@@ -13,6 +13,10 @@ The reasoning behind a change lives in the
 file when you want to know *why* — including the several tickets whose own
 premise turned out to be wrong. This file is for knowing *what*, and when.
 
+Adding a `## [x.y.z]` section here and pushing it to `main` is what cuts a
+release: the [Release workflow](./.github/workflows/release.yml) reads the top
+entry, tags it and publishes the notes.
+
 ## [Unreleased]
 
 Nothing yet.
@@ -22,12 +26,6 @@ Nothing yet.
 The first release. Everything below existed before it; naming it is what CW-028
 was for, so that an installation can say which version it is running instead of
 "whatever `main` was that day".
-
-> Tags are cut by the [Release workflow](./.github/workflows/release.yml) from
-> the top entry of this file, so adding a `## [x.y.z]` section here and pushing
-> it is what makes a release. See
-> [#26](https://github.com/SuruchBoss/Cwork/issues/26) for why it is a workflow
-> and not a command somebody runs.
 
 ### Added
 

@@ -126,6 +126,17 @@ Anything a person installing Cwork would notice goes in
 fits — Added, Changed, Fixed, Security. A refactor nobody can see from outside
 does not need an entry.
 
+## Cutting a release
+
+Rename `## [Unreleased]` to `## [x.y.z] — YYYY-MM-DD`, add a fresh empty
+`Unreleased` above it, and push to `main`. The
+[Release workflow](./.github/workflows/release.yml) reads the top entry, creates
+an annotated tag and publishes a GitHub release with that section as the notes.
+
+It is idempotent: a tag that already exists is left alone, so editing the
+changelog for any other reason does nothing. Versions below 1.0 are published as
+pre-releases, which is what the rest of the documentation says about them.
+
 ## Signing off your work
 
 Every commit needs a `Signed-off-by` line. `git commit -s` adds it:
