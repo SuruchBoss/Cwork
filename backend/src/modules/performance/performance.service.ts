@@ -283,6 +283,30 @@ export class PerformanceService {
 
     const grade = resolveGrade(overallScore, (cycle.ratingScale as unknown as RatingBand[]) ?? []);
 
+    const competencyRows = (dto.competencyScores ?? []).map((c, index) => ({
+      competency: c.competency,
+      weight: new Prisma.Decimal(c.weight),
+      score: new Prisma.Decimal(c.score),
+      comment: c.comment,
+      orderIndex: index,
+    }));
+
+    const fields = {
+      type: dto.type,
+      status: ReviewStatus.SUBMITTED,
+      kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
+      competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
+      overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
+      grade,
+      strengths: dto.strengths,
+      improvements: dto.improvements,
+      developmentPlan: dto.developmentPlan,
+      managerComment: dto.managerComment,
+      employeeComment: dto.employeeComment,
+      submittedAt: new Date(),
+      competencyScores: { create: competencyRows },
+    };
+
     const review = await this.prisma.$transaction(async (tx) => {
       const submitted = await tx.performanceReview.upsert({
         where: {
@@ -293,54 +317,15 @@ export class PerformanceService {
             type: dto.type,
           },
         },
-        create: {
-          cycleId: dto.cycleId,
-          employeeId: dto.employeeId,
-          reviewerEmployeeId,
-          type: dto.type,
-          status: ReviewStatus.SUBMITTED,
-          kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
-          competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
-          overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
-          grade,
-          strengths: dto.strengths,
-          improvements: dto.improvements,
-          developmentPlan: dto.developmentPlan,
-          managerComment: dto.managerComment,
-          employeeComment: dto.employeeComment,
-          submittedAt: new Date(),
-          competencyScores: {
-            create: (dto.competencyScores ?? []).map((c, index) => ({
-              competency: c.competency,
-              weight: new Prisma.Decimal(c.weight),
-              score: new Prisma.Decimal(c.score),
-              comment: c.comment,
-              orderIndex: index,
-            })),
-          },
-        },
+        // Written once. A submission and a resubmission differ in exactly two
+        // ways — who the review belongs to is fixed at create, and a
+        // resubmission replaces its competency rows rather than adding to
+        // them. Everything else listed twice is a field waiting to be updated
+        // in one branch and not the other.
+        create: { cycleId: dto.cycleId, employeeId: dto.employeeId, reviewerEmployeeId, ...fields },
         update: {
-          status: ReviewStatus.SUBMITTED,
-          kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
-          competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
-          overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
-          grade,
-          strengths: dto.strengths,
-          improvements: dto.improvements,
-          developmentPlan: dto.developmentPlan,
-          managerComment: dto.managerComment,
-          employeeComment: dto.employeeComment,
-          submittedAt: new Date(),
-          competencyScores: {
-            deleteMany: {},
-            create: (dto.competencyScores ?? []).map((c, index) => ({
-              competency: c.competency,
-              weight: new Prisma.Decimal(c.weight),
-              score: new Prisma.Decimal(c.score),
-              comment: c.comment,
-              orderIndex: index,
-            })),
-          },
+          ...fields,
+          competencyScores: { deleteMany: {}, create: competencyRows },
         },
         include: { competencyScores: true },
       });

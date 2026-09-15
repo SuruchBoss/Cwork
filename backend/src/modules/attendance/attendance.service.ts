@@ -456,40 +456,36 @@ export class AttendanceService {
         ? AttendanceStatus.ON_LEAVE
         : derived.status;
 
+    // Everything a recalculation may change, written once. Listing these twice
+    // — as `create` and again as `update` — is how a field added to one and
+    // forgotten in the other becomes a day that is correct when first derived
+    // and stale for ever after.
+    const derivedFields = {
+      shiftId: shift?.id ?? null,
+      firstClockInAt: derived.firstClockInAt,
+      lastClockOutAt: derived.lastClockOutAt,
+      breakMinutes: derived.breakMinutes,
+      workedMinutes: derived.workedMinutes,
+      lateMinutes: derived.lateMinutes,
+      earlyLeaveMinutes: derived.earlyLeaveMinutes,
+      overtimeMinutes: derived.overtimeMinutes,
+      status,
+      isOutsideGeofence: derived.isOutsideGeofence,
+      anomalyFlags: derived.anomalyFlags,
+      leaveRequestId: leaveDay?.leaveRequestId ?? null,
+    };
+
     await this.prisma.attendanceRecord.upsert({
       where: { employeeId_workDate: { employeeId, workDate: day } },
+      // The identity of the row, which only a create can set.
       create: {
         organizationId,
         employeeId,
         workDate: day,
-        shiftId: shift?.id ?? null,
         workLocationId: effectivePunches[0]?.workLocationId ?? null,
-        firstClockInAt: derived.firstClockInAt,
-        lastClockOutAt: derived.lastClockOutAt,
-        breakMinutes: derived.breakMinutes,
-        workedMinutes: derived.workedMinutes,
-        lateMinutes: derived.lateMinutes,
-        earlyLeaveMinutes: derived.earlyLeaveMinutes,
-        overtimeMinutes: derived.overtimeMinutes,
-        status,
-        isOutsideGeofence: derived.isOutsideGeofence,
-        anomalyFlags: derived.anomalyFlags,
-        leaveRequestId: leaveDay?.leaveRequestId ?? null,
+        ...derivedFields,
       },
-      update: {
-        shiftId: shift?.id ?? null,
-        firstClockInAt: derived.firstClockInAt,
-        lastClockOutAt: derived.lastClockOutAt,
-        breakMinutes: derived.breakMinutes,
-        workedMinutes: derived.workedMinutes,
-        lateMinutes: derived.lateMinutes,
-        earlyLeaveMinutes: derived.earlyLeaveMinutes,
-        overtimeMinutes: derived.overtimeMinutes,
-        status,
-        isOutsideGeofence: derived.isOutsideGeofence,
-        anomalyFlags: derived.anomalyFlags,
-        leaveRequestId: leaveDay?.leaveRequestId ?? null,
-      },
+      update: derivedFields,
     });
   }
 
