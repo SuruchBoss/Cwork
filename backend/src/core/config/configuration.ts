@@ -75,6 +75,7 @@ export interface RootConfig {
     throttleStorage: 'memory' | 'postgres';
   };
   malwareScan: MalwareScanConfig;
+  jobs: { lockTimeoutMs: number };
   log: { level: string; pretty: boolean };
 }
 
@@ -144,6 +145,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       throttleLimit: env.THROTTLE_LIMIT,
       throttleStorage: env.THROTTLE_STORAGE as 'memory' | 'postgres',
     },
+    jobs: { lockTimeoutMs: env.JOB_LOCK_TIMEOUT_MS },
     log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
   };
 }

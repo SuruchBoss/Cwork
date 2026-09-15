@@ -68,8 +68,9 @@ The **account lockout** — five wrong passwords, then fifteen minutes — is a
 different mechanism and has always been shared: it lives on the user row. This
 setting is about the per-client request budget.
 
-Still outstanding for a multi-instance deployment: the scheduled jobs assume a
-single instance (CW-007 in the [backlog](./backlog.md)).
+Scheduled jobs need nothing switched on: each one takes a Postgres advisory lock
+before it does anything, on every deployment, so only one instance runs it. See
+[Scheduled jobs](#scheduled-jobs).
 
 ## Turning on malware scanning
 
@@ -134,6 +135,8 @@ land in the early hours of Asia/Bangkok.
 | `attendance-close-out` | 18:00 daily | Marks no-shows ABSENT, missing clock-outs INCOMPLETE |
 | `finalise-separations` | 18:30 daily | Ends employment past the final working day, disables the login |
 | `purge-expired-candidates` | 03:00 daily | PDPA: scrubs candidate PII past its retention deadline |
+| `purge-rate-limit-counters` | 04:00 daily | Clears dead windows from the shared rate-limit table |
+| `rescan-pending-files` | hourly | Gives a verdict to uploads stored while clamd was unreachable |
 | `prune-expired-tokens` | weekly | Deletes sessions and reset tokens expired over 30 days |
 | `leave-year-rollover` | 31 Dec | Carries the capped remainder into the next leave year |
 
@@ -141,10 +144,35 @@ Every job is idempotent and bounded by date, so a missed run catches up on the
 next one and a double run changes nothing. A failure in one tenant is logged and
 does not stop the others.
 
-> **Running more than one API replica?** These jobs assume a single instance.
-> Two replicas will both run the close-out. Either run one replica with
-> scheduling enabled and the rest with it disabled, or put a Postgres advisory
-> lock around each job.
+### More than one replica
+
+Every replica runs this same schedule, so each job takes a **Postgres advisory
+lock** before it starts and the instances that do not get it stand down:
+
+```bash
+docker compose logs api | grep -i "held by another instance"
+# [JobLockService] [attendance-close-out] held by another instance — skipped
+```
+
+Nothing to configure and nothing to run — the lock lives in the database that is
+already there. Idempotence is what makes a duplicate run harmless; the lock is
+what stops it happening, along with the duplicated audit rows, notifications and
+write-write races that come of three instances doing identical work at once.
+
+There is no lease to renew and no heartbeat, because the lock is scoped to a
+database transaction: an instance killed mid-job loses its connection and
+Postgres releases the lock on its own. What it does mean is that the job runs
+with a transaction held open, so `JOB_LOCK_TIMEOUT_MS` (15 minutes by default)
+bounds how long that can last. A job that runs past it loses the lock while
+still working and says so:
+
+```
+[attendance-close-out] ran past JOB_LOCK_TIMEOUT_MS (900000ms) and lost its lock
+```
+
+Raise it for an organisation large enough that the nightly close-out genuinely
+takes longer. An open transaction also holds back vacuum for its duration, which
+is the reason not to simply set it to an hour and forget.
 
 ## Observability
 
@@ -176,9 +204,9 @@ serves a few thousand employees. In order of what to do first:
 
 1. **Postgres before anything else.** Add connection pooling (PgBouncer) and a
    read replica for reporting before splitting the app.
-2. **Multiple API replicas.** Stateless except for two things: rate limiting is
-   in-process (point `@nestjs/throttler` at a shared store) and scheduled jobs
-   assume a single instance (see above).
+2. **Multiple API replicas.** Stateless once rate limiting is shared
+   (`THROTTLE_STORAGE=postgres`); scheduled jobs already elect one instance per
+   run by themselves (see above).
 3. **Object storage.** The default `local` driver writes to a container volume,
    which does not work across replicas. Implement the S3 driver in
    `StorageService` — the seam is there and throws a clear error rather than

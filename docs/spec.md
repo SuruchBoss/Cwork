@@ -535,12 +535,13 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 192 backend, 17 web, 33 mobile. A 71-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 195 backend, 17 web, 33 mobile. A 79-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
 | **Input** | `ValidationPipe` with `whitelist` and `forbidNonWhitelisted`, so an unexpected field is rejected rather than ignored. |
 | **Localisation** | UI is Thai. Nothing in the architecture is Thailand-specific: tax rules are data, leave types are configuration, OT multipliers are settings. |
+| **Scheduled work** | Nightly maintenance runs inside the API process. Every replica runs the same schedule and each job takes a Postgres advisory lock first, so it runs once per schedule however many instances there are. Nothing to configure; `JOB_LOCK_TIMEOUT_MS` bounds how long one may hold it. |
 | **Deployment** | Three containers — API, console, PostgreSQL 16 — plus a one-off `migrate` container behind a compose profile. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
 
 ### Known limits
@@ -551,7 +552,6 @@ Stated plainly, with the remedies in
 
 - Malware scanning is off by default; it needs a clamd to talk to.
 - Rate limiting is in-process unless `THROTTLE_STORAGE=postgres` is set.
-- Scheduled jobs assume a single instance; no leader election.
 - No email or push dispatch — `NotificationsService` is the seam for it.
 - `outbox_events` exists but nothing consumes it.
 - No ภ.ง.ด.1 withholding-tax filing export.

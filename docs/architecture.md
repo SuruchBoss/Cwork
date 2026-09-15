@@ -60,7 +60,7 @@ modules/leave/
 
 The `domain/` directory is the important one. Leave arithmetic, attendance
 derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 192 backend tests that run in ten seconds
+of their inputs. That is why there are 195 backend tests that run in ten seconds
 with no database: the rules that are expensive to get wrong are the ones that
 are cheapest to test.
 
@@ -149,8 +149,9 @@ still there.
 - **No Redis.** Rate limiting is in-process by default; `THROTTLE_STORAGE=postgres`
   shares the counters through the database that is already there, so running
   several instances does not mean running another service.
-- **No leader election for cron.** `ScheduledTasksService` assumes one instance.
-  Multiple replicas need a lock — see [operations.md](./operations.md).
+- **No scheduler service.** Cron lives in the API process. Every replica runs
+  the same schedule and each job takes a Postgres advisory lock, so one of them
+  does the work and the rest stand down — see [operations.md](./operations.md).
 - **No email or push dispatch.** `NotificationsService` writes in-app
   notifications and is the seam where you plug in SMTP/FCM/APNs.
 

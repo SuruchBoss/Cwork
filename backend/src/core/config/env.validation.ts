@@ -145,6 +145,20 @@ export class EnvironmentVariables {
   @Max(300000)
   CLAMAV_TIMEOUT_MS: number = 15000;
 
+  /**
+   * The longest a scheduled task may hold its cross-instance lock.
+   *
+   * The lock lives inside a database transaction, so this is also how long that
+   * transaction stays open; a task that runs past it loses the lock and another
+   * instance may start the next run. Raise it for a large enough organisation
+   * that the nightly attendance close-out takes longer than this.
+   */
+  @toInt()
+  @IsInt()
+  @Min(1000)
+  @Max(3600000)
+  JOB_LOCK_TIMEOUT_MS: number = 900000;
+
   @IsIn(['local', 's3'])
   STORAGE_DRIVER: string = 'local';
 
