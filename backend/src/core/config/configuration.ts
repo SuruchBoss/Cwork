@@ -68,7 +68,12 @@ export interface RootConfig {
   auth: AuthConfig;
   storage: StorageConfig;
   assistant: AssistantConfig;
-  security: { fieldEncryptionKey: string; throttleTtl: number; throttleLimit: number };
+  security: {
+    fieldEncryptionKey: string;
+    throttleTtl: number;
+    throttleLimit: number;
+    throttleStorage: 'memory' | 'postgres';
+  };
   malwareScan: MalwareScanConfig;
   log: { level: string; pretty: boolean };
 }
@@ -137,6 +142,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       fieldEncryptionKey: env.FIELD_ENCRYPTION_KEY,
       throttleTtl: env.THROTTLE_TTL,
       throttleLimit: env.THROTTLE_LIMIT,
+      throttleStorage: env.THROTTLE_STORAGE as 'memory' | 'postgres',
     },
     log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
   };

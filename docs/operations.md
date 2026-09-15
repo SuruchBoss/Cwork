@@ -45,6 +45,32 @@ docker compose run --rm migrate npm run db:verify
 
 Migrations are forward-only. Take a database backup first.
 
+## Running more than one instance
+
+Rate-limit counters are in-process by default. That is correct for a single
+instance and quietly wrong for several: two replicas behind a load balancer hand
+out twice the budget, and a restart forgets every counter.
+
+```bash
+THROTTLE_STORAGE=postgres
+```
+
+Counters then live in the `rate_limit_counters` table, shared by every instance,
+at the cost of one round-trip per request. A nightly job clears out dead windows.
+The API states which store it is using at boot:
+
+```bash
+docker compose logs api | grep -i rate-limit
+# Rate-limit counters are shared through PostgreSQL
+```
+
+The **account lockout** — five wrong passwords, then fifteen minutes — is a
+different mechanism and has always been shared: it lives on the user row. This
+setting is about the per-client request budget.
+
+Still outstanding for a multi-instance deployment: the scheduled jobs assume a
+single instance (CW-007 in the [backlog](./backlog.md)).
+
 ## Turning on malware scanning
 
 Uploads are streamed to clamd before they are stored. It is off by default

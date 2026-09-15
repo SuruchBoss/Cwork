@@ -14,3 +14,25 @@ model NumberSequence {
   @@unique([organizationId, key])
   @@map("number_sequences")
 }
+
+/// Shared rate-limit counters, for deployments running more than one instance.
+///
+/// `@nestjs/throttler` keeps its counters in memory by default, which means N
+/// replicas grant N times the budget and a restart forgets everything. Pointing
+/// it here makes the limit a property of the deployment rather than of whichever
+/// instance happened to answer. Off unless `THROTTLE_STORAGE=postgres`.
+///
+/// Not tenant-scoped on purpose: the tracker is a client address, and a caller
+/// has no organisation until they are past the endpoints this protects.
+model RateLimitCounter {
+  /// Throttler name and tracked client, e.g. "default:203.0.113.7".
+  key          String   @id
+  hits         Int
+  /// End of the current window. A hit after this starts a fresh one.
+  expiresAt    DateTime
+  /// Set once the limit is exceeded; null while the caller is within budget.
+  blockedUntil DateTime?
+
+  @@index([expiresAt])
+  @@map("rate_limit_counters")
+}

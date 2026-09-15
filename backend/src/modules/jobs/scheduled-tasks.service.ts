@@ -1,7 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { subDays } from 'date-fns';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { APP_CONFIG } from '../../core/config/config.module';
+import type { RootConfig } from '../../core/config/configuration';
 import { AttendanceService } from '../attendance/attendance.service';
 import { OffboardingService } from '../employees/offboarding.service';
 import { FilesService } from '../files/files.service';
@@ -31,7 +33,25 @@ export class ScheduledTasksService {
     private readonly recruitment: RecruitmentService,
     private readonly files: FilesService,
     private readonly scanner: MalwareScannerService,
+    @Inject(APP_CONFIG) private readonly config: RootConfig,
   ) {}
+
+  /**
+   * Clears out rate-limit counters whose windows ended long ago.
+   *
+   * Only relevant when the counters are shared; the in-memory store forgets
+   * them by itself. A day's grace is deliberate — a counter still inside its
+   * block must survive, and nothing here is worth racing the clock over.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_4AM, { name: 'purge-rate-limit-counters' })
+  async purgeRateLimitCounters(): Promise<void> {
+    if (this.config.security.throttleStorage !== 'postgres') return;
+
+    const { count } = await this.prisma.rateLimitCounter.deleteMany({
+      where: { expiresAt: { lt: subDays(new Date(), 1) }, blockedUntil: null },
+    });
+    if (count > 0) this.logger.log(`Purged ${count} expired rate-limit counter(s)`);
+  }
 
   /**
    * Picks up files stored while the scanner was unreachable.

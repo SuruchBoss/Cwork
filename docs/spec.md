@@ -67,7 +67,11 @@ deployment (the schema is multi-tenant; the product is not sold as one).
   collapse into one refresh, never a stampede.
 - The credential endpoints — sign-in, MFA verify and enrolment — carry their own
   rate limit, `AUTH_THROTTLE_LIMIT` (default 10/minute), far tighter than the
-  global one. It is per-instance; see [Known limits](#known-limits).
+  global one.
+- Rate-limit counters are in-process by default and shared through PostgreSQL
+  when `THROTTLE_STORAGE=postgres`, which is what a deployment with more than one
+  instance needs. The account lockout above is a separate mechanism and has
+  always been shared, since it lives on the user row.
 
 **Requirement:** no endpoint is reachable without a valid access token unless it
 is explicitly marked public. The `JwtAuthGuard` is registered globally, so the
@@ -526,7 +530,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 176 backend, 17 web, 30 mobile. A 60-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 184 backend, 17 web, 30 mobile. A 64-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -541,7 +545,7 @@ Stated plainly, with the remedies in
 [backlog.md](./backlog.md):
 
 - Malware scanning is off by default; it needs a clamd to talk to.
-- Rate limiting is per-instance and in-memory.
+- Rate limiting is in-process unless `THROTTLE_STORAGE=postgres` is set.
 - Scheduled jobs assume a single instance; no leader election.
 - No email or push dispatch — `NotificationsService` is the seam for it.
 - `outbox_events` exists but nothing consumes it.

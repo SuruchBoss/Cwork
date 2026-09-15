@@ -219,8 +219,29 @@ Be clear-eyed about the gaps before you deploy:
 | **Malware scanning is off by default.** It works, but needs a clamd. | `docker compose --profile av up -d clamav`, then `MALWARE_SCAN_ENABLED=true`. The API logs which mode it is in at every boot. |
 | **No database-level encryption at rest.** Only specific columns are encrypted. | Enable encryption on your volume or managed database. |
 | **No PII purge for employees.** Candidate records have PDPA retention; employees do not. | Employee records are usually retained by law; check your jurisdiction. |
-| **Rate limiting is per-instance.** In-memory. | Point `@nestjs/throttler` at a shared store for multiple replicas. |
 | **No penetration test.** This code has not been audited. | Get one before handling real payroll. |
+
+### Rate limiting
+
+Two separate mechanisms, worth not confusing:
+
+- **The account lockout** is per account and lives in the database
+  (`users.failedLoginCount`, `users.lockedUntil`). It has always been shared
+  across instances: the sixth wrong password locks the account whichever replica
+  saw it.
+- **The request budget** is per client address, through `@nestjs/throttler`, and
+  is what catches a caller no single lockout would notice — one wrong password
+  each against a hundred different accounts. The credential endpoints get their
+  own tighter budget (`AUTH_THROTTLE_LIMIT`, default 10/minute).
+
+The budget is in-process by default, which is correct for one instance and
+quietly wrong for several: N replicas hand out N times the budget, and a restart
+forgets every counter. `THROTTLE_STORAGE=postgres` shares the counters through
+the database. The API states which one is in use at every boot.
+
+If the store cannot be reached, the limiter **fails open** and logs an error. A
+rate limiter is not worth locking everybody out of a healthy system for, and a
+database that is unreachable is already a louder problem than this one.
 
 ## Reporting a vulnerability
 

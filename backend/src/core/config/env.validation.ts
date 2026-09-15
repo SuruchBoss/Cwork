@@ -117,6 +117,14 @@ export class EnvironmentVariables {
    * a scanner that silently is not there would be worse than none at all — see
    * MalwareScannerService, which says so at boot either way.
    */
+  /**
+   * Where rate-limit counters live. `memory` is right for a single instance and
+   * quietly wrong for several: N replicas hand out N times the budget. `postgres`
+   * shares them, at the cost of one round-trip per request.
+   */
+  @IsIn(['memory', 'postgres'])
+  THROTTLE_STORAGE: string = 'memory';
+
   @toBool()
   @IsBoolean()
   MALWARE_SCAN_ENABLED: boolean = false;

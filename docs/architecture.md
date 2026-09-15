@@ -60,7 +60,7 @@ modules/leave/
 
 The `domain/` directory is the important one. Leave arithmetic, attendance
 derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 176 backend tests that run in ten seconds
+of their inputs. That is why there are 184 backend tests that run in ten seconds
 with no database: the rules that are expensive to get wrong are the ones that
 are cheapest to test.
 
@@ -146,8 +146,9 @@ still there.
 - **No message broker.** The `outbox_events` table exists so domain events can
   be relayed transactionally when someone needs that, but nothing consumes it
   by default.
-- **No Redis.** Rate limiting is in-process. For multiple instances, point
-  `@nestjs/throttler` at a shared store.
+- **No Redis.** Rate limiting is in-process by default; `THROTTLE_STORAGE=postgres`
+  shares the counters through the database that is already there, so running
+  several instances does not mean running another service.
 - **No leader election for cron.** `ScheduledTasksService` assumes one instance.
   Multiple replicas need a lock — see [operations.md](./operations.md).
 - **No email or push dispatch.** `NotificationsService` writes in-app

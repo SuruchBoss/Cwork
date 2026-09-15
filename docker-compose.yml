@@ -55,6 +55,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Asia/Bangkok}
       DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-THB}
+      # Set to `postgres` when running more than one api replica, or each one
+      # hands out the full budget on its own.
+      THROTTLE_STORAGE: ${THROTTLE_STORAGE:-memory}
       MALWARE_SCAN_ENABLED: ${MALWARE_SCAN_ENABLED:-false}
       CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
       CLAMAV_PORT: ${CLAMAV_PORT:-3310}
