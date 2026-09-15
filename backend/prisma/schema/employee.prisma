@@ -1,0 +1,400 @@
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  OUTSOURCE
+  DAILY
+}
+
+enum EmployeeStatus {
+  PRE_BOARDING
+  PROBATION
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  RESIGNED
+  TERMINATED
+  RETIRED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  UNDISCLOSED
+}
+
+model Employee {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeCode   String
+  /// Null until the person is invited to the app (or after their login is removed).
+  userId         String?  @unique @db.Uuid
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  titleTh        String?
+  firstNameTh    String
+  lastNameTh     String
+  firstNameEn    String?
+  lastNameEn     String?
+  nickname       String?
+  photoFileId    String?  @db.Uuid
+
+  dateOfBirth    DateTime? @db.Date
+  gender         Gender    @default(UNDISCLOSED)
+  maritalStatus  MaritalStatus @default(UNDISCLOSED)
+  nationality    String?
+  /// AES-256-GCM ciphertext. Plaintext never leaves the crypto service.
+  nationalIdEnc  String?
+  /// Last 4 digits, for search/verification without decrypting.
+  nationalIdLast4 String?
+  passportNoEnc  String?
+  taxIdEnc       String?
+  socialSecurityNoEnc String?
+
+  personalEmail  String?
+  workEmail      String?
+  phone          String?
+  addressLine    String?
+  subDistrict    String?
+  district       String?
+  province       String?
+  postalCode     String?
+  country        String?  @default("TH")
+
+  departmentId   String?  @db.Uuid
+  department     Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId     String?  @db.Uuid
+  position       Position?   @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  workLocationId String?  @db.Uuid
+  workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: SetNull)
+  managerId      String?  @db.Uuid
+  manager        Employee?  @relation("ReportsTo", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports  Employee[] @relation("ReportsTo")
+
+  employmentType EmploymentType @default(FULL_TIME)
+  status         EmployeeStatus @default(PRE_BOARDING)
+  hireDate       DateTime  @db.Date
+  probationEndDate DateTime? @db.Date
+  confirmedDate  DateTime? @db.Date
+  contractEndDate DateTime? @db.Date
+  resignationDate DateTime? @db.Date
+  lastWorkingDate DateTime? @db.Date
+  separationReason String?
+
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  headedDepartments Department[] @relation("DepartmentHead")
+  contacts          EmployeeContact[]
+  dependents        EmployeeDependent[]
+  educations        EmployeeEducation[]
+  experiences       EmployeeExperience[]
+  documents         EmployeeDocument[]
+  employmentEvents  EmploymentEvent[]
+  bankAccounts      EmployeeBankAccount[]
+
+  leaveRequests        LeaveRequest[]
+  backupForLeave       LeaveRequest[]      @relation("LeaveBackup")
+  leaveEntitlements    LeaveEntitlement[]
+  leaveAdjustments     LeaveAdjustment[]
+  attendanceRecords    AttendanceRecord[]
+  attendancePunches    AttendancePunch[]
+  attendanceCorrections AttendanceCorrection[]
+  overtimeRequests     OvertimeRequest[]
+  scheduleAssignments  ScheduleAssignment[]
+  shiftAssignments     ShiftAssignment[]
+
+  compensations     EmployeeCompensation[]
+  recurringItems    EmployeeRecurringItem[]
+  payslips          Payslip[]
+  taxProfiles       EmployeeTaxProfile[]
+  benefitEnrollments BenefitEnrollment[]
+  expenseClaims     ExpenseClaim[]
+
+  kpiGoals           KpiGoal[]
+  performanceReviews PerformanceReview[] @relation("ReviewSubject")
+  reviewsGiven       PerformanceReview[] @relation("Reviewer")
+  resignation        ResignationRequest[]
+  exitInterviews     ExitInterview[]
+  clearanceItems     OffboardingTask[]   @relation("ClearanceAssignee")
+  documentRequests   DocumentRequest[]
+  interviewSlots     InterviewParticipant[]
+  requisitions       JobRequisition[]    @relation("RequisitionRequester")
+  hiredFrom          Application[]
+
+  @@unique([organizationId, employeeCode])
+  @@index([organizationId, status])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, managerId])
+  @@index([organizationId, lastNameTh, firstNameTh])
+  @@map("employees")
+}
+
+enum ContactRelation {
+  SPOUSE
+  PARENT
+  CHILD
+  SIBLING
+  FRIEND
+  OTHER
+}
+
+model EmployeeContact {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name       String
+  relation   ContactRelation @default(OTHER)
+  phone      String
+  altPhone   String?
+  address    String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([employeeId])
+  @@map("employee_contacts")
+}
+
+/// Used for Thai personal income-tax allowances (spouse / children / parents).
+model EmployeeDependent {
+  id          String   @id @default(uuid()) @db.Uuid
+  employeeId  String   @db.Uuid
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name        String
+  relation    ContactRelation
+  dateOfBirth DateTime? @db.Date
+  nationalIdEnc String?
+  isTaxAllowance Boolean @default(false)
+  isStudying     Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([employeeId])
+  @@map("employee_dependents")
+}
+
+model EmployeeEducation {
+  id           String   @id @default(uuid()) @db.Uuid
+  employeeId   String   @db.Uuid
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  institution  String
+  degree       String?
+  fieldOfStudy String?
+  startYear    Int?
+  endYear      Int?
+  gpa          Decimal? @db.Decimal(4, 2)
+  createdAt    DateTime @default(now())
+
+  @@index([employeeId])
+  @@map("employee_educations")
+}
+
+model EmployeeExperience {
+  id          String   @id @default(uuid()) @db.Uuid
+  employeeId  String   @db.Uuid
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  company     String
+  title       String
+  startDate   DateTime? @db.Date
+  endDate     DateTime? @db.Date
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([employeeId])
+  @@map("employee_experiences")
+}
+
+enum EmployeeDocumentType {
+  ID_CARD
+  HOUSE_REGISTRATION
+  PASSPORT
+  WORK_PERMIT
+  CONTRACT
+  CERTIFICATE
+  TRANSCRIPT
+  RESUME
+  BANK_BOOK
+  MEDICAL
+  DISCIPLINARY
+  OTHER
+}
+
+model EmployeeDocument {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type       EmployeeDocumentType
+  title      String
+  fileId     String   @db.Uuid
+  file       FileObject @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  issuedAt   DateTime? @db.Date
+  expiresAt  DateTime? @db.Date
+  note       String?
+  uploadedById String? @db.Uuid
+  createdAt  DateTime @default(now())
+  deletedAt  DateTime?
+
+  @@index([employeeId, type])
+  @@map("employee_documents")
+}
+
+model EmployeeBankAccount {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  bankCode      String
+  bankName      String
+  /// Encrypted; only the payroll disbursement job decrypts it.
+  accountNoEnc  String
+  accountNoLast4 String
+  accountName   String
+  branch        String?
+  isPrimary     Boolean  @default(true)
+  verifiedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([employeeId])
+  @@map("employee_bank_accounts")
+}
+
+enum EmploymentEventType {
+  HIRE
+  PROBATION_PASSED
+  PROBATION_EXTENDED
+  PROMOTION
+  TRANSFER
+  SALARY_CHANGE
+  MANAGER_CHANGE
+  CONTRACT_RENEWAL
+  SUSPENSION
+  RESIGNATION
+  TERMINATION
+  RETIREMENT
+  REHIRE
+}
+
+/// Immutable history of everything that changed a person's employment.
+model EmploymentEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type          EmploymentEventType
+  effectiveDate DateTime @db.Date
+  previousValue Json?
+  newValue      Json?
+  reason        String?
+  note          String?
+  recordedById  String?  @db.Uuid
+  createdAt     DateTime @default(now())
+
+  @@index([employeeId, effectiveDate])
+  @@map("employment_events")
+}
+
+enum ResignationStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  COMPLETED
+}
+
+enum SeparationType {
+  RESIGNATION
+  TERMINATION
+  END_OF_CONTRACT
+  RETIREMENT
+  LAYOFF
+}
+
+model ResignationRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  employeeId      String   @db.Uuid
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  separationType  SeparationType @default(RESIGNATION)
+  submittedAt     DateTime @default(now())
+  /// Employee's requested final day; HR may negotiate `agreedLastWorkingDate`.
+  requestedLastWorkingDate DateTime @db.Date
+  agreedLastWorkingDate    DateTime? @db.Date
+  noticeDays      Int?
+  reasonCategory  String?
+  reason          String?
+  status          ResignationStatus @default(DRAFT)
+  decidedAt       DateTime?
+  decidedById     String?  @db.Uuid
+  decisionNote    String?
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tasks         OffboardingTask[]
+  exitInterview ExitInterview?
+
+  @@index([employeeId, status])
+  @@map("resignation_requests")
+}
+
+enum OffboardingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  NOT_APPLICABLE
+}
+
+/// Clearance checklist: return laptop, revoke access, settle advances, etc.
+model OffboardingTask {
+  id            String   @id @default(uuid()) @db.Uuid
+  resignationId String   @db.Uuid
+  resignation   ResignationRequest @relation(fields: [resignationId], references: [id], onDelete: Cascade)
+  title         String
+  category      String
+  assigneeEmployeeId String? @db.Uuid
+  assignee      Employee? @relation("ClearanceAssignee", fields: [assigneeEmployeeId], references: [id], onDelete: SetNull)
+  dueDate       DateTime? @db.Date
+  status        OffboardingTaskStatus @default(PENDING)
+  completedAt   DateTime?
+  note          String?
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([resignationId, status])
+  @@map("offboarding_tasks")
+}
+
+model ExitInterview {
+  id            String   @id @default(uuid()) @db.Uuid
+  resignationId String   @unique @db.Uuid
+  resignation   ResignationRequest @relation(fields: [resignationId], references: [id], onDelete: Cascade)
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  conductedById String?  @db.Uuid
+  conductedAt   DateTime?
+  /// Question key -> answer. Schema lives in org settings so HR can edit it.
+  responses     Json     @default("{}")
+  overallSatisfaction Int?
+  wouldRecommend Boolean?
+  wouldRehire   Boolean?
+  summary       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("exit_interviews")
+}

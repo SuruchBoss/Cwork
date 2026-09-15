@@ -1,0 +1,184 @@
+enum LeaveUnit {
+  DAY
+  HOUR
+}
+
+enum LeaveAccrualMethod {
+  /// Quota is granted manually / by import.
+  NONE
+  /// Whole quota granted at the start of the leave year.
+  ANNUAL_GRANT
+  /// 1/12 of the quota per completed month of service.
+  MONTHLY_ACCRUAL
+  /// Quota depends on years of service (see `seniorityTiers`).
+  SENIORITY_TIERED
+}
+
+enum LeaveRequestStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  /// Approved but the employee cancelled after the fact; balance already returned.
+  CANCELLED_AFTER_APPROVAL
+}
+
+enum DayPortion {
+  FULL
+  MORNING
+  AFTERNOON
+  HOURS
+}
+
+model LeaveType {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  nameEn         String?
+  unit           LeaveUnit @default(DAY)
+  isPaid         Boolean  @default(true)
+  /// Counts toward Thai labour-law statutory minimums (used in compliance reports).
+  isStatutory    Boolean  @default(false)
+  defaultQuota   Decimal  @default(0) @db.Decimal(8, 2)
+  accrualMethod  LeaveAccrualMethod @default(ANNUAL_GRANT)
+  /// [{ "years": 0, "quota": 6 }, { "years": 3, "quota": 10 }]
+  seniorityTiers Json     @default("[]")
+  allowHalfDay   Boolean  @default(true)
+  allowHourly    Boolean  @default(false)
+  requiresAttachment Boolean @default(false)
+  attachmentRequiredAfterDays Int?
+  minNoticeDays  Int      @default(0)
+  maxConsecutiveDays Int?
+  maxPerYear     Decimal? @db.Decimal(8, 2)
+  allowNegativeBalance Boolean @default(false)
+  /// Days of unused quota that roll into next year (0 = use it or lose it).
+  carryOverMaxDays Decimal @default(0) @db.Decimal(8, 2)
+  carryOverExpiryMonths Int?
+  /// Restrict to a gender (maternity/ordination leave). Null = everyone.
+  genderRestriction Gender?
+  /// Employees may not use this type before N days of service.
+  minServiceDays Int      @default(0)
+  colorHex       String   @default("#2563eb")
+  orderIndex     Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  requests     LeaveRequest[]
+  entitlements LeaveEntitlement[]
+  adjustments  LeaveAdjustment[]
+
+  @@unique([organizationId, code])
+  @@map("leave_types")
+}
+
+/// Balance ledger, one row per employee / leave type / leave year.
+/// `balance` is derived: opening + granted + carriedOver + adjusted - used - pending.
+model LeaveEntitlement {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId    String   @db.Uuid
+  leaveType      LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  year           Int
+  openingBalance Decimal  @default(0) @db.Decimal(8, 2)
+  granted        Decimal  @default(0) @db.Decimal(8, 2)
+  carriedOver    Decimal  @default(0) @db.Decimal(8, 2)
+  carryOverExpiresOn DateTime? @db.Date
+  adjusted       Decimal  @default(0) @db.Decimal(8, 2)
+  used           Decimal  @default(0) @db.Decimal(8, 2)
+  /// Reserved by submitted-but-not-yet-approved requests.
+  pending        Decimal  @default(0) @db.Decimal(8, 2)
+  expired        Decimal  @default(0) @db.Decimal(8, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  adjustments LeaveAdjustment[]
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@index([organizationId, year])
+  @@map("leave_entitlements")
+}
+
+model LeaveAdjustment {
+  id             String   @id @default(uuid()) @db.Uuid
+  entitlementId  String   @db.Uuid
+  entitlement    LeaveEntitlement @relation(fields: [entitlementId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId    String   @db.Uuid
+  leaveType      LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  /// Signed: positive grants days, negative deducts them.
+  amount         Decimal  @db.Decimal(8, 2)
+  reason         String
+  effectiveDate  DateTime @db.Date
+  createdById    String?  @db.Uuid
+  createdAt      DateTime @default(now())
+
+  @@index([entitlementId])
+  @@map("leave_adjustments")
+}
+
+model LeaveRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestNo      String
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId    String   @db.Uuid
+  leaveType      LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
+  startDate      DateTime @db.Date
+  endDate        DateTime @db.Date
+  startPortion   DayPortion @default(FULL)
+  endPortion     DayPortion @default(FULL)
+  /// Working days only — holidays and non-working days are excluded at creation.
+  totalDays      Decimal  @db.Decimal(8, 2)
+  totalHours     Decimal? @db.Decimal(8, 2)
+  reason         String?
+  contactPhone   String?
+  backupEmployeeId String? @db.Uuid
+  backupEmployee Employee? @relation("LeaveBackup", fields: [backupEmployeeId], references: [id], onDelete: SetNull)
+  attachmentIds  String[] @default([])
+  status         LeaveRequestStatus @default(DRAFT)
+  submittedAt    DateTime?
+  decidedAt      DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  /// True when the assistant filed it; shown in the UI and the audit log.
+  createdViaAssistant Boolean @default(false)
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  days LeaveRequestDay[]
+
+  @@unique([organizationId, requestNo])
+  @@index([organizationId, status])
+  @@index([employeeId, startDate])
+  @@index([organizationId, startDate, endDate])
+  @@map("leave_requests")
+}
+
+/// Exploded per-date rows. Attendance and payroll read these instead of
+/// re-deriving ranges, which keeps half-days and holidays consistent everywhere.
+model LeaveRequestDay {
+  id             String   @id @default(uuid()) @db.Uuid
+  leaveRequestId String   @db.Uuid
+  leaveRequest   LeaveRequest @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
+  date           DateTime @db.Date
+  portion        DayPortion @default(FULL)
+  hours          Decimal? @db.Decimal(6, 2)
+  dayValue       Decimal  @default(1) @db.Decimal(4, 2)
+
+  @@unique([leaveRequestId, date])
+  @@index([date])
+  @@map("leave_request_days")
+}

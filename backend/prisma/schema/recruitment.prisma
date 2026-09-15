@@ -1,0 +1,416 @@
+enum RequisitionStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ON_HOLD
+  FILLED
+  CANCELLED
+}
+
+model JobRequisition {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  title          String
+  departmentId   String?  @db.Uuid
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId     String?  @db.Uuid
+  position       Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  employmentType EmploymentType @default(FULL_TIME)
+  headcount      Int      @default(1)
+  filledCount    Int      @default(0)
+  /// Replacement hire vs. new headcount — drives budget approval routing.
+  isReplacement  Boolean  @default(false)
+  replacingEmployeeId String? @db.Uuid
+  salaryMin      Decimal? @db.Decimal(18, 4)
+  salaryMax      Decimal? @db.Decimal(18, 4)
+  targetStartDate DateTime? @db.Date
+  justification  String?
+  status         RequisitionStatus @default(DRAFT)
+  requestedByEmployeeId String? @db.Uuid
+  requestedBy    Employee? @relation("RequisitionRequester", fields: [requestedByEmployeeId], references: [id], onDelete: SetNull)
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  postings JobPosting[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@map("job_requisitions")
+}
+
+enum PostingStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  CLOSED
+}
+
+model JobPosting {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requisitionId  String?  @db.Uuid
+  requisition    JobRequisition? @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  /// Public URL segment for the careers page.
+  slug           String
+  title          String
+  summary        String?
+  description    String
+  requirements   String?
+  benefits       String?
+  locationText   String?
+  isRemote       Boolean  @default(false)
+  showSalary     Boolean  @default(false)
+  salaryMin      Decimal? @db.Decimal(18, 4)
+  salaryMax      Decimal? @db.Decimal(18, 4)
+  /// Internal postings are only visible to signed-in employees.
+  isInternalOnly Boolean  @default(false)
+  status         PostingStatus @default(DRAFT)
+  publishedAt    DateTime?
+  closesAt       DateTime?
+  /// Extra application questions rendered by the public form.
+  formSchema     Json     @default("[]")
+  viewCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  applications Application[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@map("job_postings")
+}
+
+model Candidate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String
+  email          String
+  phone          String?
+  currentTitle   String?
+  currentCompany String?
+  expectedSalary Decimal? @db.Decimal(18, 4)
+  noticePeriodDays Int?
+  resumeFileId   String?  @db.Uuid
+  portfolioUrl   String?
+  linkedinUrl    String?
+  source         String?
+  tags           String[] @default([])
+  /// PDPA: consent timestamp + retention deadline. A job purges expired records.
+  consentAt      DateTime?
+  consentExpiresAt DateTime?
+  /// Set when the candidate asks to be forgotten; PII is scrubbed on next run.
+  erasureRequestedAt DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  applications Application[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId, createdAt])
+  @@map("candidates")
+}
+
+enum ApplicationStage {
+  APPLIED
+  SCREENING
+  ASSESSMENT
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+model Application {
+  id             String   @id @default(uuid()) @db.Uuid
+  candidateId    String   @db.Uuid
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  postingId      String   @db.Uuid
+  posting        JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+  stage          ApplicationStage @default(APPLIED)
+  rating         Int?
+  coverLetter    String?
+  /// Answers to the posting's custom `formSchema` questions.
+  formAnswers    Json     @default("{}")
+  ownerUserId    String?  @db.Uuid
+  appliedAt      DateTime @default(now())
+  stageChangedAt DateTime @default(now())
+  rejectReason   String?
+  rejectedAt     DateTime?
+  /// Set once the candidate is converted into an employee record.
+  hiredEmployeeId String? @unique @db.Uuid
+  hiredEmployee  Employee? @relation(fields: [hiredEmployeeId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  activities   ApplicationActivity[]
+  assessments  AssessmentInvitation[]
+  interviews   Interview[]
+  offers       JobOffer[]
+
+  @@unique([candidateId, postingId])
+  @@index([postingId, stage])
+  @@map("applications")
+}
+
+model ApplicationActivity {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @db.Uuid
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          String
+  fromStage     ApplicationStage?
+  toStage       ApplicationStage?
+  note          String?
+  actorUserId   String?  @db.Uuid
+  createdAt     DateTime @default(now())
+
+  @@index([applicationId, createdAt])
+  @@map("application_activities")
+}
+
+enum AssessmentKind {
+  MULTIPLE_CHOICE
+  ESSAY
+  CODING
+  PERSONALITY
+  SKILL
+  MIXED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  CODE
+  RATING
+}
+
+model AssessmentTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  title          String
+  description    String?
+  kind           AssessmentKind @default(MULTIPLE_CHOICE)
+  durationMinutes Int     @default(30)
+  passingScore   Decimal  @default(60) @db.Decimal(5, 2)
+  /// Show a different question order to each candidate.
+  shuffleQuestions Boolean @default(true)
+  /// Essay/code answers still need a human; auto-grade covers objective types.
+  autoGrade      Boolean  @default(true)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  questions   AssessmentQuestion[]
+  invitations AssessmentInvitation[]
+
+  @@unique([organizationId, code])
+  @@map("assessment_templates")
+}
+
+model AssessmentQuestion {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @db.Uuid
+  template    AssessmentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  orderIndex  Int
+  type        QuestionType
+  prompt      String
+  /// [{ "key": "a", "text": "…" }] — never sent to the candidate with `correctKeys`.
+  options     Json     @default("[]")
+  correctKeys String[] @default([])
+  points      Decimal  @default(1) @db.Decimal(6, 2)
+  explanation String?
+  isRequired  Boolean  @default(true)
+
+  answers AssessmentAnswer[]
+
+  @@unique([templateId, orderIndex])
+  @@map("assessment_questions")
+}
+
+enum AssessmentInvitationStatus {
+  SENT
+  OPENED
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+  EXPIRED
+  CANCELLED
+}
+
+model AssessmentInvitation {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @db.Uuid
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  templateId    String   @db.Uuid
+  template      AssessmentTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  /// SHA-256 of the single-use access token mailed to the candidate.
+  tokenHash     String   @unique
+  status        AssessmentInvitationStatus @default(SENT)
+  invitedAt     DateTime @default(now())
+  expiresAt     DateTime
+  startedAt     DateTime?
+  submittedAt   DateTime?
+  /// Server-side deadline = startedAt + template.durationMinutes.
+  deadlineAt    DateTime?
+  score         Decimal? @db.Decimal(6, 2)
+  maxScore      Decimal? @db.Decimal(6, 2)
+  percentage    Decimal? @db.Decimal(5, 2)
+  isPassed      Boolean?
+  gradedById    String?  @db.Uuid
+  gradedAt      DateTime?
+  reviewerNote  String?
+
+  answers AssessmentAnswer[]
+
+  @@index([applicationId])
+  @@map("assessment_invitations")
+}
+
+model AssessmentAnswer {
+  id           String   @id @default(uuid()) @db.Uuid
+  invitationId String   @db.Uuid
+  invitation   AssessmentInvitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  questionId   String   @db.Uuid
+  question     AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedKeys String[] @default([])
+  textAnswer   String?
+  score        Decimal? @db.Decimal(6, 2)
+  isCorrect    Boolean?
+  gradedBy     String?
+  feedback     String?
+  answeredAt   DateTime @default(now())
+
+  @@unique([invitationId, questionId])
+  @@map("assessment_answers")
+}
+
+enum InterviewMode {
+  ONSITE
+  VIDEO
+  PHONE
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  RESCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Interview {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @db.Uuid
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  round         Int      @default(1)
+  title         String?
+  mode          InterviewMode @default(ONSITE)
+  scheduledAt   DateTime
+  durationMinutes Int    @default(60)
+  locationText  String?
+  meetingUrl    String?
+  status        InterviewStatus @default(SCHEDULED)
+  cancelReason  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  participants InterviewParticipant[]
+  scorecards   InterviewScorecard[]
+
+  @@index([applicationId, round])
+  @@map("interviews")
+}
+
+model InterviewParticipant {
+  id          String   @id @default(uuid()) @db.Uuid
+  interviewId String   @db.Uuid
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  employeeId  String   @db.Uuid
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  isLead      Boolean  @default(false)
+  hasResponded Boolean @default(false)
+
+  @@unique([interviewId, employeeId])
+  @@map("interview_participants")
+}
+
+enum HiringRecommendation {
+  STRONG_HIRE
+  HIRE
+  NEUTRAL
+  NO_HIRE
+  STRONG_NO_HIRE
+}
+
+model InterviewScorecard {
+  id             String   @id @default(uuid()) @db.Uuid
+  interviewId    String   @db.Uuid
+  interview      Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  reviewerEmployeeId String @db.Uuid
+  /// [{ "criterion": "Problem solving", "score": 4, "note": "…" }]
+  criteria       Json     @default("[]")
+  overallScore   Decimal? @db.Decimal(4, 2)
+  recommendation HiringRecommendation?
+  strengths      String?
+  concerns       String?
+  notes          String?
+  submittedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([interviewId, reviewerEmployeeId])
+  @@map("interview_scorecards")
+}
+
+enum OfferStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+model JobOffer {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicationId String   @db.Uuid
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  baseSalary    Decimal  @db.Decimal(18, 4)
+  currency      String   @default("THB")
+  /// [{ "code": "HOUSING", "amount": 3000 }]
+  allowances    Json     @default("[]")
+  signOnBonus   Decimal? @db.Decimal(18, 4)
+  probationMonths Int    @default(4)
+  startDate     DateTime @db.Date
+  expiresAt     DateTime?
+  status        OfferStatus @default(DRAFT)
+  letterFileId  String?  @db.Uuid
+  sentAt        DateTime?
+  respondedAt   DateTime?
+  declineReason String?
+  approvedById  String?  @db.Uuid
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([applicationId])
+  @@map("job_offers")
+}

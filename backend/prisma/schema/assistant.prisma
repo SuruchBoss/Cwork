@@ -1,0 +1,148 @@
+enum AssistantChannel {
+  WEB
+  MOBILE
+  API
+}
+
+enum AssistantMessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum AssistantFeedback {
+  UP
+  DOWN
+}
+
+model AssistantConversation {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String   @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  channel        AssistantChannel @default(WEB)
+  lastMessageAt  DateTime @default(now())
+  isArchived     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages AssistantMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@map("assistant_conversations")
+}
+
+model AssistantMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @db.Uuid
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AssistantMessageRole
+  content        String
+  /// Tool-call bookkeeping. Every tool invocation is also written to AuditLog.
+  toolName       String?
+  toolInput      Json?
+  toolResult     Json?
+  toolCallId     String?
+  /// [{ "documentId": "…", "title": "…", "chunkIndex": 3 }]
+  citations      Json     @default("[]")
+  model          String?
+  inputTokens    Int?
+  outputTokens   Int?
+  latencyMs      Int?
+  feedback       AssistantFeedback?
+  feedbackNote   String?
+  /// Set when a guardrail blocked or rewrote the turn.
+  blockedReason  String?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
+}
+
+enum KnowledgeSourceType {
+  UPLOAD
+  MANUAL
+  URL
+  POLICY
+}
+
+enum KnowledgeStatus {
+  DRAFT
+  INDEXING
+  PUBLISHED
+  ARCHIVED
+  FAILED
+}
+
+/// HR policy corpus the assistant answers from. Answers cite these documents;
+/// the assistant is instructed never to invent policy that is not in here.
+model KnowledgeDocument {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  category       String?
+  sourceType     KnowledgeSourceType @default(MANUAL)
+  sourceUrl      String?
+  fileId         String?  @db.Uuid
+  file           FileObject? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  /// Extracted plain text; chunks are derived from this.
+  content        String
+  language       String   @default("th")
+  version        Int      @default(1)
+  effectiveFrom  DateTime? @db.Date
+  effectiveTo    DateTime? @db.Date
+  /// Empty = visible to every employee. Otherwise restricted to these role keys.
+  visibleToRoles String[] @default([])
+  tags           String[] @default([])
+  checksum       String?
+  status         KnowledgeStatus @default(DRAFT)
+  indexedAt      DateTime?
+  createdById    String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  chunks KnowledgeChunk[]
+
+  @@index([organizationId, status])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id          String   @id @default(uuid()) @db.Uuid
+  documentId  String   @db.Uuid
+  document    KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex  Int
+  content     String
+  tokenCount  Int      @default(0)
+  /// pgvector column. Prisma cannot type it, so similarity search runs through
+  /// `$queryRaw` in KnowledgeRepository.
+  embedding   Unsupported("vector(1536)")?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@unique([documentId, chunkIndex])
+  @@map("knowledge_chunks")
+}
+
+/// Per-user rate limiting and cost control for assistant usage.
+model AssistantUsageCounter {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  /// YYYY-MM-DD in the organization timezone.
+  usageDate      DateTime @db.Date
+  messageCount   Int      @default(0)
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  toolCallCount  Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, usageDate])
+  @@index([organizationId, usageDate])
+  @@map("assistant_usage_counters")
+}

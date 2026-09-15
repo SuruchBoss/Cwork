@@ -1,0 +1,188 @@
+enum ApprovalEntityType {
+  LEAVE_REQUEST
+  OVERTIME_REQUEST
+  EXPENSE_CLAIM
+  ATTENDANCE_CORRECTION
+  RESIGNATION
+  JOB_REQUISITION
+  JOB_OFFER
+  PAYROLL_RUN
+  DOCUMENT_REQUEST
+}
+
+enum ApproverType {
+  LINE_MANAGER
+  DEPARTMENT_HEAD
+  ROLE
+  SPECIFIC_USER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalTaskStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+  DELEGATED
+  EXPIRED
+}
+
+/// Declarative approval chains. One policy per entity type wins, chosen by the
+/// highest `priority` whose `conditions` match the submitted entity.
+model ApprovalPolicy {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entityType     ApprovalEntityType
+  name           String
+  /// e.g. { "totalDays": { "gte": 3 }, "departmentId": { "in": [...] } }
+  conditions     Json     @default("{}")
+  priority       Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  steps     ApprovalPolicyStep[]
+  instances ApprovalInstance[]
+
+  @@index([organizationId, entityType, isActive])
+  @@map("approval_policies")
+}
+
+model ApprovalPolicyStep {
+  id            String   @id @default(uuid()) @db.Uuid
+  policyId      String   @db.Uuid
+  policy        ApprovalPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  orderIndex    Int
+  approverType  ApproverType
+  /// LINE_MANAGER: how many levels up the reporting chain (1 = direct manager).
+  levelsUp      Int      @default(1)
+  roleId        String?  @db.Uuid
+  role          Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  specificUserId String? @db.Uuid
+  specificUser  User?    @relation(fields: [specificUserId], references: [id], onDelete: SetNull)
+  /// When several approvers are resolved: true = any one decides, false = all must.
+  anyOf         Boolean  @default(true)
+  isOptional    Boolean  @default(false)
+  slaHours      Int?
+  /// Skip this step when the resolved approver is the submitter themselves.
+  skipIfSelf    Boolean  @default(true)
+
+  @@unique([policyId, orderIndex])
+  @@map("approval_policy_steps")
+}
+
+/// One running approval for one entity.
+model ApprovalInstance {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entityType     ApprovalEntityType
+  entityId       String   @db.Uuid
+  policyId       String?  @db.Uuid
+  policy         ApprovalPolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  status         ApprovalStatus @default(PENDING)
+  currentStep    Int      @default(0)
+  submittedById  String   @db.Uuid
+  submittedBy    User     @relation(fields: [submittedById], references: [id], onDelete: Cascade)
+  submittedAt    DateTime @default(now())
+  completedAt    DateTime?
+  /// Immutable copy of the entity at submission time, for the audit trail.
+  snapshot       Json     @default("{}")
+
+  tasks ApprovalTask[]
+
+  leaveRequest         LeaveRequest?
+  overtimeRequest      OvertimeRequest?
+  expenseClaim         ExpenseClaim?
+  attendanceCorrection AttendanceCorrection?
+  resignation          ResignationRequest?
+  jobRequisition       JobRequisition?
+  documentRequest      DocumentRequest?
+
+  @@unique([entityType, entityId])
+  @@index([organizationId, status])
+  @@map("approval_instances")
+}
+
+model ApprovalTask {
+  id             String   @id @default(uuid()) @db.Uuid
+  instanceId     String   @db.Uuid
+  instance       ApprovalInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  stepIndex      Int
+  approverUserId String   @db.Uuid
+  approver       User     @relation("ApprovalTaskApprover", fields: [approverUserId], references: [id], onDelete: Cascade)
+  status         ApprovalTaskStatus @default(PENDING)
+  decidedAt      DateTime?
+  comment        String?
+  delegatedToId  String?  @db.Uuid
+  delegatedTo    User?    @relation("ApprovalTaskDelegate", fields: [delegatedToId], references: [id], onDelete: SetNull)
+  dueAt          DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([approverUserId, status])
+  @@index([instanceId, stepIndex])
+  @@map("approval_tasks")
+}
+
+enum DocumentRequestType {
+  EMPLOYMENT_CERTIFICATE
+  SALARY_CERTIFICATE
+  PAYSLIP_COPY
+  TAX_WITHHOLDING_50BIS
+  VISA_SUPPORT_LETTER
+  BANK_LOAN_LETTER
+  SOCIAL_SECURITY_LETTER
+  OTHER
+}
+
+enum DocumentRequestStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  ISSUED
+  CANCELLED
+}
+
+/// "ขอเอกสาร" — the AI assistant can create these on the employee's behalf.
+model DocumentRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  referenceNo    String
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type           DocumentRequestType
+  language       String   @default("th")
+  purpose        String?
+  addressedTo    String?
+  /// Salary disclosure is opt-in per request and is itself audited.
+  includeSalary  Boolean  @default(false)
+  copies         Int      @default(1)
+  needByDate     DateTime? @db.Date
+  status         DocumentRequestStatus @default(DRAFT)
+  requestedAt    DateTime @default(now())
+  issuedAt       DateTime?
+  issuedById     String?  @db.Uuid
+  fileId         String?  @db.Uuid
+  file           FileObject? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  rejectReason   String?
+  /// Set when the assistant filed it, so HR can see the provenance.
+  createdViaAssistant Boolean @default(false)
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, referenceNo])
+  @@index([organizationId, status])
+  @@index([employeeId, status])
+  @@map("document_requests")
+}

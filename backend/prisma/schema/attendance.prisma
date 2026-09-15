@@ -1,0 +1,277 @@
+enum ScheduleType {
+  FIXED
+  SHIFT
+  FLEXIBLE
+}
+
+enum PunchType {
+  CLOCK_IN
+  CLOCK_OUT
+  BREAK_START
+  BREAK_END
+}
+
+enum PunchMethod {
+  MOBILE_GPS
+  MOBILE_QR
+  KIOSK
+  WEB
+  BIOMETRIC
+  MANUAL
+  IMPORT
+}
+
+enum AttendanceStatus {
+  NOT_STARTED
+  PRESENT
+  LATE
+  EARLY_LEAVE
+  ABSENT
+  ON_LEAVE
+  HOLIDAY
+  DAY_OFF
+  INCOMPLETE
+}
+
+model Shift {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  /// Local wall-clock "HH:mm" in the organization timezone.
+  startTime      String
+  endTime        String
+  /// Night shifts: end time falls on the next calendar day.
+  crossesMidnight Boolean @default(false)
+  breakMinutes   Int      @default(60)
+  /// Minutes of lateness tolerated before the punch is marked LATE.
+  graceInMinutes Int      @default(5)
+  graceOutMinutes Int     @default(5)
+  /// Paid hours used by payroll when the day is a full attendance day.
+  standardWorkMinutes Int @default(480)
+  isFlexible     Boolean  @default(false)
+  coreStartTime  String?
+  coreEndTime    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  schedules         WorkSchedule[]
+  shiftAssignments  ShiftAssignment[]
+  attendanceRecords AttendanceRecord[]
+
+  @@unique([organizationId, code])
+  @@map("shifts")
+}
+
+model WorkSchedule {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  type           ScheduleType @default(FIXED)
+  /// ISO weekday numbers that are working days (1 = Monday … 7 = Sunday).
+  workingDays    Int[]    @default([1, 2, 3, 4, 5])
+  defaultShiftId String?  @db.Uuid
+  defaultShift   Shift?   @relation(fields: [defaultShiftId], references: [id], onDelete: SetNull)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  assignments ScheduleAssignment[]
+
+  @@unique([organizationId, code])
+  @@map("work_schedules")
+}
+
+model ScheduleAssignment {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  scheduleId    String   @db.Uuid
+  schedule      WorkSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  effectiveFrom DateTime @db.Date
+  effectiveTo   DateTime? @db.Date
+  createdAt     DateTime @default(now())
+
+  @@index([employeeId, effectiveFrom])
+  @@map("schedule_assignments")
+}
+
+/// Roster override for one employee on one date (beats the schedule's default shift).
+model ShiftAssignment {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shiftId    String   @db.Uuid
+  shift      Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  date       DateTime @db.Date
+  isDayOff   Boolean  @default(false)
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, date])
+  @@map("shift_assignments")
+}
+
+/// Append-only raw punch stream. Never updated — corrections create new rows and
+/// the daily `AttendanceRecord` is recomputed from them.
+model AttendancePunch {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type           PunchType
+  method         PunchMethod
+  /// Server-assigned instant. Client time is kept separately for drift detection.
+  punchedAt      DateTime
+  clientTime     DateTime?
+  workDate       DateTime @db.Date
+  latitude       Decimal? @db.Decimal(10, 7)
+  longitude      Decimal? @db.Decimal(10, 7)
+  accuracyM      Int?
+  workLocationId String?  @db.Uuid
+  workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: SetNull)
+  distanceM      Int?
+  isOutsideGeofence Boolean @default(false)
+  selfieFileId   String?  @db.Uuid
+  deviceId       String?
+  deviceModel    String?
+  appVersion     String?
+  ipAddress      String?
+  /// MOCK_LOCATION, ROOTED_DEVICE, CLOCK_DRIFT, DUPLICATE, OUTSIDE_GEOFENCE…
+  anomalyFlags   String[] @default([])
+  note           String?
+  /// Client-supplied idempotency key so offline queues can retry safely.
+  clientPunchId  String?
+  createdAt      DateTime @default(now())
+
+  @@unique([employeeId, clientPunchId])
+  @@index([organizationId, workDate])
+  @@index([employeeId, workDate, punchedAt])
+  @@map("attendance_punches")
+}
+
+/// Derived daily aggregate — the table every report and payroll run reads.
+model AttendanceRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workDate       DateTime @db.Date
+  shiftId        String?  @db.Uuid
+  shift          Shift?   @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  workLocationId String?  @db.Uuid
+  workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: SetNull)
+  firstClockInAt DateTime?
+  lastClockOutAt DateTime?
+  breakMinutes   Int      @default(0)
+  workedMinutes  Int      @default(0)
+  lateMinutes    Int      @default(0)
+  earlyLeaveMinutes Int   @default(0)
+  /// Raw minutes beyond the shift; payable OT still requires an approved request.
+  overtimeMinutes Int     @default(0)
+  approvedOvertimeMinutes Int @default(0)
+  status         AttendanceStatus @default(NOT_STARTED)
+  isOutsideGeofence Boolean @default(false)
+  anomalyFlags   String[] @default([])
+  leaveRequestId String?  @db.Uuid
+  note           String?
+  /// Set when payroll has consumed this day; further edits require a correction.
+  lockedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  corrections AttendanceCorrection[]
+
+  @@unique([employeeId, workDate])
+  @@index([organizationId, workDate, status])
+  @@map("attendance_records")
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model AttendanceCorrection {
+  id             String   @id @default(uuid()) @db.Uuid
+  recordId       String   @db.Uuid
+  record         AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  requestedClockIn  DateTime?
+  requestedClockOut DateTime?
+  reason         String
+  attachmentIds  String[] @default([])
+  status         CorrectionStatus @default(PENDING)
+  decidedAt      DateTime?
+  decidedById    String?  @db.Uuid
+  decisionNote   String?
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([employeeId, status])
+  @@map("attendance_corrections")
+}
+
+enum OvertimeType {
+  /// Work beyond normal hours on a normal working day.
+  NORMAL_DAY
+  /// Work on a weekly day off.
+  DAY_OFF
+  /// Work on a public holiday.
+  HOLIDAY
+  /// Overtime worked on a holiday.
+  HOLIDAY_OVERTIME
+}
+
+enum OvertimeStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+/// Thai Labour Protection Act multipliers (1.5× / 1× / 2× / 3×) are the defaults;
+/// each organization can override them in `settings.overtime`.
+model OvertimeRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestNo      String
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workDate       DateTime @db.Date
+  startAt        DateTime
+  endAt          DateTime
+  requestedHours Decimal  @db.Decimal(6, 2)
+  approvedHours  Decimal? @db.Decimal(6, 2)
+  type           OvertimeType @default(NORMAL_DAY)
+  rateMultiplier Decimal  @default(1.5) @db.Decimal(4, 2)
+  reason         String
+  status         OvertimeStatus @default(DRAFT)
+  submittedAt    DateTime?
+  decidedAt      DateTime?
+  /// True once a payroll run has paid this request.
+  isPaid         Boolean  @default(false)
+  payrollRunId   String?  @db.Uuid
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, requestNo])
+  @@index([employeeId, workDate])
+  @@index([organizationId, status])
+  @@map("overtime_requests")
+}

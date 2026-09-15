@@ -1,0 +1,427 @@
+enum PayComponentType {
+  EARNING
+  DEDUCTION
+  /// Employer-side cost (SSO employer share, provident fund employer share).
+  EMPLOYER_CONTRIBUTION
+  /// Shown on the payslip but not added to any total (e.g. leave balance note).
+  INFORMATIONAL
+}
+
+enum PayCalcType {
+  FIXED
+  PERCENT_OF_BASE
+  RATE_TIMES_QUANTITY
+  /// Evaluated by the payroll engine's whitelisted expression evaluator.
+  FORMULA
+  /// Produced by a built-in rule (SSO, withholding tax, OT…).
+  SYSTEM
+}
+
+enum PayFrequency {
+  MONTHLY
+  SEMI_MONTHLY
+  BIWEEKLY
+  WEEKLY
+  DAILY
+  HOURLY
+}
+
+model PayComponent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  nameEn         String?
+  type           PayComponentType
+  calcType       PayCalcType @default(FIXED)
+  defaultAmount  Decimal? @db.Decimal(18, 4)
+  defaultRate    Decimal? @db.Decimal(9, 4)
+  /// Only whitelisted identifiers + arithmetic; see PayrollFormulaEvaluator.
+  formula        String?
+  isTaxable      Boolean  @default(true)
+  includeInSsoBase Boolean @default(true)
+  includeInPvdBase Boolean @default(false)
+  /// Prorated when the employee joins or leaves mid-period.
+  isProratable   Boolean  @default(true)
+  glAccountCode  String?
+  orderIndex     Int      @default(0)
+  isSystem       Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  recurringItems EmployeeRecurringItem[]
+  payslipItems   PayslipItem[]
+
+  @@unique([organizationId, code])
+  @@map("pay_components")
+}
+
+/// Effective-dated salary record. Never updated in place — a raise inserts a new
+/// row and closes the previous one, so historical payslips stay reproducible.
+model EmployeeCompensation {
+  id             String   @id @default(uuid()) @db.Uuid
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  effectiveFrom  DateTime @db.Date
+  effectiveTo    DateTime? @db.Date
+  baseSalary     Decimal  @db.Decimal(18, 4)
+  currency       String   @default("THB")
+  payFrequency   PayFrequency @default(MONTHLY)
+  hourlyRate     Decimal? @db.Decimal(18, 4)
+  dailyRate      Decimal? @db.Decimal(18, 4)
+  /// Executives and managers are commonly OT-exempt under Thai law.
+  isOvertimeEligible Boolean @default(true)
+  isSsoEligible  Boolean  @default(true)
+  pvdEmployeeRate Decimal @default(0) @db.Decimal(5, 2)
+  pvdEmployerRate Decimal @default(0) @db.Decimal(5, 2)
+  reason         String?
+  approvedById   String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([employeeId, effectiveFrom])
+  @@index([employeeId, effectiveFrom, effectiveTo])
+  @@map("employee_compensations")
+}
+
+/// Standing allowances and deductions (housing, phone, loan repayment…).
+model EmployeeRecurringItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  componentId   String   @db.Uuid
+  component     PayComponent @relation(fields: [componentId], references: [id], onDelete: Restrict)
+  amount        Decimal  @db.Decimal(18, 4)
+  effectiveFrom DateTime @db.Date
+  effectiveTo   DateTime? @db.Date
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([employeeId, effectiveFrom])
+  @@map("employee_recurring_items")
+}
+
+enum PayrollPeriodStatus {
+  OPEN
+  LOCKED
+  CLOSED
+}
+
+model PayrollPeriod {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  year           Int
+  month          Int
+  periodStart    DateTime @db.Date
+  periodEnd      DateTime @db.Date
+  /// Attendance/OT/claims after this instant roll into the next period.
+  cutoffDate     DateTime @db.Date
+  payDate        DateTime @db.Date
+  status         PayrollPeriodStatus @default(OPEN)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  runs PayrollRun[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, year, month])
+  @@map("payroll_periods")
+}
+
+enum PayrollRunStatus {
+  DRAFT
+  CALCULATING
+  CALCULATED
+  PENDING_APPROVAL
+  APPROVED
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum PayrollRunType {
+  REGULAR
+  OFF_CYCLE
+  BONUS
+  FINAL_SETTLEMENT
+}
+
+model PayrollRun {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  periodId       String   @db.Uuid
+  period         PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  runNo          String
+  type           PayrollRunType @default(REGULAR)
+  status         PayrollRunStatus @default(DRAFT)
+  employeeCount  Int      @default(0)
+  totalGross     Decimal  @default(0) @db.Decimal(18, 4)
+  totalDeduction Decimal  @default(0) @db.Decimal(18, 4)
+  totalNet       Decimal  @default(0) @db.Decimal(18, 4)
+  totalEmployerCost Decimal @default(0) @db.Decimal(18, 4)
+  currency       String   @default("THB")
+  calculatedAt   DateTime?
+  approvedAt     DateTime?
+  approvedById   String?  @db.Uuid
+  paidAt         DateTime?
+  failureReason  String?
+  note           String?
+  createdById    String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  payslips Payslip[]
+
+  @@unique([organizationId, runNo])
+  @@index([organizationId, status])
+  @@map("payroll_runs")
+}
+
+model Payslip {
+  id             String   @id @default(uuid()) @db.Uuid
+  runId          String   @db.Uuid
+  run            PayrollRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  currency       String   @default("THB")
+  baseSalary     Decimal  @db.Decimal(18, 4)
+  grossEarnings  Decimal  @db.Decimal(18, 4)
+  totalDeductions Decimal @db.Decimal(18, 4)
+  netPay         Decimal  @db.Decimal(18, 4)
+  taxableIncome  Decimal  @default(0) @db.Decimal(18, 4)
+  withholdingTax Decimal  @default(0) @db.Decimal(18, 4)
+  ssoEmployee    Decimal  @default(0) @db.Decimal(18, 4)
+  ssoEmployer    Decimal  @default(0) @db.Decimal(18, 4)
+  pvdEmployee    Decimal  @default(0) @db.Decimal(18, 4)
+  pvdEmployer    Decimal  @default(0) @db.Decimal(18, 4)
+  workedDays     Decimal  @default(0) @db.Decimal(6, 2)
+  unpaidLeaveDays Decimal @default(0) @db.Decimal(6, 2)
+  overtimeHours  Decimal  @default(0) @db.Decimal(8, 2)
+  /// Frozen copy of employee, compensation and tax inputs used for this slip.
+  snapshot       Json     @default("{}")
+  pdfFileId      String?  @db.Uuid
+  publishedAt    DateTime?
+  viewedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items PayslipItem[]
+
+  @@unique([runId, employeeId])
+  @@index([employeeId, createdAt])
+  @@map("payslips")
+}
+
+model PayslipItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  payslipId   String   @db.Uuid
+  payslip     Payslip  @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  componentId String?  @db.Uuid
+  component   PayComponent? @relation(fields: [componentId], references: [id], onDelete: SetNull)
+  code        String
+  name        String
+  type        PayComponentType
+  quantity    Decimal? @db.Decimal(12, 4)
+  rate        Decimal? @db.Decimal(18, 4)
+  amount      Decimal  @db.Decimal(18, 4)
+  isTaxable   Boolean  @default(true)
+  orderIndex  Int      @default(0)
+  meta        Json     @default("{}")
+
+  @@index([payslipId])
+  @@map("payslip_items")
+}
+
+/// Yearly tax inputs for Thai PIT withholding (ภ.ง.ด.1).
+model EmployeeTaxProfile {
+  id             String   @id @default(uuid()) @db.Uuid
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  taxYear        Int
+  filingStatus   String   @default("SINGLE")
+  spouseAllowance Boolean @default(false)
+  childrenCount  Int      @default(0)
+  /// Children born from 2018 onward attract a higher allowance for the 2nd+ child.
+  childrenBorn2018OrLater Int @default(0)
+  parentCareCount Int     @default(0)
+  disabledCareCount Int   @default(0)
+  lifeInsurancePremium Decimal @default(0) @db.Decimal(18, 4)
+  healthInsurancePremium Decimal @default(0) @db.Decimal(18, 4)
+  parentHealthInsurancePremium Decimal @default(0) @db.Decimal(18, 4)
+  providentFundContribution Decimal @default(0) @db.Decimal(18, 4)
+  rmfContribution Decimal @default(0) @db.Decimal(18, 4)
+  ssfContribution Decimal @default(0) @db.Decimal(18, 4)
+  mortgageInterest Decimal @default(0) @db.Decimal(18, 4)
+  donation       Decimal  @default(0) @db.Decimal(18, 4)
+  educationDonation Decimal @default(0) @db.Decimal(18, 4)
+  otherDeductions Json    @default("[]")
+  /// Income earned before joining this employer in the same tax year.
+  priorEmployerIncome Decimal @default(0) @db.Decimal(18, 4)
+  priorEmployerTax    Decimal @default(0) @db.Decimal(18, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([employeeId, taxYear])
+  @@map("employee_tax_profiles")
+}
+
+enum BenefitCategory {
+  HEALTH_INSURANCE
+  LIFE_INSURANCE
+  DENTAL
+  PROVIDENT_FUND
+  ALLOWANCE
+  EQUIPMENT
+  WELLNESS
+  TRAINING
+  TRANSPORT
+  MEAL
+  OTHER
+}
+
+enum BenefitEnrollmentStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ENDED
+  REJECTED
+}
+
+model BenefitPlan {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  nameEn         String?
+  category       BenefitCategory
+  provider       String?
+  description    String?
+  coverageAmount Decimal? @db.Decimal(18, 4)
+  employeeCostPerPeriod Decimal @default(0) @db.Decimal(18, 4)
+  employerCostPerPeriod Decimal @default(0) @db.Decimal(18, 4)
+  /// e.g. { "minServiceMonths": 4, "employmentTypes": ["FULL_TIME"] }
+  eligibilityRule Json    @default("{}")
+  allowsDependents Boolean @default(false)
+  /// Annual cap for reimbursement-style benefits.
+  annualLimit    Decimal? @db.Decimal(18, 4)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  enrollments BenefitEnrollment[]
+
+  @@unique([organizationId, code])
+  @@map("benefit_plans")
+}
+
+model BenefitEnrollment {
+  id            String   @id @default(uuid()) @db.Uuid
+  employeeId    String   @db.Uuid
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  planId        String   @db.Uuid
+  plan          BenefitPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status        BenefitEnrollmentStatus @default(PENDING)
+  effectiveFrom DateTime @db.Date
+  effectiveTo   DateTime? @db.Date
+  dependentIds  String[] @default([])
+  usedAmount    Decimal  @default(0) @db.Decimal(18, 4)
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([employeeId, planId, effectiveFrom])
+  @@index([employeeId, status])
+  @@map("benefit_enrollments")
+}
+
+enum ExpenseCategory {
+  TRAVEL
+  ACCOMMODATION
+  MEAL
+  TRANSPORT
+  MEDICAL
+  TRAINING
+  EQUIPMENT
+  ENTERTAINMENT
+  TELECOM
+  OTHER
+}
+
+enum ExpenseClaimStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  /// Approved and scheduled for payment (bank transfer or next payroll run).
+  SCHEDULED
+  PAID
+}
+
+enum ExpensePaymentMethod {
+  PAYROLL
+  BANK_TRANSFER
+  PETTY_CASH
+}
+
+/// "เบิกจ่าย" — expense reimbursement.
+model ExpenseClaim {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  claimNo        String
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title          String
+  category       ExpenseCategory @default(OTHER)
+  currency       String   @default("THB")
+  totalAmount    Decimal  @default(0) @db.Decimal(18, 4)
+  approvedAmount Decimal? @db.Decimal(18, 4)
+  /// Links the claim to a benefit plan when it draws on an annual limit.
+  benefitPlanId  String?  @db.Uuid
+  status         ExpenseClaimStatus @default(DRAFT)
+  submittedAt    DateTime?
+  decidedAt      DateTime?
+  rejectReason   String?
+  paymentMethod  ExpensePaymentMethod @default(PAYROLL)
+  paidAt         DateTime?
+  payrollRunId   String?  @db.Uuid
+  approvalInstanceId String? @unique @db.Uuid
+  approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items ExpenseClaimItem[]
+
+  @@unique([organizationId, claimNo])
+  @@index([organizationId, status])
+  @@index([employeeId, status])
+  @@map("expense_claims")
+}
+
+model ExpenseClaimItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  claimId       String   @db.Uuid
+  claim         ExpenseClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  expenseDate   DateTime @db.Date
+  category      ExpenseCategory
+  description   String
+  amount        Decimal  @db.Decimal(18, 4)
+  taxAmount     Decimal  @default(0) @db.Decimal(18, 4)
+  vendor        String?
+  taxInvoiceNo  String?
+  receiptFileId String?  @db.Uuid
+  receiptFile   FileObject? @relation(fields: [receiptFileId], references: [id], onDelete: SetNull)
+  approvedAmount Decimal? @db.Decimal(18, 4)
+  note          String?
+
+  @@index([claimId])
+  @@map("expense_claim_items")
+}

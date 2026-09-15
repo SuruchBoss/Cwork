@@ -1,0 +1,20 @@
+// MarMa HRIS — Prisma schema (multi-file).
+//
+// Conventions used across every model in this folder:
+//   * Primary keys are UUIDv4 stored as `uuid` — never expose sequential ids.
+//   * Every tenant-owned row carries `organizationId`; repositories always scope by it.
+//   * Money is `Decimal(18, 4)`; never floats. Currency lives on the organization.
+//   * Timestamps are stored in UTC. Calendar-only values (work dates, leave dates,
+//     payroll periods) use `@db.Date` so they are timezone-stable.
+//   * `deletedAt` marks a soft delete. Queries go through helpers that filter it out.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, vector]
+}

@@ -1,0 +1,50 @@
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/lib/**/*.key
+
+# ---- Node ----
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ---- Nest / Prisma ----
+backend/dist/
+backend/generated/
+backend/prisma/*.db
+backend/uploads/
+
+# ---- Flutter / Dart ----
+mobile/.dart_tool/
+mobile/.packages
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/**/*.g.dart.bak
+
+# ---- Docker / data ----
+infra/docker/data/
+*.log

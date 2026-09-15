@@ -1,0 +1,225 @@
+enum ReviewCycleType {
+  ANNUAL
+  SEMI_ANNUAL
+  QUARTERLY
+  MONTHLY
+  PROBATION
+  PROJECT
+}
+
+enum ReviewCycleStatus {
+  DRAFT
+  GOAL_SETTING
+  IN_PROGRESS
+  CALIBRATION
+  CLOSED
+  CANCELLED
+}
+
+model ReviewCycle {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  type           ReviewCycleType @default(ANNUAL)
+  periodStart    DateTime @db.Date
+  periodEnd      DateTime @db.Date
+  goalSettingDue DateTime? @db.Date
+  selfReviewDue  DateTime? @db.Date
+  managerReviewDue DateTime? @db.Date
+  calibrationDue DateTime? @db.Date
+  status         ReviewCycleStatus @default(DRAFT)
+  /// Weight split between KPI achievement and competency scores (must total 100).
+  kpiWeight      Int      @default(70)
+  competencyWeight Int    @default(30)
+  /// [{ "grade": "A", "min": 90, "label": "Outstanding" }]
+  ratingScale    Json     @default("[]")
+  includeSelfReview Boolean @default(true)
+  includePeerReview Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  goals   KpiGoal[]
+  reviews PerformanceReview[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@map("review_cycles")
+}
+
+/// Reusable KPI library so managers do not retype goals every cycle.
+model KpiTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  description    String?
+  departmentId   String?  @db.Uuid
+  positionId     String?  @db.Uuid
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items KpiTemplateItem[]
+
+  @@unique([organizationId, code])
+  @@map("kpi_templates")
+}
+
+enum KpiCategory {
+  FINANCIAL
+  CUSTOMER
+  PROCESS
+  LEARNING_GROWTH
+  BEHAVIOR
+  PROJECT
+}
+
+enum KpiDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+  EXACT_TARGET
+}
+
+model KpiTemplateItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @db.Uuid
+  template    KpiTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    KpiCategory @default(PROCESS)
+  unit        String?
+  direction   KpiDirection @default(HIGHER_IS_BETTER)
+  defaultWeight Decimal @default(0) @db.Decimal(5, 2)
+  defaultTarget Decimal? @db.Decimal(18, 4)
+  orderIndex  Int      @default(0)
+
+  @@index([templateId])
+  @@map("kpi_template_items")
+}
+
+enum KpiGoalStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  ACHIEVED
+  MISSED
+  CANCELLED
+}
+
+model KpiGoal {
+  id           String   @id @default(uuid()) @db.Uuid
+  cycleId      String   @db.Uuid
+  cycle        ReviewCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employeeId   String   @db.Uuid
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  category     KpiCategory @default(PROCESS)
+  /// Weights of all a person's goals in one cycle must total 100.
+  weight       Decimal  @db.Decimal(5, 2)
+  unit         String?
+  direction    KpiDirection @default(HIGHER_IS_BETTER)
+  baselineValue Decimal? @db.Decimal(18, 4)
+  targetValue  Decimal  @db.Decimal(18, 4)
+  stretchValue Decimal? @db.Decimal(18, 4)
+  actualValue  Decimal? @db.Decimal(18, 4)
+  /// 0–100 achievement percentage derived from direction + target + actual.
+  achievement  Decimal? @db.Decimal(6, 2)
+  /// achievement × weight / 100.
+  weightedScore Decimal? @db.Decimal(6, 2)
+  status       KpiGoalStatus @default(DRAFT)
+  dueDate      DateTime? @db.Date
+  approvedById String?  @db.Uuid
+  approvedAt   DateTime?
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  checkIns KpiCheckIn[]
+
+  @@index([cycleId, employeeId])
+  @@index([employeeId, status])
+  @@map("kpi_goals")
+}
+
+model KpiCheckIn {
+  id            String   @id @default(uuid()) @db.Uuid
+  goalId        String   @db.Uuid
+  goal          KpiGoal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  value         Decimal  @db.Decimal(18, 4)
+  note          String?
+  evidenceFileIds String[] @default([])
+  recordedAt    DateTime @default(now())
+  recordedById  String?  @db.Uuid
+
+  @@index([goalId, recordedAt])
+  @@map("kpi_check_ins")
+}
+
+enum ReviewType {
+  SELF
+  MANAGER
+  PEER
+  SKIP_LEVEL
+  SUBORDINATE
+}
+
+enum ReviewStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  ACKNOWLEDGED
+  CALIBRATED
+  CLOSED
+}
+
+model PerformanceReview {
+  id             String   @id @default(uuid()) @db.Uuid
+  cycleId        String   @db.Uuid
+  cycle          ReviewCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation("ReviewSubject", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewerEmployeeId String @db.Uuid
+  reviewer       Employee @relation("Reviewer", fields: [reviewerEmployeeId], references: [id], onDelete: Cascade)
+  type           ReviewType
+  status         ReviewStatus @default(NOT_STARTED)
+  kpiScore       Decimal? @db.Decimal(6, 2)
+  competencyScore Decimal? @db.Decimal(6, 2)
+  overallScore   Decimal? @db.Decimal(6, 2)
+  grade          String?
+  /// Grade after the calibration meeting, when it differs from `grade`.
+  calibratedGrade String?
+  strengths      String?
+  improvements   String?
+  developmentPlan String?
+  managerComment String?
+  employeeComment String?
+  submittedAt    DateTime?
+  acknowledgedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  competencyScores ReviewCompetencyScore[]
+
+  @@unique([cycleId, employeeId, reviewerEmployeeId, type])
+  @@index([cycleId, status])
+  @@index([employeeId])
+  @@map("performance_reviews")
+}
+
+model ReviewCompetencyScore {
+  id         String   @id @default(uuid()) @db.Uuid
+  reviewId   String   @db.Uuid
+  review     PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  competency String
+  weight     Decimal  @default(0) @db.Decimal(5, 2)
+  score      Decimal  @db.Decimal(5, 2)
+  comment    String?
+  orderIndex Int      @default(0)
+
+  @@index([reviewId])
+  @@map("review_competency_scores")
+}

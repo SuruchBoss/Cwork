@@ -1,0 +1,164 @@
+/// Tenant root. Every other entity hangs off exactly one organization.
+model Organization {
+  id                  String   @id @default(uuid()) @db.Uuid
+  code                String   @unique
+  name                String
+  legalName           String?
+  taxId               String?
+  countryCode         String   @default("TH")
+  timezone            String   @default("Asia/Bangkok")
+  currency            String   @default("THB")
+  defaultLocale       String   @default("th")
+  fiscalYearStartMonth Int     @default(1)
+  logoUrl             String?
+  /// Feature flags + policy knobs (probation length, OT multipliers, geofence defaults…).
+  settings            Json     @default("{}")
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+
+  users                 User[]
+  roles                 Role[]
+  employees             Employee[]
+  departments           Department[]
+  positions             Position[]
+  workLocations         WorkLocation[]
+  holidays              Holiday[]
+  auditLogs             AuditLog[]
+  files                 FileObject[]
+  notifications         Notification[]
+  approvalPolicies      ApprovalPolicy[]
+  approvalInstances     ApprovalInstance[]
+  documentRequests      DocumentRequest[]
+  leaveTypes            LeaveType[]
+  leaveRequests         LeaveRequest[]
+  leaveEntitlements     LeaveEntitlement[]
+  shifts                Shift[]
+  workSchedules         WorkSchedule[]
+  attendanceRecords     AttendanceRecord[]
+  attendancePunches     AttendancePunch[]
+  overtimeRequests      OvertimeRequest[]
+  payComponents         PayComponent[]
+  payrollPeriods        PayrollPeriod[]
+  payrollRuns           PayrollRun[]
+  benefitPlans          BenefitPlan[]
+  expenseClaims         ExpenseClaim[]
+  jobRequisitions       JobRequisition[]
+  jobPostings           JobPosting[]
+  candidates            Candidate[]
+  assessmentTemplates   AssessmentTemplate[]
+  reviewCycles          ReviewCycle[]
+  kpiTemplates          KpiTemplate[]
+  assistantConversations AssistantConversation[]
+  knowledgeDocuments    KnowledgeDocument[]
+
+  @@index([isActive])
+  @@map("organizations")
+}
+
+model Department {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  nameEn         String?
+  costCenter     String?
+  parentId       String?  @db.Uuid
+  parent         Department?  @relation("DepartmentTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Department[] @relation("DepartmentTree")
+  headEmployeeId String?  @db.Uuid
+  head           Employee? @relation("DepartmentHead", fields: [headEmployeeId], references: [id], onDelete: SetNull)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  employees       Employee[]       @relation("EmployeeDepartment")
+  positions       Position[]
+  jobRequisitions JobRequisition[]
+  roleGrants      UserRole[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, parentId])
+  @@map("departments")
+}
+
+model Position {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  title          String
+  titleEn        String?
+  /// 1 = individual contributor … 9 = executive. Drives approval escalation depth.
+  level          Int      @default(1)
+  jobFamily      String?
+  departmentId   String?  @db.Uuid
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  description    String?
+  minSalary      Decimal? @db.Decimal(18, 4)
+  maxSalary      Decimal? @db.Decimal(18, 4)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  employees       Employee[]
+  jobRequisitions JobRequisition[]
+
+  @@unique([organizationId, code])
+  @@map("positions")
+}
+
+/// A physical worksite. Geofence + IP allow-list are enforced on clock-in.
+model WorkLocation {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code             String
+  name             String
+  addressLine      String?
+  district         String?
+  province         String?
+  postalCode       String?
+  latitude         Decimal? @db.Decimal(10, 7)
+  longitude        Decimal? @db.Decimal(10, 7)
+  /// Metres. A punch outside this radius is flagged, not silently accepted.
+  geofenceRadiusM  Int      @default(200)
+  /// Empty list = no IP restriction for this site.
+  ipAllowlist      String[] @default([])
+  timezone         String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  employees         Employee[]
+  attendanceRecords AttendanceRecord[]
+  attendancePunches AttendancePunch[]
+  holidays          Holiday[]
+
+  @@unique([organizationId, code])
+  @@map("work_locations")
+}
+
+model Holiday {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  date           DateTime @db.Date
+  name           String
+  nameEn         String?
+  /// Null = applies to the whole organization.
+  workLocationId String?  @db.Uuid
+  workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: Cascade)
+  isPaid         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, date, workLocationId])
+  @@index([organizationId, date])
+  @@map("holidays")
+}

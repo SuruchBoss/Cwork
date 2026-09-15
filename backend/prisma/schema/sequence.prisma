@@ -1,0 +1,16 @@
+/// Human-readable document numbers (LV-2026-00042, EXP-2026-00007…).
+/// Allocated with a single atomic UPDATE … RETURNING so concurrent submissions
+/// can never receive the same number.
+model NumberSequence {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  /// Scope key, e.g. "LEAVE_REQUEST:2026".
+  key            String
+  prefix         String
+  nextValue      Int      @default(1)
+  padding        Int      @default(5)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, key])
+  @@map("number_sequences")
+}
