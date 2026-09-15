@@ -23,9 +23,11 @@ The first release. Everything below existed before it; naming it is what CW-028
 was for, so that an installation can say which version it is running instead of
 "whatever `main` was that day".
 
-> The `v0.1.0` tag is cut by a maintainer at `8ad1f41` — see
-> [#26](https://github.com/SuruchBoss/Cwork/issues/26). Until it is, the two
-> links at the foot of this file point at a tag that does not exist yet.
+> Tags are cut by the [Release workflow](./.github/workflows/release.yml) from
+> the top entry of this file, so adding a `## [x.y.z]` section here and pushing
+> it is what makes a release. See
+> [#26](https://github.com/SuruchBoss/Cwork/issues/26) for why it is a workflow
+> and not a command somebody runs.
 
 ### Added
 

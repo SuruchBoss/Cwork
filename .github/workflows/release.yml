@@ -1,0 +1,104 @@
+name: Release
+
+# Cutting a release is one thing this repository cannot do from a development
+# session: the platform refuses tag and release writes from an agent, which is
+# a sensible restriction and not one worth arguing with. A workflow runs with
+# the repository's own credentials, so it can.
+#
+# Adding a `## [x.y.z]` section to CHANGELOG.md and pushing it is what cuts a
+# release. The job is idempotent — a tag that already exists is left alone —
+# so editing the changelog for any other reason does nothing.
+on:
+  push:
+    branches: [main]
+    paths: ['CHANGELOG.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Tag the top changelog entry
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tags have to be visible for "does this one already exist?" to mean
+          # anything, and the default shallow clone fetches none of them.
+          fetch-depth: 0
+
+      - name: Read the version and its notes
+        id: entry
+        run: |
+          python3 - <<'PY'
+          import os, re
+
+          changelog = open('CHANGELOG.md', encoding='utf-8').read()
+
+          # The first `## [x.y.z]` heading, skipping `## [Unreleased]`.
+          headings = list(re.finditer(r'^## \[(\d+\.\d+\.\d+)\][^\n]*$', changelog, re.M))
+          if not headings:
+              raise SystemExit('No released version section in CHANGELOG.md')
+
+          first = headings[0]
+          version = first.group(1)
+
+          # Everything up to the next `## ` heading or the link definitions.
+          rest = changelog[first.end():]
+          end = re.search(r'^(## |\[Unreleased\]:)', rest, re.M)
+          notes = rest[: end.start()].strip() if end else rest.strip()
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'version={version}\n')
+          with open('release-notes.md', 'w', encoding='utf-8') as out:
+              out.write(notes)
+          PY
+
+      - name: Skip if the tag already exists
+        id: check
+        run: |
+          tag="v${{ steps.entry.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null ||
+             git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "$tag already exists — nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create the tag
+        if: steps.check.outputs.exists == 'false'
+        env:
+          TAG: v${{ steps.entry.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # Annotated rather than lightweight, so `git describe` names it
+          # without being asked to consider lightweight tags.
+          git tag -a "$TAG" -m "Cwork ${TAG#v}
+
+          See CHANGELOG.md for what is in this release, and docs/security.md for
+          the gaps that decide whether you can run it yet.
+
+          0.x: breaking changes are allowed and recorded. No LTS before 1.0."
+
+          git push origin "refs/tags/$TAG"
+
+      - name: Publish the release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.entry.outputs.version }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            --verify-tag \
+            ${{ startsWith(steps.entry.outputs.version, '0.') && '--prerelease' || '' }}
