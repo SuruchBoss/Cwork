@@ -23,10 +23,28 @@ in the assistant.
 | `npm run start:dev` | Watch mode |
 | `npm run build` · `start:prod` | Production build and run |
 | `npm test` · `test:cov` | Unit tests (126, no database needed) |
+| `npm run test:e2e` | End-to-end tests (36) — needs a throwaway database, see below |
 | `npm run typecheck` · `lint` | Static checks |
 | `npm run prisma:migrate` | Create a migration — **see the warning below** |
 | `npm run prisma:deploy` | Apply migrations |
 | `npm run db:seed` · `db:verify` | Seed demo data · verify hand-written DB objects |
+
+## End-to-end tests
+
+```bash
+E2E_DATABASE_URL=postgresql://cwork:cwork@localhost:5432/cwork_test npm run test:e2e
+```
+
+Boots the real application in-process and drives it over HTTP. It migrates,
+**truncates** and seeds the database it is given, then walks one company through
+a month: sign-in, permission scoping, a leave request from submission to
+approved balance, clock in and out with an offline replay, overtime, expenses,
+documents, policy search, a full payroll run with separation of duties, and the
+audit trail that recorded all of it.
+
+It refuses a database whose name does not look like a test database unless you
+set `E2E_ALLOW_NON_TEST_DB=1`. Point `E2E_DATABASE_URL` somewhere disposable
+instead.
 
 ## Layout
 

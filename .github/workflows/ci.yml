@@ -64,6 +64,16 @@ jobs:
         run: npm run db:verify
 
       - run: npm test
+
+      # Black-box run against the real application: auth, RBAC row scoping,
+      # the leave ledger, idempotent punch replay, the payroll lifecycle with
+      # its separation of duties, and the append-only audit trail. Migrates,
+      # truncates and seeds the database itself.
+      - name: End-to-end tests
+        run: npm run test:e2e
+        env:
+          E2E_DATABASE_URL: postgresql://cwork:cwork@localhost:5432/cwork_test?schema=public
+
       - run: npm run build
 
   web:

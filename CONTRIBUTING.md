@@ -39,6 +39,21 @@ cd ../mobile && dart format --line-length 100 lib test && flutter analyze && flu
 CI runs all of it. `flutter analyze` must be **completely clean** — infos
 included.
 
+### End-to-end tests
+
+Anything touching auth, leave, attendance, payroll or approvals should also run
+the e2e suite, which drives the real application over HTTP:
+
+```bash
+cd backend
+E2E_DATABASE_URL=postgresql://cwork:cwork@localhost:5432/cwork_test npm run test:e2e
+```
+
+It migrates, **truncates** and seeds the database it is pointed at, so give it a
+throwaway one. It refuses to run against a database whose name does not look
+like a test database — that guard is there to save your local data, so set
+`E2E_DATABASE_URL` rather than reaching for `E2E_ALLOW_NON_TEST_DB=1`.
+
 ## Where code goes
 
 ```

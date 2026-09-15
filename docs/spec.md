@@ -449,7 +449,7 @@ which is unit-tested rather than trusted.
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested. 126 backend, 17 web, 30 mobile tests. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 126 backend, 17 web, 30 mobile. A 36-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

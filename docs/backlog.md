@@ -236,31 +236,30 @@ department or location; a calendar view of who is on which shift; bulk assign.
 
 ---
 
-## P2 — worth doing
+### CW-020 · Clear the production dependency advisories
+`P1` · security · **S**
 
-### CW-011 · Restore the end-to-end test suite
-`P2` · testing · **M**
+`npm audit --omit=dev` reports nine high-severity advisories in shipped
+dependencies. The one that matters here is **multer**, reachable from the
+public careers page: a crafted multipart field name causes a denial of
+service, and résumé upload is the least trusted input the system takes. The
+rest come in through `@nestjs/core` and `@prisma/config` (deepmerge-ts stack
+exhaustion).
 
-`npm run test:e2e` is a dangling script: it points at `./test/jest-e2e.json`,
-which does not exist, and `backend/test/` is an empty directory. The command
-fails with a config error. The behaviour it should cover — RBAC row scoping,
-the leave ledger, payroll separation of duties — is currently only verified by
-an ad-hoc script outside the repo.
+**Scope** Upgrade `@nestjs/platform-express` and `prisma` to releases carrying
+the fixed transitive versions; where no fix exists yet, bound the exposure —
+multer already has size limits, so also cap field-name length and field count.
 
-**Scope**
-- Add `test/jest-e2e.json` and a Testcontainers (or compose) Postgres fixture.
-- Port the scenarios that already proved their worth: auth and refresh rotation,
-  RBAC scoping at each of the three visibility levels, leave with weekend and
-  holiday exclusion, idempotent punch replay, geofence flagging, the full
-  payroll lifecycle including the preparer/approver split, append-only audit.
-- Run it in CI.
+**Acceptance**
+- `npm audit --omit=dev` reports no high or critical advisories.
+- Upload tests still pass, including the magic-byte rejection.
+- CI fails on a new high-severity production advisory.
 
-**Acceptance** `npm run test:e2e` passes from a clean database, and CI fails if
-any scenario regresses.
-
-**Files** `backend/test/`, `.github/workflows/ci.yml`
+**Files** `backend/package.json`, `backend/src/modules/files/`
 
 ---
+
+## P2 — worth doing
 
 ### CW-012 · Expense claims on mobile
 `P2` · mobile · **M**
@@ -406,3 +405,4 @@ Kept so the reasoning survives.
 | | |
 |---|---|
 | **CW-000** · Docker quick start could not migrate or seed | The API image is pruned to production dependencies, so `docker compose exec api npx prisma migrate deploy` and `npm run db:seed` — both documented in the README — failed: no Prisma CLI, no ts-node. Fixed by splitting the prune into its own Dockerfile stage and adding a profiled `migrate` service built from the `build` stage. The runtime image is unchanged. |
+| **CW-011** · `npm run test:e2e` was a dangling script | It pointed at `./test/jest-e2e.json`, which did not exist, and `backend/test/` was an empty directory, so the command failed with a Jest config error. Rebuilt as a 36-check suite that boots the real application, migrates, truncates and seeds its own database, and runs in CI. Covers auth and deny-by-default, RBAC row scoping at all three visibility levels, the leave ledger, idempotent punch replay, geofence flagging, the payroll lifecycle with separation of duties, and the append-only audit trail. |

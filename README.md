@@ -155,9 +155,10 @@ rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll, with 126 backend
-tests, 17 web tests and 30 mobile tests, and the admin console exercised in a
-real browser against the live API.
+Working and verified end to end — sign-in through payroll. 126 backend unit
+tests, 17 web, 30 mobile, plus a 36-check end-to-end suite that drives the real
+API over HTTP in CI, and the admin console exercised in a real browser against
+the live API.
 
 **Not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
