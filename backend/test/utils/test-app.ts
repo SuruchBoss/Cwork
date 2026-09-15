@@ -56,6 +56,14 @@ export class Api {
     return { status: res.status, body: res.body };
   }
 
+  async patch<T = any>(path: string, token?: string, body?: unknown): Promise<ApiResponse<T>> {
+    const req = request(this.server()).patch(this.base + path);
+    if (token) req.set('Authorization', `Bearer ${token}`);
+    if (body !== undefined) req.send(body as object);
+    const res = await req;
+    return { status: res.status, body: res.body };
+  }
+
   async put<T = any>(path: string, token?: string, body?: unknown): Promise<ApiResponse<T>> {
     const req = request(this.server()).put(this.base + path);
     if (token) req.set('Authorization', `Bearer ${token}`);

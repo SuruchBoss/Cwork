@@ -21,13 +21,23 @@ import {
   SubmitScorecardDto,
   UpdatePostingStatusDto,
 } from './dto/recruitment.dto';
+import { ApplicationsService } from './applications.service';
+import { AssessmentsService } from './assessments.service';
+import { InterviewsService } from './interviews.service';
+import { OffersService } from './offers.service';
 import { RecruitmentService } from './recruitment.service';
 
 @ApiTags('Recruitment')
 @ApiBearerAuth()
 @Controller('recruitment')
 export class RecruitmentController {
-  constructor(private readonly recruitment: RecruitmentService) {}
+  constructor(
+    private readonly recruitment: RecruitmentService,
+    private readonly applications: ApplicationsService,
+    private readonly assessments: AssessmentsService,
+    private readonly interviews: InterviewsService,
+    private readonly offers: OffersService,
+  ) {}
 
   // -------------------------------------------------------------- requisitions
 
@@ -84,14 +94,14 @@ export class RecruitmentController {
   @RequirePermissions(Permission.RECRUITMENT_READ)
   @ApiOperation({ summary: 'Applicant pipeline' })
   listApplications(@CurrentUser() user: AuthenticatedUser, @Query() query: ApplicationQueryDto) {
-    return this.recruitment.listApplications(user.organizationId, query);
+    return this.applications.listApplications(user.organizationId, query);
   }
 
   @Get('applications/:id')
   @RequirePermissions(Permission.RECRUITMENT_READ)
   @ApiOperation({ summary: 'Application detail with assessments and interviews' })
   getApplication(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
-    return this.recruitment.getApplication(user.organizationId, id);
+    return this.applications.getApplication(user.organizationId, id);
   }
 
   @Post('applications/:id/stage')
@@ -103,7 +113,7 @@ export class RecruitmentController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: MoveStageDto,
   ) {
-    return this.recruitment.moveStage(user, id, dto);
+    return this.applications.moveStage(user, id, dto);
   }
 
   // --------------------------------------------------------------- assessments
@@ -112,7 +122,7 @@ export class RecruitmentController {
   @RequirePermissions(Permission.RECRUITMENT_READ)
   @ApiOperation({ summary: 'List assessment templates' })
   listTemplates(@CurrentUser() user: AuthenticatedUser) {
-    return this.recruitment.listTemplates(user.organizationId);
+    return this.assessments.listTemplates(user.organizationId);
   }
 
   @Post('assessment-templates')
@@ -120,7 +130,7 @@ export class RecruitmentController {
   @Audited({ action: AuditAction.CREATE, entityType: 'AssessmentTemplate' })
   @ApiOperation({ summary: 'Create an assessment with its questions' })
   createTemplate(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAssessmentTemplateDto) {
-    return this.recruitment.createTemplate(user.organizationId, dto);
+    return this.assessments.createTemplate(user.organizationId, dto);
   }
 
   @Post('assessments/invite')
@@ -131,7 +141,7 @@ export class RecruitmentController {
     description: 'The returned token is shown once and stored only as a hash.',
   })
   invite(@CurrentUser() user: AuthenticatedUser, @Body() dto: InviteAssessmentDto) {
-    return this.recruitment.inviteToAssessment(user.organizationId, dto);
+    return this.assessments.inviteToAssessment(user.organizationId, dto);
   }
 
   // ---------------------------------------------------------------- interviews
@@ -141,14 +151,14 @@ export class RecruitmentController {
   @Audited({ action: AuditAction.CREATE, entityType: 'Interview' })
   @ApiOperation({ summary: 'Schedule an interview' })
   scheduleInterview(@CurrentUser() user: AuthenticatedUser, @Body() dto: ScheduleInterviewDto) {
-    return this.recruitment.scheduleInterview(user.organizationId, dto);
+    return this.interviews.scheduleInterview(user.organizationId, dto);
   }
 
   @Get('interviews/mine')
   @RequirePermissions(Permission.INTERVIEW_CONDUCT)
   @ApiOperation({ summary: 'Interviews I am scheduled to conduct' })
   myInterviews(@CurrentUser() user: AuthenticatedUser) {
-    return this.recruitment.listMyInterviews(requireEmployeeId(user));
+    return this.interviews.listMyInterviews(requireEmployeeId(user));
   }
 
   @Post('interviews/:id/scorecard')
@@ -160,7 +170,7 @@ export class RecruitmentController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SubmitScorecardDto,
   ) {
-    return this.recruitment.submitScorecard(user, id, dto);
+    return this.interviews.submitScorecard(user, id, dto);
   }
 
   // -------------------------------------------------------------------- offers
@@ -170,7 +180,7 @@ export class RecruitmentController {
   @Audited({ action: AuditAction.CREATE, entityType: 'JobOffer' })
   @ApiOperation({ summary: 'Create a job offer' })
   createOffer(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOfferDto) {
-    return this.recruitment.createOffer(user.organizationId, dto);
+    return this.offers.createOffer(user.organizationId, dto);
   }
 
   @Post('offers/:id/respond')
@@ -182,7 +192,7 @@ export class RecruitmentController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { accepted: boolean; reason?: string },
   ) {
-    return this.recruitment.respondToOffer(user.organizationId, id, body.accepted, body.reason);
+    return this.offers.respondToOffer(user.organizationId, id, body.accepted, body.reason);
   }
 
   @Post('offers/:id/convert')
@@ -194,7 +204,7 @@ export class RecruitmentController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { employeeCode?: string },
   ) {
-    return this.recruitment.convertToEmployee(user, id, body?.employeeCode);
+    return this.offers.convertToEmployee(user, id, body?.employeeCode);
   }
 }
 
@@ -207,7 +217,11 @@ export class RecruitmentController {
 @ApiTags('Careers (public)')
 @Controller('careers')
 export class PublicCareersController {
-  constructor(private readonly recruitment: RecruitmentService) {}
+  constructor(
+    private readonly recruitment: RecruitmentService,
+    private readonly applications: ApplicationsService,
+    private readonly assessments: AssessmentsService,
+  ) {}
 
   @Public()
   @Get(':orgCode/jobs')
@@ -230,7 +244,7 @@ export class PublicCareersController {
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @ApiOperation({ summary: 'Apply for a job (PDPA consent required)' })
   apply(@Param('orgCode') orgCode: string, @Param('slug') slug: string, @Body() dto: ApplyDto) {
-    return this.recruitment.apply(orgCode, slug, dto);
+    return this.applications.apply(orgCode, slug, dto);
   }
 
   @Public()
@@ -238,7 +252,7 @@ export class PublicCareersController {
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiOperation({ summary: 'Open an assessment with a single-use token' })
   startAssessment(@Param('token') token: string) {
-    return this.recruitment.startAssessment(token);
+    return this.assessments.startAssessment(token);
   }
 
   @Public()
@@ -246,6 +260,6 @@ export class PublicCareersController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Submit assessment answers' })
   submitAssessment(@Body() dto: SubmitAssessmentDto) {
-    return this.recruitment.submitAssessment(dto);
+    return this.assessments.submitAssessment(dto);
   }
 }

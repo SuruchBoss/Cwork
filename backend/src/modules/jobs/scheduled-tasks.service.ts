@@ -9,7 +9,7 @@ import { OffboardingService } from '../employees/offboarding.service';
 import { FilesService } from '../files/files.service';
 import { MalwareScannerService } from '../files/malware-scanner.service';
 import { LeaveBalanceService } from '../leave/leave-balance.service';
-import { RecruitmentService } from '../recruitment/recruitment.service';
+import { ApplicationsService } from '../recruitment/applications.service';
 import { JobLockService } from './job-lock.service';
 
 /**
@@ -36,7 +36,7 @@ export class ScheduledTasksService {
     private readonly attendance: AttendanceService,
     private readonly offboarding: OffboardingService,
     private readonly leaveBalances: LeaveBalanceService,
-    private readonly recruitment: RecruitmentService,
+    private readonly applications: ApplicationsService,
     private readonly files: FilesService,
     private readonly scanner: MalwareScannerService,
     private readonly locks: JobLockService,
@@ -147,7 +147,7 @@ export class ScheduledTasksService {
 
       for (const org of organizations) {
         try {
-          const count = await this.recruitment.purgeExpiredCandidates(org.id);
+          const count = await this.applications.purgeExpiredCandidates(org.id);
           if (count > 0)
             this.logger.log(`[${org.code}] erased ${count} expired candidate record(s)`);
         } catch (error) {
