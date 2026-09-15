@@ -197,20 +197,25 @@ async function main(): Promise<void> {
     { month: 12, day: 31, name: 'วันสิ้นปี', nameEn: "New Year's Eve" },
   ];
 
+  // `upsert` cannot target a composite unique that contains a NULL column
+  // (workLocationId is null for org-wide holidays), so find-then-create.
+  // Holidays are load-bearing — they decide which days leave and attendance
+  // charge for — so a failure here must surface, never be swallowed.
+  let holidaysCreated = 0;
   for (const holiday of holidays) {
     const date = new Date(Date.UTC(year, holiday.month - 1, holiday.day));
-    await prisma.holiday.upsert({
-      where: {
-        organizationId_date_workLocationId: {
-          organizationId: organization.id,
-          date,
-          workLocationId: null as unknown as string,
-        },
-      },
-      create: { organizationId: organization.id, date, name: holiday.name, nameEn: holiday.nameEn },
-      update: {},
-    }).catch(() => undefined); // composite unique with a null column: ignore duplicates
+    const existing = await prisma.holiday.findFirst({
+      where: { organizationId: organization.id, date, workLocationId: null },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    await prisma.holiday.create({
+      data: { organizationId: organization.id, date, name: holiday.name, nameEn: holiday.nameEn },
+    });
+    holidaysCreated += 1;
   }
+  console.log(`  public holidays ${year}: ${holidaysCreated} added (${holidays.length} defined)`);
 
   // ---- Leave types (Thai Labour Protection Act minimums) ------------------
   const leaveTypes = await upsertMany(
@@ -508,24 +513,15 @@ async function main(): Promise<void> {
       update: { passwordHash, status: UserStatus.ACTIVE },
     });
 
-    await prisma.userRole.upsert({
-      where: {
-        userId_roleId_departmentId: {
-          userId: user.id,
-          roleId: roles.get(person.role)!,
-          departmentId: null as unknown as string,
-        },
-      },
-      create: { userId: user.id, roleId: roles.get(person.role)! },
-      update: {},
-    }).catch(async () => {
-      const already = await prisma.userRole.findFirst({
-        where: { userId: user.id, roleId: roles.get(person.role)! },
-      });
-      if (!already) {
-        await prisma.userRole.create({ data: { userId: user.id, roleId: roles.get(person.role)! } });
-      }
+    // Same nullable-composite-unique limitation as holidays above.
+    const roleId = roles.get(person.role)!;
+    const existingGrant = await prisma.userRole.findFirst({
+      where: { userId: user.id, roleId, departmentId: null },
+      select: { id: true },
     });
+    if (!existingGrant) {
+      await prisma.userRole.create({ data: { userId: user.id, roleId } });
+    }
 
     const hireDate = new Date(Date.UTC(year - 2, 0, 15));
 

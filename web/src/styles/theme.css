@@ -1,0 +1,117 @@
+/*
+ * Design tokens.
+ *
+ * One palette defined on :root, redefined under the dark media query and under
+ * an explicit [data-theme] so a manual toggle wins in both directions. No colour
+ * is ever defined only inside a dark block.
+ */
+:root {
+  color-scheme: light dark;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-hover: #eaedf2;
+  --border: #dfe3ea;
+  --border-strong: #c3cad6;
+
+  --text: #16181d;
+  --text-muted: #5b6472;
+  --text-subtle: #858e9d;
+  --text-inverse: #ffffff;
+
+  --brand: #1f5fd0;
+  --brand-hover: #1a4fae;
+  --brand-soft: #e8f0fe;
+  --brand-text: #14448f;
+
+  --success: #16794a;
+  --success-soft: #e3f5ec;
+  --warning: #a35a00;
+  --warning-soft: #fdf1df;
+  --danger: #c02626;
+  --danger-soft: #fdeaea;
+  --info: #0e6f8a;
+  --info-soft: #e2f3f8;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 6%);
+  --shadow: 0 2px 8px rgb(16 24 40 / 8%);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / 14%);
+
+  --font: 'IBM Plex Sans Thai', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --sidebar-width: 248px;
+  --header-height: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1116;
+    --surface: #171a21;
+    --surface-2: #1e222b;
+    --surface-hover: #252a34;
+    --border: #2a3039;
+    --border-strong: #3b4350;
+
+    --text: #e8eaef;
+    --text-muted: #9aa3b2;
+    --text-subtle: #6f7887;
+    --text-inverse: #0f1116;
+
+    --brand: #6fa0f5;
+    --brand-hover: #8ab4ff;
+    --brand-soft: #1b2942;
+    --brand-text: #a9c6fb;
+
+    --success: #4ec98d;
+    --success-soft: #142b20;
+    --warning: #e0a04a;
+    --warning-soft: #2e2314;
+    --danger: #f3736f;
+    --danger-soft: #331a1a;
+    --info: #57bcd8;
+    --info-soft: #14282f;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow: 0 2px 8px rgb(0 0 0 / 45%);
+    --shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1116;
+  --surface: #171a21;
+  --surface-2: #1e222b;
+  --surface-hover: #252a34;
+  --border: #2a3039;
+  --border-strong: #3b4350;
+
+  --text: #e8eaef;
+  --text-muted: #9aa3b2;
+  --text-subtle: #6f7887;
+  --text-inverse: #0f1116;
+
+  --brand: #6fa0f5;
+  --brand-hover: #8ab4ff;
+  --brand-soft: #1b2942;
+  --brand-text: #a9c6fb;
+
+  --success: #4ec98d;
+  --success-soft: #142b20;
+  --warning: #e0a04a;
+  --warning-soft: #2e2314;
+  --danger: #f3736f;
+  --danger-soft: #331a1a;
+  --info: #57bcd8;
+  --info-soft: #14282f;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow: 0 2px 8px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);
+}
