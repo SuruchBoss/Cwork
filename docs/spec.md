@@ -635,7 +635,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 245 backend, 17 web, 33 mobile. A 127-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 245 backend, 17 web, 33 mobile. A 138-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
