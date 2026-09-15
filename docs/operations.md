@@ -174,6 +174,64 @@ Raise it for an organisation large enough that the nightly close-out genuinely
 takes longer. An open transaction also holds back vacuum for its duration, which
 is the reason not to simply set it to an hour and forget.
 
+## The outbox
+
+Anything that has to leave the system — an email, a push, a webhook — is not
+sent by the code that caused it. That code writes an **outbox event in its own
+transaction**, and `OutboxDispatcher` relays it afterwards:
+
+| | |
+|---|---|
+| `OUTBOX_POLL_MS` | How often each instance polls. `0` switches dispatch off here. Default 5000 |
+| `OUTBOX_BATCH_SIZE` | Events claimed per poll, dispatched in one transaction. Default 20 |
+| `OUTBOX_MAX_ATTEMPTS` | Failures before an event is parked as a dead letter. Default 8 |
+| `OUTBOX_RETENTION_DAYS` | How long delivered events are kept. Default 14 |
+
+Writing the row and sending the message in one transaction is the only way to
+make them atomic, so both go into PostgreSQL and the second becomes a message
+later. A transaction that rolls back takes its events with it; a process that
+dies after committing leaves them to whoever is alive next.
+
+**Every replica polls.** Unlike the scheduled tasks, which take a lock so
+exactly one instance runs them, the claim here is
+`SELECT … FOR UPDATE SKIP LOCKED`: each dispatcher takes rows nobody else holds
+and walks past the rest, so three instances drain three times faster instead of
+fighting. A queue is meant to be shared; there is no "twice" to avoid when every
+row has one owner.
+
+Delivery is **at least once**. A handler may be called again after a failure
+elsewhere in its batch, so handlers have to be safe to repeat. Exactly-once
+would mean a distributed transaction with whatever is on the other end, which is
+not something an HRIS should be buying.
+
+### When something is not being delivered
+
+```sql
+-- Owed but not yet delivered
+SELECT "eventType", count(*) FROM outbox_events
+ WHERE "processedAt" IS NULL AND "failedAt" IS NULL GROUP BY 1;
+
+-- Dead letters, newest first: the message somebody was owed and never got
+SELECT id, "eventType", attempts, "lastError", "failedAt" FROM outbox_events
+ WHERE "failedAt" IS NOT NULL ORDER BY "failedAt" DESC LIMIT 20;
+```
+
+Retries back off from 30 seconds, doubling, capped at 30 minutes. After
+`OUTBOX_MAX_ATTEMPTS` the event is parked with `failedAt` set and is never
+claimed again. Dead letters are **not** purged by the nightly job — only
+delivered events are — because that row is the only record that a message was
+owed and missed. To replay one after fixing the cause:
+
+```sql
+UPDATE outbox_events
+   SET "failedAt" = NULL, attempts = 0, "nextAttemptAt" = now()
+ WHERE id = '…';
+```
+
+An event type nobody has registered a handler for is marked delivered rather
+than retried, and the API logs at boot which types have listeners. That is why a
+deployment with no email provider configured does not slowly fill this table.
+
 ## Observability
 
 - **Logs** are structured. Every request carries a correlation id, echoed in the

@@ -60,7 +60,7 @@ modules/leave/
 
 The `domain/` directory is the important one. Leave arithmetic, attendance
 derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 195 backend tests that run in ten seconds
+of their inputs. That is why there are 201 backend tests that run in ten seconds
 with no database: the rules that are expensive to get wrong are the ones that
 are cheapest to test.
 
@@ -152,8 +152,14 @@ still there.
 - **No scheduler service.** Cron lives in the API process. Every replica runs
   the same schedule and each job takes a Postgres advisory lock, so one of them
   does the work and the rest stand down — see [operations.md](./operations.md).
-- **No email or push dispatch.** `NotificationsService` writes in-app
-  notifications and is the seam where you plug in SMTP/FCM/APNs.
+- **No message broker.** Anything that has to leave the system is written to
+  `outbox_events` in the same transaction as the change that caused it, and
+  relayed by a poller claiming batches with `FOR UPDATE SKIP LOCKED`. One
+  table, no Kafka, and the consistency guarantee a broker would not have given
+  on its own anyway.
+- **No email or push dispatch yet.** Notifications raise an outbox event with
+  nobody listening for it; registering a handler is what turns it into a
+  message — see CW-005 in the backlog.
 
 These are all deliberate: an HRIS that needs a Kafka cluster to send a leave
 notification is an HRIS nobody can self-host.

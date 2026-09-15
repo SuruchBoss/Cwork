@@ -9,6 +9,7 @@ import { AuditInterceptor } from './core/http/audit.interceptor';
 import { RequestContextMiddleware } from './core/http/request-context.middleware';
 import { PrismaModule } from './core/prisma/prisma.module';
 import { PrismaService } from './core/prisma/prisma.service';
+import { OutboxModule } from './core/outbox/outbox.module';
 import { PermissionsGuard } from './core/security/permissions.guard';
 import { PostgresThrottlerStorage } from './core/security/postgres-throttler.storage';
 import { SequenceService } from './core/utils/sequence.service';
@@ -40,6 +41,7 @@ import { RecruitmentModule } from './modules/recruitment/recruitment.module';
     AppConfigModule,
     PrismaModule,
     ScheduleModule.forRoot(),
+    OutboxModule,
     /**
      * Rate limiting.
      *

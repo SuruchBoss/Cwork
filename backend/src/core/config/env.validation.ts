@@ -159,6 +159,41 @@ export class EnvironmentVariables {
   @Max(3600000)
   JOB_LOCK_TIMEOUT_MS: number = 900000;
 
+  /**
+   * How often each instance polls the outbox, in milliseconds. `0` switches
+   * dispatch off, which is for tests and for an instance deliberately kept out
+   * of delivery — the API says which at boot either way.
+   *
+   * Every instance polls: the claim uses `FOR UPDATE SKIP LOCKED`, so they take
+   * different rows rather than the same ones.
+   */
+  @toInt()
+  @IsInt()
+  @Min(0)
+  @Max(600000)
+  OUTBOX_POLL_MS: number = 5000;
+
+  /** Events claimed per poll. The batch is dispatched inside one transaction. */
+  @toInt()
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  OUTBOX_BATCH_SIZE: number = 20;
+
+  /** Failures before an event is parked as a dead letter instead of retried. */
+  @toInt()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  OUTBOX_MAX_ATTEMPTS: number = 8;
+
+  /** How long delivered events are kept before the nightly purge removes them. */
+  @toInt()
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  OUTBOX_RETENTION_DAYS: number = 14;
+
   @IsIn(['local', 's3'])
   STORAGE_DRIVER: string = 'local';
 

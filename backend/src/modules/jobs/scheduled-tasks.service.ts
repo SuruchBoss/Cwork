@@ -203,6 +203,25 @@ export class ScheduledTasksService {
     });
   }
 
+  /**
+   * Clears out outbox events that have been delivered.
+   *
+   * Only the delivered ones. A dead letter is kept until somebody looks at it:
+   * an event nobody could deliver is the one record of a message a person was
+   * owed and never got, and deleting it on a timer turns that into silence.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_2AM, { name: 'purge-delivered-outbox' })
+  async purgeDeliveredOutbox(): Promise<void> {
+    await this.locks.runExclusively('purge-delivered-outbox', async () => {
+      const cutoff = subDays(new Date(), this.config.outbox.retentionDays);
+
+      const { count } = await this.prisma.outboxEvent.deleteMany({
+        where: { processedAt: { lt: cutoff } },
+      });
+      if (count > 0) this.logger.log(`Purged ${count} delivered outbox event(s)`);
+    });
+  }
+
   private activeOrganizations() {
     return this.prisma.organization.findMany({
       where: { isActive: true, deletedAt: null },

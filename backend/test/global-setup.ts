@@ -72,6 +72,11 @@ export default async function globalSetup(): Promise<void> {
   // a 429 there shows up as a missing challenge token three assertions later.
   process.env.THROTTLE_LIMIT = '100000';
   process.env.AUTH_THROTTLE_LIMIT = process.env.AUTH_THROTTLE_LIMIT ?? '1000';
+
+  // No background outbox polling. Every test that cares about dispatch drives
+  // `drainOnce()` itself, and a timer draining the same rows underneath would
+  // turn "exactly one delivery" into a coin toss.
+  process.env.OUTBOX_POLL_MS = '0';
   process.env.DATABASE_URL = databaseUrl;
   process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
 

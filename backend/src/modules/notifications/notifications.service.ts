@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel, Prisma } from '@prisma/client';
+import { OutboxService } from '../../core/outbox/outbox.service';
 import { PrismaService } from '../../core/prisma/prisma.service';
+
+/**
+ * Raised once per notification row, for anything that delivers it elsewhere.
+ * Exported so a handler registers for the same string this publishes, rather
+ * than for a copy of it that can drift.
+ */
+export const NOTIFICATION_RAISED = 'notification.raised';
 
 export interface NotificationPayload {
   type: string;
@@ -13,15 +21,31 @@ export interface NotificationPayload {
 /**
  * In-app notifications, written straight to the database.
  *
- * Email and push are intentionally *not* implemented here — every deployment
- * has a different provider. `PushDispatcher` is the seam: implement it and
- * register it in this module to fan out to FCM/APNs or an SMTP relay.
+ * The row is written synchronously because the console reads it back
+ * immediately; what goes *out* — email, push — is recorded as an outbox event
+ * in the same transaction and relayed by `OutboxDispatcher`. The pairing is the
+ * point: a notification and its delivery instruction commit together, so no
+ * email is ever sent for a notification that does not exist, and none is lost
+ * because the process died a moment after writing the row.
+ *
+ * Handlers for `notification.raised` are what turn those events into messages.
+ * Until one is registered the dispatcher relays them to nobody and marks them
+ * delivered, which is the honest answer for a deployment with no provider
+ * configured — see CW-005 in the backlog.
+ *
+ * Note what this is *not*: the caller's own transaction. Callers notify after
+ * their business transaction has committed, so a notification can still be lost
+ * if the process dies in between. Closing that gap means passing the caller's
+ * transaction client all the way down, which is a change to every call site.
  */
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly outbox: OutboxService,
+  ) {}
 
   async notify(
     organizationId: string,
@@ -40,16 +64,39 @@ export class NotificationsService {
     if (recipients.length === 0) return;
 
     try {
-      await this.prisma.notification.createMany({
-        data: recipients.map((userId) => ({
-          organizationId,
-          userId,
-          type: payload.type,
-          title: payload.title,
-          body: payload.body,
-          data: (payload.data ?? {}) as Prisma.InputJsonValue,
-          channel: payload.channel ?? NotificationChannel.IN_APP,
-        })),
+      await this.prisma.$transaction(async (tx) => {
+        const created = await tx.notification.createManyAndReturn({
+          data: recipients.map((userId) => ({
+            organizationId,
+            userId,
+            type: payload.type,
+            title: payload.title,
+            body: payload.body,
+            data: (payload.data ?? {}) as Prisma.InputJsonValue,
+            channel: payload.channel ?? NotificationChannel.IN_APP,
+          })),
+          select: { id: true, userId: true },
+        });
+
+        // One event per recipient rather than one for the batch: a send that
+        // fails for one address should be retried for that address, not for
+        // everyone who already received it.
+        await this.outbox.recordMany(
+          tx,
+          created.map((notification) => ({
+            organizationId,
+            eventType: NOTIFICATION_RAISED,
+            aggregateType: 'Notification',
+            aggregateId: notification.id,
+            payload: {
+              userId: notification.userId,
+              type: payload.type,
+              title: payload.title,
+              body: payload.body,
+              data: payload.data ?? {},
+            },
+          })),
+        );
       });
     } catch (error) {
       // Never let a notification failure roll back the business operation.

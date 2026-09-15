@@ -76,6 +76,12 @@ export interface RootConfig {
   };
   malwareScan: MalwareScanConfig;
   jobs: { lockTimeoutMs: number };
+  outbox: {
+    pollMs: number;
+    batchSize: number;
+    maxAttempts: number;
+    retentionDays: number;
+  };
   log: { level: string; pretty: boolean };
 }
 
@@ -146,6 +152,12 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       throttleStorage: env.THROTTLE_STORAGE as 'memory' | 'postgres',
     },
     jobs: { lockTimeoutMs: env.JOB_LOCK_TIMEOUT_MS },
+    outbox: {
+      pollMs: env.OUTBOX_POLL_MS,
+      batchSize: env.OUTBOX_BATCH_SIZE,
+      maxAttempts: env.OUTBOX_MAX_ATTEMPTS,
+      retentionDays: env.OUTBOX_RETENTION_DAYS,
+    },
     log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
   };
 }
