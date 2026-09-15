@@ -128,6 +128,28 @@ ERROR:  audit_logs is append-only (attempted UPDATE)
 AI assistant tool calls are audited too, with their arguments, under the
 `AI_TOOL_CALL` action.
 
+### Uploads
+
+Uploads are checked three ways before they are kept: the MIME type against an
+allow-list, the extension against that type, and the leading bytes against the
+type's magic number — so a `.exe` renamed to `.pdf` is refused. There is a 20 MB
+ceiling and archives are not accepted at all.
+
+On top of that, **the bytes are streamed to clamd before anything is written to
+storage**, so a file that turns out to be malware was never stored anywhere for
+a later change to expose. See `MalwareScannerService`.
+
+The rule that matters: **a scanner that is not working is never a pass.**
+Unreachable, timed out, or a reply we cannot parse all land the file at
+`PENDING`, which is recorded but refused on download; an hourly sweep retries
+it. The only way a file is served unscanned is when scanning is deliberately
+switched off — and the API says so, at `WARN`, at every boot.
+
+A detection is refused at upload with the signature named, recorded in the audit
+trail, and notified to the uploader. Quarantine is destruction: the row and the
+signature survive, the bytes do not. Keeping malware on disk to look at later is
+not a decision an HRIS should make on its owner's behalf.
+
 ## Input handling
 
 - `ValidationPipe` runs with `whitelist` and `forbidNonWhitelisted`, so a
@@ -194,7 +216,7 @@ Be clear-eyed about the gaps before you deploy:
 
 | Gap | What to do |
 |---|---|
-| **No malware scanning.** Uploads are type-checked, not scanned. | Run ClamAV or equivalent over the bucket; `FileObject.scanStatus` exists for it. |
+| **Malware scanning is off by default.** It works, but needs a clamd. | `docker compose --profile av up -d clamav`, then `MALWARE_SCAN_ENABLED=true`. The API logs which mode it is in at every boot. |
 | **No database-level encryption at rest.** Only specific columns are encrypted. | Enable encryption on your volume or managed database. |
 | **No PII purge for employees.** Candidate records have PDPA retention; employees do not. | Employee records are usually retained by law; check your jurisdiction. |
 | **Rate limiting is per-instance.** In-memory. | Point `@nestjs/throttler` at a shared store for multiple replicas. |

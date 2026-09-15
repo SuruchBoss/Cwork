@@ -22,8 +22,8 @@ in the assistant.
 |---|---|
 | `npm run start:dev` | Watch mode |
 | `npm run build` · `start:prod` | Production build and run |
-| `npm test` · `test:cov` | Unit tests (158, no database needed) |
-| `npm run test:e2e` | End-to-end tests (49) — needs a throwaway database, see below |
+| `npm test` · `test:cov` | Unit tests (176, no database needed) |
+| `npm run test:e2e` | End-to-end tests (60) — needs a throwaway database, see below |
 | `npm run typecheck` · `lint` | Static checks |
 | `npm run prisma:migrate` | Create a migration — **see the warning below** |
 | `npm run prisma:deploy` | Apply migrations |

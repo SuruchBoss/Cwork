@@ -424,8 +424,25 @@ approval trail ends in a manual step. See CW-008 in the
 [backlog](./backlog.md).
 
 Files go to local disk or S3-compatible storage behind one `StorageService`.
-Uploads are type- and size-checked. `FileObject.scanStatus` exists for malware
-scanning; **nothing populates it yet** — see the backlog.
+Uploads are checked against a MIME allow-list, a matching extension, and the
+type's magic bytes, with a 20 MB ceiling.
+
+**Requirement: uploads are scanned before they are stored.** The bytes are
+streamed to clamd (`MALWARE_SCAN_ENABLED`); a detection is refused at upload
+with the signature named, audited, and notified to the uploader, and nothing is
+written. `FileObject.scanStatus` records the verdict:
+
+| Status | Meaning | Downloadable |
+|---|---|---|
+| `CLEAN` | clamd passed it | yes |
+| `INFECTED` | quarantined — the row survives, the bytes do not | no |
+| `PENDING` | the scanner could not be reached, timed out, or replied unintelligibly | **no** |
+| `SKIPPED` | scanning is switched off for this deployment | yes |
+
+**Requirement: a scanner that is not working is never a pass.** Every failure
+mode lands at `PENDING`, which is held rather than served; an hourly sweep
+retries it. A file is served unscanned only when scanning is deliberately off,
+which the API announces at every boot.
 
 ---
 
@@ -509,7 +526,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 158 backend, 17 web, 30 mobile. A 49-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 176 backend, 17 web, 30 mobile. A 60-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -523,7 +540,7 @@ Stated plainly, with the remedies in
 [security.md](./security.md#what-this-does-not-do) and tickets in
 [backlog.md](./backlog.md):
 
-- No malware scanning on uploads.
+- Malware scanning is off by default; it needs a clamd to talk to.
 - Rate limiting is per-instance and in-memory.
 - Scheduled jobs assume a single instance; no leader election.
 - No email or push dispatch — `NotificationsService` is the seam for it.

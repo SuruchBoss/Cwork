@@ -201,7 +201,7 @@ lack of word boundaries.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 158 backend tests run in ten
+no database, no framework and no I/O. That is why 176 backend tests run in ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -261,15 +261,15 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 158 backend unit
-tests, 17 web, 30 mobile, plus a 49-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 176 backend unit
+tests, 17 web, 30 mobile, plus a 60-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
 **Not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: no malware scanning on uploads, no ภ.ง.ด.1 filing export, no penetration
-test.
+short: no ภ.ง.ด.1 filing export, malware scanning is off until you point it at a
+clamd, and no penetration test.
 
 ## Contributing
 

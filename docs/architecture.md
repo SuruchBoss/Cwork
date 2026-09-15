@@ -60,7 +60,7 @@ modules/leave/
 
 The `domain/` directory is the important one. Leave arithmetic, attendance
 derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 158 backend tests that run in ten seconds
+of their inputs. That is why there are 176 backend tests that run in ten seconds
 with no database: the rules that are expensive to get wrong are the ones that
 are cheapest to test.
 

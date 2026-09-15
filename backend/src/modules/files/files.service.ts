@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { FileScanStatus, FileVisibility } from '@prisma/client';
+import { Injectable, Logger } from '@nestjs/common';
+import { AuditAction, FileScanStatus, FileVisibility } from '@prisma/client';
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
+import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { MalwareScannerService, type ScanOutcome } from './malware-scanner.service';
 import { StorageService } from './storage.service';
 
 /** Upload allow-list. Anything not here is rejected, including archives. */
@@ -27,6 +30,21 @@ const MAGIC_BYTES: Array<{ mime: string; signature: number[] }> = [
   { mime: 'image/png', signature: [0x89, 0x50, 0x4e, 0x47] },
 ];
 
+/** How a scan outcome lands in the database. */
+function scanStatusFor(outcome: ScanOutcome): FileScanStatus {
+  switch (outcome.status) {
+    case 'clean':
+      return FileScanStatus.CLEAN;
+    case 'infected':
+      return FileScanStatus.INFECTED;
+    case 'skipped':
+      return FileScanStatus.SKIPPED;
+    case 'unavailable':
+      // Deliberately not SKIPPED: the file is held, not waved through.
+      return FileScanStatus.PENDING;
+  }
+}
+
 export interface UploadInput {
   originalName: string;
   mimeType: string;
@@ -37,13 +55,40 @@ export interface UploadInput {
 
 @Injectable()
 export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly scanner: MalwareScannerService,
+    private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
+  /**
+   * Validates, stores and scans an upload.
+   *
+   * The scan happens inside the request rather than on a queue. There is no
+   * broker in this deployment, and for a 20 MB ceiling a clamd verdict arrives
+   * in well under a second — which buys the thing a queue cannot: the person
+   * uploading an infected résumé is told so immediately, instead of
+   * discovering it never arrived. A scan that cannot complete leaves the file
+   * `PENDING` and undownloadable, and the nightly sweep retries it.
+   */
   async upload(user: AuthenticatedUser, input: UploadInput) {
     this.assertAcceptable(input);
+
+    // Scan before the bytes are written: malware that is never stored cannot
+    // be served by a path someone forgets to check.
+    const outcome = await this.scanner.scan(input.buffer);
+
+    if (outcome.status === 'infected') {
+      await this.recordInfectedUpload(user, input, outcome.signature);
+      throw new BusinessRuleError(
+        'FILE_INFECTED',
+        `This file was rejected by the malware scanner (${outcome.signature})`,
+      );
+    }
 
     const stored = await this.storage.put(
       input.prefix,
@@ -62,11 +107,108 @@ export class FilesService {
         sizeBytes: stored.sizeBytes,
         checksumSha256: stored.checksumSha256,
         visibility: input.visibility ?? FileVisibility.PRIVATE,
-        // No AV integration ships by default; deployments that need one flip
-        // this to PENDING and run a scanner over the bucket.
-        scanStatus: FileScanStatus.SKIPPED,
+        scanStatus: scanStatusFor(outcome),
         uploadedById: user.userId,
       },
+    });
+  }
+
+  /**
+   * Leaves a record of a rejected upload without keeping the file.
+   *
+   * The bytes are never stored, so there is nothing to quarantine — but the
+   * attempt is exactly the sort of thing whoever reviews the audit trail needs
+   * to see, and the uploader needs to know their file did not arrive.
+   */
+  private async recordInfectedUpload(
+    user: AuthenticatedUser,
+    input: UploadInput,
+    signature: string,
+  ): Promise<void> {
+    const filename = input.originalName.slice(0, 200);
+    this.logger.warn(`Rejected upload "${filename}" from ${user.email}: ${signature}`);
+
+    await this.audit.record({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: AuditAction.CREATE,
+      entityType: 'FileObject',
+      summary: `Upload rejected by malware scanner: ${filename} (${signature})`,
+      changes: { filename, mimeType: input.mimeType, sizeBytes: input.buffer.length, signature },
+    });
+
+    await this.notifications.notify(user.organizationId, user.userId, {
+      type: 'FILE_INFECTED',
+      title: 'ไฟล์ถูกปฏิเสธ',
+      body: `ไฟล์ "${filename}" ถูกปฏิเสธเนื่องจากตรวจพบมัลแวร์ (${signature})`,
+      data: { filename, signature },
+    });
+  }
+
+  /**
+   * Rescans a file that was stored without a verdict, and quarantines it if it
+   * turns out to be malware.
+   *
+   * Reached from the nightly sweep. Returns the status the file ended on.
+   */
+  async rescan(fileId: string): Promise<FileScanStatus> {
+    const file = await this.prisma.fileObject.findFirst({
+      where: { id: fileId, deletedAt: null },
+    });
+    if (!file) throw new NotFoundError('File', fileId);
+    if (file.scanStatus !== FileScanStatus.PENDING) return file.scanStatus;
+
+    let content: Buffer;
+    try {
+      content = await this.storage.get(file.objectKey);
+    } catch (error) {
+      this.logger.warn(`Cannot rescan ${file.id}: ${String(error)}`);
+      return FileScanStatus.PENDING;
+    }
+
+    const outcome = await this.scanner.scan(content);
+    if (outcome.status === 'unavailable') return FileScanStatus.PENDING;
+
+    const scanStatus = scanStatusFor(outcome);
+    await this.prisma.fileObject.update({ where: { id: file.id }, data: { scanStatus } });
+
+    if (outcome.status === 'infected') {
+      // Quarantine is destruction here: the record and the signature survive,
+      // the bytes do not. Keeping malware on disk to look at later is a
+      // decision an HRIS has no business making on its owner's behalf.
+      await this.storage.remove(file.objectKey);
+      this.logger.warn(`Quarantined ${file.id} (${file.filename}): ${outcome.signature}`);
+
+      await this.audit.record({
+        organizationId: file.organizationId,
+        actorUserId: file.uploadedById ?? undefined,
+        action: AuditAction.UPDATE,
+        entityType: 'FileObject',
+        entityId: file.id,
+        summary: `Quarantined by malware scanner: ${file.filename} (${outcome.signature})`,
+        changes: { scanStatus, signature: outcome.signature },
+      });
+
+      if (file.uploadedById) {
+        await this.notifications.notify(file.organizationId, file.uploadedById, {
+          type: 'FILE_INFECTED',
+          title: 'ไฟล์ถูกกักกัน',
+          body: `ไฟล์ "${file.filename}" ถูกลบออกหลังตรวจพบมัลแวร์ (${outcome.signature})`,
+          data: { fileId: file.id, signature: outcome.signature },
+        });
+      }
+    }
+
+    return scanStatus;
+  }
+
+  /** Files stored without a verdict, oldest first. Used by the nightly sweep. */
+  async findPending(limit = 100) {
+    return this.prisma.fileObject.findMany({
+      where: { scanStatus: FileScanStatus.PENDING, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+      select: { id: true },
     });
   }
 
@@ -83,12 +225,23 @@ export class FilesService {
     id: string,
   ): Promise<{ file: Awaited<ReturnType<FilesService['getMetadata']>>; content: Buffer }> {
     const file = await this.getMetadata(organizationId, id);
+
+    // Deny-by-default: only a file that has been cleared, or one from a
+    // deployment that never scans, is served. PENDING means the scanner has
+    // not had its say yet, and "not yet checked" is not "safe".
     if (file.scanStatus === FileScanStatus.INFECTED) {
       throw new BusinessRuleError(
         'FILE_INFECTED',
         'This file was quarantined by the malware scanner',
       );
     }
+    if (file.scanStatus === FileScanStatus.PENDING) {
+      throw new BusinessRuleError(
+        'FILE_SCAN_PENDING',
+        'This file has not been scanned yet. Try again shortly.',
+      );
+    }
+
     const content = await this.storage.get(file.objectKey);
     return { file, content };
   }

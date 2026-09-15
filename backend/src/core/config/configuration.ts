@@ -42,6 +42,14 @@ export interface StorageConfig {
   };
 }
 
+/** Where the malware scanner lives, and whether there is one at all. */
+export interface MalwareScanConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  timeoutMs: number;
+}
+
 export interface AssistantConfig {
   enabled: boolean;
   provider: 'anthropic' | 'openai-compatible' | 'none';
@@ -61,6 +69,7 @@ export interface RootConfig {
   storage: StorageConfig;
   assistant: AssistantConfig;
   security: { fieldEncryptionKey: string; throttleTtl: number; throttleLimit: number };
+  malwareScan: MalwareScanConfig;
   log: { level: string; pretty: boolean };
 }
 
@@ -105,6 +114,12 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
         secretKey: env.S3_SECRET_KEY,
         forcePathStyle: env.S3_FORCE_PATH_STYLE,
       },
+    },
+    malwareScan: {
+      enabled: env.MALWARE_SCAN_ENABLED,
+      host: env.CLAMAV_HOST,
+      port: env.CLAMAV_PORT,
+      timeoutMs: env.CLAMAV_TIMEOUT_MS,
     },
     assistant: {
       enabled: env.ASSISTANT_ENABLED,

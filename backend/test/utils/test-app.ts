@@ -56,6 +56,33 @@ export class Api {
     return { status: res.status, body: res.body };
   }
 
+  /** Multipart upload, for the endpoints that take a file rather than JSON. */
+  async upload<T = any>(
+    path: string,
+    token: string,
+    file: { filename: string; contentType: string; content: Buffer },
+  ): Promise<ApiResponse<T>> {
+    const res = await request(this.server())
+      .post(this.base + path)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('file', file.content, { filename: file.filename, contentType: file.contentType });
+    return { status: res.status, body: res.body };
+  }
+
+  /** Raw GET, for endpoints that return bytes rather than JSON. */
+  async getRaw(path: string, token: string): Promise<{ status: number; body: Buffer }> {
+    const res = await request(this.server())
+      .get(this.base + path)
+      .set('Authorization', `Bearer ${token}`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(chunks)));
+      });
+    return { status: res.status, body: res.body as Buffer };
+  }
+
   /**
    * Signs in, completing the second factor when the account owes one.
    *
@@ -130,7 +157,30 @@ export interface TestContext {
   close: () => Promise<void>;
 }
 
-export async function createTestApp(): Promise<TestContext> {
+export interface CreateTestAppOptions {
+  /**
+   * Environment overrides applied while the module is built and left in place
+   * for the app's lifetime — `APP_CONFIG` is rebuilt from `process.env` when the
+   * provider is instantiated, so this is how a spec boots the app with, say,
+   * malware scanning switched on.
+   */
+  env?: Record<string, string>;
+}
+
+export async function createTestApp(options: CreateTestAppOptions = {}): Promise<TestContext> {
+  const previous: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(options.env ?? {})) {
+    previous[key] = process.env[key];
+    process.env[key] = value;
+  }
+
+  const restoreEnv = (): void => {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
+
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
   const app = moduleRef.createNestApplication();
@@ -153,6 +203,9 @@ export async function createTestApp(): Promise<TestContext> {
   return {
     app,
     api: new Api(app, `/${config.app.apiPrefix}/v1`),
-    close: () => app.close(),
+    close: async () => {
+      await app.close();
+      restoreEnv();
+    },
   };
 }

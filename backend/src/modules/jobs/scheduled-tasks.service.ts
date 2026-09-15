@@ -4,6 +4,8 @@ import { subDays } from 'date-fns';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { AttendanceService } from '../attendance/attendance.service';
 import { OffboardingService } from '../employees/offboarding.service';
+import { FilesService } from '../files/files.service';
+import { MalwareScannerService } from '../files/malware-scanner.service';
 import { LeaveBalanceService } from '../leave/leave-balance.service';
 import { RecruitmentService } from '../recruitment/recruitment.service';
 
@@ -27,7 +29,42 @@ export class ScheduledTasksService {
     private readonly offboarding: OffboardingService,
     private readonly leaveBalances: LeaveBalanceService,
     private readonly recruitment: RecruitmentService,
+    private readonly files: FilesService,
+    private readonly scanner: MalwareScannerService,
   ) {}
+
+  /**
+   * Picks up files stored while the scanner was unreachable.
+   *
+   * An upload whose scan could not complete is held `PENDING` — recorded, but
+   * refused on download. This is what eventually gives it a verdict, so a
+   * clamd outage costs a delay rather than a lost file.
+   *
+   * Hourly rather than nightly: a file nobody can open is a support ticket.
+   */
+  @Cron(CronExpression.EVERY_HOUR, { name: 'rescan-pending-files' })
+  async rescanPendingFiles(): Promise<void> {
+    if (!this.scanner.enabled) return;
+
+    const pending = await this.files.findPending();
+    if (pending.length === 0) return;
+
+    let cleared = 0;
+    let quarantined = 0;
+    let stillWaiting = 0;
+
+    for (const { id } of pending) {
+      const status = await this.files.rescan(id);
+      if (status === 'CLEAN' || status === 'SKIPPED') cleared += 1;
+      else if (status === 'INFECTED') quarantined += 1;
+      else stillWaiting += 1;
+    }
+
+    this.logger.log(
+      `Rescanned ${pending.length} pending file(s): ` +
+        `${cleared} cleared, ${quarantined} quarantined, ${stillWaiting} still waiting`,
+    );
+  }
 
   /** 18:00 UTC = 01:00 Asia/Bangkok — closes out the day that just ended. */
   @Cron('0 18 * * *', { name: 'attendance-close-out' })

@@ -18,30 +18,6 @@ it does not.
 
 ## P0 — blocks a real deployment
 
-### CW-002 · Scan uploads for malware
-`P0` · security · **M**
-
-`FileObject.scanStatus` exists and nothing ever sets it. Uploads are type- and
-magic-byte checked, which stops a renamed `.exe` but not a malicious PDF.
-Résumés arrive from the public careers page — this is the least trusted input
-the system takes.
-
-**Scope**
-- Queue an async scan on upload (ClamAV via `clamd` is the obvious default).
-- Hold files at `PENDING` and refuse download until `CLEAN`.
-- Quarantine on `INFECTED`, notify, and audit it.
-- Degrade explicitly when no scanner is configured — a documented setting, not a
-  silent pass.
-
-**Acceptance**
-- The EICAR test file is quarantined and never downloadable.
-- A clean file becomes downloadable once scanned.
-- With scanning disabled, boot logs say so plainly.
-
-**Files** `backend/src/modules/files/`
-
----
-
 ### CW-003 · Move rate limiting to a shared store
 `P0` · security · **S** · 🌱
 
@@ -404,3 +380,4 @@ Kept so the reasoning survives.
 | **CW-000** · Docker quick start could not migrate or seed | The API image is pruned to production dependencies, so `docker compose exec api npx prisma migrate deploy` and `npm run db:seed` — both documented in the README — failed: no Prisma CLI, no ts-node. Fixed by splitting the prune into its own Dockerfile stage and adding a profiled `migrate` service built from the `build` stage. The runtime image is unchanged. |
 | **CW-011** · `npm run test:e2e` was a dangling script | It pointed at `./test/jest-e2e.json`, which did not exist, and `backend/test/` was an empty directory, so the command failed with a Jest config error. Rebuilt as a suite that boots the real application, migrates, truncates and seeds its own database, and runs in CI — 36 checks at the time, 49 once CW-001 added its own. Covers auth and deny-by-default, RBAC row scoping at all three visibility levels, the leave ledger, idempotent punch replay, geofence flagging, the payroll lifecycle with separation of duties, and the append-only audit trail. |
 | **CW-001** · Privileged accounts could sign in with a password alone | TOTP (RFC 6238), implemented against the RFC's own test vectors rather than pulled in as a dependency, and required — not offered — for any account holding `employee:read:sensitive`, `payroll:run`, `payroll:approve` or `role:manage`. A correct password for such an account now yields a challenge token, not a session; that token carries a `typ` claim the access-token strategy rejects, which is the only thing separating it from a full session since both are signed with the same secret. Codes cannot be replayed inside their own window, recovery codes are single-use, a wrong code counts towards the password lockout, and disabling is refused for an account that must have one. Recovery codes are stored as SHA-256 digests rather than argon2 as the ticket originally said: at 100 bits of entropy a slow KDF buys nothing and only gives a half-authenticated endpoint a way to burn CPU, and refresh tokens already use the same treatment for the same reason. Mobile can present a code but not yet enrol — see CW-021. |
+| **CW-002** · Uploads were never scanned | `FileObject.scanStatus` existed and nothing ever set it, on a system that takes résumés from a public careers page. Uploads now stream to clamd *before* anything is written to storage, so malware is never stored for a later change to expose. The clamd INSTREAM protocol is implemented directly against its specification rather than pulled in as a dependency, and unit-tested. The rule throughout is that a scanner which is not working is never a pass: unreachable, timed out, or a reply that cannot be parsed all land the file at `PENDING`, which is refused on download and retried hourly. A detection is refused at upload with the signature named, audited and notified; quarantine destroys the bytes and keeps the record. Off by default, with a `clamav` compose profile to turn it on, and the API states which mode it is in at every boot. |

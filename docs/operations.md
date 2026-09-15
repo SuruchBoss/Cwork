@@ -45,6 +45,39 @@ docker compose run --rm migrate npm run db:verify
 
 Migrations are forward-only. Take a database backup first.
 
+## Turning on malware scanning
+
+Uploads are streamed to clamd before they are stored. It is off by default
+because it needs one to talk to, and the API logs which mode it is in at every
+boot — a deployment can never quietly believe it is scanning when it is not.
+
+```bash
+docker compose --profile av up -d clamav
+```
+
+Then in `.env`:
+
+```bash
+MALWARE_SCAN_ENABLED=true
+CLAMAV_HOST=clamav
+```
+
+The image downloads its signature database on first start, which takes a few
+minutes; the healthcheck allows for it. The database lives in the `clamav-db`
+volume, so a restart does not re-download it.
+
+Check it took:
+
+```bash
+docker compose logs api | grep -i malware
+# Malware scanning enabled — clamd at clamav:3310 answered PING
+```
+
+**While clamd is unreachable, uploads are held rather than passed.** They are
+recorded as `PENDING` and refused on download; an hourly job rescans them, so an
+outage costs a delay rather than a lost file. If you see uploads stuck at
+`PENDING`, clamd is the first place to look.
+
 ## Requiring two-factor authentication
 
 Accounts holding `employee:read:sensitive`, `payroll:run`, `payroll:approve` or

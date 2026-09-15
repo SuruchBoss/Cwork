@@ -112,6 +112,31 @@ export class EnvironmentVariables {
   @Max(1800)
   MFA_CHALLENGE_TTL: number = 300;
 
+  /**
+   * Malware scanning. Off by default because it needs a clamd to talk to, and
+   * a scanner that silently is not there would be worse than none at all — see
+   * MalwareScannerService, which says so at boot either way.
+   */
+  @toBool()
+  @IsBoolean()
+  MALWARE_SCAN_ENABLED: boolean = false;
+
+  @IsString()
+  CLAMAV_HOST: string = '127.0.0.1';
+
+  @toInt()
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  CLAMAV_PORT: number = 3310;
+
+  /** How long to wait for a verdict before leaving the file unscanned. */
+  @toInt()
+  @IsInt()
+  @Min(1000)
+  @Max(300000)
+  CLAMAV_TIMEOUT_MS: number = 15000;
+
   @IsIn(['local', 's3'])
   STORAGE_DRIVER: string = 'local';
 
