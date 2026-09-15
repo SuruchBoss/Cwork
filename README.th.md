@@ -105,7 +105,8 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 
 ## ทำอะไรได้บ้าง
 
-> ภาพทั้งหมดด้านล่างเป็นภาพหน้าจอจริงจากบริษัทตัวอย่างที่ seed ไว้
+> ภาพทั้งหมดด้านล่างเป็นภาพหน้าจอจริงจากบริษัทตัวอย่างที่ seed ไว้ — เว็บคอนโซล
+> บนเบราว์เซอร์ และแอปพนักงานบนหน้าจอขนาด 390×844
 
 ### พนักงาน
 
@@ -173,6 +174,21 @@ PostgreSQL ร่วมกับ trigram ซึ่งไม่ต้องใช
 
 <img src="./docs/screenshots/14-knowledge.png" alt="ฐานความรู้ HR" width="49%"> <img src="./docs/screenshots/15-assistant.png" alt="ผู้ช่วย HR ปิดไว้เป็นค่าเริ่มต้น" width="49%">
 
+
+### แอปพนักงาน
+
+Flutter สำหรับทุกคนที่ไม่เคยเปิดเว็บคอนโซล ลงเวลาเข้า-ออกพร้อม geofence ขอลา
+ดูสลิปเงินเดือน อนุมัติรายการที่รออยู่ และถามผู้ช่วย HR
+
+ออกแบบมาสำหรับโทรศัพท์ที่สัญญาณหลุด การลงเวลาจะถูกเก็บคิวไว้ในหน่วยความจำถาวร
+แล้วส่งใหม่เมื่อกลับมาออนไลน์ โดยแนบรหัสที่สร้างจากฝั่งเครื่อง การส่งซ้ำจึง
+ไม่กลายเป็นการลงเวลาสองครั้ง
+
+<img src="./docs/screenshots/mobile/01-login.png" alt="เข้าสู่ระบบบนมือถือ" width="23%"> <img src="./docs/screenshots/mobile/02-home.png" alt="ลงเวลาเข้า-ออกงาน" width="23%"> <img src="./docs/screenshots/mobile/03-leave.png" alt="วันลาคงเหลือและคำขอลา" width="23%"> <img src="./docs/screenshots/mobile/05-payslip-detail.png" alt="รายละเอียดสลิปเงินเดือน" width="23%">
+
+สลิปใบนั้นคือคำว่า "อธิบายที่มาของตัวเลขได้แม้ผ่านไปหนึ่งปี" ในทางปฏิบัติ —
+รายได้ รายการหัก และเงินสมทบฝั่งนายจ้าง แยกให้เห็นชัดว่าอะไรไม่ได้หักจากเงินพนักงาน
+
 <details>
 <summary><b>ภาพหน้าจอเพิ่มเติม</b> — เข้าสู่ระบบและ 2FA, เบิกค่าใช้จ่าย, การลาออก, ผังองค์กร, บันทึกการใช้งาน, ธีมมืด, ขนาดมือถือ</summary>
 
@@ -189,6 +205,10 @@ PostgreSQL ร่วมกับ trigram ซึ่งไม่ต้องใช
 **ผังองค์กร และบันทึกการใช้งานที่เขียนเพิ่มได้อย่างเดียว**
 
 <img src="./docs/screenshots/16-organization.png" alt="โครงสร้างองค์กร" width="49%"> <img src="./docs/screenshots/17-audit.png" alt="บันทึกการใช้งาน" width="49%">
+
+**แอปพนักงานเพิ่มเติม** — สลิป ผู้ช่วย HR โปรไฟล์ และการยื่นใบลา
+
+<img src="./docs/screenshots/mobile/04-payslip.png" alt="สลิปเงินเดือน" width="23%"> <img src="./docs/screenshots/mobile/06-assistant.png" alt="ผู้ช่วย HR บนมือถือ" width="23%"> <img src="./docs/screenshots/mobile/07-profile.png" alt="โปรไฟล์" width="23%"> <img src="./docs/screenshots/mobile/08-leave-request.png" alt="ยื่นคำขอลา" width="23%">
 
 **ธีมมืด และคอนโซลบนความกว้างระดับมือถือ**
 

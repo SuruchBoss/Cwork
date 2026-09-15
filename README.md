@@ -106,8 +106,9 @@ The interactive API docs live at `/api/docs` whenever `NODE_ENV` is not
 ## What it does
 
 > **The interface is Thai.** An English locale is on the
-> [backlog](./docs/backlog.md) as CW-016. Everything below is a real screenshot
-> of the seeded demo company.
+> [backlog](./docs/backlog.md) as CW-016. Every image below is a real screenshot
+> of the seeded demo company — the console in a browser, the employee app on a
+> 390×844 phone.
 
 ### People
 
@@ -177,6 +178,23 @@ lack of word boundaries.
 
 <img src="./docs/screenshots/14-knowledge.png" alt="HR knowledge base" width="49%"> <img src="./docs/screenshots/15-assistant.png" alt="Assistant, disabled by default" width="49%">
 
+
+### The employee app
+
+Flutter, for everyone who never opens the console. Clock in and out with
+geofencing, request leave, read a payslip, approve what is waiting, ask the
+assistant.
+
+Built for a phone that loses signal: punches queue in durable storage and replay
+on reconnect, carrying a client-generated id so a retry cannot become a second
+punch.
+
+<img src="./docs/screenshots/mobile/01-login.png" alt="Mobile sign-in" width="23%"> <img src="./docs/screenshots/mobile/02-home.png" alt="Clock in and out" width="23%"> <img src="./docs/screenshots/mobile/03-leave.png" alt="Leave balances and requests" width="23%"> <img src="./docs/screenshots/mobile/05-payslip-detail.png" alt="Payslip breakdown" width="23%">
+
+That payslip is the "explain it a year later" claim in practice: earnings,
+deductions, and employer contributions kept visibly separate from what came out
+of the employee's pay.
+
 <details>
 <summary><b>More screenshots</b> — sign-in and 2FA, expenses, offboarding, org chart, audit, dark theme, phone width</summary>
 
@@ -193,6 +211,10 @@ lack of word boundaries.
 **Org chart and the append-only audit trail**
 
 <img src="./docs/screenshots/16-organization.png" alt="Organisation structure" width="49%"> <img src="./docs/screenshots/17-audit.png" alt="Audit log" width="49%">
+
+**More of the employee app** — payslips, the assistant, profile, and filing leave
+
+<img src="./docs/screenshots/mobile/04-payslip.png" alt="Payslips" width="23%"> <img src="./docs/screenshots/mobile/06-assistant.png" alt="HR assistant on mobile" width="23%"> <img src="./docs/screenshots/mobile/07-profile.png" alt="Profile" width="23%"> <img src="./docs/screenshots/mobile/08-leave-request.png" alt="Filing a leave request" width="23%">
 
 **Dark theme, and the console at phone width**
 
