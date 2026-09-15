@@ -367,6 +367,8 @@ docs/        Spec, architecture, security, data model, API, ADRs, backlog
 | [Backlog](./docs/backlog.md) | Open work, prioritised, with acceptance criteria |
 | [Architecture](./docs/architecture.md) | How the pieces fit, and what is deliberately absent |
 | [Security](./docs/security.md) | Auth, encryption, audit — and an honest list of gaps |
+| [Personal data](./docs/privacy.md) | What is held about people, for how long, and how to take it out |
+| [Privacy notice (ไทย)](./docs/privacy-notice.th.md) | A draft notice to hand to employees |
 | [Data model](./docs/data-model.md) | Schema patterns and the hand-written SQL |
 | [API reference](./docs/api.md) | Endpoints, error codes, conventions |
 | [Payroll: Thai rules](./docs/payroll-thailand.md) | Tax brackets, allowances, OT multipliers |

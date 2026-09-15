@@ -36,6 +36,13 @@ immediately, without waiting for it to expire.
 effect within 30 seconds (a small in-process cache) rather than when the access
 token expires.
 
+## Personal data
+
+What the database holds about people, how long each class is kept, and the
+procedure for erasing an individual on request — including the two tables that
+are append-only and therefore cannot be edited by the application — is in
+[Personal data](./privacy.md), with a draft employee notice beside it.
+
 ## Claiming a fresh installation
 
 Between the moment a deployment starts answering requests and the moment its
@@ -263,7 +270,7 @@ Be clear-eyed about the gaps before you deploy:
 |---|---|
 | **Malware scanning is off by default.** It works, but needs a clamd. | `docker compose --profile av up -d clamav`, then `MALWARE_SCAN_ENABLED=true`. The API logs which mode it is in at every boot. |
 | **No database-level encryption at rest.** Only specific columns are encrypted. | Enable encryption on your volume or managed database. |
-| **No PII purge for employees.** Candidate records have PDPA retention; employees do not. | Employee records are usually retained by law; check your jurisdiction. |
+| **No automatic purge for employees.** Applicant records expire on their own after twelve months; employee records never do. | Employee records are usually retained by law, so a purge is a policy decision rather than a default. Set a period per record class and act on it — [Personal data](./privacy.md) lists what is held and carries a tested erasure procedure. Automating it is `CW-015`. |
 | **No penetration test.** This code has not been audited. | Get one before handling real payroll. |
 | **`organizationId` is not a tenant boundary.** Every table carries it and every query filters on it, but nothing in the test suite exercises two organisations sharing a database. | Run one deployment per organisation. Treat the column as defence in depth inside that deployment, not as isolation between deployments. |
 | **The Thai payroll and social-security rules have not been reviewed by anyone qualified.** They were written from published sources and unit-tested for internal consistency, which proves the code matches its author's reading of the rules, not that the reading is right. | Have an accountant or payroll professional check the figures against your own before a real run. |

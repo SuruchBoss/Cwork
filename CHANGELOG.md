@@ -52,6 +52,18 @@ entry, tags it and publishes the notes.
   (`docs/demo/record.mjs`). It drives the real console against the seeded
   company, second factor included, so the demo cannot drift from the product.
 
+- **The PDPA minimum a pilot needs** (CW-026). [Personal data](./docs/privacy.md)
+  lists every class of personal data the schema holds and where, the retention
+  the software actually enforces and the far longer list it does not, and a
+  step-by-step erasure procedure that was run against a real database before it
+  was written down. [A draft employee notice](./docs/privacy-notice.th.md) in
+  Thai goes with it.
+  - Two facts that procedure had to establish rather than assume: an employee
+    who has ever clocked in **cannot be deleted** — the append-only trigger on
+    `attendance_punches` blocks the cascade — and the audit trail cannot be
+    erased at all without destroying the property it exists for. Both are now
+    written down, with what to do instead.
+
 ### Changed
 
 - **The assistant is hidden when it is switched off** (CW-027). `ASSISTANT_ENABLED=false`
