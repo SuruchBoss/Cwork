@@ -14,6 +14,29 @@ it does not.
 | Estimate | **S** under a day · **M** a few days · **L** a week or more |
 | 🌱 | Good first issue — self-contained, with a clear acceptance test |
 
+## Order of work
+
+Agreed 2026-09-15 — the reasoning is in
+[spec.md § Agreed direction](./spec.md#agreed-direction). Priority still marks
+severity; this is the sequence work is actually taken in.
+
+| Phase | | |
+|---|---|---|
+| **0** | A baseline to measure from | CW-028 · CW-030 · CW-029 |
+| **1** | A stranger can install it | CW-022 · CW-020 · CW-027 |
+| **2** | The pilot can run | CW-010 · CW-023 · CW-024 · CW-025 · CW-026 · CW-007 |
+| **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 |
+| **4** | When someone actually needs it | CW-004 · CW-019 · CW-002 · CW-003 · CW-005 · CW-006 · CW-021 · CW-017 |
+
+Two deliberate departures from priority order:
+
+- **CW-007 is pulled into phase 2.** The pilot holds real people's leave
+  balances, and an accrual job that runs twice during a rolling restart grants
+  leave twice — hard to unpick afterwards, and a few hours to prevent.
+- **CW-002 and CW-003 sit in phase 4 despite being P0.** Both guard surfaces the
+  pilot does not use: the public careers page, and a second replica. They become
+  P0-in-practice the moment either is switched on.
+
 ---
 
 ## P0 — blocks a real deployment
@@ -40,6 +63,9 @@ the system takes.
 
 **Files** `backend/src/modules/files/`
 
+> Phase 4: this guards the public careers page, which the pilot does not use. It
+> is P0 again the day that page goes live.
+
 ---
 
 ### CW-003 · Move rate limiting to a shared store
@@ -57,6 +83,86 @@ default.
 sign-in is rejected regardless of which instance serves it.
 
 **Files** `backend/src/core/`, `docker-compose.yml`, `docs/operations.md`
+
+---
+
+### CW-022 · First-run setup for a clean install
+`P0` · platform · **M**
+
+There is no way to create an organisation or a first administrator. The only
+`organization.upsert` in the codebase is in `prisma/seed.ts`, which the README
+itself labels *demo data — evaluation only*, and there is no `@Post` on
+`organization.controller.ts` and no registration route on `auth.controller.ts`.
+Anyone installing Cwork for a real organisation has to load fake data and then
+clean up after it.
+
+**Scope**
+- `npm run db:init` — an interactive CLI taking organisation name, timezone and
+  the first administrator's email, creating the org, the default role set and
+  that one account.
+- A web setup wizard for the same thing, reachable only with a one-time setup
+  token that `db:init` prints. No token, no wizard — a bare "if no org exists,
+  let anyone through" check is an account-takeover waiting to happen.
+- Keep `db:seed` strictly for demo data and say so when it runs.
+- The first administrator holds `role:manage`, so it is required to have a
+  second factor. The existing `@Public() POST /auth/mfa/enroll` path already
+  covers enrolling before a session exists; the CLI must not print the secret.
+
+**Acceptance**
+- A fresh database plus `db:init` yields a usable sign-in with no demo rows.
+- The wizard refuses every request without a valid, unspent setup token.
+- Running `db:init` a second time on a populated database refuses rather than
+  creating a second organisation.
+
+**Files** `backend/src/modules/organization/`, `backend/prisma/`, `web/src/`
+
+---
+
+### CW-026 · The PDPA minimum the pilot needs
+`P0` · compliance · **S**
+
+The pilot runs leave and attendance for real employees, so it collects real
+location data and sick-leave records. `CW-015` — proper retention and purge — is
+too large to precede it, but going in with nothing is not an option either.
+
+**Scope**
+- A notice for pilot employees: what is collected, that **location is recorded
+  only at the moment of a punch and never continuously**, how long it is kept,
+  and how to ask for erasure.
+- A retention period written down, per record class.
+- An erasure path. A documented manual procedure is acceptable here; an
+  undocumented one is not.
+
+**Acceptance** A pilot employee can be told, in writing, what is held about them
+and can have it removed on request without anyone improvising.
+
+**Files** `docs/`, `README.md`
+
+---
+
+### CW-030 · Correct the claims the documentation makes
+`P0` · docs · **S**
+
+Three statements in the docs are not true, and each one could lead somebody to
+rely on something that is not there.
+
+**Scope**
+- Remove "multi-tenant" as a property of the product. `organizationId` is
+  defence in depth inside a single-organisation deployment and no test covers
+  two organisations sharing a database. *(Done in `spec.md`; `README.md`,
+  `architecture.md` and `security.md` still need the pass.)*
+- State plainly that the Thai tax and social-security rules have **not** been
+  reviewed by anyone qualified, in `README.md` and at the head of
+  `payroll-thailand.md`.
+- Say that location is captured only at the instant of a punch — it is true, it
+  is a real privacy property, and nothing currently says it.
+- Open an issue inviting an accountant or payroll professional to review the
+  rules. Open source is a reasonable way to find one.
+
+**Acceptance** No document claims multi-tenancy; no reader can reach the payroll
+rules without meeting the warning first.
+
+**Files** `README.md`, `docs/`
 
 ---
 
@@ -109,6 +215,10 @@ feel broken even though it works.
 
 **Files** `backend/src/modules/notifications/`
 
+> `CW-023` delivers the email half directly, before the outbox exists, so the
+> pilot is not held up. This ticket remains the full version: push, preferences,
+> unsubscribe, and delivery from the outbox.
+
 ---
 
 ### CW-006 · Consume the outbox
@@ -144,6 +254,10 @@ completion, with a heartbeat so a crashed holder does not block the next run.
 exactly once per schedule.
 
 **Files** `backend/src/modules/jobs/scheduled-tasks.service.ts`
+
+> Pulled into phase 2 despite single-instance deployment being the supported
+> shape: a rolling restart briefly runs two processes, and nightly accrual
+> firing twice grants leave twice.
 
 ---
 
@@ -233,6 +347,117 @@ multer already has size limits, so also cap field-name length and field count.
 
 ---
 
+### CW-023 · Send notifications by email
+`P1` · platform · **M**
+
+`NotificationsService` writes in-app rows and stops. During the pilot that means
+an approver never learns a leave request is waiting unless they happen to open
+the console — a leave system nobody is told about is a broken leave system, even
+with every rule correct. `.env.example` has no mail configuration at all.
+
+This is the near-term slice of `CW-005`: SMTP only, no push, and dispatched
+directly rather than through the outbox. That is a deliberate trade — it will be
+rewritten when `CW-006` lands — because the pilot is worth more than the two
+weeks outbox-first would cost.
+
+**Scope**
+- `MAIL_ENABLED=false` by default: boots, logs plainly that notifications are
+  in-app only.
+- `MAIL_ENABLED=true` with incomplete configuration: **refuses to boot**, the
+  same rule `ASSISTANT_ENABLED` already follows.
+- Send after the transaction commits, for approval-pending, approved, rejected
+  and document-ready. A send that fails is logged and never fails the request
+  that triggered it.
+- Thai-capable templates.
+
+**Acceptance**
+- Submitting leave emails the approver.
+- SMTP being down loses the email and nothing else — the leave request is
+  unaffected.
+- A rolled-back transaction sends nothing.
+
+**Files** `backend/src/modules/notifications/`, `backend/src/core/config/`
+
+---
+
+### CW-024 · Bind an account to a device
+`P1` · attendance · security · **M**
+
+The app already generates a stable `deviceId` and every punch records it, but
+nothing authorises it: any device holding a valid token can punch. Clocking in
+for an absent colleague needs nothing more than their password.
+
+**Scope**
+- A device registry: an employee's first device binds on sign-in; that binding
+  is what a punch is checked against.
+- Re-binding — a lost or replaced phone, which is common — requires HR approval
+  and is audited. Self-service re-binding would defeat the control entirely.
+- A punch from an unbound device is **recorded and flagged**, never refused,
+  consistent with how the geofence already behaves.
+
+**Acceptance**
+- A punch from a second device is accepted, flagged, and visible to HR.
+- Re-binding without approval is impossible, and every re-binding is in the
+  audit log.
+
+**Files** `backend/src/modules/attendance/`, `backend/src/modules/auth/`,
+`mobile/lib/core/storage/`
+
+---
+
+### CW-025 · Harden offline punch capture
+`P1` · attendance · security · **M**
+
+The server credits the instant a punch was captured, which is right — someone in
+a warehouse with no signal should not lose the time. But `punch_queue.dart`
+keeps that queue in `SharedPreferences`, which the owner of a rooted device can
+edit, so arrival times are forgeable. Meanwhile the API accepts
+`dto.isRootedDevice` and **the app never sends it**: there is no root-detection
+dependency in `pubspec.yaml`, so `ROOTED_DEVICE` can never be raised.
+
+**Scope**
+- Move the queue to `flutter_secure_storage`, which tokens already use.
+- Detect and send rooted/jailbroken status so the flag the backend is waiting
+  for actually fires.
+- A configurable ceiling — 12 hours as the starting value — beyond which a
+  queued punch is flagged for a manager to confirm. The real number comes from
+  the pilot's flag rate.
+- Confirmation runs through the existing approval engine, with **only two
+  outcomes: acknowledge, or reject the flag.** It must never create or delete a
+  punch: `attendance_punches` is append-only at the database level and that
+  property is load-bearing.
+
+**Acceptance**
+- A punch replayed 14 hours late is accepted, flagged, and appears in a
+  manager's queue.
+- Confirming or rejecting writes no new punch and deletes none.
+- A rooted device produces `ROOTED_DEVICE` end to end.
+
+**Files** `mobile/lib/features/attendance/data/`,
+`backend/src/modules/attendance/`, `backend/src/modules/approvals/`
+
+---
+
+### CW-028 · A release baseline and a CHANGELOG
+`P1` · project · **S** · 🌱
+
+There is no `CHANGELOG.md` and the repository has no tags. Anyone installing
+Cwork runs whatever `main` happened to be that day and cannot say which version
+they have. The next phase rewrites every UI string for `CW-016`; without a
+marker first there is nothing to compare against or fall back to.
+
+**Scope** Tag `v0.1.0` at the current tree — it works end to end and the suites
+pass, which is a fair baseline. Add `CHANGELOG.md` in Keep a Changelog form.
+State the 0.x contract in `README.md`: breaking changes allowed, recorded, no
+LTS before 1.0.
+
+**Acceptance** `git describe` names a release, and the changelog has an entry
+for it.
+
+**Files** `CHANGELOG.md`, `README.md`
+
+---
+
 ## P2 — worth doing
 
 ### CW-012 · Expense claims on mobile
@@ -314,6 +539,11 @@ breakage, and Thai remains the default.
 
 **Files** `web/src/`, `mobile/lib/`
 
+> Decided: keys are English, Thai ships as a translation file, Thai stays the
+> default. Content an organisation enters — leave type names, departments,
+> positions — is not translated. Store Gregorian years always; the Buddhist era
+> is a presentation concern only.
+
 ---
 
 ### CW-021 · Two-factor enrolment on mobile
@@ -336,6 +566,108 @@ an authenticator app on the same device, then confirm with a code.
 only the phone, and the recovery codes are shown once with a way to save them.
 
 **Files** `mobile/lib/features/auth/`
+
+---
+
+### CW-027 · Hide the assistant when it is disabled
+`P2` · web · mobile · **S** · 🌱
+
+`ASSISTANT_ENABLED=false` is the default, so the standard install shows an
+assistant entry that cannot work. A control that fails when pressed reads as a
+broken product, not a disabled option.
+
+**Scope** Expose the flag on a public config endpoint and hide the assistant
+entry point in both clients when it is off.
+
+**Acceptance** With the assistant disabled, neither client offers any route to
+it, and nothing 404s.
+
+**Files** `web/src/`, `mobile/lib/`, `backend/src/modules/assistant/`
+
+---
+
+### CW-029 · Require DCO sign-off on contributions
+`P2` · project · **S** · 🌱
+
+Contributions are taken under Apache-2.0 with no CLA and no sign-off, so there
+is no record that a contributor had the right to submit what they submitted.
+Without a CLA the licence cannot realistically be changed later — that is an
+accepted consequence, but it should be a stated one.
+
+**Scope** Document DCO in `CONTRIBUTING.md`, add the sign-off line to the pull
+request template, add a CI check for it, and note in `README.md` that there is
+no CLA and why.
+
+**Acceptance** A pull request without `Signed-off-by` fails CI with a message
+saying how to fix it.
+
+**Files** `CONTRIBUTING.md`, `.github/`
+
+---
+
+### CW-031 · A public demo instance
+`P2` · project · **M**
+
+Evaluating Cwork currently means cloning it, writing an `.env`, running compose,
+migrating and seeding. Most people will not, and the assistant — the thing that
+distinguishes this from other open-source HR systems — is off by default, so
+nobody evaluating it ever sees the feature.
+
+**Blocked on a decision:** who pays for the demo's LLM usage. Asking visitors
+for their own API key is not an option — it trains people to paste credentials
+into unfamiliar sites. If no budget is agreed, ship the demo with the assistant
+off and a short screen recording instead.
+
+**Scope**
+- A hosted instance reset hourly, writable so that approval flows can actually
+  be tried.
+- Sign-in as employee, manager or HR in one click.
+- If the assistant is on: cheapest model, a hard spending cap at the provider,
+  and per-IP rate limiting on the assistant routes specifically — the existing
+  per-user caps do nothing when everyone shares a demo account.
+
+**Acceptance** Someone with no local setup can approve a leave request within a
+minute of opening the link, and no single visitor can exceed the spending cap.
+
+**Files** `docs/`, `README.md`, deployment configuration
+
+---
+
+### CW-032 · Test migrations from the previous release in CI
+`P2` · platform · **S**
+
+CI only ever runs `prisma migrate deploy` against an empty database, so nothing
+proves that an existing installation survives an upgrade. Once other people are
+running Cwork, a bad migration destroys their data, not ours.
+
+**Scope** A job that checks out the previous tag, migrates and seeds, then
+migrates up to the current commit and asserts the seeded data is still readable.
+Depends on `CW-028` for a first tag to upgrade from.
+
+**Acceptance** A migration that drops a populated column fails CI.
+
+**Files** `.github/workflows/ci.yml`
+
+---
+
+### CW-033 · Remove the unused anti-fraud columns
+`P2` · attendance · **S** · 🌱
+
+`AttendancePunch.selfieFileId` is never written — there is no camera capture
+anywhere in the app — and selfie capture was considered and not adopted, partly
+because biometric data drags consent and retention obligations along with it. A
+column nothing writes misleads whoever reads the schema next.
+
+The same argument settles kiosk devices: no `type` field on the device model
+until kiosk devices are actually built.
+
+**Scope** Drop `selfieFileId` in a migration, or implement capture. Do not leave
+it as it is. `isRootedDevice` is the opposite case and is handled by `CW-025`:
+the API already accepts it, so wire the app up to send it.
+
+**Acceptance** Every column in `attendance.prisma` is written by some code path.
+
+**Files** `backend/prisma/schema/attendance.prisma`
 
 ---
 
