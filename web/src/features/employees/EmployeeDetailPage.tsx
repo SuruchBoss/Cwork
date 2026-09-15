@@ -115,7 +115,16 @@ export default function EmployeeDetailPage() {
             )}
             <DetailRow
               label="เลขบัตรประชาชน"
-              value={person.nationalId ?? person.nationalIdMasked ?? 'ไม่มีสิทธิ์ดู'}
+              // The API distinguishes the two cases by which key it sends:
+              // `nationalId` when the viewer may decrypt it, `nationalIdMasked`
+              // when they may not. Either can still be null simply because
+              // nothing was recorded — which is not a permission problem, and
+              // saying otherwise misrepresents the viewer's own access.
+              value={
+                'nationalId' in person
+                  ? (person.nationalId ?? '—')
+                  : (person.nationalIdMasked ?? 'ไม่มีสิทธิ์ดู')
+              }
             />
             {person.user && (
               <DetailRow
