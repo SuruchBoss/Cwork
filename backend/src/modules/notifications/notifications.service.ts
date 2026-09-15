@@ -23,20 +23,28 @@ export interface NotificationPayload {
  *
  * The row is written synchronously because the console reads it back
  * immediately; what goes *out* — email, push — is recorded as an outbox event
- * in the same transaction and relayed by `OutboxDispatcher`. The pairing is the
- * point: a notification and its delivery instruction commit together, so no
- * email is ever sent for a notification that does not exist, and none is lost
- * because the process died a moment after writing the row.
+ * beside it and relayed by `OutboxDispatcher`. The pairing is the point: a
+ * notification and its delivery instruction commit together, so no email is
+ * ever sent for a notification that does not exist.
  *
  * Handlers for `notification.raised` are what turn those events into messages.
  * Until one is registered the dispatcher relays them to nobody and marks them
  * delivered, which is the honest answer for a deployment with no provider
  * configured — see CW-005 in the backlog.
  *
- * Note what this is *not*: the caller's own transaction. Callers notify after
- * their business transaction has committed, so a notification can still be lost
- * if the process dies in between. Closing that gap means passing the caller's
- * transaction client all the way down, which is a change to every call site.
+ * ## Which method to call
+ *
+ * `notifyIn` takes the caller's transaction client and is the one to reach for.
+ * "Approved, and told them so" is one fact: with the notification inside the
+ * approval's transaction, a crash between the two cannot leave an approval
+ * nobody was told about, and a rolled-back approval cannot leave a message
+ * saying it happened. It throws, on purpose — it is part of the unit of work
+ * now, and swallowing an error inside a transaction only means committing a
+ * half of it.
+ *
+ * `notify` runs in a transaction of its own and swallows failures. It is for
+ * the handful of callers with nothing to join — telling somebody an upload was
+ * refused, when the whole point is that nothing was stored.
  */
 @Injectable()
 export class NotificationsService {
@@ -47,6 +55,73 @@ export class NotificationsService {
     private readonly outbox: OutboxService,
   ) {}
 
+  /** One recipient, inside the caller's transaction. Prefer this. */
+  async notifyIn(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    userId: string,
+    payload: NotificationPayload,
+  ): Promise<void> {
+    await this.notifyManyIn(tx, organizationId, [userId], payload);
+  }
+
+  /**
+   * Several recipients, inside the caller's transaction.
+   *
+   * Throws. The notification is part of the change now, so a failure here has
+   * to take the change with it — and inside a transaction there is nothing else
+   * it *could* do: PostgreSQL has already aborted, and catching the error would
+   * only move the failure to the commit.
+   */
+  async notifyManyIn(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    userIds: string[],
+    payload: NotificationPayload,
+  ): Promise<void> {
+    const recipients = [...new Set(userIds)].filter(Boolean);
+    if (recipients.length === 0) return;
+
+    const created = await tx.notification.createManyAndReturn({
+      data: recipients.map((userId) => ({
+        organizationId,
+        userId,
+        type: payload.type,
+        title: payload.title,
+        body: payload.body,
+        data: (payload.data ?? {}) as Prisma.InputJsonValue,
+        channel: payload.channel ?? NotificationChannel.IN_APP,
+      })),
+      select: { id: true, userId: true },
+    });
+
+    // One event per recipient rather than one for the batch: a send that fails
+    // for one address should be retried for that address, not for everyone who
+    // already received it.
+    await this.outbox.recordMany(
+      tx,
+      created.map((notification) => ({
+        organizationId,
+        eventType: NOTIFICATION_RAISED,
+        aggregateType: 'Notification',
+        aggregateId: notification.id,
+        payload: {
+          userId: notification.userId,
+          type: payload.type,
+          title: payload.title,
+          body: payload.body,
+          data: payload.data ?? {},
+        },
+      })),
+    );
+  }
+
+  /**
+   * One recipient, in a transaction of its own, best effort.
+   *
+   * For callers with no business write to join — see the note on the class.
+   * Everywhere else, `notifyIn` is the one you want.
+   */
   async notify(
     organizationId: string,
     userId: string,
@@ -55,51 +130,19 @@ export class NotificationsService {
     await this.notifyMany(organizationId, [userId], payload);
   }
 
+  /** Several recipients, in a transaction of its own, best effort. */
   async notifyMany(
     organizationId: string,
     userIds: string[],
     payload: NotificationPayload,
   ): Promise<void> {
-    const recipients = [...new Set(userIds)].filter(Boolean);
-    if (recipients.length === 0) return;
-
     try {
-      await this.prisma.$transaction(async (tx) => {
-        const created = await tx.notification.createManyAndReturn({
-          data: recipients.map((userId) => ({
-            organizationId,
-            userId,
-            type: payload.type,
-            title: payload.title,
-            body: payload.body,
-            data: (payload.data ?? {}) as Prisma.InputJsonValue,
-            channel: payload.channel ?? NotificationChannel.IN_APP,
-          })),
-          select: { id: true, userId: true },
-        });
-
-        // One event per recipient rather than one for the batch: a send that
-        // fails for one address should be retried for that address, not for
-        // everyone who already received it.
-        await this.outbox.recordMany(
-          tx,
-          created.map((notification) => ({
-            organizationId,
-            eventType: NOTIFICATION_RAISED,
-            aggregateType: 'Notification',
-            aggregateId: notification.id,
-            payload: {
-              userId: notification.userId,
-              type: payload.type,
-              title: payload.title,
-              body: payload.body,
-              data: payload.data ?? {},
-            },
-          })),
-        );
-      });
+      await this.prisma.$transaction((tx) =>
+        this.notifyManyIn(tx, organizationId, userIds, payload),
+      );
     } catch (error) {
-      // Never let a notification failure roll back the business operation.
+      // There is no business operation to fail here, so the only thing left to
+      // do is say so loudly and carry on.
       this.logger.error(
         `Failed to create notifications of type ${payload.type}`,
         error instanceof Error ? error.stack : String(error),

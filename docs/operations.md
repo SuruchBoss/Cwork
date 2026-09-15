@@ -192,6 +192,11 @@ make them atomic, so both go into PostgreSQL and the second becomes a message
 later. A transaction that rolls back takes its events with it; a process that
 dies after committing leaves them to whoever is alive next.
 
+That includes the in-app notification itself. Approving leave writes the
+balance, the request, the notification and its delivery event in one commit, so
+there is no state where an approval happened and nobody was told, nor one where
+somebody was told about an approval that did not.
+
 **Every replica polls.** Unlike the scheduled tasks, which take a lock so
 exactly one instance runs them, the claim here is
 `SELECT … FOR UPDATE SKIP LOCKED`: each dispatcher takes rows nobody else holds

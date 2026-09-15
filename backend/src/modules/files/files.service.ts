@@ -137,6 +137,9 @@ export class FilesService {
       changes: { filename, mimeType: input.mimeType, sizeBytes: input.buffer.length, signature },
     });
 
+    // Best-effort, and correctly so: nothing was stored, so there is no write
+    // for this to be atomic with. The audit entry above is the record that
+    // matters; this is the courtesy of saying so to the person who tried.
     await this.notifications.notify(user.organizationId, user.userId, {
       type: 'FILE_INFECTED',
       title: 'ไฟล์ถูกปฏิเสธ',
@@ -170,7 +173,6 @@ export class FilesService {
     if (outcome.status === 'unavailable') return FileScanStatus.PENDING;
 
     const scanStatus = scanStatusFor(outcome);
-    await this.prisma.fileObject.update({ where: { id: file.id }, data: { scanStatus } });
 
     if (outcome.status === 'infected') {
       // Quarantine is destruction here: the record and the signature survive,
@@ -189,14 +191,23 @@ export class FilesService {
         changes: { scanStatus, signature: outcome.signature },
       });
 
-      if (file.uploadedById) {
-        await this.notifications.notify(file.organizationId, file.uploadedById, {
-          type: 'FILE_INFECTED',
-          title: 'ไฟล์ถูกกักกัน',
-          body: `ไฟล์ "${file.filename}" ถูกลบออกหลังตรวจพบมัลแวร์ (${outcome.signature})`,
-          data: { fileId: file.id, signature: outcome.signature },
-        });
-      }
+      // The quarantine and the notice about it commit together: a file marked
+      // INFECTED that its uploader was never told about is a download that
+      // starts failing with no explanation.
+      await this.prisma.$transaction(async (tx) => {
+        await tx.fileObject.update({ where: { id: file.id }, data: { scanStatus } });
+
+        if (file.uploadedById) {
+          await this.notifications.notifyIn(tx, file.organizationId, file.uploadedById, {
+            type: 'FILE_INFECTED',
+            title: 'ไฟล์ถูกกักกัน',
+            body: `ไฟล์ "${file.filename}" ถูกลบออกหลังตรวจพบมัลแวร์ (${outcome.signature})`,
+            data: { fileId: file.id, signature: outcome.signature },
+          });
+        }
+      });
+    } else {
+      await this.prisma.fileObject.update({ where: { id: file.id }, data: { scanStatus } });
     }
 
     return scanStatus;

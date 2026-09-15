@@ -268,16 +268,19 @@ export class OvertimeService implements OnModuleInit {
     if (outcome.status === ApprovalStatus.APPROVED) {
       await this.applyApproval(request.id, new Decimal(request.requestedHours.toString()));
     } else if (outcome.status === ApprovalStatus.REJECTED) {
-      await this.prisma.overtimeRequest.update({
-        where: { id: request.id },
-        data: { status: OvertimeStatus.REJECTED, decidedAt: new Date() },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.overtimeRequest.update({
+          where: { id: request.id },
+          data: { status: OvertimeStatus.REJECTED, decidedAt: new Date() },
+        });
+        await this.notifyEmployee(
+          tx,
+          request.id,
+          'overtime.rejected',
+          'คำขอโอทีไม่ได้รับการอนุมัติ',
+          outcome.comment,
+        );
       });
-      await this.notifyEmployee(
-        request.id,
-        'overtime.rejected',
-        'คำขอโอทีไม่ได้รับการอนุมัติ',
-        outcome.comment,
-      );
     }
   }
 
@@ -287,46 +290,62 @@ export class OvertimeService implements OnModuleInit {
    * the *approved* figure, never the raw clock time.
    */
   private async applyApproval(requestId: string, approvedHours: Decimal): Promise<void> {
-    const request = await this.prisma.overtimeRequest.update({
-      where: { id: requestId },
-      data: {
-        status: OvertimeStatus.APPROVED,
-        approvedHours: toPrismaDecimal(approvedHours),
-        decidedAt: new Date(),
-      },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      const request = await tx.overtimeRequest.update({
+        where: { id: requestId },
+        data: {
+          status: OvertimeStatus.APPROVED,
+          approvedHours: toPrismaDecimal(approvedHours),
+          decidedAt: new Date(),
+        },
+      });
 
-    await this.prisma.attendanceRecord.updateMany({
-      where: { employeeId: request.employeeId, workDate: request.workDate },
-      data: { approvedOvertimeMinutes: Math.round(approvedHours.times(60).toNumber()) },
-    });
+      await tx.attendanceRecord.updateMany({
+        where: { employeeId: request.employeeId, workDate: request.workDate },
+        data: { approvedOvertimeMinutes: Math.round(approvedHours.times(60).toNumber()) },
+      });
 
-    await this.notifyEmployee(
-      requestId,
-      'overtime.approved',
-      'คำขอโอทีได้รับการอนุมัติ',
-      `${approvedHours.toFixed(1)} ชั่วโมง`,
-    );
+      await this.notifyEmployee(
+        tx,
+        requestId,
+        'overtime.approved',
+        'คำขอโอทีได้รับการอนุมัติ',
+        `${approvedHours.toFixed(1)} ชั่วโมง`,
+      );
+    });
   }
 
+  /**
+   * Tells the employee, inside the caller's transaction.
+   *
+   * The `tx` is not decoration: the decision and the message about it belong to
+   * the same commit, or a crash between them leaves a decided request nobody
+   * was told about.
+   */
   private async notifyEmployee(
+    tx: Prisma.TransactionClient,
     requestId: string,
     type: string,
     title: string,
     body?: string,
   ): Promise<void> {
-    const request = await this.prisma.overtimeRequest.findUnique({
+    const request = await tx.overtimeRequest.findUnique({
       where: { id: requestId },
       include: { employee: { select: { userId: true, organizationId: true } } },
     });
     if (!request?.employee.userId) return;
 
-    await this.notifications.notify(request.employee.organizationId, request.employee.userId, {
-      type,
-      title,
-      body: body ?? `${formatDateOnly(request.workDate)}`,
-      data: { overtimeRequestId: requestId },
-    });
+    await this.notifications.notifyIn(
+      tx,
+      request.employee.organizationId,
+      request.employee.userId,
+      {
+        type,
+        title,
+        body: body ?? `${formatDateOnly(request.workDate)}`,
+        data: { overtimeRequestId: requestId },
+      },
+    );
   }
 
   /** Picks the statutory category from the calendar and the employee's roster. */

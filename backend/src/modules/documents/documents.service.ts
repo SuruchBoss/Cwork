@@ -169,26 +169,33 @@ export class DocumentsService implements OnModuleInit {
       );
     }
 
-    const issued = await this.prisma.documentRequest.update({
-      where: { id },
-      data: {
-        status: DocumentRequestStatus.ISSUED,
-        issuedAt: new Date(),
-        issuedById: user.userId,
-        fileId,
-        purpose: note ? `${request.purpose ?? ''}\n${note}`.trim() : request.purpose,
-      },
-      include: { employee: { select: { userId: true } } },
-    });
-
-    if (issued.employee.userId) {
-      await this.notifications.notify(user.organizationId, issued.employee.userId, {
-        type: 'document.issued',
-        title: 'เอกสารของคุณพร้อมแล้ว',
-        body: `${DOCUMENT_TYPE_LABELS[issued.type]} (${issued.referenceNo}) ออกให้เรียบร้อยแล้ว`,
-        data: { documentRequestId: id, fileId },
+    const issued = await this.prisma.$transaction(async (tx) => {
+      const record = await tx.documentRequest.update({
+        where: { id },
+        data: {
+          status: DocumentRequestStatus.ISSUED,
+          issuedAt: new Date(),
+          issuedById: user.userId,
+          fileId,
+          purpose: note ? `${request.purpose ?? ''}\n${note}`.trim() : request.purpose,
+        },
+        include: { employee: { select: { userId: true } } },
       });
-    }
+
+      // Issuing and saying so commit together: a document marked issued that
+      // the employee was never told about is a request that looks answered and
+      // is not.
+      if (record.employee.userId) {
+        await this.notifications.notifyIn(tx, user.organizationId, record.employee.userId, {
+          type: 'document.issued',
+          title: 'เอกสารของคุณพร้อมแล้ว',
+          body: `${DOCUMENT_TYPE_LABELS[record.type]} (${record.referenceNo}) ออกให้เรียบร้อยแล้ว`,
+          data: { documentRequestId: id, fileId },
+        });
+      }
+
+      return record;
+    });
 
     return issued;
   }

@@ -742,16 +742,19 @@ export class LeaveService implements OnModuleInit {
         where: { id: requestId },
         data: { status: LeaveRequestStatus.APPROVED, decidedAt: new Date() },
       });
-    });
 
-    if (request.employee.userId) {
-      await this.notifications.notify(request.organizationId, request.employee.userId, {
-        type: 'leave.approved',
-        title: 'คำขอลาได้รับการอนุมัติ',
-        body: `${request.leaveType.name} ${formatDateOnly(request.startDate)} - ${formatDateOnly(request.endDate)}${comment ? ` · ${comment}` : ''}`,
-        data: { leaveRequestId: requestId },
-      });
-    }
+      // Inside the transaction: the balance moving and the employee being told
+      // are one fact. A crash between them would otherwise leave an approval
+      // nobody was told about.
+      if (request.employee.userId) {
+        await this.notifications.notifyIn(tx, request.organizationId, request.employee.userId, {
+          type: 'leave.approved',
+          title: 'คำขอลาได้รับการอนุมัติ',
+          body: `${request.leaveType.name} ${formatDateOnly(request.startDate)} - ${formatDateOnly(request.endDate)}${comment ? ` · ${comment}` : ''}`,
+          data: { leaveRequestId: requestId },
+        });
+      }
+    });
   }
 
   /** Releases the reserved days back to the balance. */
@@ -778,15 +781,15 @@ export class LeaveService implements OnModuleInit {
         where: { id: requestId },
         data: { status: LeaveRequestStatus.REJECTED, decidedAt: new Date() },
       });
-    });
 
-    if (request.employee.userId) {
-      await this.notifications.notify(request.organizationId, request.employee.userId, {
-        type: 'leave.rejected',
-        title: 'คำขอลาไม่ได้รับการอนุมัติ',
-        body: comment ?? `${request.leaveType.name} ${formatDateOnly(request.startDate)}`,
-        data: { leaveRequestId: requestId },
-      });
-    }
+      if (request.employee.userId) {
+        await this.notifications.notifyIn(tx, request.organizationId, request.employee.userId, {
+          type: 'leave.rejected',
+          title: 'คำขอลาไม่ได้รับการอนุมัติ',
+          body: comment ?? `${request.leaveType.name} ${formatDateOnly(request.startDate)}`,
+          data: { leaveRequestId: requestId },
+        });
+      }
+    });
   }
 }

@@ -234,6 +234,78 @@ describe('Outbox (e2e)', () => {
     });
   });
 
+  describe("a notification inside the caller's transaction", () => {
+    let userId: string;
+
+    beforeAll(async () => {
+      const user = await prisma.user.findFirstOrThrow({
+        where: { email: EMPLOYEE },
+        select: { id: true },
+      });
+      userId = user.id;
+    });
+
+    it('leaves neither the notification nor its event when the caller rolls back', async () => {
+      // The gap this closes: before, the notification was written in a
+      // transaction of its own *after* the business one committed, so a change
+      // that rolled back could still announce itself, and a crash in between
+      // lost the announcement of a change that did happen.
+      const before = await prisma.notification.count({ where: { userId } });
+
+      await expect(
+        prisma.$transaction(async (tx) => {
+          await instanceA.app.get(NotificationsService).notifyIn(tx, organizationId, userId, {
+            type: 'test.rolled-back',
+            title: 'ไม่ควรเห็นข้อความนี้',
+            body: 'the business operation is about to fail',
+          });
+          throw new Error('the business operation failed');
+        }),
+      ).rejects.toThrow('the business operation failed');
+
+      expect(await prisma.notification.count({ where: { userId } })).toBe(before);
+      expect(await prisma.outboxEvent.count()).toBe(0);
+    });
+
+    it('writes both when the caller commits', async () => {
+      await prisma.$transaction(async (tx) => {
+        await instanceA.app.get(NotificationsService).notifyIn(tx, organizationId, userId, {
+          type: 'test.committed',
+          title: 'อนุมัติแล้ว',
+          body: 'and the message about it survived with it',
+        });
+      });
+
+      const notifications = await prisma.notification.findMany({
+        where: { userId, type: 'test.committed' },
+      });
+      const events = await prisma.outboxEvent.findMany({
+        where: { eventType: NOTIFICATION_RAISED },
+      });
+
+      expect(notifications).toHaveLength(1);
+      expect(events).toHaveLength(1);
+      expect(events[0].aggregateId).toBe(notifications[0].id);
+    });
+
+    it('fails the caller rather than swallowing its own error', async () => {
+      // Inside a transaction there is nothing else it could do: PostgreSQL has
+      // already aborted, so catching would only move the failure to the commit
+      // and lose the reason on the way.
+      await expect(
+        prisma.$transaction(async (tx) => {
+          await instanceA.app.get(NotificationsService).notifyIn(tx, 'not-a-uuid', userId, {
+            type: 'test.broken',
+            title: 'x',
+            body: 'x',
+          });
+        }),
+      ).rejects.toThrow();
+
+      expect(await prisma.notification.count({ where: { type: 'test.broken' } })).toBe(0);
+    });
+  });
+
   describe('the notification producer', () => {
     it('records an event alongside every notification it writes', async () => {
       const token = await instanceA.api.token(EMPLOYEE);

@@ -176,15 +176,23 @@ export class ExpensesService implements OnModuleInit {
     }
 
     if (dto.decision === 'REJECT') {
-      await this.prisma.expenseClaim.update({
-        where: { id },
-        data: {
-          status: ExpenseClaimStatus.REJECTED,
-          decidedAt: new Date(),
-          rejectReason: dto.note,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.expenseClaim.update({
+          where: { id },
+          data: {
+            status: ExpenseClaimStatus.REJECTED,
+            decidedAt: new Date(),
+            rejectReason: dto.note,
+          },
+        });
+        await this.notifyEmployee(
+          tx,
+          id,
+          'expense.rejected',
+          'คำขอเบิกไม่ได้รับการอนุมัติ',
+          dto.note,
+        );
       });
-      await this.notifyEmployee(id, 'expense.rejected', 'คำขอเบิกไม่ได้รับการอนุมัติ', dto.note);
       return this.findOne(user, id);
     }
 
@@ -274,39 +282,45 @@ export class ExpensesService implements OnModuleInit {
     if (outcome.status === ApprovalStatus.APPROVED) {
       await this.applyApproval(claim.id, new Decimal(claim.totalAmount.toString()));
     } else if (outcome.status === ApprovalStatus.REJECTED) {
-      await this.prisma.expenseClaim.update({
-        where: { id: claim.id },
-        data: {
-          status: ExpenseClaimStatus.REJECTED,
-          decidedAt: new Date(),
-          rejectReason: outcome.comment,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.expenseClaim.update({
+          where: { id: claim.id },
+          data: {
+            status: ExpenseClaimStatus.REJECTED,
+            decidedAt: new Date(),
+            rejectReason: outcome.comment,
+          },
+        });
+        await this.notifyEmployee(
+          tx,
+          claim.id,
+          'expense.rejected',
+          'คำขอเบิกไม่ได้รับการอนุมัติ',
+          outcome.comment,
+        );
       });
-      await this.notifyEmployee(
-        claim.id,
-        'expense.rejected',
-        'คำขอเบิกไม่ได้รับการอนุมัติ',
-        outcome.comment,
-      );
     }
   }
 
   private async applyApproval(claimId: string, approvedAmount: Decimal): Promise<void> {
-    await this.prisma.expenseClaim.update({
-      where: { id: claimId },
-      data: {
-        status: ExpenseClaimStatus.APPROVED,
-        approvedAmount: toPrismaDecimal(approvedAmount),
-        decidedAt: new Date(),
-      },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.expenseClaim.update({
+        where: { id: claimId },
+        data: {
+          status: ExpenseClaimStatus.APPROVED,
+          approvedAmount: toPrismaDecimal(approvedAmount),
+          decidedAt: new Date(),
+        },
+      });
 
-    await this.notifyEmployee(
-      claimId,
-      'expense.approved',
-      'คำขอเบิกได้รับการอนุมัติ',
-      `จำนวน ${approvedAmount.toFixed(2)} บาท จะจ่ายพร้อมเงินเดือนงวดถัดไป`,
-    );
+      await this.notifyEmployee(
+        tx,
+        claimId,
+        'expense.approved',
+        'คำขอเบิกได้รับการอนุมัติ',
+        `จำนวน ${approvedAmount.toFixed(2)} บาท จะจ่ายพร้อมเงินเดือนงวดถัดไป`,
+      );
+    });
   }
 
   private async assertWithinBenefitLimit(
@@ -342,19 +356,27 @@ export class ExpensesService implements OnModuleInit {
     }
   }
 
+  /**
+   * Tells the employee, inside the caller's transaction.
+   *
+   * The `tx` is not decoration: the decision and the message about it belong to
+   * the same commit, or a crash between them leaves a decided claim nobody was
+   * told about.
+   */
   private async notifyEmployee(
+    tx: Prisma.TransactionClient,
     claimId: string,
     type: string,
     title: string,
     body?: string,
   ): Promise<void> {
-    const claim = await this.prisma.expenseClaim.findUnique({
+    const claim = await tx.expenseClaim.findUnique({
       where: { id: claimId },
       include: { employee: { select: { userId: true } } },
     });
     if (!claim?.employee.userId) return;
 
-    await this.notifications.notify(claim.organizationId, claim.employee.userId, {
+    await this.notifications.notifyIn(tx, claim.organizationId, claim.employee.userId, {
       type,
       title,
       body: body ?? claim.title,

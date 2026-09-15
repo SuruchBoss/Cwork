@@ -284,24 +284,30 @@ export class ApprovalService {
       }
 
       const dueAt = step.slaHours ? new Date(Date.now() + step.slaHours * 3_600_000) : null;
-      await this.prisma.approvalTask.createMany({
-        data: eligible.map((approverUserId) => ({
-          instanceId,
-          stepIndex: step.orderIndex,
-          approverUserId,
-          dueAt,
-        })),
-        skipDuplicates: true,
-      });
 
-      if (input.notification) {
-        await this.notifications.notifyMany(input.organizationId, eligible, {
-          type: `approval.${input.entityType.toLowerCase()}.pending`,
-          title: input.notification.title,
-          body: input.notification.body,
-          data: { entityType: input.entityType, entityId: input.entityId, instanceId },
+      // The task and the message about it commit together. An approval task
+      // nobody was told about is the failure this whole chain exists to
+      // prevent: it waits in a queue the approver has no reason to open.
+      await this.prisma.$transaction(async (tx) => {
+        await tx.approvalTask.createMany({
+          data: eligible.map((approverUserId) => ({
+            instanceId,
+            stepIndex: step.orderIndex,
+            approverUserId,
+            dueAt,
+          })),
+          skipDuplicates: true,
         });
-      }
+
+        if (input.notification) {
+          await this.notifications.notifyManyIn(tx, input.organizationId, eligible, {
+            type: `approval.${input.entityType.toLowerCase()}.pending`,
+            title: input.notification.title,
+            body: input.notification.body,
+            data: { entityType: input.entityType, entityId: input.entityId, instanceId },
+          });
+        }
+      });
 
       return { completed: false, stepIndex: step.orderIndex };
     }
