@@ -15,7 +15,11 @@ Built for Thai labour practice. Designed to be self-hosted.
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
-<img src="./docs/screenshots/03-dashboard.png" alt="Cwork dashboard" width="860">
+<img src="./docs/demo/walkthrough.gif" alt="Signing in with two-factor authentication, then the approvals inbox, employee register, leave, attendance, a closed payroll run, the hiring pipeline, KPIs and the audit log" width="860">
+
+<sub>Real console, real second factor, real payroll run — recorded against the
+company `npm run db:seed` builds, by <a href="./docs/demo/record.mjs">a script in
+this repository</a>. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
 
 </div>
 
@@ -87,6 +91,12 @@ docker compose run --rm migrate npm run db:seed    # demo data — evaluation on
 ```
 
 Open **http://localhost:8080**.
+
+The seed does not stop at an org chart: it runs last month's payroll through the
+real calculator, books leave that real approvers approved, and leaves a hiring
+pipeline mid-flight and two requests waiting in an inbox. Every page has
+something on it, because a console full of *"nothing here yet"* tells you
+nothing about whether the thing works.
 
 | | |
 |---|---|

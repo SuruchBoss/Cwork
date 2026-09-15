@@ -80,6 +80,20 @@ evaluating Cwork and nothing else, it says so when it runs, and it refuses to
 install itself beside an organisation it did not create (`SEED_FORCE=1`
 overrides that, and you will not want to).
 
+It runs in two halves, and `db:seed` chains them:
+
+| | |
+|---|---|
+| `db:seed:base` | The org chart, policies, leave types, shifts, pay components and people. |
+| `db:demo` | What that company has *done*: last month's payroll, leave that was requested and approved, expense claims, a hiring pipeline, a review cycle. |
+
+The second half boots the application and calls the same services an HTTP
+request would, rather than inserting rows. That is the whole point of it: the
+payslips are produced by the real Thai tax code, the approvals are routed by the
+real policy engine, and the run had to be prepared by one person and approved by
+another because payroll refuses to let anyone do both. Demo data that lies about
+what the product does is worse than no demo data.
+
 ### Backups
 
 Two things must be backed up, **separately**:

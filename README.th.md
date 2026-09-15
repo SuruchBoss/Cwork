@@ -15,7 +15,11 @@
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
-<img src="./docs/screenshots/03-dashboard.png" alt="แดชบอร์ด Cwork" width="860">
+<img src="./docs/demo/walkthrough.gif" alt="เข้าสู่ระบบด้วยการยืนยันตัวตนสองขั้นตอน แล้วดูรายการรออนุมัติ ทะเบียนพนักงาน การลา การลงเวลา รอบเงินเดือนที่ปิดแล้ว ขั้นตอนการสรรหา KPI และบันทึกการใช้งาน" width="860">
+
+<sub>คอนโซลจริง ปัจจัยที่สองจริง รอบเงินเดือนจริง — อัดจากบริษัทที่
+`npm run db:seed` สร้างขึ้น ด้วย<a href="./docs/demo/record.mjs">สคริปต์ในรีโพนี้</a>
+· <a href="./docs/demo/walkthrough.mp4">ไฟล์ MP4 ความละเอียดสูงกว่า</a></sub>
 
 </div>
 
@@ -85,6 +89,11 @@ docker compose up -d --build
 docker compose run --rm --build migrate            # รัน migration
 docker compose run --rm migrate npm run db:seed    # ข้อมูลตัวอย่าง — สำหรับทดลองเท่านั้น
 ```
+
+ข้อมูลตัวอย่างไม่ได้หยุดแค่ผังองค์กร: มันรันเงินเดือนของเดือนที่แล้วผ่านตัวคำนวณจริง
+บันทึกการลาที่ผู้อนุมัติจริงกดอนุมัติแล้ว ทิ้งผู้สมัครงานไว้กลางขั้นตอนการสรรหา
+และมีคำขอรออนุมัติค้างอยู่สองรายการ ทุกหน้ามีของให้ดู เพราะคอนโซลที่ขึ้นว่า
+*"ยังไม่มีข้อมูล"* ทุกหน้า ไม่ได้บอกอะไรเลยว่าระบบใช้งานได้จริงหรือไม่
 
 เปิด **http://localhost:8080**
 

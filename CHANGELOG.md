@@ -41,6 +41,17 @@ entry, tags it and publishes the notes.
 - **`GET /config`**, a public endpoint reporting the feature flags a client
   needs before it can draw its shell. One flag today, `assistantEnabled`.
 
+- **`npm run db:demo`**, a second half to the demo seed that gives the fictional
+  company a history: last month's payroll run, leave that was requested and
+  approved, expense claims, a hiring pipeline mid-flight and an open review
+  cycle. `db:seed` chains the two. It drives the application's own services
+  rather than inserting rows, so the payslips come from the real Thai tax code
+  and the run had to be prepared and approved by two different people.
+
+- **A recorded walkthrough** in both READMEs, and the script that produces it
+  (`docs/demo/record.mjs`). It drives the real console against the seeded
+  company, second factor included, so the demo cannot drift from the product.
+
 ### Changed
 
 - **The assistant is hidden when it is switched off** (CW-027). `ASSISTANT_ENABLED=false`
@@ -52,6 +63,10 @@ entry, tags it and publishes the notes.
   is off. The boot-time rule is unchanged.
 - `db:seed` now says it is demo data when it runs, and refuses to install itself
   beside an organisation it did not create (`SEED_FORCE=1` overrides).
+- **The demo seed no longer leaves most of the console empty.** Payroll,
+  expenses, recruitment and performance all showed *"nothing here yet"* after
+  the documented five-minute setup, which did not match the screenshots in the
+  README and told an evaluator nothing about whether any of it works.
 
 ### Fixed
 
