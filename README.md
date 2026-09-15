@@ -43,15 +43,19 @@ cp .env.example .env
 #   openssl rand -base64 32   # FIELD_ENCRYPTION_KEY
 
 docker compose up -d --build
-docker compose exec api npx prisma migrate deploy
-docker compose exec api npm run db:seed      # demo data — evaluation only
+docker compose run --rm --build migrate              # apply migrations
+docker compose run --rm migrate npm run db:seed      # demo data — evaluation only
 ```
+
+Migrations run through the one-off `migrate` service rather than `exec api`,
+because the API image is pruned to production dependencies and ships no Prisma
+CLI. It is behind a compose profile, so `up` never starts it.
 
 | | |
 |---|---|
 | Admin console | http://localhost:8080 |
-| API docs | http://localhost:3000/api/docs |
 | Demo login | `hr.manager@cwork.example` / `Cwork2026!` |
+| API docs | http://localhost:3000/api/docs — only when `NODE_ENV` is not `production`, which compose defaults it to. Set `NODE_ENV=development` in `.env` to mount them. |
 
 The seed creates a company with eight employees, Thai statutory leave types,
 approval policies, a public-holiday calendar and eight HR policy documents for
@@ -85,7 +89,8 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 backend/     NestJS API — modular monolith over PostgreSQL
 web/         React 19 + Vite admin console
 mobile/      Flutter employee app
-docs/        Architecture, security, data model, API, ADRs
+docs/        Spec, architecture, security, data model, API, ADRs, backlog
+.github/     CI workflow, issue and pull-request templates
 ```
 
 ## A few decisions worth knowing about
@@ -128,6 +133,8 @@ boundaries.
 
 | | |
 |---|---|
+| [Specification](./docs/spec.md) | What the system does, module by module — the reference for what "correct" means |
+| [Backlog](./docs/backlog.md) | Open work, prioritised, with acceptance criteria |
 | [Architecture](./docs/architecture.md) | How the pieces fit, and what is deliberately absent |
 | [Security](./docs/security.md) | Auth, encryption, audit — and an honest list of gaps |
 | [Data model](./docs/data-model.md) | Schema patterns and the hand-written SQL |
@@ -159,9 +166,10 @@ export, no penetration test.
 
 ## Contributing
 
-Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). Good first
-issues tend to be leave-policy variants, payroll edge cases, or a jurisdiction
-other than Thailand.
+Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). The
+[backlog](./docs/backlog.md) is the list of open work, with the ones marked
+*good first issue* called out; they tend to be leave-policy variants, payroll
+edge cases, or a jurisdiction other than Thailand.
 
 ## Licence
 

@@ -10,12 +10,19 @@ COPY package*.json ./
 RUN npm ci
 
 # ---- build ------------------------------------------------------------------
+# Keeps devDependencies, so this stage doubles as the tools image that runs
+# `prisma migrate deploy` and the seed. The runtime image below never uses it
+# directly — it copies from `prod-deps`, which is this stage minus dev deps.
 FROM deps AS build
 COPY prisma ./prisma
 COPY prisma.config.ts tsconfig*.json nest-cli.json ./
 RUN npx prisma generate
 COPY src ./src
-RUN npm run build && npm prune --omit=dev
+RUN npm run build
+
+# ---- prod-deps --------------------------------------------------------------
+FROM build AS prod-deps
+RUN npm prune --omit=dev
 
 # ---- runtime ----------------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime
@@ -29,9 +36,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl curl \
 RUN useradd --system --create-home --uid 10001 cwork
 USER cwork
 
-COPY --chown=cwork:cwork --from=build /app/node_modules ./node_modules
-COPY --chown=cwork:cwork --from=build /app/dist ./dist
-COPY --chown=cwork:cwork --from=build /app/prisma ./prisma
+COPY --chown=cwork:cwork --from=prod-deps /app/node_modules ./node_modules
+COPY --chown=cwork:cwork --from=prod-deps /app/dist ./dist
+COPY --chown=cwork:cwork --from=prod-deps /app/prisma ./prisma
 COPY --chown=cwork:cwork prisma.config.ts package.json ./
 
 EXPOSE 3000

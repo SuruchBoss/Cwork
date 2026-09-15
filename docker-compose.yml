@@ -1,12 +1,18 @@
 # Cwork — full stack for local development and small self-hosted deployments.
 #
 #   cp .env.example .env    # then fill in the secrets it asks for
-#   docker compose up -d
-#   docker compose exec api npx prisma migrate deploy
-#   docker compose exec api npm run db:seed    # demo data; skip in production
+#   docker compose up -d --build
+#   docker compose run --rm --build migrate                    # apply migrations
+#   docker compose run --rm migrate npm run db:seed            # demo data; skip in production
 #
-# The web console is then at http://localhost:8080 and the API docs at
-# http://localhost:3000/api/docs.
+# The web console is then at http://localhost:8080.
+#
+# Migrations run through the `migrate` service, not `exec api`: the api image is
+# pruned to production dependencies and deliberately ships no Prisma CLI.
+#
+# The interactive API docs at http://localhost:3000/api/docs are only mounted
+# when NODE_ENV is not `production`, which is the default here. Set
+# NODE_ENV=development in .env if you want them.
 
 name: cwork
 
@@ -58,6 +64,26 @@ services:
       - "${API_PORT:-3000}:3000"
     volumes:
       - api-uploads:/app/uploads
+
+  # One-off tools container: migrations, the demo seed, `db:verify`. Built from
+  # the Dockerfile's `build` stage, which keeps the devDependencies the runtime
+  # image prunes away. Under a profile so `docker compose up` never starts it;
+  # `docker compose run` enables the profile on its own.
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: ./backend
+      target: build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cwork}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cwork}?schema=public
+      # The seed writes encrypted columns, so it needs the same key as the API.
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env}
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
 
   web:
     build:

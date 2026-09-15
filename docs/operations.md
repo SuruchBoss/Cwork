@@ -8,13 +8,19 @@ cp .env.example .env
 # FIELD_ENCRYPTION_KEY. Compose refuses to start without them.
 
 docker compose up -d --build
-docker compose exec api npx prisma migrate deploy
-docker compose exec api npm run db:verify   # confirm hand-written DB objects
+docker compose run --rm --build migrate                  # apply migrations
+docker compose run --rm migrate npm run db:verify        # confirm hand-written DB objects
 ```
 
+Everything that needs the Prisma CLI runs through the one-off `migrate` service,
+never `exec api`. The API image is pruned to production dependencies and ships
+no CLI on purpose; `migrate` is built from the Dockerfile's `build` stage, which
+keeps them. It sits behind the `tools` compose profile, so `up` never starts it
+and it holds no long-running container.
+
 Then create your first organisation and admin. The seed
-(`docker compose exec api npm run db:seed`) creates a demo company with known
-passwords — **use it to evaluate, never in production.**
+(`docker compose run --rm migrate npm run db:seed`) creates a demo company with
+known passwords — **use it to evaluate, never in production.**
 
 ### Backups
 
@@ -32,9 +38,9 @@ encrypting the columns. Keep it in a secret manager.
 ```bash
 git pull
 docker compose build
-docker compose run --rm api npx prisma migrate deploy
+docker compose run --rm --build migrate
 docker compose up -d
-docker compose exec api npm run db:verify
+docker compose run --rm migrate npm run db:verify
 ```
 
 Migrations are forward-only. Take a database backup first.
@@ -131,7 +137,7 @@ docker compose stop api web
 docker compose exec -T postgres psql -U cwork -d postgres -c 'DROP DATABASE cwork;'
 docker compose exec -T postgres psql -U cwork -d postgres -c 'CREATE DATABASE cwork;'
 cat backup.sql | docker compose exec -T postgres psql -U cwork -d cwork
-docker compose exec api npm run db:verify
+docker compose run --rm migrate npm run db:verify
 docker compose start api web
 ```
 
