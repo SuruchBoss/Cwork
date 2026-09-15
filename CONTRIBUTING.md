@@ -121,6 +121,11 @@ In the PR description, say what changed and **why** — the reasoning is the par
 that is hard to recover later. If you made a non-obvious trade-off, an
 [ADR](./docs/adr/) is welcome.
 
+Anything a person installing Cwork would notice goes in
+[CHANGELOG.md](./CHANGELOG.md) under `## [Unreleased]`, in the section that
+fits — Added, Changed, Fixed, Security. A refactor nobody can see from outside
+does not need an entry.
+
 ## Signing off your work
 
 Every commit needs a `Signed-off-by` line. `git commit -s` adds it:

@@ -322,6 +322,24 @@ the rules to be — not that the belief is right. Check the figures against your
 own before a real run. If you have the standing to review them properly,
 [issue #36](https://github.com/SuruchBoss/Cwork/issues/36) is open for it.
 
+## Versioning
+
+Releases are tagged and recorded in [CHANGELOG.md](./CHANGELOG.md). Install a
+tag rather than `main` if you want to be able to say which version you are
+running:
+
+```bash
+git clone --branch v0.1.0 https://github.com/SuruchBoss/Cwork.git
+```
+
+**This is 0.x, and breaking changes are allowed.** They will be in the changelog
+with what to do about them, but there is no long-term support branch and no
+promise of a painless upgrade path until 1.0. Migrations are forward-only; take
+a database backup before applying any.
+
+1.0 means the schema and the API are stable enough to promise that. It is not
+close, and pretending otherwise would be the more expensive mistake.
+
 ## How this was built
 
 **The code in this repository was written by an AI agent**, working under
