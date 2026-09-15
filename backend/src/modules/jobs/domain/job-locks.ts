@@ -25,15 +25,11 @@ export const JOB_LOCKS = {
 export type JobName = keyof typeof JOB_LOCKS;
 
 /**
- * The first half of every lock id, so Cwork cannot collide with another
- * application's advisory locks in a database it shares. Postgres takes two
- * 32-bit keys or one 64-bit one; two keys is the form that lets a namespace
- * exist at all.
- *
- * `0x43574F52` spells `CWOR` — arbitrary, but recognisable in `pg_locks.classid`
- * and comfortably inside a signed 32-bit integer.
+ * The first half of every lock id. Shared with every other advisory lock Cwork
+ * takes, so it lives in `core/prisma/advisory-lock.ts` and is re-exported here
+ * under the name the job code has always called it.
  */
-export const JOB_LOCK_NAMESPACE = 0x43574f52;
+export { ADVISORY_LOCK_NAMESPACE as JOB_LOCK_NAMESPACE } from '../../../core/prisma/advisory-lock';
 
 /** The lock id for a task, by name. */
 export function lockIdFor(name: JobName): number {

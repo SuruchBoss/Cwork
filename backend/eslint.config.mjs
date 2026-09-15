@@ -24,4 +24,16 @@ export default tseslint.config(
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    /**
+     * Command-line entry points. `no-console` exists to stop a request handler
+     * writing past the logger; for a CLI, stdout *is* the interface, and routing
+     * a prompt or a setup token through Nest's logger would stamp it with a
+     * timestamp and a context tag nobody asked for.
+     */
+    files: ['src/**/*.cli.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );

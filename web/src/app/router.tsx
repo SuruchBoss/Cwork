@@ -7,6 +7,7 @@ import { P } from '@/lib/permissions';
 // Route-level code splitting: the console is large and most roles only ever
 // open a handful of these screens.
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const SetupPage = lazy(() => import('@/features/setup/SetupPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const ApprovalsPage = lazy(() => import('@/features/approvals/ApprovalsPage'));
 const EmployeeListPage = lazy(() => import('@/features/employees/EmployeeListPage'));
@@ -50,6 +51,17 @@ function SuspenseOutlet() {
 }
 
 export const router = createBrowserRouter([
+  {
+    // Outside RequireAuth on purpose: this runs before any account exists. What
+    // stands in for authentication here is the one-time token the wizard asks
+    // for, which only a process with shell access to the server can mint.
+    path: '/setup',
+    element: (
+      <Suspense fallback={<RouteFallback />}>
+        <SetupPage />
+      </Suspense>
+    ),
+  },
   {
     path: '/login',
     element: (

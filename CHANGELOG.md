@@ -19,7 +19,38 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **First-run setup for a clean install** (CW-022). `npm run db:init` creates an
+  organisation, the eight system roles and one administrator — and nothing else.
+  Until now the only way to get an account was `db:seed`, which the README
+  itself labels demo data, so installing Cwork for real people meant loading a
+  fictional company with published credentials and then cleaning up after it.
+  - `npm run db:init -- --web` prints a single-use token instead and setup
+    finishes in a browser at `/setup`. Minting a token requires shell access to
+    the server, which is what keeps a deployment that is up but not yet set up
+    from being claimed by whoever reaches it first. There is deliberately no
+    endpoint that issues one, and no "if no organisation exists, let anyone
+    through" check anywhere.
+  - Both paths refuse once an organisation exists, including a token that was
+    valid moments earlier, and two concurrent attempts are serialised by a
+    Postgres advisory lock.
+  - The first administrator holds `role:manage`, so it enrols a second factor at
+    its first sign-in. Nothing in setup prints a TOTP secret.
+
+### Changed
+
+- `db:seed` now says it is demo data when it runs, and refuses to install itself
+  beside an organisation it did not create (`SEED_FORCE=1` overrides).
+
+### Fixed
+
+- An account could not use an access token issued in the same wall-clock second
+  as the account row was created: `User.sessionsValidFrom` is stored with
+  millisecond precision and is compared against a JWT `iat` in whole seconds, so
+  the token read as older than the account and every request came back "session
+  has been invalidated". Unreachable before — no account could be created and
+  signed into that quickly — and reachable the moment setup existed.
 
 ## [0.1.0] — 2026-09-15
 

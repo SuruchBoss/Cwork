@@ -75,7 +75,7 @@ their own subject, not because a rule said so.
 
 The `domain/` directory is the one that earns its boundary. Leave arithmetic,
 attendance derivation, Thai tax, KPI scoring and assessment grading are all pure
-functions of their inputs. That is why there are 245 backend tests that run in
+functions of their inputs. That is why there are 271 backend tests that run in
 ten seconds with no database: the rules that are expensive to get wrong are the
 ones that are cheapest to test.
 
@@ -146,6 +146,16 @@ There is deliberately no Prisma middleware injecting the filter automatically.
 An implicit filter is invisible when it goes missing — raw queries, nested
 writes and `$queryRaw` all escape it — and a scoping bug that silently stops
 working is far worse than one the compiler can point at.
+
+That one organisation has to come from somewhere, and the module that creates it
+is the one place in the codebase with no tenant to scope to. `modules/setup`
+runs exactly once per install: it takes an organisation, the system role set and
+one administrator, and after that every one of its entry points refuses. Its
+authority comes from outside HTTP — `npm run db:init` needs a shell on the
+server, and the web wizard needs a single-use token that only `db:init` can
+mint. `SetupModule` provides its own `CryptoService` rather than borrowing the
+global one, so the CLI can boot a three-module context instead of the whole
+application to write four rows.
 
 ## Data model
 

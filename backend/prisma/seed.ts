@@ -1,13 +1,17 @@
 /**
- * Development seed.
+ * Demo data. Evaluation only — never a real installation.
  *
- * Creates one organisation with realistic Thai HR configuration: roles, leave
- * types, shifts, pay components, approval policies, a small org chart, and HR
- * policy documents for the assistant to answer from.
+ * Creates one fictional organisation with realistic Thai HR configuration:
+ * roles, leave types, shifts, pay components, approval policies, a small org
+ * chart, and HR policy documents for the assistant to answer from. Every account
+ * shares a published password, and the privileged ones share a published TOTP
+ * secret, so that anybody can open the console in a minute and look around.
  *
- * Safe to re-run: every write is an upsert keyed on a natural key.
+ * Setting up an installation for real people is `npm run db:init` instead, which
+ * creates an organisation, the role set and one administrator, and nothing else.
  *
- * Run with: npm run db:seed
+ * Safe to re-run: every write is an upsert keyed on a natural key. It refuses to
+ * run beside an organisation it did not create — see `assertDemoDatabase`.
  */
 import { hash as argonHash } from '@node-rs/argon2';
 import {
@@ -67,8 +71,50 @@ const MFA_REQUIRED_ROLE_KEYS = new Set(
   ).map((role) => role.key),
 );
 
+/**
+ * Refuses to seed a database that belongs to somebody real.
+ *
+ * The seed upserts on `code: 'CWORK'`, so running it against an installation set
+ * up with `db:init` would not overwrite anything — it would quietly add a second
+ * organisation, with published credentials, alongside the real one. That is a
+ * worse outcome than an error, and it is the kind of mistake made at the end of
+ * a long day with two terminals open.
+ */
+/** A refusal, not a crash: printed as a message with no stack trace. */
+class SeedRefused extends Error {}
+
+async function assertDemoDatabase(): Promise<void> {
+  const foreign = await prisma.organization.findFirst({
+    where: { code: { not: ORG_CODE } },
+    select: { code: true, name: true },
+  });
+  if (!foreign) return;
+
+  if (process.env.SEED_FORCE === '1') {
+    console.warn(
+      `  SEED_FORCE=1: adding demo data beside "${foreign.name}" (${foreign.code}). ` +
+        'Published credentials are about to exist in this database.',
+    );
+    return;
+  }
+
+  throw new SeedRefused(
+    [
+      `This database already holds "${foreign.name}" (${foreign.code}), which the demo seed did not create.`,
+      '',
+      'The seed is evaluation-only: it creates accounts with a published password',
+      'and a published two-factor secret. Adding those beside a real organisation',
+      'is not something to do by accident.',
+      '',
+      'Nothing has been written. Point DATABASE_URL at a throwaway database, or',
+      'set SEED_FORCE=1 if you genuinely mean to do this.',
+    ].join('\n'),
+  );
+}
+
 async function main(): Promise<void> {
-  console.log('Seeding Cwork…');
+  console.log('Seeding Cwork with DEMO DATA — evaluation only, never a real installation.');
+  await assertDemoDatabase();
 
   const organization = await prisma.organization.upsert({
     where: { code: ORG_CODE },
@@ -938,7 +984,7 @@ async function main(): Promise<void> {
     });
   }
 
-  console.log('\nSeed complete.');
+  console.log('\nSeed complete — this is demo data.');
   console.log(`  Sign in at /api/v1/auth/login with any of:`);
   for (const person of people) {
     const marker = mfaDemoAccounts.includes(person.email) ? '  [needs a 2FA code]' : '';
@@ -965,6 +1011,9 @@ async function main(): Promise<void> {
     console.log('\n  FIELD_ENCRYPTION_KEY is not set, so the privileged demo accounts were');
     console.log('  left without a second factor — and they cannot sign in until they enrol.');
   }
+
+  console.log('\n  Every credential above is published in this repository. Setting up an');
+  console.log('  installation for real people is `npm run db:init`, not this.');
 }
 
 async function upsertMany<T extends { code: string }, R extends { id: string }>(
@@ -1022,7 +1071,7 @@ async function seedApprovalPolicy(
 
 main()
   .catch((error) => {
-    console.error('Seed failed:', error);
+    console.error(error instanceof SeedRefused ? `\n${error.message}` : `Seed failed: ${String(error)}`);
     process.exitCode = 1;
   })
   .finally(async () => {

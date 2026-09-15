@@ -166,13 +166,18 @@ export class ScheduledTasksService {
     await this.locks.runExclusively('prune-expired-tokens', async () => {
       const cutoff = subDays(new Date(), 30);
 
-      const [sessions, resets] = await this.prisma.$transaction([
+      const [sessions, resets, setupTokens] = await this.prisma.$transaction([
         this.prisma.session.deleteMany({ where: { expiresAt: { lt: cutoff } } }),
         this.prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: cutoff } } }),
+        // First-run tokens outlive their hour by a long way here on purpose:
+        // the row is the only record that setup was reachable at all, and it is
+        // worth keeping around for the same month the other two are.
+        this.prisma.setupToken.deleteMany({ where: { expiresAt: { lt: cutoff } } }),
       ]);
 
       this.logger.log(
-        `Pruned ${sessions.count} expired session(s), ${resets.count} reset token(s)`,
+        `Pruned ${sessions.count} expired session(s), ${resets.count} reset token(s), ` +
+          `${setupTokens.count} setup token(s)`,
       );
     });
   }

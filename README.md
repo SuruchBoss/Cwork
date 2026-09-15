@@ -108,6 +108,46 @@ The interactive API docs live at `/api/docs` whenever `NODE_ENV` is not
 
 ---
 
+## Installing it for a real organisation
+
+The five minutes above are demo data: a published password, a published
+two-factor secret, eight fictional employees. A real install skips the seed
+entirely.
+
+```bash
+docker compose up -d --build
+docker compose run --rm --build migrate           # apply migrations
+docker compose run --rm migrate npm run db:init   # your organisation
+```
+
+`db:init` asks for an organisation name, a timezone and the first
+administrator's email, and creates exactly that: one organisation, the eight
+system roles, one account. Nothing else — no departments, no demo rows, nothing
+to clean up afterwards.
+
+If the terminal is not where you want to type all that:
+
+```bash
+docker compose run --rm migrate npm run db:init -- --web
+```
+
+prints a single-use token and you finish at **http://localhost:8080/setup**.
+That token is the entire security model. Minting one needs shell access to the
+server, which is the one thing a stranger who finds a fresh deployment does not
+have — so the wizard cannot be claimed by whoever reaches it first. It lasts an
+hour and works once.
+
+Either way the first administrator holds every permission there is, so Cwork
+makes it enrol a second factor before its first session: have an authenticator
+app to hand. Neither the CLI nor the wizard ever prints a TOTP secret — you
+enrol it yourself, once.
+
+Running `db:init` a second time on a database that already has an organisation
+refuses, and so does `db:seed`: the demo data will not install itself beside a
+real company by accident.
+
+---
+
 ## What it does
 
 > **The interface is Thai.** An English locale is on the
@@ -233,7 +273,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 245 backend tests run in ten
+no database, no framework and no I/O. That is why 271 backend tests run in ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -299,8 +339,8 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 245 backend unit
-tests, 17 web, 33 mobile, plus a 138-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 271 backend unit
+tests, 23 web, 33 mobile, plus a 160-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -359,8 +399,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 245 backend unit tests, 17 web,
-  33 mobile, 103 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 271 backend unit tests, 23 web,
+  33 mobile, 160 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the

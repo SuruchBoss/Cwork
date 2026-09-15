@@ -28,6 +28,12 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 You need Node 22+, PostgreSQL 16, and Flutter 3.24+ for mobile work. pgvector is
 optional — only semantic search uses it.
 
+`db:seed` is the demo company, which is what you want for development: known
+passwords, a published two-factor secret, eight employees to work against. The
+path a real installation takes is `npm run db:init` instead — see
+[Operations](./docs/operations.md#first-run-setup). The two refuse to share a
+database, so you cannot end up with demo accounts sitting next to real ones.
+
 ## Before you open a PR
 
 ```bash

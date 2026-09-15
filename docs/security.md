@@ -36,6 +36,39 @@ immediately, without waiting for it to expire.
 effect within 30 seconds (a small in-process cache) rather than when the access
 token expires.
 
+## Claiming a fresh installation
+
+Between the moment a deployment starts answering requests and the moment its
+first administrator exists, there is a window in which the install belongs to
+nobody. Whoever creates that account owns every record the organisation will
+ever hold.
+
+Cwork closes that window with a credential a stranger cannot have: shell access
+to the server. `npm run db:init` either completes setup on the spot or mints a
+single-use token for the browser wizard at `/setup`. There is no HTTP endpoint
+that issues a token, and no code path anywhere that treats "no organisation
+exists yet" as authorisation — that check alone would make the install a race,
+and a scanner sweeping the port wins races against a person reading logs.
+
+The specifics:
+
+- The token is 32 random bytes; only its SHA-256 is stored.
+- It expires an hour after it is minted and can be spent once. The update that
+  marks it spent is conditional on it still being unspent, so two requests
+  carrying the same token cannot both succeed.
+- Unknown, expired and already-spent tokens are refused with one identical
+  message, so a guess cannot be graded.
+- Setup runs inside a transaction holding a Postgres advisory lock and re-checks
+  for an organisation after taking it. Concurrent attempts cannot both win.
+- Once an organisation exists, everything here refuses — including a token that
+  was perfectly valid a moment earlier.
+- `GET /setup/status` is public and reveals one bit: whether setup has run. The
+  sign-in page reveals as much, and the console needs it to know which screen to
+  show. Knowing an install is fresh still buys nothing without a token.
+- The first administrator holds `role:manage`, which is on the MFA-required
+  list, so it must enrol a second factor before its first session. Nothing in
+  setup prints a TOTP secret.
+
 ## Authorisation
 
 Permissions are strings (`leave:approve`, `employee:read:sensitive`). Roles are

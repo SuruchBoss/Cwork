@@ -30,6 +30,7 @@ import { OrganizationModule } from './modules/organization/organization.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
 import { PerformanceModule } from './modules/performance/performance.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
+import { SetupModule } from './modules/setup/setup.module';
 
 /**
  * Modular monolith. Each feature module owns its data and exposes a service;
@@ -80,6 +81,7 @@ import { RecruitmentModule } from './modules/recruitment/recruitment.module';
     AuditModule,
     AuthModule,
     HealthModule,
+    SetupModule,
 
     OrganizationModule,
     EmployeesModule,

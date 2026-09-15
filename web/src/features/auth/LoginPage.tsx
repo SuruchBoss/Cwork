@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Button, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
+import { fetchSetupStatus } from '@/features/setup/setup.api';
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/stores/auth.store';
 import type { MfaChallenge, MfaEnrolment } from '@/types/api';
@@ -40,6 +41,29 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<Step>({ name: 'credentials' });
   const [serverError, setServerError] = useState<string | null>(null);
+
+  /**
+   * A freshly installed Cwork has no account to sign in as, and a sign-in form
+   * is a dead end for whoever just deployed it. Send them to the wizard instead.
+   *
+   * Deliberately does not block the form while it asks: on every install after
+   * the first this check is a no-op, and making everybody wait on it to render a
+   * login box would be the wrong trade.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    fetchSetupStatus()
+      .then((status) => {
+        if (!cancelled && !status.initialised) navigate('/setup', { replace: true });
+      })
+      .catch(() => {
+        // Unreachable API. The sign-in attempt will say so far better than a
+        // banner here could.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   const {
     register,

@@ -635,7 +635,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 245 backend, 17 web, 33 mobile. A 138-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 271 backend, 23 web, 33 mobile. A 160-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -659,8 +659,6 @@ Stated plainly, with the remedies in
 - Issued documents are not rendered; the API supplies merge data only.
 - Benefits and shift administration exist in the API but not in the console.
 - The mobile app can present a second factor but cannot enrol one.
-- **No first-run setup.** A clean install cannot create an organisation or a
-  first administrator except through `db:seed`, which is demo data (CW-022).
 - **The Thai tax and social-security rules are unreviewed** by anyone qualified
   (CW-030).
 - **No device binding.** `deviceId` is recorded on every punch and authorises

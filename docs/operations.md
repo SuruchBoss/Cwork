@@ -18,9 +18,67 @@ no CLI on purpose; `migrate` is built from the Dockerfile's `build` stage, which
 keeps them. It sits behind the `tools` compose profile, so `up` never starts it
 and it holds no long-running container.
 
-Then create your first organisation and admin. The seed
-(`docker compose run --rm migrate npm run db:seed`) creates a demo company with
-known passwords — **use it to evaluate, never in production.**
+### First-run setup
+
+A freshly migrated database has no organisation and no account, and there is no
+registration endpoint — by design. The only thing that can create the first
+administrator is a process with shell access to the server:
+
+```bash
+docker compose run --rm migrate npm run db:init
+```
+
+It asks for an organisation name, a short code, a timezone and the first
+administrator's email and password, then creates one organisation, the eight
+system roles and that one account. Nothing else: no departments, no positions,
+no employees.
+
+To finish in a browser instead — which is usually nicer for typing a Thai
+organisation name — ask for a token:
+
+```bash
+docker compose run --rm migrate npm run db:init -- --web
+```
+
+and open `$PUBLIC_WEB_URL/setup` with it. The token is single use, expires after
+an hour, and is the only thing the wizard accepts.
+
+**Why a token rather than "if no organisation exists, let anyone through".**
+Between `docker compose up` and the moment setup finishes, a deployment is
+reachable and unclaimed. A bare emptiness check would hand it to whoever found
+it first — a scanner sweeping port 8080 has better odds of being first than the
+person who just started the container and is still reading logs. Requiring a
+token moves the credential to something only the operator has: a shell on the
+server. There is no endpoint that issues one; `db:init` is the only source.
+
+Other things worth knowing:
+
+- **It refuses to run twice.** A database with an organisation in it — including
+  a soft-deleted one — gets a refusal and no writes. So does the wizard, token
+  or no token: a token minted while the install was empty is worthless once
+  somebody else has finished setting it up.
+- **Two wizards cannot race.** Setup runs inside a transaction holding a
+  Postgres advisory lock, so the second one waits and then fails the re-check
+  rather than quietly creating a second administrator.
+- **Scripted installs** pass `--name`, `--code`, `--timezone`, `--email` and
+  either `--password` or `CWORK_ADMIN_PASSWORD` (which keeps the password out of
+  shell history and out of `ps`). Without a terminal and without those, it
+  refuses rather than hanging on a prompt.
+- **The first administrator holds `role:manage`**, which is on the MFA-required
+  list, so its first sign-in goes through enrolment before any session exists.
+  Neither the CLI nor the wizard prints a TOTP secret — the administrator enrols
+  its own.
+- **The account has no employee record.** It is an operator, not a member of
+  staff. Create employees from the console afterwards; give the person their own
+  employee account then if they need one.
+
+### Demo data is a separate thing
+
+`docker compose run --rm migrate npm run db:seed` creates a fictional company
+with a published password and a published two-factor secret. It is for
+evaluating Cwork and nothing else, it says so when it runs, and it refuses to
+install itself beside an organisation it did not create (`SEED_FORCE=1`
+overrides that, and you will not want to).
 
 ### Backups
 

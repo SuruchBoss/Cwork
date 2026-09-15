@@ -126,6 +126,30 @@ model Session {
   @@map("sessions")
 }
 
+/// One-time credential that lets the browser setup wizard create the very first
+/// organisation and administrator.
+///
+/// Issued only by `npm run db:init`, which needs shell access to the server —
+/// that is the entire security argument. Nothing reachable over HTTP can mint
+/// one, so the wizard cannot be opened by a stranger who finds a fresh install
+/// before its owner does.
+///
+/// Deliberately has no `organizationId`: it exists precisely while there is no
+/// organisation to belong to.
+model SetupToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  /// SHA-256 of the token. The raw value is printed once, by the CLI, and never stored.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  /// Email of the administrator this token created, once it has been spent.
+  usedBy    String?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("setup_tokens")
+}
+
 model PasswordResetToken {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @db.Uuid
