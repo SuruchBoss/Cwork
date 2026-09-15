@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -b --noEmit",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts"

@@ -150,6 +150,18 @@ trail, and notified to the uploader. Quarantine is destruction: the row and the
 signature survive, the bytes do not. Keeping malware on disk to look at later is
 not a decision an HRIS should make on its owner's behalf.
 
+**Before any of that, there is the parser.** Three of the four multer
+advisories cleared in September 2026 were denial of service, and two of those
+needed only a crafted *field name* — no file at all. So the endpoint declares
+its whole contract as parser limits: one part, named `file`, 20 MB, and **zero
+text fields**. Anything else is refused with a 400 before a byte is read. That
+last limit is the one doing the work: a field-name attack needs a text part to
+put the name on.
+
+Multer errors are mapped to HTTP status by *code*, not by message — Nest's own
+mapping matches message text, and a multer release that reworded one turned
+every such request into a 500. See `AllExceptionsFilter`.
+
 ## Input handling
 
 - `ValidationPipe` runs with `whitelist` and `forbidNonWhitelisted`, so a
@@ -242,6 +254,25 @@ the database. The API states which one is in use at every boot.
 If the store cannot be reached, the limiter **fails open** and logs an error. A
 rate limiter is not worth locking everybody out of a healthy system for, and a
 database that is unreachable is already a louder problem than this one.
+
+## Dependencies
+
+`npm audit --omit=dev` must report nothing high or critical, in the backend and
+in the web console. CI enforces it on every push **and weekly on a schedule**,
+because an advisory is published against code that has not changed — a gate that
+only runs on commits reports the problem whenever someone next happens to push.
+
+Dev-only advisories are deliberately not part of that gate. A build-tool
+advisory is worth knowing about and is not a reason to block a release, and a
+gate that cries wolf is a gate somebody eventually mutes.
+
+When a transitive dependency is fixed upstream but its parent has not picked the
+fix up yet, the fixed version is pinned with an npm `overrides` entry rather than
+by taking a major framework upgrade for a security patch. That is what
+`backend/package.json` does for `multer` and `deepmerge-ts` today. An override is
+a claim that the new version is compatible, so it comes with the tests that
+prove it — `test/upload-limits.e2e-spec.ts` exists because the multer override
+did in fact change behaviour on the way in.
 
 ## Reporting a vulnerability
 

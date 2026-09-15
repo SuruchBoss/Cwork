@@ -17,6 +17,7 @@
     "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"{src,test,prisma}/**/*.{ts,prisma}\"",
     "format:check": "prettier --check \"{src,test}/**/*.ts\"",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -89,6 +90,10 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.43.0"
+  },
+  "overrides": {
+    "multer": "^2.4.0",
+    "deepmerge-ts": "^8.0.2"
   },
   "jest": {
     "moduleFileExtensions": [

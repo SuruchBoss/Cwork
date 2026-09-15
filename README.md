@@ -228,7 +228,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 184 backend tests run in ten
+no database, no framework and no I/O. That is why 192 backend tests run in ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -294,8 +294,8 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 184 backend unit
-tests, 17 web, 33 mobile, plus a 64-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 192 backend unit
+tests, 17 web, 33 mobile, plus a 71-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 

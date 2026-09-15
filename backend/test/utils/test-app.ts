@@ -56,16 +56,48 @@ export class Api {
     return { status: res.status, body: res.body };
   }
 
-  /** Multipart upload, for the endpoints that take a file rather than JSON. */
+  /**
+   * Multipart upload, for the endpoints that take a file rather than JSON.
+   *
+   * `part` exists for the limit tests: they need to send the file under a
+   * different name, or bolt extra text fields onto an otherwise valid request,
+   * which is what the multipart parser is being asked to refuse.
+   */
   async upload<T = any>(
     path: string,
     token: string,
     file: { filename: string; contentType: string; content: Buffer },
+    part: { name?: string; fields?: Record<string, string> } = {},
   ): Promise<ApiResponse<T>> {
-    const res = await request(this.server())
+    const req = request(this.server())
       .post(this.base + path)
       .set('Authorization', `Bearer ${token}`)
-      .attach('file', file.content, { filename: file.filename, contentType: file.contentType });
+      .attach(part.name ?? 'file', file.content, {
+        filename: file.filename,
+        contentType: file.contentType,
+      });
+
+    for (const [name, value] of Object.entries(part.fields ?? {})) req.field(name, value);
+
+    const res = await req;
+    return { status: res.status, body: res.body };
+  }
+
+  /** Several file parts in one request — only the limit tests want this. */
+  async uploadMany<T = any>(
+    path: string,
+    token: string,
+    files: { filename: string; contentType: string; content: Buffer }[],
+  ): Promise<ApiResponse<T>> {
+    const req = request(this.server())
+      .post(this.base + path)
+      .set('Authorization', `Bearer ${token}`);
+
+    for (const f of files) {
+      req.attach('file', f.content, { filename: f.filename, contentType: f.contentType });
+    }
+
+    const res = await req;
     return { status: res.status, body: res.body };
   }
 

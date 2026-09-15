@@ -431,6 +431,11 @@ Files go to local disk or S3-compatible storage behind one `StorageService`.
 Uploads are checked against a MIME allow-list, a matching extension, and the
 type's magic bytes, with a 20 MB ceiling.
 
+The multipart parser is held to the same contract before any of that: one part,
+named `file`, and no text fields at all. Two of the four multer advisories this
+cleared are denial of service through a crafted *field name* rather than a file,
+and a request that cannot carry a field cannot carry one of those.
+
 **Requirement: uploads are scanned before they are stored.** The bytes are
 streamed to clamd (`MALWARE_SCAN_ENABLED`); a detection is refused at upload
 with the signature named, audited, and notified to the uploader, and nothing is
@@ -530,7 +535,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 184 backend, 17 web, 33 mobile. A 64-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 192 backend, 17 web, 33 mobile. A 71-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -553,7 +558,4 @@ Stated plainly, with the remedies in
 - Issued documents are not rendered; the API supplies merge data only.
 - Benefits and shift administration exist in the API but not in the console.
 - The mobile app can present a second factor but cannot enrol one.
-- `npm audit --omit=dev` reports nine high-severity advisories in shipped
-  dependencies, the notable one being a multer denial of service reachable from
-  the public careers page.
 - No penetration test. This code has not been audited.

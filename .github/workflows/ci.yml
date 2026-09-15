@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Advisories are published against code that has not changed, so the audit
+  # below has to run on a clock as well as on a commit. Monday 03:00 UTC is
+  # Monday morning in Bangkok.
+  schedule:
+    - cron: '0 3 * * 1'
 
 # A new push supersedes an in-flight run for the same branch.
 concurrency:
@@ -117,3 +122,34 @@ jobs:
       - run: dart format --line-length 100 --set-exit-if-changed lib test
       - run: flutter analyze --fatal-infos
       - run: flutter test
+
+  security:
+    name: Dependency advisories
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Shipped dependencies only. A dev-only advisory is worth knowing about
+      # but is not a reason to block a release, and treating the two alike is
+      # how an audit gate ends up permanently muted.
+      #
+      # This job can go red without anybody pushing anything: that is the
+      # point. When it does, the fix is a real one — upgrade the parent, or
+      # pin the fixed transitive version through `overrides` in package.json
+      # and say in the commit message what bounds the exposure meanwhile.
+      - name: Backend production dependencies
+        working-directory: backend
+        run: |
+          npm ci --ignore-scripts
+          npm run audit:prod
+
+      - name: Web production dependencies
+        working-directory: web
+        run: |
+          npm ci --ignore-scripts
+          npm run audit:prod
