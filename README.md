@@ -295,7 +295,7 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 ## Status
 
 Working and verified end to end — sign-in through payroll. 184 backend unit
-tests, 17 web, 30 mobile, plus a 64-check end-to-end suite that drives the real
+tests, 17 web, 33 mobile, plus a 64-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
