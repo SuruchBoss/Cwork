@@ -11,6 +11,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalOutcomeRegistry } from './approval-outcome.registry';
 import { matchesConditions, type PolicyConditions } from './domain/policy-matcher';
+import type { CreateApprovalPolicyDto } from './dto/approval.dto';
 
 export interface StartApprovalInput {
   organizationId: string;
@@ -236,6 +237,37 @@ export class ApprovalService {
           },
         },
       },
+    });
+  }
+
+  // ------------------------------------------------------------------ policies
+
+  /**
+   * The policies themselves, which are configuration rather than a decision.
+   *
+   * Thin enough that they lived in the controller until the layering audit
+   * found them there. A controller holding a Prisma client is one refactor away
+   * from a controller holding a transaction.
+   */
+  listPolicies(organizationId: string) {
+    return this.prisma.approvalPolicy.findMany({
+      where: { organizationId },
+      orderBy: [{ entityType: 'asc' }, { priority: 'desc' }],
+      include: { steps: { orderBy: { orderIndex: 'asc' } } },
+    });
+  }
+
+  createPolicy(organizationId: string, dto: CreateApprovalPolicyDto) {
+    return this.prisma.approvalPolicy.create({
+      data: {
+        organizationId,
+        entityType: dto.entityType,
+        name: dto.name,
+        conditions: (dto.conditions ?? {}) as Prisma.InputJsonValue,
+        priority: dto.priority ?? 0,
+        steps: { create: dto.steps },
+      },
+      include: { steps: { orderBy: { orderIndex: 'asc' } } },
     });
   }
 

@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuditAction, Prisma } from '@prisma/client';
+import { PageDto } from '../../core/http/pagination.dto';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import type { AuthenticatedUser } from '../../core/security/current-user';
+import type { AuditQueryDto } from './dto/audit-query.dto';
 
 export interface AuditEntry {
   organizationId: string;
@@ -41,6 +44,45 @@ export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Browsing the trail, scoped to the caller's organisation.
+   *
+   * The write side above is the interesting one; this is here so the controller
+   * does not have to hold a Prisma client to answer a GET. The `where` is built
+   * once and used for both the page and the count, so the total can never
+   * describe a different filter from the rows.
+   */
+  async search(user: AuthenticatedUser, query: AuditQueryDto) {
+    const where: Prisma.AuditLogWhereInput = {
+      organizationId: user.organizationId,
+      ...(query.action ? { action: query.action } : {}),
+      ...(query.entityType ? { entityType: query.entityType } : {}),
+      ...(query.entityId ? { entityId: query.entityId } : {}),
+      ...(query.actorUserId ? { actorUserId: query.actorUserId } : {}),
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: query.sortOrder },
+        skip: query.skip,
+        take: query.limit,
+        include: { actor: { select: { id: true, email: true } } },
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+
+    return PageDto.of(data, total, query.page, query.limit);
+  }
 
   /**
    * Auditing must never break the operation it is recording, so failures are

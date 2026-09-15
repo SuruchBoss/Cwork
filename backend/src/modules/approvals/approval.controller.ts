@@ -1,8 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApprovalEntityType, ApprovalTaskStatus, AuditAction, Prisma } from '@prisma/client';
+import { ApprovalEntityType, ApprovalTaskStatus, AuditAction } from '@prisma/client';
 import { Audited } from '../../core/http/audit.decorator';
-import { PrismaService } from '../../core/prisma/prisma.service';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
@@ -17,10 +16,7 @@ import {
 @ApiBearerAuth()
 @Controller('approvals')
 export class ApprovalController {
-  constructor(
-    private readonly approvals: ApprovalService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly approvals: ApprovalService) {}
 
   @Get('tasks')
   @ApiOperation({ summary: 'Approval tasks assigned to me' })
@@ -53,11 +49,7 @@ export class ApprovalController {
   @RequirePermissions(Permission.APPROVAL_POLICY_MANAGE)
   @ApiOperation({ summary: 'List approval policies' })
   listPolicies(@CurrentUser() user: AuthenticatedUser) {
-    return this.prisma.approvalPolicy.findMany({
-      where: { organizationId: user.organizationId },
-      orderBy: [{ entityType: 'asc' }, { priority: 'desc' }],
-      include: { steps: { orderBy: { orderIndex: 'asc' } } },
-    });
+    return this.approvals.listPolicies(user.organizationId);
   }
 
   @Post('policies')
@@ -65,16 +57,6 @@ export class ApprovalController {
   @Audited({ action: AuditAction.CREATE, entityType: 'ApprovalPolicy' })
   @ApiOperation({ summary: 'Create an approval policy with its steps' })
   createPolicy(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateApprovalPolicyDto) {
-    return this.prisma.approvalPolicy.create({
-      data: {
-        organizationId: user.organizationId,
-        entityType: dto.entityType,
-        name: dto.name,
-        conditions: (dto.conditions ?? {}) as Prisma.InputJsonValue,
-        priority: dto.priority ?? 0,
-        steps: { create: dto.steps },
-      },
-      include: { steps: { orderBy: { orderIndex: 'asc' } } },
-    });
+    return this.approvals.createPolicy(user.organizationId, dto);
   }
 }
