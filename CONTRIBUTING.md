@@ -57,16 +57,30 @@ like a test database — that guard is there to save your local data, so set
 ## Where code goes
 
 ```
-backend/src/modules/<domain>/
-├── domain/       Pure functions. No Prisma, no Nest, no I/O.
-├── application/  Services: orchestration, transactions, permissions.
-└── api/          Controllers and DTOs.
+backend/src/modules/<feature>/
+├── domain/                 Pure functions. No Prisma client, no Nest, no I/O.
+├── dto/                    Request and response shapes, with validation.
+├── <feature>.service.ts    Orchestration, transactions, permissions.
+├── <feature>.controller.ts HTTP only: route, guard, delegate.
+└── <feature>.module.ts
 ```
+
+Only `domain/` is a boundary; the rest are files named after what they are.
+There is no `application/` or `api/` directory — one service file and one
+controller file per module is unambiguous at this size. Add a second service
+when one grows broad enough to be two subjects (`payroll.service.ts` and
+`compensation.service.ts`), not because a layer diagram said to.
 
 **Business rules belong in `domain/`.** If it computes leave days, tax, a KPI
 score or an attendance status, it is a pure function of its inputs and it has a
 unit test. This is not stylistic — it is what makes the rules cheap to test and
 possible to explain to someone disputing a number.
+
+A `domain/` file may import **types and enums** from `@prisma/client` and
+nothing else from it: those enums are the vocabulary the rules are written in,
+and a second copy of `LeaveAccrualMethod` is a second thing to keep in step.
+What it must never touch is the client — no query, no transaction, no `await`
+on anything that leaves the process.
 
 Modules call each other's **services**, never each other's repositories.
 

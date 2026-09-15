@@ -51,21 +51,42 @@ pay the cost up front.
 ## Layering inside a module
 
 ```
-modules/leave/
-├── domain/       Pure functions. No database, no framework, no I/O.
-├── data|infra/   Prisma queries.
-├── application/  Services: orchestration, transactions, permissions.
-└── api/          Controllers and DTOs.
+modules/payroll/
+├── domain/                  Pure functions. No client, no framework, no I/O.
+│   ├── thai-tax.ts
+│   └── payroll-calculator.ts
+├── dto/                     Request and response shapes, with validation.
+│   └── payroll.dto.ts
+├── payroll.service.ts       Orchestration, transactions, permissions.
+├── compensation.service.ts  A second service when one grew too broad.
+├── payroll.controller.ts    HTTP only: route, guard, delegate.
+└── payroll.module.ts
 ```
 
-The `domain/` directory is the important one. Leave arithmetic, attendance
-derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 245 backend tests that run in ten seconds
-with no database: the rules that are expensive to get wrong are the ones that
-are cheapest to test.
+**One boundary is enforced, and it is `domain/`.** Everything else is a flat
+file whose name says what it is. There is no `application/` or `infrastructure/`
+directory, deliberately: a service file and a controller file per module is
+already unambiguous at this size, and a directory per layer would be four
+folders deep to hold one file each.
+
+Splitting happens when a service gets broad rather than on a schedule — payroll
+is four services because compensation, expense claims and benefits are each
+their own subject, not because a rule said so.
+
+The `domain/` directory is the one that earns its boundary. Leave arithmetic,
+attendance derivation, Thai tax, KPI scoring and assessment grading are all pure
+functions of their inputs. That is why there are 245 backend tests that run in
+ten seconds with no database: the rules that are expensive to get wrong are the
+ones that are cheapest to test.
 
 It is also what makes "why was I charged 2.5 days?" answerable. The calculation
 is one function you can read, not a query plan spread across three services.
+
+**What `domain/` may import**: types and enums from `@prisma/client`, and
+nothing else from it. `AttendanceStatus` and `LeaveAccrualMethod` are the
+vocabulary the rules are written in, and re-declaring them here to keep a rule
+pure on paper would mean two definitions to keep in step. What is banned is the
+*client* — a `domain/` function never reads or writes anything.
 
 ## State management
 
