@@ -2,7 +2,9 @@
 
 What the system does, module by module. This is the reference for what
 "correct" means: when an implementation and this document disagree, one of them
-is a bug, and the tests in `*/domain/*.spec.ts` are the tie-breaker.
+is a bug. The tie-breaker is the tests: `*/domain/*.spec.ts` for the rules
+below, and `backend/test/*.e2e-spec.ts` for the ones that only show up when the
+whole thing runs.
 
 It describes the system as built, not as wished for. Work that is *not* built
 lives in [backlog.md](./backlog.md); the architecture behind these decisions is
@@ -51,7 +53,9 @@ deployment (the schema is multi-tenant; the product is not sold as one).
 - Email and password. Passwords are hashed with **Argon2id** (19456 KiB memory,
   t=2, p=1). No other hash is accepted.
 - Sign-in returns a short-lived **access token** (JWT, 15 min default) and a
-  long-lived **refresh token** (30 days default).
+  long-lived **refresh token** (30 days default) — unless the account owes a
+  second factor, in which case it returns a challenge instead. See
+  [Second factor](#second-factor) below.
 - Refresh tokens **rotate** on every use. Presenting a refresh token that has
   already been used invalidates the entire token family — the signal of a stolen
   token is that it gets used twice.
@@ -61,6 +65,9 @@ deployment (the schema is multi-tenant; the product is not sold as one).
   for `AUTH_LOCKOUT_MINUTES` (default 15).
 - Both clients refresh through a **single-flight** guard: concurrent 401s
   collapse into one refresh, never a stampede.
+- The credential endpoints — sign-in, MFA verify and enrolment — carry their own
+  rate limit, `AUTH_THROTTLE_LIMIT` (default 10/minute), far tighter than the
+  global one. It is per-instance; see [Known limits](#known-limits).
 
 **Requirement:** no endpoint is reachable without a valid access token unless it
 is explicitly marked public. The `JwtAuthGuard` is registered globally, so the
@@ -236,6 +243,11 @@ early-leave minutes against the assigned shift, and a status of `PRESENT`,
 The derivation is pure and re-runnable: the punch stream is the source of truth,
 and the record is a cache of it.
 
+**Shift assignment is API-only.** Late and early-leave minutes are measured
+against the assigned shift, but nothing in the console defines a shift or
+assigns one, so in practice those numbers come from seeded or API-created data.
+See CW-010 in the [backlog](./backlog.md).
+
 ### 5.4 Offline capture
 
 The mobile app queues punches while offline in durable storage and replays them
@@ -342,6 +354,11 @@ into the run as recurring lines. `ExpenseClaim` has line items with categories
 and receipts, goes through the approval chain, and pays through payroll or
 outside it.
 
+**Benefits are API-only.** The endpoints, models and permissions are all there,
+but the console has no benefits screen, so enrolment means calling the API
+directly — and enrolments feed payroll. See CW-009 in the
+[backlog](./backlog.md).
+
 ---
 
 ## 7. Approvals
@@ -400,6 +417,11 @@ keeps leave, payroll and recruitment from forming an import cycle.
 `PAYSLIP_COPY`, `TAX_WITHHOLDING_50BIS`, `VISA_SUPPORT_LETTER`,
 `BANK_LOAN_LETTER` and `SOCIAL_SECURITY_LETTER`. An employee requests; someone
 with `document:issue` fulfils.
+
+**Nothing renders the document.** The API returns the *merge data* a certificate
+template needs, and `issue` records the id of a file somebody uploaded — so the
+approval trail ends in a manual step. See CW-008 in the
+[backlog](./backlog.md).
 
 Files go to local disk or S3-compatible storage behind one `StorageService`.
 Uploads are type- and size-checked. `FileObject.scanStatus` exists for malware
@@ -474,6 +496,13 @@ Flutter with Riverpod, **no code generation** — see
 `flutter_secure_storage`. Tabs are computed by `visibleTabsFor(SessionUser)`,
 which is unit-tested rather than trusted.
 
+It can *present* a second factor — a generated code or a recovery code — but it
+cannot **enrol** one: scanning a QR code with the phone displaying it does not
+work. An account that must enrol is sent to the console. That is invisible while
+the requirement only reaches console roles, and a lock-out the moment an
+organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
+[backlog](./backlog.md).
+
 ---
 
 ## Non-functional requirements
@@ -486,7 +515,7 @@ which is unit-tested rather than trusted.
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
 | **Input** | `ValidationPipe` with `whitelist` and `forbidNonWhitelisted`, so an unexpected field is rejected rather than ignored. |
 | **Localisation** | UI is Thai. Nothing in the architecture is Thailand-specific: tax rules are data, leave types are configuration, OT multipliers are settings. |
-| **Deployment** | Three containers plus PostgreSQL 16. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
+| **Deployment** | Three containers — API, console, PostgreSQL 16 — plus a one-off `migrate` container behind a compose profile. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
 
 ### Known limits
 
@@ -500,4 +529,10 @@ Stated plainly, with the remedies in
 - No email or push dispatch — `NotificationsService` is the seam for it.
 - `outbox_events` exists but nothing consumes it.
 - No ภ.ง.ด.1 withholding-tax filing export.
+- Issued documents are not rendered; the API supplies merge data only.
+- Benefits and shift administration exist in the API but not in the console.
+- The mobile app can present a second factor but cannot enrol one.
+- `npm audit --omit=dev` reports nine high-severity advisories in shipped
+  dependencies, the notable one being a multer denial of service reachable from
+  the public careers page.
 - No penetration test. This code has not been audited.
