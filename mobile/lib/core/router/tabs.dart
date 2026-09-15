@@ -29,8 +29,14 @@ class AppTab {
 /// role never sees a tab whose API would refuse it. The server still enforces
 /// every action — this only avoids showing a dead end.
 ///
+/// `assistantEnabled` is a second, different question. Every role carries
+/// `assistant:use`, and the server ships with the assistant off, so permissions
+/// alone would put a tab in front of every employee that opens onto an
+/// explanation of why it does not work. A control that fails when pressed reads
+/// as a broken product rather than a disabled option.
+///
 /// Kept out of the widget so it can be unit-tested without pumping the tree.
-List<AppTab> visibleTabsFor(SessionUser user) {
+List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) {
   return <AppTab>[
     const AppTab(
       id: 'home',
@@ -63,7 +69,7 @@ List<AppTab> visibleTabsFor(SessionUser user) {
         selectedIcon: Icons.receipt_long,
         screen: PayslipScreen(),
       ),
-    if (user.can(Perm.assistantUse))
+    if (assistantEnabled && user.can(Perm.assistantUse))
       const AppTab(
         id: 'assistant',
         label: 'ผู้ช่วย',

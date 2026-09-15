@@ -7,10 +7,6 @@ import '../domain/assistant_models.dart';
 final Provider<AssistantRepository> assistantRepositoryProvider =
     Provider<AssistantRepository>((Ref ref) => AssistantRepository(ref.watch(apiClientProvider)));
 
-final FutureProvider<bool> assistantEnabledProvider = FutureProvider<bool>((Ref ref) {
-  return ref.watch(assistantRepositoryProvider).isEnabled();
-});
-
 class ChatState {
   const ChatState({
     this.turns = const <ChatTurn>[],

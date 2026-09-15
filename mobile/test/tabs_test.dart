@@ -13,7 +13,12 @@ SessionUser userWith(List<String> permissions) => SessionUser(
       locale: 'th',
     );
 
-List<String> idsFor(SessionUser user) => visibleTabsFor(user).map((AppTab tab) => tab.id).toList();
+/// Defaults to a deployment with the assistant on, so a test that says nothing
+/// about it is exercising permissions alone.
+List<String> idsFor(SessionUser user, {bool assistantEnabled = true}) =>
+    visibleTabsFor(user, assistantEnabled: assistantEnabled)
+        .map((AppTab tab) => tab.id)
+        .toList();
 
 void main() {
   group('visibleTabsFor', () {
@@ -43,8 +48,31 @@ void main() {
       expect(ids.indexOf('approvals'), greaterThan(ids.indexOf('leave')));
     });
 
-    test('hides the assistant tab when the deployment has no AI', () {
+    test('hides the assistant tab from an account without assistant:use', () {
       expect(idsFor(userWith(<String>[Perm.leaveReadSelf])), isNot(contains('assistant')));
+    });
+
+    test('hides the assistant tab when the deployment has the assistant off', () {
+      // The case that matters: `assistant:use` is in the baseline employee
+      // role and the server ships with ASSISTANT_ENABLED=false, so permissions
+      // alone would show this tab on every standard install.
+      final List<String> ids = idsFor(
+        userWith(<String>[Perm.leaveReadSelf, Perm.assistantUse]),
+        assistantEnabled: false,
+      );
+
+      expect(ids, isNot(contains('assistant')));
+      expect(ids, <String>['home', 'leave', 'profile']);
+    });
+
+    test('switching the assistant off changes nothing else', () {
+      final SessionUser user =
+          userWith(<String>[Perm.leaveReadSelf, Perm.payslipReadSelf, Perm.assistantUse]);
+
+      expect(
+        idsFor(user, assistantEnabled: false),
+        idsFor(user).where((String id) => id != 'assistant').toList(),
+      );
     });
 
     test('hides payslips from an account with no payslip permission', () {

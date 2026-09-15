@@ -6,11 +6,6 @@ class AssistantRepository {
 
   final ApiClient _api;
 
-  Future<bool> isEnabled() async {
-    final Map<String, dynamic> json = await _api.get<Map<String, dynamic>>('/assistant/status');
-    return json['enabled'] as bool? ?? false;
-  }
-
   Future<ChatResult> chat({required String message, String? conversationId}) async {
     final Map<String, dynamic> json = await _api.post<Map<String, dynamic>>(
       '/assistant/chat',

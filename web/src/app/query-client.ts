@@ -74,7 +74,6 @@ export const qk = {
 
   knowledgeDocuments: (status?: string) => ['knowledge', status] as const,
   knowledgeDocument: (id: string) => ['knowledge', id] as const,
-  assistantStatus: ['assistant', 'status'] as const,
   conversations: ['assistant', 'conversations'] as const,
   conversation: (id: string) => ['assistant', 'conversations', id] as const,
 

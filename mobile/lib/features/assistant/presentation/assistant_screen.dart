@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/platform/platform_config.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/assistant_controller.dart';
 import '../domain/assistant_models.dart';
@@ -54,7 +55,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   @override
   Widget build(BuildContext context) {
     final ChatState chat = ref.watch(assistantControllerProvider);
-    final AsyncValue<bool> enabled = ref.watch(assistantEnabledProvider);
+    final AsyncValue<PlatformConfig> platform = ref.watch(platformConfigProvider);
 
     ref.listen<ChatState>(assistantControllerProvider, (ChatState? _, ChatState __) {
       _scrollToEnd();
@@ -72,14 +73,14 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
             ),
         ],
       ),
-      body: enabled.when(
+      body: platform.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object error, StackTrace _) => ErrorView(
           error: error,
-          onRetry: () => ref.invalidate(assistantEnabledProvider),
+          onRetry: () => ref.invalidate(platformConfigProvider),
         ),
-        data: (bool isEnabled) {
-          if (!isEnabled) {
+        data: (PlatformConfig config) {
+          if (!config.assistantEnabled) {
             return const EmptyState(
               icon: Icons.power_off_outlined,
               title: 'ผู้ช่วย HR ยังไม่เปิดใช้งาน',

@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/app_config.dart';
+import 'core/platform/platform_config.dart';
 import 'core/providers.dart';
 import 'core/router/tabs.dart';
 import 'core/theme/app_theme.dart';
@@ -97,23 +98,32 @@ class _LoginWithMessageState extends State<_LoginWithMessage> {
 }
 
 /// Bottom-navigation shell. Tabs come from `visibleTabsFor`, which derives them
-/// from the user's permissions.
-class HomeShell extends StatefulWidget {
+/// from the user's permissions and from what this deployment has switched on.
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({required this.user, super.key});
 
   final SessionUser user;
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+class _HomeShellState extends ConsumerState<HomeShell> {
+  /// The selection is held as a tab id rather than an index because the tab
+  /// list is not fixed: the deployment's feature flags arrive a moment after
+  /// launch, and an index would then be pointing at whatever moved into that
+  /// slot. An id survives the list changing shape underneath it.
+  String _selected = 'home';
 
   @override
   Widget build(BuildContext context) {
-    final List<AppTab> tabs = visibleTabsFor(widget.user);
-    final int safeIndex = _index.clamp(0, tabs.length - 1);
+    final List<AppTab> tabs = visibleTabsFor(
+      widget.user,
+      assistantEnabled: ref.watch(assistantEnabledProvider),
+    );
+    // A tab that has gone away falls back to the first, which is always home.
+    final int found = tabs.indexWhere((AppTab tab) => tab.id == _selected);
+    final int safeIndex = found < 0 ? 0 : found;
 
     return Scaffold(
       body: IndexedStack(
@@ -122,7 +132,7 @@ class _HomeShellState extends State<HomeShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: safeIndex,
-        onDestinationSelected: (int index) => setState(() => _index = index),
+        onDestinationSelected: (int index) => setState(() => _selected = tabs[index].id),
         destinations: tabs
             .map(
               (AppTab tab) => NavigationDestination(

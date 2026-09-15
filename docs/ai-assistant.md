@@ -4,6 +4,15 @@ An assistant that answers HR questions and files requests on an employee's
 behalf. It is **off by default** — `ASSISTANT_ENABLED=false` — and the rest of
 the HRIS works identically without it.
 
+Off means invisible, not broken. Both clients read `GET /config`, a public
+endpoint that reports the flag, and neither offers a way in when it is false:
+the console drops the sidebar entry, the app drops the bottom-navigation tab.
+That is a separate question from permissions — every role carries
+`assistant:use`, so permissions alone would have put an entry in front of every
+employee that opened onto an apology. A bookmark saved while the assistant was
+on still resolves, to a screen that explains it is switched off rather than to a
+404.
+
 ## Design premise
 
 An HR assistant is only useful if people trust its answers, and only safe if a

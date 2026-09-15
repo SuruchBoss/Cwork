@@ -29,6 +29,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { OrganizationModule } from './modules/organization/organization.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
 import { PerformanceModule } from './modules/performance/performance.module';
+import { PlatformModule } from './modules/platform/platform.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { SetupModule } from './modules/setup/setup.module';
 
@@ -81,6 +82,7 @@ import { SetupModule } from './modules/setup/setup.module';
     AuditModule,
     AuthModule,
     HealthModule,
+    PlatformModule,
     SetupModule,
 
     OrganizationModule,

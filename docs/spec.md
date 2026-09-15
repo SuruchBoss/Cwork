@@ -97,9 +97,10 @@ together with a retention period and a way to ask for erasure (CW-026).
 
 **An optional feature fails loudly when switched on and stays quiet when off.**
 `ASSISTANT_ENABLED=false` boots without complaint; `ASSISTANT_ENABLED=true` with
-no API key refuses to boot. Mail will follow the same rule (CW-023), as malware
-scanning already does. Anything disabled is hidden in the UI rather than shown
-as a control that cannot work (CW-027).
+no API key refuses to boot. Mail follows the same rule, as malware scanning
+already does. Anything disabled is hidden in the UI rather than shown as a
+control that cannot work: both clients read the deployment's flags from the
+public `GET /config` and leave out what is switched off.
 
 **Attendance trusts the employee, within a ceiling.** A punch outside the
 geofence is flagged, not refused, and an offline punch is credited at capture
@@ -635,7 +636,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 271 backend, 23 web, 33 mobile. A 160-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 271 backend, 29 web, 35 mobile. A 163-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

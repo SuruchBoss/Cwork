@@ -5,6 +5,7 @@ import { Badge, Button, Card, EmptyState, PageHeader, Textarea } from '@/compone
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatRelative } from '@/lib/format';
+import { usePlatformConfig } from '@/lib/platform';
 import type { AssistantConversation, AssistantMessage, ChatResult } from '@/types/api';
 
 const SUGGESTIONS = [
@@ -30,15 +31,15 @@ export default function AssistantPage() {
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const status = useQuery({
-    queryKey: qk.assistantStatus,
-    queryFn: () => api.get<{ enabled: boolean }>('/assistant/status'),
-  });
+  // The same flag the sidebar uses to decide whether to offer this screen at
+  // all. Reachable anyway by a bookmark from before the assistant was switched
+  // off, which is what the explanation further down is for.
+  const { assistantEnabled } = usePlatformConfig();
 
   const conversations = useQuery({
     queryKey: qk.conversations,
     queryFn: () => api.get<AssistantConversation[]>('/assistant/conversations'),
-    enabled: status.data?.enabled === true,
+    enabled: assistantEnabled,
   });
 
   const send = useMutation({
@@ -103,7 +104,7 @@ export default function AssistantPage() {
     );
   };
 
-  if (status.data && !status.data.enabled) {
+  if (!assistantEnabled) {
     return (
       <div className="page">
         <PageHeader title="ผู้ช่วย HR" />

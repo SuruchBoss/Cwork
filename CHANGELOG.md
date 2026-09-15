@@ -38,8 +38,18 @@ entry, tags it and publishes the notes.
   - The first administrator holds `role:manage`, so it enrols a second factor at
     its first sign-in. Nothing in setup prints a TOTP secret.
 
+- **`GET /config`**, a public endpoint reporting the feature flags a client
+  needs before it can draw its shell. One flag today, `assistantEnabled`.
+
 ### Changed
 
+- **The assistant is hidden when it is switched off** (CW-027). `ASSISTANT_ENABLED=false`
+  is the default and every role carries `assistant:use`, so the standard install
+  put an assistant entry in front of everybody that could only fail — which
+  reads as a broken product rather than a disabled option. The console now drops
+  the sidebar entry and the app drops the bottom-navigation tab. A bookmark from
+  before it was switched off still resolves, to the screen that explains why it
+  is off. The boot-time rule is unchanged.
 - `db:seed` now says it is demo data when it runs, and refuses to install itself
   beside an organisation it did not create (`SEED_FORCE=1` overrides).
 
