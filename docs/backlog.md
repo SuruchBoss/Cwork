@@ -6,6 +6,23 @@ something that is actually missing or broken in the code — not a wish list.
 The [specification](./spec.md) says what the system does today. This says what
 it does not.
 
+**Who maintains what**
+
+`spec.md` and this file belong to whoever holds the product-owner role: scope,
+the order work happens in, and when a ticket is done. `README.md` is shared.
+Code, and the technical documentation describing it, belongs to whoever writes
+it.
+
+Every ticket here has a GitHub issue carrying the same `CW-` number. The issue
+is authoritative for **status** — open, closed, who is on it — and this file is
+authoritative for **reasoning**, which is what makes the Done table worth more
+than a list of closed issues. Whoever finishes a ticket names the commit in its
+issue; the Done entry here gets written from that.
+
+Open a ticket in either place and the other gets one to match. A ticket with no
+issue is invisible to anyone browsing the repository; an issue with no entry
+here loses its reasoning the moment it is closed.
+
 **Conventions**
 
 | | |
