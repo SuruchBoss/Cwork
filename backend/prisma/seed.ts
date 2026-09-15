@@ -24,13 +24,48 @@ import {
   PrismaClient,
   UserStatus,
 } from '@prisma/client';
-import { randomUUID } from 'node:crypto';
+import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto';
+import { MFA_REQUIRED_PERMISSIONS } from '../src/modules/auth/mfa.service';
+import { generateRecoveryCodes, normaliseRecoveryCode } from '../src/modules/auth/domain/totp';
 import { SYSTEM_ROLE_DEFINITIONS, SystemRole } from '../src/core/security/roles';
 
 const prisma = new PrismaClient();
 
 const ORG_CODE = 'CWORK';
 const DEFAULT_PASSWORD = process.env.SEED_PASSWORD ?? 'Cwork2026!';
+
+/**
+ * Roles holding a privileged permission may not sign in with a password alone,
+ * so the demo accounts that hold one are enrolled with a **fixed, published**
+ * TOTP secret. Scan it once and the demo works; it is printed below along with
+ * the otpauth URI.
+ *
+ * This is a demo convenience and nothing else. A real deployment enrols each
+ * person with their own secret through /auth/mfa/enroll, and the seed itself is
+ * evaluation-only — see docs/operations.md.
+ */
+const DEMO_MFA_SECRET = 'CWORKDEMOMFASECRET234567';
+
+/** Mirrors CryptoService.encrypt: v1:iv:tag:ciphertext, AES-256-GCM. */
+function encryptField(plaintext: string, keyBase64: string): string {
+  const key = Buffer.from(keyBase64, 'base64');
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `v1:${iv.toString('base64')}:${tag.toString('base64')}:${ciphertext.toString('base64')}`;
+}
+
+/** Mirrors CryptoService.hashToken. */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+const MFA_REQUIRED_ROLE_KEYS = new Set(
+  SYSTEM_ROLE_DEFINITIONS.filter((role) =>
+    MFA_REQUIRED_PERMISSIONS.some((permission) => role.permissions.includes(permission)),
+  ).map((role) => role.key),
+);
 
 async function main(): Promise<void> {
   console.log('Seeding Cwork…');
@@ -498,8 +533,29 @@ async function main(): Promise<void> {
   ];
 
   const employeesByCode = new Map<string, string>();
+  const encryptionKey = process.env.FIELD_ENCRYPTION_KEY;
+  const mfaDemoAccounts: string[] = [];
+  const demoRecoveryCodes = generateRecoveryCodes(5);
 
   for (const person of people) {
+    // Accounts whose role carries a privileged permission cannot sign in with a
+    // password alone, so the demo enrols them on a published secret. Without a
+    // FIELD_ENCRYPTION_KEY there is nowhere to put the secret, so they are left
+    // unenrolled and the seed says so at the end.
+    const needsMfa = MFA_REQUIRED_ROLE_KEYS.has(person.role) && Boolean(encryptionKey);
+    const mfaFields = needsMfa
+      ? {
+          mfaEnabled: true,
+          mfaSecretEnc: encryptField(DEMO_MFA_SECRET, encryptionKey!),
+          mfaEnrolledAt: new Date(),
+          mfaLastUsedStep: null,
+          mfaRecoveryCodes: demoRecoveryCodes.map((code) =>
+            hashToken(normaliseRecoveryCode(code)),
+          ),
+        }
+      : {};
+    if (needsMfa) mfaDemoAccounts.push(person.email);
+
     const user = await prisma.user.upsert({
       where: { organizationId_email: { organizationId: organization.id, email: person.email } },
       create: {
@@ -509,8 +565,9 @@ async function main(): Promise<void> {
         status: UserStatus.ACTIVE,
         emailVerifiedAt: new Date(),
         passwordChangedAt: new Date(),
+        ...mfaFields,
       },
-      update: { passwordHash, status: UserStatus.ACTIVE },
+      update: { passwordHash, status: UserStatus.ACTIVE, ...mfaFields },
     });
 
     // Same nullable-composite-unique limitation as holidays above.
@@ -884,9 +941,30 @@ async function main(): Promise<void> {
   console.log('\nSeed complete.');
   console.log(`  Sign in at /api/v1/auth/login with any of:`);
   for (const person of people) {
-    console.log(`    ${person.email.padEnd(30)} (${person.role})`);
+    const marker = mfaDemoAccounts.includes(person.email) ? '  [needs a 2FA code]' : '';
+    console.log(`    ${person.email.padEnd(30)} (${person.role})${marker}`);
   }
   console.log(`  Password: ${DEFAULT_PASSWORD}`);
+
+  if (mfaDemoAccounts.length > 0) {
+    console.log('\n  Two-factor authentication');
+    console.log('  ------------------------');
+    console.log('  The accounts marked above hold privileged permissions, so a password');
+    console.log('  alone will not sign them in. Add this secret to any authenticator app');
+    console.log('  once and they all work:');
+    console.log(`\n    secret : ${DEMO_MFA_SECRET}`);
+    console.log(
+      `    or QR  : otpauth://totp/${encodeURIComponent(`${organization.name}:demo`)}` +
+        `?secret=${DEMO_MFA_SECRET}&issuer=${encodeURIComponent(organization.name)}` +
+        '&algorithm=SHA1&digits=6&period=30',
+    );
+    console.log('\n  Recovery codes (single use, work in place of a code):');
+    for (const code of demoRecoveryCodes) console.log(`    ${code}`);
+    console.log('\n  This is a published demo secret. Never use it anywhere real.');
+  } else if (!encryptionKey) {
+    console.log('\n  FIELD_ENCRYPTION_KEY is not set, so the privileged demo accounts were');
+    console.log('  left without a second factor — and they cannot sign in until they enrol.');
+  }
 }
 
 async function upsertMany<T extends { code: string }, R extends { id: string }>(

@@ -68,7 +68,10 @@ export default async function globalSetup(): Promise<void> {
 
   // The suite makes a few hundred requests in a couple of minutes; the default
   // throttle would start rejecting them and the failures would look like bugs.
+  // The credential limit matters too: the MFA scenarios sign in repeatedly, and
+  // a 429 there shows up as a missing challenge token three assertions later.
   process.env.THROTTLE_LIMIT = '100000';
+  process.env.AUTH_THROTTLE_LIMIT = process.env.AUTH_THROTTLE_LIMIT ?? '1000';
   process.env.DATABASE_URL = databaseUrl;
   process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
 

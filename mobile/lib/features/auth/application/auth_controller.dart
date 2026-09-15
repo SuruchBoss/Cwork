@@ -50,9 +50,36 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  /// Signs in, returning a challenge when the account owes a second factor.
+  ///
+  /// The state only becomes [AuthSignedIn] once there is a real session, so a
+  /// half-finished sign-in never reaches the rest of the app.
+  Future<MfaRequired?> login({required String email, required String password}) async {
     state = const AuthLoading();
-    state = AuthSignedIn(await _repository.login(email: email, password: password));
+    try {
+      final LoginOutcome outcome = await _repository.login(email: email, password: password);
+      switch (outcome) {
+        case LoggedIn(:final SessionUser user):
+          state = AuthSignedIn(user);
+          return null;
+        case MfaRequired():
+          state = const AuthSignedOut();
+          return outcome;
+      }
+    } on Object {
+      state = const AuthSignedOut();
+      rethrow;
+    }
+  }
+
+  /// Completes a sign-in that was waiting on a code.
+  Future<void> verifyMfa({
+    required String challengeToken,
+    required String code,
+  }) async {
+    state = AuthSignedIn(
+      await _repository.verifyMfa(challengeToken: challengeToken, code: code),
+    );
   }
 
   Future<void> logout() async {

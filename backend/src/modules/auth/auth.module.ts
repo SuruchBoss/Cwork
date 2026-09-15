@@ -5,6 +5,7 @@ import { CryptoService } from '../../core/security/crypto.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { MfaService } from './mfa.service';
 import { UserContextService } from './user-context.service';
 
 @Global()
@@ -14,7 +15,7 @@ import { UserContextService } from './user-context.service';
     JwtModule.register({}),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UserContextService, CryptoService],
-  exports: [AuthService, UserContextService, CryptoService, JwtModule],
+  providers: [AuthService, MfaService, JwtStrategy, UserContextService, CryptoService],
+  exports: [AuthService, MfaService, UserContextService, CryptoService, JwtModule],
 })
 export class AuthModule {}

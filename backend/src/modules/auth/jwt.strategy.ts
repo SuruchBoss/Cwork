@@ -13,6 +13,12 @@ export interface AccessTokenPayload {
   sid: string;
   iat: number;
   exp: number;
+  /**
+   * Absent on a real access token. The MFA challenge token is signed with the
+   * same secret, issuer and audience, so this claim is the only thing standing
+   * between "password accepted" and a full session.
+   */
+  typ?: string;
 }
 
 @Injectable()
@@ -33,6 +39,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: AccessTokenPayload): Promise<AuthenticatedUser> {
+    // A half-finished sign-in is not a session. Rejecting anything carrying a
+    // `typ` keeps the challenge token — and any future scoped token — out of
+    // every guarded endpoint.
+    if (payload.typ) {
+      throw new UnauthorizedException('This token cannot be used to access resources');
+    }
+    if (!payload.sid) {
+      throw new UnauthorizedException('Token is missing a session');
+    }
+
     // A global password reset or forced logout bumps `sessionsValidFrom`, which
     // invalidates every access token issued before that moment.
     const user = await this.prisma.user.findUnique({

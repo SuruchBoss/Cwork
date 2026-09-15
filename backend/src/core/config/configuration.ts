@@ -19,6 +19,14 @@ export interface AuthConfig {
   maxFailedAttempts: number;
   lockoutMinutes: number;
   passwordMinLength: number;
+  /** Requests per minute allowed against the credential endpoints. */
+  credentialThrottleLimit: number;
+  /**
+   * How long the token handed out between password and second factor stays
+   * valid. Long enough to fetch a code from a phone, short enough that a
+   * half-finished sign-in is not a standing invitation.
+   */
+  mfaChallengeTtlSeconds: number;
 }
 
 export interface StorageConfig {
@@ -83,6 +91,8 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       maxFailedAttempts: env.AUTH_MAX_FAILED_ATTEMPTS,
       lockoutMinutes: env.AUTH_LOCKOUT_MINUTES,
       passwordMinLength: env.PASSWORD_MIN_LENGTH,
+      credentialThrottleLimit: env.AUTH_THROTTLE_LIMIT,
+      mfaChallengeTtlSeconds: env.MFA_CHALLENGE_TTL,
     },
     storage: {
       driver: env.STORAGE_DRIVER as 'local' | 's3',

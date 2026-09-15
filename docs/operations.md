@@ -45,6 +45,26 @@ docker compose run --rm migrate npm run db:verify
 
 Migrations are forward-only. Take a database backup first.
 
+## Requiring two-factor authentication
+
+Accounts holding `employee:read:sensitive`, `payroll:run`, `payroll:approve` or
+`role:manage` must carry a second factor — that is not configurable, and they
+cannot sign in without one.
+
+To require it of *everyone*, set `security.requireMfa` in the organisation's
+`settings`:
+
+```sql
+UPDATE organizations
+SET settings = jsonb_set(settings, '{security,requireMfa}', 'true', true)
+WHERE code = 'YOUR_ORG';
+```
+
+Anyone not yet enrolled is walked through enrolment at their next sign-in rather
+than locked out. Note that the mobile app can present a code but cannot yet
+enrol one — see CW-021 in the backlog — so turning this on organisation-wide
+while field staff have no console access will strand them.
+
 ## Scheduled jobs
 
 `ScheduledTasksService` runs nightly maintenance. Cron times are UTC, chosen to

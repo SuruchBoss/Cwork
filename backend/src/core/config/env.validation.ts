@@ -95,6 +95,23 @@ export class EnvironmentVariables {
   @Min(8)
   PASSWORD_MIN_LENGTH: number = 12;
 
+  /**
+   * Requests per minute allowed against the credential endpoints (sign-in, MFA
+   * verify, enrolment). Much tighter than the global limit on purpose. Raise it
+   * only for a deployment behind a shared egress address — or in tests.
+   */
+  @toInt()
+  @IsInt()
+  @Min(3)
+  AUTH_THROTTLE_LIMIT: number = 10;
+
+  /** Seconds a half-finished sign-in stays resumable while MFA is pending. */
+  @toInt()
+  @IsInt()
+  @Min(60)
+  @Max(1800)
+  MFA_CHALLENGE_TTL: number = 300;
+
   @IsIn(['local', 's3'])
   STORAGE_DRIVER: string = 'local';
 

@@ -14,8 +14,11 @@ import type {
   ChangePasswordDto,
   LoginDto,
   LoginResponseDto,
+  MfaChallengeResponseDto,
+  MfaVerifyDto,
   SessionUserDto,
 } from './dto/auth.dto';
+import { MfaService } from './mfa.service';
 import { assertPasswordPolicy } from './password.policy';
 import { UserContextService } from './user-context.service';
 
@@ -36,9 +39,13 @@ export class AuthService {
     private readonly crypto: CryptoService,
     private readonly userContext: UserContextService,
     private readonly audit: AuditService,
+    private readonly mfa: MfaService,
   ) {}
 
-  async login(dto: LoginDto, meta: RequestMeta): Promise<LoginResponseDto> {
+  async login(
+    dto: LoginDto,
+    meta: RequestMeta,
+  ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
     const user = await this.prisma.user.findFirst({
       where: { email: dto.email, deletedAt: null },
       include: {
@@ -74,26 +81,134 @@ export class AuthService {
       data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
     });
 
-    const tokens = await this.issueTokens(user.id, user.organizationId, {
-      deviceId: dto.deviceId,
-      deviceName: dto.deviceName,
-      platform: dto.platform,
+    // A correct password is not a session when the account owes a second
+    // factor. Hand back a challenge instead — an account that is *required* to
+    // have MFA but has not enrolled gets one too, so it can enrol before it can
+    // do anything else.
+    const mfa = await this.mfa.requirementFor(user.id);
+    if (mfa.enrolled || mfa.required) {
+      const challenge = await this.mfa.issueChallengeToken(
+        user.id,
+        user.organizationId,
+        mfa.enrolled,
+      );
+      return {
+        mfaRequired: true,
+        mfaEnrolled: mfa.enrolled,
+        ...challenge,
+      };
+    }
+
+    return this.completeLogin(user.id, user.organizationId, dto, meta);
+  }
+
+  /**
+   * Issues the session and records the sign-in. Reached either straight from
+   * `login` or, for an account with a second factor, from `verifyMfa`.
+   */
+  private async completeLogin(
+    userId: string,
+    organizationId: string,
+    device: { deviceId?: string; deviceName?: string; platform?: string },
+    meta: RequestMeta,
+    summarySuffix = '',
+  ): Promise<LoginResponseDto> {
+    const tokens = await this.issueTokens(userId, organizationId, {
+      deviceId: device.deviceId,
+      deviceName: device.deviceName,
+      platform: device.platform,
       ...meta,
     });
 
     await this.audit.record({
-      organizationId: user.organizationId,
-      actorUserId: user.id,
+      organizationId,
+      actorUserId: userId,
       action: AuditAction.LOGIN,
       entityType: 'User',
-      entityId: user.id,
-      summary: `Signed in from ${dto.platform ?? 'web'}`,
+      entityId: userId,
+      summary: `Signed in from ${device.platform ?? 'web'}${summarySuffix}`,
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
       requestId: meta.requestId,
     });
 
-    return { ...tokens, user: await this.buildSessionUser(user.id) };
+    return { mfaRequired: false, ...tokens, user: await this.buildSessionUser(userId) };
+  }
+
+  /**
+   * Second half of a sign-in: exchange a challenge token plus a code for a
+   * real session.
+   *
+   * A wrong code counts towards the same lockout a wrong password does —
+   * otherwise the second factor is brute-forceable at leisure once the password
+   * is known.
+   */
+  async verifyMfa(dto: MfaVerifyDto, meta: RequestMeta): Promise<LoginResponseDto> {
+    const payload = await this.mfa.verifyChallengeToken(dto.challengeToken);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        organizationId: true,
+        status: true,
+        mfaEnabled: true,
+        failedLoginCount: true,
+        lockedUntil: true,
+      },
+    });
+    if (!user || user.organizationId !== payload.org) {
+      throw new UnauthorizedException('Sign-in has expired. Start again.');
+    }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
+        lockedUntil: user.lockedUntil.toISOString(),
+      });
+    }
+    if (!user.mfaEnabled) {
+      // The account still has to enrol; a code cannot exist yet.
+      throw new BusinessRuleError(
+        'MFA_ENROLMENT_REQUIRED',
+        'Set up two-factor authentication to finish signing in.',
+      );
+    }
+
+    const accepted = await this.mfa.consumeFactor(user.id, dto.code);
+    if (!accepted) {
+      await this.registerFailedAttempt(user.id, user.failedLoginCount, user.organizationId, meta);
+      throw new UnauthorizedException('That code is not right');
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}`);
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
+    });
+
+    return this.completeLogin(user.id, user.organizationId, dto, meta, ' with a second factor');
+  }
+
+  /**
+   * Finishes a sign-in for an account that had to enrol first. Only reachable
+   * with a challenge token, and only once the secret is active.
+   */
+  async completeEnrolmentLogin(
+    challengeToken: string,
+    device: { deviceId?: string; deviceName?: string; platform?: string },
+    meta: RequestMeta,
+  ): Promise<LoginResponseDto> {
+    const payload = await this.mfa.verifyChallengeToken(challengeToken);
+    const requirement = await this.mfa.requirementFor(payload.sub);
+    if (!requirement.enrolled) {
+      throw new BusinessRuleError(
+        'MFA_ENROLMENT_REQUIRED',
+        'Finish setting up two-factor authentication first.',
+      );
+    }
+    return this.completeLogin(payload.sub, payload.org, device, meta, ' after MFA enrolment');
   }
 
   /**

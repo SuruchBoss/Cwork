@@ -55,6 +55,37 @@ Verified end to end: an employee sees 1 record, their manager 3, HR all 8.
 **Separation of duties on payroll.** Whoever prepares a payroll run cannot
 approve it. The API rejects self-approval with `SELF_APPROVAL_NOT_ALLOWED`.
 
+### Multi-factor authentication
+
+TOTP (RFC 6238), implemented in `modules/auth/domain/totp.ts` and verified
+against the RFC's published test vectors, so it interoperates with any
+authenticator app.
+
+- **Required, not offered,** for any account holding `employee:read:sensitive`,
+  `payroll:run`, `payroll:approve` or `role:manage`. Between them those
+  permissions read every national ID in the organisation, move money, and hand
+  out permissions. An organisation can also require it of everyone through
+  `settings.security.requireMfa`.
+- A correct password for such an account yields a **challenge token**, not a
+  session. That token carries a `typ` claim the access-token strategy rejects,
+  so it opens the MFA endpoints and nothing else — it is signed with the same
+  secret, issuer and audience as an access token, and that claim is the only
+  thing separating them.
+- An account that is required to have a second factor but has not enrolled gets
+  a challenge too, and must enrol before it can do anything.
+- The secret is stored AES-256-GCM encrypted and is returned in the clear
+  exactly once, during enrolment. It does not become active until a code proves
+  the user actually scanned it.
+- **A code cannot be spent twice.** `mfaLastUsedStep` records the newest step
+  accepted, so a code observed in flight — a phishing proxy, a shoulder — is
+  useless even while it is still inside its 90-second window.
+- Recovery codes are 100-bit random, stored as SHA-256 digests, and removed as
+  they are spent. A slow KDF would add nothing at that entropy and would only
+  give a half-authenticated endpoint a way to burn CPU.
+- A wrong code counts towards the same lockout a wrong password does.
+- Turning it off requires a current code, and is refused outright for an account
+  that is required to have one.
+
 ## Data protection
 
 **Encrypted at rest, in the application.** National IDs, passport numbers, tax
@@ -163,7 +194,6 @@ Be clear-eyed about the gaps before you deploy:
 
 | Gap | What to do |
 |---|---|
-| **No MFA enforcement.** The schema has the fields; the flow is not built. | Put the console behind an SSO/IdP that enforces MFA. |
 | **No malware scanning.** Uploads are type-checked, not scanned. | Run ClamAV or equivalent over the bucket; `FileObject.scanStatus` exists for it. |
 | **No database-level encryption at rest.** Only specific columns are encrypted. | Enable encryption on your volume or managed database. |
 | **No PII purge for employees.** Candidate records have PDPA retention; employees do not. | Employee records are usually retained by law; check your jurisdiction. |

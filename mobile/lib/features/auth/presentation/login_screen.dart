@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../application/auth_controller.dart';
+import '../domain/session.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,10 +21,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _busy = false;
   String? _error;
 
+  /// Set once the password is accepted but a second factor is still owed. Held
+  /// in memory only: a challenge is not a session and must not outlive the
+  /// screen.
+  MfaRequired? _challenge;
+  final TextEditingController _code = TextEditingController();
+
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _code.dispose();
     super.dispose();
   }
 
@@ -36,13 +44,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authControllerProvider.notifier).login(
+      final MfaRequired? challenge = await ref.read(authControllerProvider.notifier).login(
             email: _email.text,
             password: _password.text,
           );
+      if (challenge != null && mounted) {
+        setState(() => _challenge = challenge);
+      }
     } on Object catch (error) {
       // Surface the server's message: it distinguishes a locked account from
       // bad credentials, which matters to someone genuinely locked out.
+      final String raw = error.toString();
+      final int separator = raw.indexOf(': ');
+      if (mounted) {
+        setState(() => _error = separator >= 0 ? raw.substring(separator + 2) : raw);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _submitCode() async {
+    final MfaRequired? challenge = _challenge;
+    if (challenge == null || _code.text.trim().isEmpty) return;
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await ref.read(authControllerProvider.notifier).verifyMfa(
+            challengeToken: challenge.challengeToken,
+            code: _code.text,
+          );
+    } on Object catch (error) {
       final String raw = error.toString();
       final int separator = raw.indexOf(': ');
       if (mounted) {
@@ -94,41 +130,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
                     ),
                     const SizedBox(height: 28),
-                    TextFormField(
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const <String>[AutofillHints.username],
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'อีเมล',
-                        prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                      validator: (String? value) {
-                        final String email = (value ?? '').trim();
-                        if (email.isEmpty) return 'กรุณากรอกอีเมล';
-                        if (!email.contains('@')) return 'อีเมลไม่ถูกต้อง';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _password,
-                      obscureText: _obscure,
-                      autofillHints: const <String>[AutofillHints.password],
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: 'รหัสผ่าน',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                          tooltip: _obscure ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน',
+                    if (_challenge != null)
+                      _MfaFields(
+                        challenge: _challenge!,
+                        controller: _code,
+                        onSubmit: _submitCode,
+                      )
+                    else ...<Widget>[
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const <String>[AutofillHints.username],
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'อีเมล',
+                          prefixIcon: Icon(Icons.mail_outline),
                         ),
+                        validator: (String? value) {
+                          final String email = (value ?? '').trim();
+                          if (email.isEmpty) return 'กรุณากรอกอีเมล';
+                          if (!email.contains('@')) return 'อีเมลไม่ถูกต้อง';
+                          return null;
+                        },
                       ),
-                      validator: (String? value) =>
-                          (value ?? '').isEmpty ? 'กรุณากรอกรหัสผ่าน' : null,
-                    ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: _obscure,
+                        autofillHints: const <String>[AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(),
+                        decoration: InputDecoration(
+                          labelText: 'รหัสผ่าน',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(() => _obscure = !_obscure),
+                            icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                            tooltip: _obscure ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน',
+                          ),
+                        ),
+                        validator: (String? value) =>
+                            (value ?? '').isEmpty ? 'กรุณากรอกรหัสผ่าน' : null,
+                      ),
+                    ],
                     if (_error != null) ...<Widget>[
                       const SizedBox(height: 14),
                       Container(
@@ -157,15 +201,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                     const SizedBox(height: 20),
                     FilledButton(
-                      onPressed: _busy ? null : _submit,
+                      onPressed: _busy
+                          ? null
+                          : (_challenge == null
+                              ? _submit
+                              : (_challenge!.enrolled ? _submitCode : null)),
                       child: _busy
                           ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('เข้าสู่ระบบ'),
+                          : Text(_challenge == null ? 'เข้าสู่ระบบ' : 'ยืนยัน'),
                     ),
+                    if (_challenge != null) ...<Widget>[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() {
+                                  _challenge = null;
+                                  _code.clear();
+                                  _error = null;
+                                }),
+                        child: const Text('ย้อนกลับ'),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -173,6 +234,69 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Second-factor step.
+///
+/// Entering a code is supported; *enrolling* is not — scanning a QR code with
+/// the same phone that is displaying it does not work, so an account that still
+/// has to set up a second factor is sent to the web console. See CW-021.
+class _MfaFields extends StatelessWidget {
+  const _MfaFields({
+    required this.challenge,
+    required this.controller,
+    required this.onSubmit,
+  });
+
+  final MfaRequired challenge;
+  final TextEditingController controller;
+  final Future<void> Function() onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    if (!challenge.enrolled) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondaryContainer,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          'บัญชีนี้ต้องตั้งค่ายืนยันตัวตนสองขั้นตอนก่อน '
+          'กรุณาตั้งค่าผ่านเว็บคอนโซลแล้วเข้าสู่ระบบอีกครั้ง',
+          style: TextStyle(color: theme.colorScheme.onSecondaryContainer),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          'กรอกรหัส 6 หลักจากแอป Authenticator หรือรหัสสำรอง',
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: controller,
+          // Not a number field: leading zeros matter, and recovery codes are
+          // not digits at all.
+          keyboardType: TextInputType.text,
+          autofocus: true,
+          autofillHints: const <String>[AutofillHints.oneTimeCode],
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => onSubmit(),
+          decoration: const InputDecoration(
+            labelText: 'รหัสยืนยัน',
+            prefixIcon: Icon(Icons.shield_outlined),
+            hintText: '123456',
+          ),
+        ),
+      ],
     );
   }
 }

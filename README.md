@@ -54,7 +54,7 @@ CLI. It is behind a compose profile, so `up` never starts it.
 | | |
 |---|---|
 | Admin console | http://localhost:8080 |
-| Demo login | `hr.manager@cwork.example` / `Cwork2026!` |
+| Demo login | `hr.manager@cwork.example` / `Cwork2026!` — an admin account, so it also needs a 2FA code; `db:seed` prints the demo secret to add to an authenticator app once. `dev2@cwork.example` signs in with the password alone. |
 | API docs | http://localhost:3000/api/docs — only when `NODE_ENV` is not `production`, which compose defaults it to. Set `NODE_ENV=development` in `.env` to mount them. |
 
 The seed creates a company with eight employees, Thai statutory leave types,
@@ -97,7 +97,7 @@ docs/        Spec, architecture, security, data model, API, ADRs, backlog
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 126 backend tests run in ten
+no database, no framework and no I/O. That is why 158 backend tests run in ten
 seconds — and why "why was I charged 2.5 days?" is answered by reading one
 function instead of a query plan.
 
@@ -155,15 +155,15 @@ rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 126 backend unit
-tests, 17 web, 30 mobile, plus a 36-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 158 backend unit
+tests, 17 web, 30 mobile, plus a 49-check end-to-end suite that drives the real
 API over HTTP in CI, and the admin console exercised in a real browser against
 the live API.
 
 **Not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: no MFA enforcement, no malware scanning on uploads, no ภ.ง.ด.1 filing
-export, no penetration test.
+short: no malware scanning on uploads, no ภ.ง.ด.1 filing export, no penetration
+test.
 
 ## Contributing
 

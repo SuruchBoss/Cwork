@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -21,23 +22,144 @@ import {
   ChangePasswordDto,
   LoginDto,
   LoginResponseDto,
+  MfaActivateDto,
+  MfaChallengeResponseDto,
+  MfaCodeDto,
+  MfaEnrolDto,
+  MfaEnrolmentResponseDto,
+  MfaRecoveryCodesResponseDto,
+  MfaStatusResponseDto,
+  MfaVerifyDto,
   RefreshTokenDto,
   SessionUserDto,
 } from './dto/auth.dto';
+import { MfaService } from './mfa.service';
+
+/**
+ * Credential endpoints get a much tighter budget than the global limit.
+ *
+ * Read straight from the environment because `@Throttle` is evaluated when the
+ * class is defined, long before DI exists. `AUTH_THROTTLE_LIMIT` is validated
+ * with everything else in `env.validation.ts`; this is the same value, reached
+ * earlier.
+ */
+const CREDENTIAL_THROTTLE = {
+  default: { limit: Number(process.env.AUTH_THROTTLE_LIMIT ?? 10), ttl: 60_000 },
+};
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly mfa: MfaService,
+  ) {}
 
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  // Credential endpoints get a much tighter budget than the global limit.
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Sign in with email and password' })
-  login(@Body() dto: LoginDto, @Req() req: Request): Promise<LoginResponseDto> {
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiOperation({
+    summary: 'Sign in with email and password',
+    description:
+      'Returns a session, or — when the account owes a second factor — a ' +
+      'challenge to complete at /auth/mfa/verify. Branch on `mfaRequired`.',
+  })
+  login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+  ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
     return this.authService.login(dto, requestMeta(req));
+  }
+
+  // ------------------------------------------------------------------- MFA
+
+  @Public()
+  @Post('mfa/verify')
+  @HttpCode(HttpStatus.OK)
+  // As tight as the password endpoint: this is the other half of the same door.
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiOperation({ summary: 'Finish a sign-in with a second factor' })
+  verifyMfa(@Body() dto: MfaVerifyDto, @Req() req: Request): Promise<LoginResponseDto> {
+    return this.authService.verifyMfa(dto, requestMeta(req));
+  }
+
+  /**
+   * Enrolment is reachable two ways: from a session (a user adding a second
+   * factor voluntarily) or from a challenge token (an account that may not hold
+   * a session until it has one). Hence `@Public()` plus an explicit check.
+   */
+  @Public()
+  @Post('mfa/enroll')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Start two-factor enrolment — returns a secret and QR URI' })
+  async beginMfaEnrolment(
+    @Body() dto: MfaEnrolDto,
+    @Req() req: Request,
+  ): Promise<MfaEnrolmentResponseDto> {
+    const userId = await this.resolveMfaSubject(req, dto.challengeToken);
+    return this.mfa.beginEnrolment(userId);
+  }
+
+  @Public()
+  @Post('mfa/activate')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Confirm a code to switch two-factor on, returning recovery codes' })
+  async activateMfa(
+    @Body() dto: MfaActivateDto,
+    @Req() req: Request,
+  ): Promise<MfaRecoveryCodesResponseDto> {
+    const userId = await this.resolveMfaSubject(req, dto.challengeToken);
+    return this.mfa.activate(userId, dto.code, requestMeta(req));
+  }
+
+  @Public()
+  @Post('mfa/complete-enrolment')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiOperation({
+    summary: 'Exchange a challenge token for a session, once enrolment is finished',
+  })
+  completeMfaEnrolment(@Body() dto: MfaVerifyDto, @Req() req: Request): Promise<LoginResponseDto> {
+    return this.authService.completeEnrolmentLogin(dto.challengeToken, dto, requestMeta(req));
+  }
+
+  @Get('mfa/status')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Whether this account has, or needs, a second factor' })
+  mfaStatus(@CurrentUser() user: AuthenticatedUser): Promise<MfaStatusResponseDto> {
+    return this.mfa.statusFor(user.userId);
+  }
+
+  @Post('mfa/disable')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(CREDENTIAL_THROTTLE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Turn two-factor off — refused for privileged accounts' })
+  async disableMfa(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: MfaCodeDto,
+    @Req() req: Request,
+  ): Promise<{ disabled: true }> {
+    await this.mfa.disable(user.userId, dto.code, requestMeta(req));
+    return { disabled: true };
+  }
+
+  @Post('mfa/recovery-codes')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: Math.ceil(CREDENTIAL_THROTTLE.default.limit / 2), ttl: 60_000 } })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Issue a fresh set of recovery codes, invalidating the old ones' })
+  regenerateRecoveryCodes(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: MfaCodeDto,
+    @Req() req: Request,
+  ): Promise<MfaRecoveryCodesResponseDto> {
+    return this.mfa.regenerateRecoveryCodes(user.userId, dto.code, requestMeta(req));
   }
 
   @Public()
@@ -71,7 +193,7 @@ export class AuthController {
   @Post('change-password')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Throttle({ default: { limit: Math.ceil(CREDENTIAL_THROTTLE.default.limit / 2), ttl: 60_000 } })
   @ApiOperation({ summary: 'Change own password; signs out every other device' })
   changePassword(
     @Body() dto: ChangePasswordDto,
@@ -79,6 +201,26 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<void> {
     return this.authService.changePassword(user, dto, requestMeta(req));
+  }
+
+  /**
+   * Enrolment can be reached from a session or from a half-finished sign-in.
+   * A challenge token wins when supplied; otherwise a Bearer access token is
+   * required. Both are verified explicitly, because the endpoint is `@Public()`
+   * and no guard has run.
+   */
+  private async resolveMfaSubject(req: Request, challengeToken?: string): Promise<string> {
+    if (challengeToken) {
+      const payload = await this.mfa.verifyChallengeToken(challengeToken);
+      return payload.sub;
+    }
+
+    const header = req.headers.authorization;
+    const bearer = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : undefined;
+    if (!bearer) {
+      throw new UnauthorizedException('Sign in, or supply the challenge token from /auth/login');
+    }
+    return this.mfa.verifyAccessToken(bearer);
   }
 
   @Get('sessions')

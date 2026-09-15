@@ -13,7 +13,11 @@ class AuthRepository {
   final ApiClient _api;
   final TokenStorage _tokenStorage;
 
-  Future<SessionUser> login({
+  /// Signs in, which may stop half way when the account owes a second factor.
+  ///
+  /// Returns either a session or a challenge; the caller decides which screen
+  /// to show. Nothing is stored for a challenge — it is not a session.
+  Future<LoginOutcome> login({
     required String email,
     required String password,
   }) async {
@@ -29,11 +33,42 @@ class AuthRepository {
       },
     );
 
+    if (result['mfaRequired'] == true) {
+      return MfaRequired(
+        challengeToken: result['challengeToken'] as String,
+        enrolled: result['mfaEnrolled'] as bool? ?? false,
+      );
+    }
+
+    return LoggedIn(await _adoptSession(result));
+  }
+
+  /// Exchanges a challenge token and a code — generated or recovery — for a
+  /// session.
+  Future<SessionUser> verifyMfa({
+    required String challengeToken,
+    required String code,
+  }) async {
+    final Map<String, dynamic> result = await _api.post<Map<String, dynamic>>(
+      '/auth/mfa/verify',
+      anonymous: true,
+      body: <String, dynamic>{
+        'challengeToken': challengeToken,
+        'code': code.trim(),
+        'deviceId': await _tokenStorage.deviceId(),
+        'deviceName': await _deviceName(),
+        'platform': defaultTargetPlatform.name,
+      },
+    );
+
+    return _adoptSession(result);
+  }
+
+  Future<SessionUser> _adoptSession(Map<String, dynamic> result) async {
     await _tokenStorage.saveTokens(
       accessToken: result['accessToken'] as String,
       refreshToken: result['refreshToken'] as String,
     );
-
     return SessionUser.fromJson(result['user'] as Map<String, dynamic>);
   }
 

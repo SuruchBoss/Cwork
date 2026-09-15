@@ -40,13 +40,42 @@ to display; never compute on the client.
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/login` | **public**, 10/min |
+| POST | `/auth/login` | **public**, `AUTH_THROTTLE_LIMIT`/min (default 10) |
 | POST | `/auth/refresh` | **public**, rotates the token |
 | POST | `/auth/logout` | omit the body to revoke every session |
 | GET | `/auth/me` | current user, roles, effective permissions |
 | POST | `/auth/change-password` | signs out every other device |
 | GET | `/auth/sessions` | active sessions for this user |
 | DELETE | `/auth/sessions/:id` | revoke one |
+
+### Two-factor authentication
+
+`POST /auth/login` returns one of two shapes. Branch on `mfaRequired` — the two
+halves share no fields worth guessing at:
+
+```jsonc
+// a session
+{ "mfaRequired": false, "accessToken": "…", "refreshToken": "…", "user": { … } }
+
+// a second factor still owed
+{ "mfaRequired": true, "mfaEnrolled": true, "challengeToken": "…", "expiresIn": 300 }
+```
+
+The challenge token opens the MFA endpoints and nothing else; presenting it as a
+Bearer token anywhere else is a 401.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/auth/mfa/verify` | **public** — challenge token + code (generated or recovery) → session |
+| POST | `/auth/mfa/enroll` | session **or** challenge token; returns the secret and an `otpauth://` URI |
+| POST | `/auth/mfa/activate` | a code proves the secret was scanned; returns the recovery codes, once |
+| POST | `/auth/mfa/complete-enrolment` | **public** — challenge token → session, after enrolling |
+| GET | `/auth/mfa/status` | `required`, `enrolled`, `recoveryCodesRemaining` |
+| POST | `/auth/mfa/disable` | needs a current code; refused when MFA is mandatory |
+| POST | `/auth/mfa/recovery-codes` | fresh set, invalidating the old ones |
+
+Error codes: `MFA_ENROLMENT_REQUIRED`, `MFA_CODE_INVALID`, `MFA_MANDATORY`,
+`MFA_ALREADY_ENROLLED`, `MFA_NOT_STARTED`, `MFA_NOT_ENROLLED`.
 
 ## Employees
 

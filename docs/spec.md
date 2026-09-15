@@ -66,6 +66,37 @@ deployment (the schema is multi-tenant; the product is not sold as one).
 is explicitly marked public. The `JwtAuthGuard` is registered globally, so the
 default for a new endpoint is *denied*.
 
+#### Second factor
+
+TOTP (RFC 6238), verified against the RFC's own test vectors.
+
+**Requirement: a privileged account cannot obtain an access token with only a
+password.** Holding `employee:read:sensitive`, `payroll:run`, `payroll:approve`
+or `role:manage` makes a second factor mandatory; so does
+`settings.security.requireMfa` on the organisation.
+
+Sign-in becomes two steps for such an account. A correct password returns a
+**challenge token** rather than a session:
+
+| Response | Meaning |
+|---|---|
+| `mfaRequired: false` | Full session — tokens and user |
+| `mfaRequired: true, mfaEnrolled: true` | Present a code at `POST /auth/mfa/verify` |
+| `mfaRequired: true, mfaEnrolled: false` | Enrol first, then `POST /auth/mfa/complete-enrolment` |
+
+**Requirements:**
+
+1. The challenge token carries a `typ` claim the access-token strategy rejects.
+   It is signed with the same secret, issuer and audience as an access token, so
+   that claim is the only thing between "password accepted" and a session.
+2. The secret is AES-256-GCM encrypted, returned in the clear exactly once, and
+   inactive until a code proves it was scanned.
+3. **A code cannot be spent twice**, even inside its own validity window.
+4. Recovery codes are single-use and stored as digests; they are shown once.
+5. A wrong code counts towards the same lockout a wrong password does.
+6. Disabling requires a current code, and is refused for an account that is
+   required to have one.
+
 ### 2.2 Authorisation
 
 Permissions are strings shaped `<resource>:<action>`, listed in
@@ -449,7 +480,7 @@ which is unit-tested rather than trusted.
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 126 backend, 17 web, 30 mobile. A 36-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 158 backend, 17 web, 30 mobile. A 49-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -463,7 +494,6 @@ Stated plainly, with the remedies in
 [security.md](./security.md#what-this-does-not-do) and tickets in
 [backlog.md](./backlog.md):
 
-- No MFA enforcement — the schema has the fields, the flow is not built.
 - No malware scanning on uploads.
 - Rate limiting is per-instance and in-memory.
 - Scheduled jobs assume a single instance; no leader election.

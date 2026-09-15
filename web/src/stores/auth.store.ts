@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '@/lib/api-client';
-import type { AuthTokens, LoginResponse, SessionUser } from '@/types/api';
+import type {
+  AuthTokens,
+  LoginResponse,
+  LoginSession,
+  MfaChallenge,
+  SessionUser,
+} from '@/types/api';
 
 interface AuthState {
   accessToken: string | null;
@@ -10,13 +16,34 @@ interface AuthState {
   /** True until the persisted session has been rehydrated and revalidated. */
   isBootstrapping: boolean;
 
-  login: (email: string, password: string) => Promise<void>;
+  /**
+   * Resolves to a challenge when the account owes a second factor, and to null
+   * once a session is established. The caller decides what to show.
+   */
+  login: (email: string, password: string) => Promise<MfaChallenge | null>;
+  /** Exchanges a challenge and a code for a session. */
+  verifyMfa: (challengeToken: string, code: string) => Promise<void>;
+  /** Finishes a sign-in that had to enrol first. */
+  completeMfaEnrolment: (challengeToken: string) => Promise<void>;
   logout: () => Promise<void>;
   setTokens: (tokens: AuthTokens) => void;
   refreshUser: () => Promise<void>;
   bootstrap: () => Promise<void>;
   can: (...permissions: string[]) => boolean;
   canAny: (...permissions: string[]) => boolean;
+}
+
+/** One place where a successful sign-in becomes a session, whichever route it took. */
+function adoptSession(
+  set: (partial: Partial<AuthState>) => void,
+  session: LoginSession,
+): void {
+  set({
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    user: session.user,
+    isBootstrapping: false,
+  });
 }
 
 /**
@@ -41,12 +68,42 @@ export const useAuthStore = create<AuthState>()(
           { email, password, platform: 'web', deviceName: navigator.userAgent.slice(0, 80) },
           { anonymous: true },
         );
-        set({
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
-          user: result.user,
-          isBootstrapping: false,
-        });
+
+        if (result.mfaRequired) {
+          // Nothing is stored yet: a challenge is not a session.
+          return result;
+        }
+        adoptSession(set, result);
+        return null;
+      },
+
+      async verifyMfa(challengeToken, code) {
+        const result = await api.post<LoginSession>(
+          '/auth/mfa/verify',
+          {
+            challengeToken,
+            code,
+            platform: 'web',
+            deviceName: navigator.userAgent.slice(0, 80),
+          },
+          { anonymous: true },
+        );
+        adoptSession(set, result);
+      },
+
+      async completeMfaEnrolment(challengeToken) {
+        const result = await api.post<LoginSession>(
+          '/auth/mfa/complete-enrolment',
+          {
+            challengeToken,
+            // The endpoint shares a DTO with verify, which wants a code field.
+            code: 'enrolled',
+            platform: 'web',
+            deviceName: navigator.userAgent.slice(0, 80),
+          },
+          { anonymous: true },
+        );
+        adoptSession(set, result);
       },
 
       async logout() {

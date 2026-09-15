@@ -15,6 +15,7 @@ import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/app.module';
+import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
 import { APP_CONFIG } from 'src/core/config/config.module';
 import type { RootConfig } from 'src/core/config/configuration';
 
@@ -55,22 +56,72 @@ export class Api {
     return { status: res.status, body: res.body };
   }
 
-  /** Signs in and returns the session payload, failing loudly if it cannot. */
+  /**
+   * Signs in, completing the second factor when the account owes one.
+   *
+   * The seed enrols the privileged demo accounts on a published secret, so the
+   * suite can produce a real code rather than mocking the check away — which
+   * would leave the interesting half of the flow untested.
+   */
   async login(email: string, password = process.env.SEED_PASSWORD ?? 'Cwork2026!') {
     const res = await this.post('/auth/login', undefined, { email, password });
     if (res.status !== 200) {
       throw new Error(`login failed for ${email}: ${res.status} ${JSON.stringify(res.body)}`);
     }
-    return res.body as {
-      accessToken: string;
-      refreshToken: string;
-      user: { displayName: string; roles: string[]; permissions: string[] };
-    };
+
+    if (res.body?.mfaRequired) {
+      return this.completeMfa(email, res.body.challengeToken);
+    }
+    return res.body as SessionResponse;
+  }
+
+  private async completeMfa(email: string, challengeToken: string): Promise<SessionResponse> {
+    const attempt = async (): Promise<ApiResponse> =>
+      this.post('/auth/mfa/verify', undefined, {
+        challengeToken,
+        code: currentDemoCode(),
+      });
+
+    let verified = await attempt();
+    if (verified.status !== 200) {
+      // A code is single-use, so two sign-ins for the same account inside one
+      // 30-second step collide. Wait for the next step and try once more.
+      await waitForNextStep();
+      verified = await attempt();
+    }
+    if (verified.status !== 200) {
+      throw new Error(
+        `MFA verify failed for ${email}: ${verified.status} ${JSON.stringify(verified.body)}`,
+      );
+    }
+    return verified.body as SessionResponse;
   }
 
   async token(email: string): Promise<string> {
     return (await this.login(email)).accessToken;
   }
+}
+
+export interface SessionResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: { displayName: string; roles: string[]; permissions: string[] };
+}
+
+/**
+ * The secret `prisma/seed.ts` enrols the privileged demo accounts on. Published
+ * on purpose: it is demo data, and the tests need to produce real codes.
+ */
+export const DEMO_MFA_SECRET = 'CWORKDEMOMFASECRET234567';
+
+export function currentDemoCode(atMs = Date.now()): string {
+  return generateTotpForStep(DEMO_MFA_SECRET, timeStepAt(atMs));
+}
+
+/** Sleeps until the next TOTP step begins, so a fresh code is available. */
+export async function waitForNextStep(): Promise<void> {
+  const msIntoStep = Date.now() % 30_000;
+  await new Promise((resolve) => setTimeout(resolve, 30_000 - msIntoStep + 500));
 }
 
 export interface TestContext {

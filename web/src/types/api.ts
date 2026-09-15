@@ -48,8 +48,36 @@ export interface AuthTokens {
   tokenType: string;
 }
 
-export interface LoginResponse extends AuthTokens {
+export interface LoginSession extends AuthTokens {
+  mfaRequired: false;
   user: SessionUser;
+}
+
+/**
+ * Returned when the password was right but the account still owes a second
+ * factor — either because it has one enrolled, or because it holds privileges
+ * that demand one and has not enrolled yet.
+ */
+export interface MfaChallenge {
+  mfaRequired: true;
+  mfaEnrolled: boolean;
+  challengeToken: string;
+  expiresIn: number;
+}
+
+/** Branch on `mfaRequired`; the two halves share no fields worth guessing at. */
+export type LoginResponse = LoginSession | MfaChallenge;
+
+export interface MfaEnrolment {
+  secret: string;
+  otpauthUri: string;
+}
+
+export interface MfaStatus {
+  required: boolean;
+  enrolled: boolean;
+  enrolledAt: string | null;
+  recoveryCodesRemaining: number;
 }
 
 export type EmployeeStatus =

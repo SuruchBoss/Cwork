@@ -24,7 +24,12 @@ model User {
   mfaEnabled        Boolean  @default(false)
   /// AES-256-GCM envelope, decrypted only inside the MFA service.
   mfaSecretEnc      String?
+  /// SHA-256 digests of unused recovery codes; a code is removed once spent.
   mfaRecoveryCodes  String[] @default([])
+  mfaEnrolledAt     DateTime?
+  /// Newest TOTP step already accepted, so a code cannot be replayed inside its
+  /// own 90-second window.
+  mfaLastUsedStep   Int?
   failedLoginCount  Int      @default(0)
   lockedUntil       DateTime?
   lastLoginAt       DateTime?

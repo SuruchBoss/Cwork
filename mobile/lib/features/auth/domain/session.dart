@@ -60,3 +60,26 @@ class Perm {
   static const String approvalAct = 'approval:act';
   static const String overtimeRequestSelf = 'overtime:request:self';
 }
+
+/// What a sign-in attempt produced: a session, or a second factor still owed.
+sealed class LoginOutcome {
+  const LoginOutcome();
+}
+
+class LoggedIn extends LoginOutcome {
+  const LoggedIn(this.user);
+
+  final SessionUser user;
+}
+
+/// The password was right; the account still owes a code.
+class MfaRequired extends LoginOutcome {
+  const MfaRequired({required this.challengeToken, required this.enrolled});
+
+  final String challengeToken;
+
+  /// False when the account must set a second factor up before it can sign in.
+  /// Enrolment is done in the web console — scanning a QR code with the phone
+  /// that is showing it does not work.
+  final bool enrolled;
+}

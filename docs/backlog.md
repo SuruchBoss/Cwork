@@ -18,32 +18,6 @@ it does not.
 
 ## P0 — blocks a real deployment
 
-### CW-001 · Enforce multi-factor authentication
-`P0` · security · **M**
-
-The `User` model already carries the MFA fields and `crypto.service.ts` can
-encrypt the secret. Nothing issues a challenge, so an HR admin account is one
-stolen password away from every employee's national ID.
-
-**Scope**
-- TOTP enrolment: generate a secret, show a QR, verify a first code before
-  activating.
-- Require a second factor at sign-in for any role holding
-  `employee:read:sensitive`, `payroll:run`, `payroll:approve` or `role:manage`.
-- Recovery codes, single-use, hashed at rest like passwords.
-- An org setting to require MFA for everyone.
-
-**Acceptance**
-- A privileged account cannot obtain an access token with only a password.
-- A reused recovery code is rejected.
-- Enrolment, challenge success and challenge failure each write an audit entry.
-- The encrypted secret never appears in an API response.
-
-**Files** `backend/src/modules/auth/`, `prisma/schema/identity.prisma`,
-`web/src/features/auth/`
-
----
-
 ### CW-002 · Scan uploads for malware
 `P0` · security · **M**
 
@@ -342,6 +316,29 @@ breakage, and Thai remains the default.
 
 ---
 
+### CW-021 · Two-factor enrolment on mobile
+`P2` · mobile · **M**
+
+The app can complete a second factor — it shows a code field and accepts a
+generated or recovery code — but it cannot *enrol* one. Scanning a QR code with
+the phone that is displaying it does not work, so an account required to have a
+second factor is currently told to enrol in the web console first.
+
+That is fine while the requirement only reaches privileged console roles. An
+organisation that turns on `settings.security.requireMfa` for everyone leaves
+its field staff unable to set themselves up from the only device they have.
+
+**Scope** Enrolment without a camera round-trip: show the secret, offer a
+"copy to clipboard" and a deep link that hands the `otpauth://` URI straight to
+an authenticator app on the same device, then confirm with a code.
+
+**Acceptance** An employee with no console access can enrol and sign in using
+only the phone, and the recovery codes are shown once with a way to save them.
+
+**Files** `mobile/lib/features/auth/`
+
+---
+
 ## P3 — nice to have
 
 ### CW-017 · Accessibility pass on the console
@@ -406,3 +403,4 @@ Kept so the reasoning survives.
 |---|---|
 | **CW-000** · Docker quick start could not migrate or seed | The API image is pruned to production dependencies, so `docker compose exec api npx prisma migrate deploy` and `npm run db:seed` — both documented in the README — failed: no Prisma CLI, no ts-node. Fixed by splitting the prune into its own Dockerfile stage and adding a profiled `migrate` service built from the `build` stage. The runtime image is unchanged. |
 | **CW-011** · `npm run test:e2e` was a dangling script | It pointed at `./test/jest-e2e.json`, which did not exist, and `backend/test/` was an empty directory, so the command failed with a Jest config error. Rebuilt as a 36-check suite that boots the real application, migrates, truncates and seeds its own database, and runs in CI. Covers auth and deny-by-default, RBAC row scoping at all three visibility levels, the leave ledger, idempotent punch replay, geofence flagging, the payroll lifecycle with separation of duties, and the append-only audit trail. |
+| **CW-001** · Privileged accounts could sign in with a password alone | TOTP (RFC 6238), implemented against the RFC's own test vectors rather than pulled in as a dependency, and required — not offered — for any account holding `employee:read:sensitive`, `payroll:run`, `payroll:approve` or `role:manage`. A correct password for such an account now yields a challenge token, not a session; that token carries a `typ` claim the access-token strategy rejects, which is the only thing separating it from a full session since both are signed with the same secret. Codes cannot be replayed inside their own window, recovery codes are single-use, a wrong code counts towards the password lockout, and disabling is refused for an account that must have one. Recovery codes are stored as SHA-256 digests rather than argon2 as the ticket originally said: at 100 bits of entropy a slow KDF buys nothing and only gives a half-authenticated endpoint a way to burn CPU, and refresh tokens already use the same treatment for the same reason. Mobile can present a code but not yet enrol — see CW-021. |

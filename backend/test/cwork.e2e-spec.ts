@@ -14,7 +14,13 @@
  * attendance coverage, and the seed silently creating none of the public
  * holidays. Both are asserted here so they cannot come back.
  */
-import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import {
+  createTestApp,
+  currentDemoCode,
+  waitForNextStep,
+  type Api,
+  type TestContext,
+} from './utils/test-app';
 import { findFridayToMondayWindow, isoDate } from './utils/dates';
 
 const EMPLOYEE = 'dev2@cwork.example';
@@ -89,6 +95,203 @@ describe('Cwork API (e2e)', () => {
       });
 
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe('multi-factor authentication', () => {
+    const PRIVILEGED = HR;
+    const UNPRIVILEGED = EMPLOYEE;
+
+    it('will not hand a privileged account a session for a password alone', async () => {
+      // The whole point of the ticket: one stolen password must not be enough
+      // to reach every national ID in the organisation.
+      const res = await api.post('/auth/login', undefined, {
+        email: PRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.mfaRequired).toBe(true);
+      expect(res.body.challengeToken).toBeTruthy();
+      expect(res.body.accessToken).toBeUndefined();
+      expect(res.body.refreshToken).toBeUndefined();
+    });
+
+    it('does not challenge an account with no privileges and no enrolment', async () => {
+      const res = await api.post('/auth/login', undefined, {
+        email: UNPRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+
+      expect(res.body.mfaRequired).toBe(false);
+      expect(res.body.accessToken).toBeTruthy();
+    });
+
+    it('refuses the challenge token as if it were an access token', async () => {
+      // It is signed with the same secret, issuer and audience as a real access
+      // token; only the `typ` claim separates them. If that check regresses,
+      // a correct password alone becomes a full session again.
+      const login = await api.post('/auth/login', undefined, {
+        email: PRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+
+      const res = await api.get('/employees?limit=1', login.body.challengeToken);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a wrong code and issues a session for a right one', async () => {
+      const login = await api.post('/auth/login', undefined, {
+        email: PRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+
+      const wrong = await api.post('/auth/mfa/verify', undefined, {
+        challengeToken: login.body.challengeToken,
+        code: '000000',
+      });
+      expect(wrong.status).toBe(401);
+
+      await waitForNextStep();
+      const right = await api.post('/auth/mfa/verify', undefined, {
+        challengeToken: login.body.challengeToken,
+        code: currentDemoCode(),
+      });
+
+      expect(right.status).toBe(200);
+      expect(right.body.mfaRequired).toBe(false);
+      expect(right.body.accessToken).toBeTruthy();
+    });
+
+    it('refuses to spend the same code twice', async () => {
+      // A code observed in flight — by a phishing proxy, over a shoulder — is
+      // valid for up to 90 seconds. Once spent, it is spent.
+      await waitForNextStep();
+      const code = currentDemoCode();
+
+      const first = await api.post('/auth/login', undefined, {
+        email: PRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+      const accepted = await api.post('/auth/mfa/verify', undefined, {
+        challengeToken: first.body.challengeToken,
+        code,
+      });
+      expect(accepted.status).toBe(200);
+
+      const second = await api.post('/auth/login', undefined, {
+        email: PRIVILEGED,
+        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+      });
+      const replayed = await api.post('/auth/mfa/verify', undefined, {
+        challengeToken: second.body.challengeToken,
+        code,
+      });
+
+      expect(replayed.status).toBe(401);
+    });
+
+    it('never returns the secret through the status endpoint', async () => {
+      const res = await api.get('/auth/mfa/status', hrToken);
+
+      expect(res.status).toBe(200);
+      expect(res.body.enrolled).toBe(true);
+      expect(res.body.required).toBe(true);
+      expect(JSON.stringify(res.body)).not.toContain('CWORKDEMOMFASECRET');
+    });
+
+    it('refuses to let a privileged account turn its second factor off', async () => {
+      await waitForNextStep();
+      const res = await api.post('/auth/mfa/disable', hrToken, { code: currentDemoCode() });
+
+      expect(res.body.code).toBe('MFA_MANDATORY');
+    });
+
+    describe('voluntary enrolment from a session', () => {
+      let enrolToken: string;
+      let secret: string;
+      let recoveryCodes: string[];
+
+      beforeAll(async () => {
+        // An ordinary employee adding a second factor of their own accord.
+        enrolToken = await api.token('dev1@cwork.example');
+      });
+
+      it('offers a secret and a scannable URI', async () => {
+        const res = await api.post('/auth/mfa/enroll', enrolToken, {});
+
+        expect(res.status).toBe(200);
+        expect(res.body.secret).toMatch(/^[A-Z2-7]+$/);
+        expect(res.body.otpauthUri).toContain('otpauth://totp/');
+        secret = res.body.secret;
+      });
+
+      it('does not count as enrolled until a code proves the secret was scanned', async () => {
+        const status = await api.get('/auth/mfa/status', enrolToken);
+
+        expect(status.body.enrolled).toBe(false);
+      });
+
+      it('rejects a wrong activation code', async () => {
+        const res = await api.post('/auth/mfa/activate', enrolToken, { code: '000000' });
+
+        expect(res.body.code).toBe('MFA_CODE_INVALID');
+      });
+
+      it('activates on a real code and returns recovery codes once', async () => {
+        const { generateTotpForStep, timeStepAt } = await import('src/modules/auth/domain/totp');
+        const res = await api.post('/auth/mfa/activate', enrolToken, {
+          code: generateTotpForStep(secret, timeStepAt(Date.now())),
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.recoveryCodes).toHaveLength(10);
+        recoveryCodes = res.body.recoveryCodes;
+
+        const status = await api.get('/auth/mfa/status', enrolToken);
+        expect(status.body.enrolled).toBe(true);
+        expect(status.body.recoveryCodesRemaining).toBe(10);
+      });
+
+      it('accepts a recovery code in place of a generated one, exactly once', async () => {
+        const [recovery] = recoveryCodes;
+
+        const first = await api.post('/auth/login', undefined, {
+          email: 'dev1@cwork.example',
+          password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        });
+        expect(first.body.mfaRequired).toBe(true);
+
+        const used = await api.post('/auth/mfa/verify', undefined, {
+          challengeToken: first.body.challengeToken,
+          code: recovery,
+        });
+        expect(used.status).toBe(200);
+
+        const second = await api.post('/auth/login', undefined, {
+          email: 'dev1@cwork.example',
+          password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        });
+        const reused = await api.post('/auth/mfa/verify', undefined, {
+          challengeToken: second.body.challengeToken,
+          code: recovery,
+        });
+
+        expect(reused.status).toBe(401);
+
+        const status = await api.get('/auth/mfa/status', enrolToken);
+        expect(status.body.recoveryCodesRemaining).toBe(9);
+      });
+
+      it('lets an unprivileged account turn it back off with a valid code', async () => {
+        const [spare] = recoveryCodes.slice(1);
+        const res = await api.post('/auth/mfa/disable', enrolToken, { code: spare });
+
+        expect(res.status).toBe(200);
+        const status = await api.get('/auth/mfa/status', enrolToken);
+        expect(status.body.enrolled).toBe(false);
+      });
     });
   });
 
