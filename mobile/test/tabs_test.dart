@@ -16,9 +16,7 @@ SessionUser userWith(List<String> permissions) => SessionUser(
 /// Defaults to a deployment with the assistant on, so a test that says nothing
 /// about it is exercising permissions alone.
 List<String> idsFor(SessionUser user, {bool assistantEnabled = true}) =>
-    visibleTabsFor(user, assistantEnabled: assistantEnabled)
-        .map((AppTab tab) => tab.id)
-        .toList();
+    visibleTabsFor(user, assistantEnabled: assistantEnabled).map((AppTab tab) => tab.id).toList();
 
 void main() {
   group('visibleTabsFor', () {
