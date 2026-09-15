@@ -378,11 +378,60 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
     throw new Error(`Invalid environment configuration:\n${details}`);
   }
 
+  // Not production-only: a channel switched on and left unconfigured is a
+  // mistake at every tier, and the symptom — a queue quietly filling with
+  // retries nobody is watching — reads nothing like its cause.
+  assertDeliveryConfiguration(config);
+
   if (config.NODE_ENV === 'production') {
     assertProductionSafety(config);
   }
 
   return config;
+}
+
+/**
+ * A delivery channel that is on must be able to deliver.
+ *
+ * Refusing to boot is the right answer rather than warning and carrying on:
+ * `EMAIL_ENABLED=true` is somebody saying they want mail sent, and the
+ * alternative is an outbox that fills with dead letters over a setting the
+ * operator believes they already made.
+ */
+function assertDeliveryConfiguration(config: EnvironmentVariables): void {
+  const problems: string[] = [];
+
+  if (config.EMAIL_ENABLED) {
+    if (!config.SMTP_HOST.trim()) problems.push('EMAIL_ENABLED=true requires SMTP_HOST');
+    if (!config.SMTP_FROM_ADDRESS.includes('@')) {
+      problems.push('EMAIL_ENABLED=true requires SMTP_FROM_ADDRESS to be an email address');
+    }
+    if (config.SMTP_USERNAME && !config.SMTP_PASSWORD) {
+      problems.push('SMTP_USERNAME is set without SMTP_PASSWORD');
+    }
+  }
+
+  if (config.PUSH_ENABLED) {
+    const missing = (
+      [
+        ['FCM_PROJECT_ID', config.FCM_PROJECT_ID],
+        ['FCM_CLIENT_EMAIL', config.FCM_CLIENT_EMAIL],
+        ['FCM_PRIVATE_KEY', config.FCM_PRIVATE_KEY],
+      ] as const
+    )
+      .filter(([, value]) => !value)
+      .map(([name]) => name);
+
+    if (missing.length > 0) {
+      problems.push(`PUSH_ENABLED=true requires ${missing.join(', ')}`);
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `Incomplete notification delivery configuration:\n${problems.map((p) => `  - ${p}`).join('\n')}`,
+    );
+  }
 }
 
 /**

@@ -24,13 +24,15 @@ severity; this is the sequence work is actually taken in.
 |---|---|---|
 | **0** | A baseline to measure from | CW-028 · CW-030 · CW-036 · CW-029 |
 | **1** | A stranger can install it | CW-022 · CW-027 |
-| **2** | The pilot can run | CW-010 · CW-023 · CW-024 · CW-025 · CW-026 |
+| **2** | The pilot can run | CW-010 · CW-024 · CW-025 · CW-026 |
 | **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 |
-| **4** | When someone actually needs it | CW-004 · CW-019 · CW-005 · CW-021 · CW-017 |
+| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-017 |
 
 The plan was drawn up before CW-002, CW-003, CW-006, CW-007 and CW-020 landed,
-and those five came out of it as they were finished. Two consequences worth
-stating rather than leaving implicit:
+and those five came out of it as they were finished. CW-005 and CW-023 have
+since landed together — they were the same work described twice — which takes
+email and push out of phases 2 and 4 both. Consequences worth stating rather
+than leaving implicit:
 
 - **Phase 1 lost CW-020, CW-034 and CW-035** — the advisories are cleared, and
   the README now carries screenshots and an English translation.
@@ -211,35 +213,6 @@ department or location; a calendar view of who is on which shift; bulk assign.
 - Overlapping assignments for one employee-day are rejected with a clear error.
 
 **Files** `web/src/features/attendance/`, `backend/src/modules/attendance/`
-
----
-
-### CW-023 · Send notifications by email
-`P1` · platform · **M**
-
-`NotificationsService` writes in-app rows and an outbox event, and nothing
-delivers either. During the pilot that means an approver never learns a leave
-request is waiting unless they happen to open the console. `.env.example` has no
-mail configuration at all.
-
-CW-006 landed while this was being planned, so the original argument for
-bypassing the outbox is gone: register a handler with `OutboxRegistry` and the
-retry, backoff and dead-letter behaviour comes for free.
-
-**Scope**
-- `MAIL_ENABLED=false` by default: boots, logs plainly that notifications are
-  in-app only.
-- `MAIL_ENABLED=true` with incomplete configuration: **refuses to boot**, the
-  same rule `ASSISTANT_ENABLED` already follows.
-- An outbox handler for the notification event, with Thai-capable templates for
-  approval-pending, approved, rejected and document-ready.
-
-**Acceptance**
-- Submitting leave emails the approver.
-- SMTP being down parks the event for retry and leaves the leave request alone.
-- A rolled-back transaction sends nothing.
-
-**Files** `backend/src/modules/notifications/`, `backend/src/core/config/`
 
 ---
 
@@ -432,7 +405,7 @@ breakage, and Thai remains the default.
 
 ---
 
-### CW-022 · Register the employee app for push
+### CW-037 · Register the employee app for push
 `P2` · mobile · **M**
 
 The backend sends push through FCM and `POST /notifications/devices` has always
@@ -657,6 +630,7 @@ Kept so the reasoning survives.
 | **CW-007** · Every replica ran every scheduled job | CW-003 made more than one instance a supported configuration and left the cron schedule running on all of them. Each task now takes a **transaction-scoped Postgres advisory lock** before it does anything and the instances that do not get it stand down — no table, no migration, no lease, nothing to switch on, and nothing to clean up: an instance killed mid-job loses its connection and Postgres releases the lock by itself. Lock ids are written out by hand in `domain/job-locks.ts` rather than hashed from the job name, because a hash is one collision away from two unrelated jobs blocking each other for ever and a literal is what you can look for in `pg_locks`. **Two things in the ticket were wrong.** It said a double run would grant leave quota twice: it would not — `rolloverYear` *assigns* the carried balance rather than adding to it, separations are filtered by status, and the purges are `deleteMany`, so every task was already idempotent. What a double run actually costs is the work itself, the duplicated audit and notification rows, and write-write races between instances doing identical work at the same instant. It also asked for a heartbeat "so a crashed holder does not block the next run" — a transaction-scoped lock has nothing to heartbeat, and that is precisely the argument for it over a lease table. The cost, stated in [operations.md](./operations.md): the job runs with a transaction open, so `JOB_LOCK_TIMEOUT_MS` bounds it at fifteen minutes by default and an open transaction holds back vacuum meanwhile. The e2e suite boots three complete applications against one database and never relies on timing to decide the winner — where a race would be the point, the test takes the lock itself and holds it. |
 | **CW-006** · The outbox table had no producer and no consumer | The ticket said `outbox_events` "is written transactionally and nothing reads it". Half right: nothing read it, and **nothing wrote it either** — the table had been in the schema since the first migration with no reference to it anywhere in `src`, so the work was both halves rather than one. `OutboxService.record` takes the caller's transaction client and will not work without one, because an event written on the ordinary client is a plain dual write with extra steps and nothing at the call site would show the difference. `OutboxDispatcher` claims a batch with `SELECT … FOR UPDATE SKIP LOCKED`, dispatches to whoever registered for the type, backs off from 30 seconds doubling to a 30-minute cap, and parks an event as a dead letter after `OUTBOX_MAX_ATTEMPTS`. Dead letters are never purged — only delivered events are — because that row is the only record that somebody was owed a message and did not get it. Unlike the scheduled tasks of CW-007, **every instance polls**: `SKIP LOCKED` means each dispatcher takes rows nobody else holds, so three replicas drain three times faster rather than fighting. Delivery is at least once and says so. The producer shipped with it is notifications: the in-app row and the event that will carry it out by email or push are written in one transaction, so no message is ever sent for a notification that does not exist. Nobody is listening yet — an event with no handler is marked delivered rather than queued for ever, and the API warns at boot when no handlers are registered at all — which is exactly the seam CW-005 plugs into. Closed straight afterwards, in the same branch: every call site now passes its own transaction client, so the change and the message about it commit together. `notifyIn`/`notifyManyIn` take the caller's `tx` and throw rather than swallow — inside a transaction there is nothing else they could do, since PostgreSQL has already aborted and catching would only move the failure to the commit. Four of the call sites had no transaction to join and now have one: approving a resignation writes the request, the employee and the employment event together, which was three separate writes that could always have disagreed with each other. The best-effort `notify` survives for exactly one caller — an upload the scanner refused, where nothing was stored and there is nothing to be atomic with — and a unit test fails if a second one appears without being added to the list with a reason. |
 | **CW-005** · Notifications never left the database | In-app rows and nothing else, so nobody learned a leave request was waiting unless they opened the console. SMTP is now written out against RFC 5321 and FCM's HTTP v1 API against its own two requests — the same trade as the clamd client and the TOTP implementation, because what is actually needed is one well-specified conversation and the alternative is a transport abstraction and a dependency tree. Both register as outbox handlers, so a failed send retries on the backoff CW-006 already built and never blocks the request that caused it. **The retry rule is the part worth arguing about**: the ticket asked for a bounce to be "retried with backoff and then recorded as failed", but eight attempts over an hour at a mailbox refused for not existing teaches nothing and buries the one message somebody should have looked at. A new `PermanentDeliveryError` lets a handler say so, and the dispatcher dead-letters it at once: SMTP 5xx and FCM 401/403 immediately, SMTP 4xx and FCM 5xx on the backoff. `starttls` refuses to send if the server does not offer STARTTLS rather than putting the relay password on the wire, and a device FCM calls `UNREGISTERED` has its row deleted instead of retried. Preferences are a rule per notification type with `*` as the catch-all; the unsubscribe link in every footer is public and signed, because nobody should have to sign in to stop receiving email, and it turns off email only — the click happened in an email, and in-app notifications are the record rather than a message. Both fakes speak the real protocols, and the FCM one verifies the service-account assertion against the key pair it generated, so a client that signs the wrong bytes fails in CI rather than at three in the morning. **Not done, and it is not backend work**: the employee app does not register an FCM token yet, so push has nowhere to go until it does. |
+| **CW-023** · Notifications had no mail transport | The same work as CW-005 above, written up separately while that one was still open, and delivered with it. Two requirements of this ticket shaped the result and are worth keeping: the handler goes through `OutboxRegistry` rather than round it, so retry, backoff and dead-lettering come from CW-006 rather than being reinvented; and a channel switched on with incomplete configuration now **refuses to boot**, the rule `ASSISTANT_ENABLED` already follows — because the symptom otherwise is an outbox filling with dead letters days later, over a setting the operator believes they already made. The variable is `EMAIL_ENABLED` rather than the `MAIL_ENABLED` proposed here; it was already shipped, documented and tested under that name by the time the two tickets were reconciled, and a rename would have been churn for its own sake. |
 | **CW-020** · Nine high-severity advisories in shipped dependencies | Two root causes, not nine: multer below 2.3.0 (four advisories) and deepmerge-ts below 8.0.0 reached through `@prisma/config`. Everything else was npm reporting the parents. Both are fixed upstream but neither parent has picked the fix up — the latest NestJS 11 still pins multer 2.2.0, and Prisma 7 still pins deepmerge-ts 7 — so the fixed versions are pinned through npm `overrides` rather than by taking two major upgrades for a security patch. `npm audit --omit=dev` is clean, and a CI job re-checks it weekly as well as on every push, because an advisory is published against code that has not changed. The upload endpoint also now states its whole contract as multer limits (one part, named `file`, no text fields), which is what actually neutralises the two field-name advisories: they need a text part, and there is no longer one to send. **The ticket's premise was wrong** in a way worth recording: it called multer "reachable from the public careers page". It is not. `POST /careers/:orgCode/jobs/:slug/apply` takes JSON, and the only multipart route in the system, `POST /files/upload`, sits behind the global auth guard — so this was an authenticated denial of service, not an anonymous one. Still worth fixing; not the emergency the ticket described. The upgrade also broke something on the way in, which is the argument for the tests: Nest maps multer errors by matching their *message*, multer 2.4 reworded `LIMIT_UNEXPECTED_FILE`, and a file sent under the wrong field name started returning 500 with a stack trace. The exception filter now reads `err.code`, as multer's own documentation asks. |
 | **CW-035** · The README was Thai only | A reviewer who does not read Thai could not assess the project at all, which for something that wants contributors is a hard stop. `README.md` is now English with `README.th.md` alongside it and a switcher at the top of both. This is not CW-016: the *interface* is still Thai-only, and the translation layer for both clients remains open. |
 | **CW-034** · The README described the system and showed none of it | Seeing any screen cost a clone, an `.env`, a compose run, a migration and a seed — minutes of commitment from someone who had not yet decided the project was worth any. Twenty-one console screenshots and eight from the app now sit in `docs/screenshots/`, fourteen of them in the README itself. The cross-client recording the ticket also asked for — submit leave on the phone, approve it in the console — was not done; open a new ticket if it is wanted. |

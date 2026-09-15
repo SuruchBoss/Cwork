@@ -266,6 +266,11 @@ PUBLIC_WEB_URL=https://hr.yourcompany.co.th
 than falling back to plaintext with the relay password on the wire. `none` is
 for a relay on localhost and nothing else.
 
+`EMAIL_ENABLED=true` with no `SMTP_HOST`, or `PUSH_ENABLED=true` with any FCM
+credential missing, **refuses to boot** and names every missing variable at
+once. The alternative is an outbox quietly filling with dead letters days later,
+over a setting somebody believes they already made.
+
 `PUBLIC_WEB_URL` is where the button in every email points, and where the
 unsubscribe link lives. An email that says something is waiting but not where is
 an email that may as well not have been sent.

@@ -37,21 +37,15 @@ export class FcmClient {
 
   constructor(@Inject(APP_CONFIG) private readonly config: RootConfig) {}
 
+  /**
+   * Whether push is on.
+   *
+   * Only the switch needs checking: `validateEnv` refuses to boot with
+   * `PUSH_ENABLED=true` and any of the three credentials missing, so a
+   * half-configured client is not a state this can reach.
+   */
   get enabled(): boolean {
-    const { enabled, projectId, clientEmail, privateKey } = this.config.delivery.push;
-    return Boolean(enabled && projectId && clientEmail && privateKey);
-  }
-
-  /** Why push is off, for the boot log — `null` when it is on. */
-  get disabledReason(): string | null {
-    const { enabled, projectId, clientEmail, privateKey } = this.config.delivery.push;
-    if (!enabled) return 'PUSH_ENABLED is false';
-    const missing = [
-      !projectId && 'FCM_PROJECT_ID',
-      !clientEmail && 'FCM_CLIENT_EMAIL',
-      !privateKey && 'FCM_PRIVATE_KEY',
-    ].filter(Boolean);
-    return missing.length > 0 ? `missing ${missing.join(', ')}` : null;
+    return this.config.delivery.push.enabled;
   }
 
   /**

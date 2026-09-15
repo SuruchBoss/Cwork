@@ -59,7 +59,7 @@ export class DeliveryService implements OnModuleInit {
       this.registry.register(NOTIFICATION_RAISED, (event) => this.deliverPush(event));
       this.logger.log(`Push delivery on via FCM project ${this.config.delivery.push.projectId}`);
     } else {
-      this.logger.warn(`Push delivery is off (${this.fcm.disabledReason})`);
+      this.logger.warn('Push delivery is off (PUSH_ENABLED=false) — nothing will be sent');
     }
   }
 
