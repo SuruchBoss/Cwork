@@ -322,6 +322,34 @@ the rules to be — not that the belief is right. Check the figures against your
 own before a real run. If you have the standing to review them properly,
 [issue #36](https://github.com/SuruchBoss/Cwork/issues/36) is open for it.
 
+## How this was built
+
+**The code in this repository was written by an AI agent**, working under
+direction, over a small number of days. Several commits add thousands of lines
+at once. That is visible in `git log` to anyone who looks, and it changes what
+you should check before trusting any of it — so it is said here rather than left
+to be inferred.
+
+What was *not* generated: the architecture, the security model, the priorities,
+and the arguments behind them. Those were decided by a person, recorded as they
+were settled, and are readable in
+[spec.md § Agreed direction](./docs/spec.md#agreed-direction) and in the
+[ADRs](./docs/adr/). Where a ticket's own premise turned out to be wrong, the
+correction is written down in the backlog's Done table next to what was built —
+that record is the point.
+
+What it implies about review:
+
+- Every suite passes, in CI, on every push — 245 backend unit tests, 17 web,
+  33 mobile, 103 end-to-end checks against the real API over HTTP.
+- The decisions are documented and the reasoning is recoverable.
+- **No independent human has read every line.** Tests passing and a design
+  being defensible are not the same thing as a review, and this has had the
+  first two and not the third.
+
+The history has not been rewritten to look otherwise, and it will not be.
+Rewriting it would be the actual dishonesty.
+
 ## Contributing
 
 Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). The

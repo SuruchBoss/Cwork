@@ -107,6 +107,16 @@ this reason.
 
 Conventional commits: `feat(leave): …`, `fix(payroll): …`, `docs: …`.
 
+**One change per commit.** Some of the early history does not follow this — the
+code was written by an AI agent under direction and several commits land
+thousands of lines at once, which the README
+[says plainly](./README.md#how-this-was-built). It is not the standard going
+forward: a commit that does one thing is a commit that can be read, reverted and
+bisected, and none of those work on a commit that does four.
+
+That history stays as it is. It is accurate, and rewriting it to look more
+conventional would be the actual dishonesty.
+
 In the PR description, say what changed and **why** — the reasoning is the part
 that is hard to recover later. If you made a non-obvious trade-off, an
 [ADR](./docs/adr/) is welcome.
