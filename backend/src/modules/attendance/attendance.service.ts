@@ -18,7 +18,7 @@ import {
   toDateOnly,
   workDateFor,
 } from '../../core/utils/date.util';
-import { employeeVisibilityFilter, requireEmployeeId } from '../employees/domain/employee-access';
+import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { OrganizationService } from '../organization/organization.service';
 import {
   AnomalyFlag,

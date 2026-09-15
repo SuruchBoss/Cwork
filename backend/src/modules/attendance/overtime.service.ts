@@ -17,7 +17,7 @@ import {
   type ApprovalOutcome,
 } from '../approvals/approval-outcome.registry';
 import { ApprovalService } from '../approvals/approval.service';
-import { employeeVisibilityFilter, requireEmployeeId } from '../employees/domain/employee-access';
+import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
 import type { CreateOvertimeDto, DecideOvertimeDto } from './dto/attendance.dto';

@@ -1,12 +1,18 @@
 import { Prisma } from '@prisma/client';
-import { AccessDeniedError } from '../../../core/errors/domain.errors';
-import type { AuthenticatedUser } from '../../../core/security/current-user';
-import { Permission } from '../../../core/security/permissions';
+import { AccessDeniedError } from '../errors/domain.errors';
+import type { AuthenticatedUser } from './current-user';
+import { Permission } from './permissions';
 
 /**
  * Turns a principal into a Prisma filter describing *which employees they may
  * see*. Every employee query composes this, so a missing check cannot widen
  * access by accident.
+ *
+ * It lives in `core/security` rather than in the employees module because it is
+ * an authorisation rule that nine modules apply — leave, payroll, attendance,
+ * documents and the rest all scope their own queries with it. Filing it under
+ * the module that happens to own the `Employee` table made every one of them
+ * look like it was reaching into another module's internals.
  *
  * Precedence, widest first:
  *   1. `employee:read`            → everyone in the organisation

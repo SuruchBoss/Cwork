@@ -16,7 +16,7 @@ import { SystemRole } from '../../core/security/roles';
 import { toDateOnly } from '../../core/utils/date.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { AuditService } from '../audit/audit.service';
-import { employeeVisibilityFilter } from './domain/employee-access';
+import { employeeVisibilityFilter } from '../../core/security/employee-access';
 import type {
   CreateEmployeeDto,
   EmployeeQueryDto,

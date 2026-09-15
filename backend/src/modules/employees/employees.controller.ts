@@ -17,7 +17,7 @@ import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
-import { requireEmployeeId } from './domain/employee-access';
+import { requireEmployeeId } from '../../core/security/employee-access';
 import {
   CreateEmployeeDto,
   CreateOffboardingTaskDto,

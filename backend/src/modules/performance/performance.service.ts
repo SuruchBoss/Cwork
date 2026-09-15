@@ -5,7 +5,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
 import { toDateOnly } from '../../core/utils/date.util';
-import { employeeVisibilityFilter, requireEmployeeId } from '../employees/domain/employee-access';
+import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   computeAchievement,

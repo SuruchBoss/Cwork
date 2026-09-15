@@ -18,7 +18,7 @@ import {
 } from '../approvals/approval-outcome.registry';
 import { ApprovalService } from '../approvals/approval.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { requireEmployeeId } from './domain/employee-access';
+import { requireEmployeeId } from '../../core/security/employee-access';
 import type {
   CreateOffboardingTaskDto,
   CreateResignationDto,
