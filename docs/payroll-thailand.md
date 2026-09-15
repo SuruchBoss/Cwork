@@ -1,9 +1,20 @@
 # Payroll: Thai rules
 
-> **This is not tax advice.** The engine implements the common salaried-employee
-> case. Verify against the Revenue Department and your accountant before running
-> real payroll. Rates change; the rule set is data (`THAI_TAX_RULES_2026`) so a
-> change is a config edit plus a test case, not a rewrite.
+> **No qualified person has reviewed these rules.**
+>
+> They were written from published sources — the Revenue Code, the Social
+> Security Act, Revenue Department guidance — and unit-tested against
+> hand-worked examples. That proves the code computes what its author believed
+> the rules to be. It does not prove the belief is correct, and no accountant,
+> tax agent or payroll professional has checked it.
+>
+> So: **this is not tax advice**, the engine implements the common
+> salaried-employee case, and the figures need verifying against your own
+> before a real run. Rates change; the rule set is data (`THAI_TAX_RULES_2026`)
+> so a change is a config edit plus a test case, not a rewrite.
+>
+> If you have the standing to review this properly, please do —
+> [issue #36](https://github.com/SuruchBoss/Cwork/issues/36) is open for it.
 
 Implementation: `backend/src/modules/payroll/domain/thai-tax.ts`.
 Tests: `thai-tax.spec.ts` (27 cases, hand-verified bracket arithmetic).

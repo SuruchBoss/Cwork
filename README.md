@@ -35,6 +35,11 @@ one setting (`THROTTLE_STORAGE=postgres`) rather than another service to operate
 — an HRIS that needs a Kafka cluster to send a leave notification is one nobody
 can self-host.
 
+**One deployment serves one organisation.** Every table carries `organizationId`
+and every query filters on it, but that is defence in depth inside a single
+install, not a tenant boundary: nothing in the test suite exercises two
+organisations sharing a database, so nothing should depend on it.
+
 ## Try it in five minutes
 
 ```bash
@@ -299,14 +304,23 @@ tests, 17 web, 33 mobile, plus a 103-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
-Second-factor authentication, upload scanning and shared rate limiting are in
-place, so nothing is left in the backlog's P0 tier.
+Second-factor authentication, upload scanning, shared rate limiting and
+email/push delivery are all in place. What is left is tracked in the
+[backlog](./docs/backlog.md), P0 first.
 
 **Still not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
+short: there is no way to create an organisation without loading the demo data,
+no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
 employee app cannot register for push yet, and this code has never had a
 penetration test.
+
+**The Thai payroll and social-security rules have not been reviewed by anyone
+qualified.** They were written from published sources and unit-tested against
+hand-worked examples, which proves the code computes what its author believed
+the rules to be — not that the belief is right. Check the figures against your
+own before a real run. If you have the standing to review them properly,
+[issue #36](https://github.com/SuruchBoss/Cwork/issues/36) is open for it.
 
 ## Contributing
 

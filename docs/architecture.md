@@ -112,15 +112,19 @@ closed, which is the direction you want that mistake to go.
 `forbidNonWhitelisted: true`, so a payload carrying `organizationId` or `role`
 is rejected outright rather than silently ignored.
 
-## Multi-tenancy
+## Tenant scoping
 
-Every tenant-owned table carries `organizationId`, and every repository query
-filters on it explicitly.
+**One deployment serves exactly one organisation.** Every tenant-owned table
+carries `organizationId` and every repository query filters on it explicitly,
+but that is a safety net inside a single-organisation install — it is not
+multi-tenancy, and nothing should be built on the assumption that two
+organisations may share a database. Nothing in the test suite exercises that
+case.
 
 There is deliberately no Prisma middleware injecting the filter automatically.
 An implicit filter is invisible when it goes missing — raw queries, nested
-writes and `$queryRaw` all escape it — and a tenant-isolation bug that silently
-stops working is far worse than one the compiler can point at.
+writes and `$queryRaw` all escape it — and a scoping bug that silently stops
+working is far worse than one the compiler can point at.
 
 ## Data model
 

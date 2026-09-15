@@ -232,6 +232,8 @@ Be clear-eyed about the gaps before you deploy:
 | **No database-level encryption at rest.** Only specific columns are encrypted. | Enable encryption on your volume or managed database. |
 | **No PII purge for employees.** Candidate records have PDPA retention; employees do not. | Employee records are usually retained by law; check your jurisdiction. |
 | **No penetration test.** This code has not been audited. | Get one before handling real payroll. |
+| **`organizationId` is not a tenant boundary.** Every table carries it and every query filters on it, but nothing in the test suite exercises two organisations sharing a database. | Run one deployment per organisation. Treat the column as defence in depth inside that deployment, not as isolation between deployments. |
+| **The Thai payroll and social-security rules have not been reviewed by anyone qualified.** They were written from published sources and unit-tested for internal consistency, which proves the code matches its author's reading of the rules, not that the reading is right. | Have an accountant or payroll professional check the figures against your own before a real run. |
 
 ### Rate limiting
 
