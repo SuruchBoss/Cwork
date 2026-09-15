@@ -234,54 +234,9 @@ export class PerformanceService {
     const reviewerEmployeeId = requireEmployeeId(user);
     const cycle = await this.requireCycle(user.organizationId, dto.cycleId);
 
-    if (dto.type === ReviewType.SELF && dto.employeeId !== reviewerEmployeeId) {
-      throw new BusinessRuleError('INVALID_SELF_REVIEW', 'A self review must be about yourself');
-    }
-    if (dto.type === ReviewType.MANAGER) {
-      const subject = await this.prisma.employee.findUnique({
-        where: { id: dto.employeeId },
-        select: { managerId: true },
-      });
-      const canOverride = user.permissions.includes(Permission.PERFORMANCE_MANAGE);
-      if (subject?.managerId !== reviewerEmployeeId && !canOverride) {
-        throw new BusinessRuleError(
-          'NOT_THEIR_MANAGER',
-          'Only the employee’s manager can submit a manager review',
-        );
-      }
-    }
+    await this.assertMayReview(user, reviewerEmployeeId, dto);
 
-    const goals = await this.prisma.kpiGoal.findMany({
-      where: {
-        cycleId: dto.cycleId,
-        employeeId: dto.employeeId,
-        status: { not: KpiGoalStatus.CANCELLED },
-      },
-      select: { weight: true, achievement: true },
-    });
-
-    const kpiResult = computeKpiScore(
-      goals.map((g) => ({
-        weight: Number(g.weight),
-        achievement: g.achievement ? Number(g.achievement) : null,
-      })),
-    );
-    const kpiScore = kpiResult.scoredGoals > 0 ? kpiResult.weightedScore : null;
-
-    const competencyScore = dto.competencyScores?.length
-      ? computeCompetencyScore(
-          dto.competencyScores.map((c) => ({ weight: c.weight, score: c.score })),
-        )
-      : null;
-
-    const overallScore = computeOverallScore({
-      kpiScore,
-      competencyScore,
-      kpiWeight: cycle.kpiWeight,
-      competencyWeight: cycle.competencyWeight,
-    });
-
-    const grade = resolveGrade(overallScore, (cycle.ratingScale as unknown as RatingBand[]) ?? []);
+    const { kpiScore, competencyScore, overallScore, grade } = await this.score(cycle, dto);
 
     const competencyRows = (dto.competencyScores ?? []).map((c, index) => ({
       competency: c.competency,
@@ -352,6 +307,87 @@ export class PerformanceService {
     });
 
     return review;
+  }
+
+  /**
+   * Who may write this review about whom.
+   *
+   * `PERFORMANCE_MANAGE` overrides the manager check on purpose: HR has to be
+   * able to file a review when the manager has left, and the alternative is
+   * editing `managerId` to get past it.
+   */
+  private async assertMayReview(
+    user: AuthenticatedUser,
+    reviewerEmployeeId: string,
+    dto: SubmitReviewDto,
+  ): Promise<void> {
+    if (dto.type === ReviewType.SELF && dto.employeeId !== reviewerEmployeeId) {
+      throw new BusinessRuleError('INVALID_SELF_REVIEW', 'A self review must be about yourself');
+    }
+    if (dto.type !== ReviewType.MANAGER) return;
+
+    const subject = await this.prisma.employee.findUnique({
+      where: { id: dto.employeeId },
+      select: { managerId: true },
+    });
+    const canOverride = user.permissions.includes(Permission.PERFORMANCE_MANAGE);
+
+    if (subject?.managerId !== reviewerEmployeeId && !canOverride) {
+      throw new BusinessRuleError(
+        'NOT_THEIR_MANAGER',
+        'Only the employee’s manager can submit a manager review',
+      );
+    }
+  }
+
+  /**
+   * The numbers, entirely from `domain/` functions.
+   *
+   * A cycle with no scored goals yields a null KPI score rather than a zero —
+   * "nobody set any targets" and "they missed every target" are different
+   * facts, and averaging the second into an overall score would be a lie about
+   * the first.
+   */
+  private async score(
+    cycle: { kpiWeight: number; competencyWeight: number; ratingScale: unknown },
+    dto: SubmitReviewDto,
+  ) {
+    const goals = await this.prisma.kpiGoal.findMany({
+      where: {
+        cycleId: dto.cycleId,
+        employeeId: dto.employeeId,
+        status: { not: KpiGoalStatus.CANCELLED },
+      },
+      select: { weight: true, achievement: true },
+    });
+
+    const kpiResult = computeKpiScore(
+      goals.map((g) => ({
+        weight: Number(g.weight),
+        achievement: g.achievement ? Number(g.achievement) : null,
+      })),
+    );
+    const kpiScore = kpiResult.scoredGoals > 0 ? kpiResult.weightedScore : null;
+
+    const competencyScore = dto.competencyScores?.length
+      ? computeCompetencyScore(
+          dto.competencyScores.map((c) => ({ weight: c.weight, score: c.score })),
+        )
+      : null;
+
+    const overallScore = computeOverallScore({
+      kpiScore,
+      competencyScore,
+      kpiWeight: cycle.kpiWeight,
+      competencyWeight: cycle.competencyWeight,
+    });
+
+    return {
+      kpiScore,
+      competencyScore,
+      overallScore,
+      grade: resolveGrade(overallScore, (cycle.ratingScale as unknown as RatingBand[]) ?? []),
+    };
   }
 
   async acknowledgeReview(user: AuthenticatedUser, reviewId: string, comment?: string) {

@@ -60,49 +60,7 @@ export class OvertimeService implements OnModuleInit {
     const startAt = new Date(dto.startAt);
     const endAt = new Date(dto.endAt);
 
-    if (endAt <= startAt) {
-      throw new BusinessRuleError('INVALID_OT_INTERVAL', 'Overtime must end after it starts');
-    }
-
-    const hours = new Decimal(minutesBetween(startAt, endAt)).dividedBy(60).toDecimalPlaces(2);
-    if (hours.greaterThan(12)) {
-      throw new BusinessRuleError(
-        'OT_TOO_LONG',
-        'A single overtime request cannot exceed 12 hours',
-      );
-    }
-
-    const overlapping = await this.prisma.overtimeRequest.findFirst({
-      where: {
-        employeeId,
-        status: { in: [OvertimeStatus.PENDING, OvertimeStatus.APPROVED] },
-        startAt: { lt: endAt },
-        endAt: { gt: startAt },
-      },
-      select: { id: true, requestNo: true },
-    });
-    if (overlapping) {
-      throw new BusinessRuleError(
-        'OVERLAPPING_OVERTIME',
-        `This overlaps overtime request ${overlapping.requestNo}`,
-      );
-    }
-
-    const compensation = await this.prisma.employeeCompensation.findFirst({
-      where: {
-        employeeId,
-        effectiveFrom: { lte: workDate },
-        OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
-      },
-      orderBy: { effectiveFrom: 'desc' },
-      select: { isOvertimeEligible: true },
-    });
-    if (compensation && !compensation.isOvertimeEligible) {
-      throw new BusinessRuleError(
-        'NOT_OVERTIME_ELIGIBLE',
-        'This position is not eligible for paid overtime',
-      );
-    }
+    const hours = await this.assertRequestable(employeeId, workDate, startAt, endAt);
 
     const type =
       dto.type ?? (await this.inferOvertimeType(user.organizationId, employeeId, workDate));
@@ -322,6 +280,69 @@ export class OvertimeService implements OnModuleInit {
    * the same commit, or a crash between them leaves a decided request nobody
    * was told about.
    */
+  /**
+   * Everything that can refuse a request, in the order that gives the most
+   * useful message: a backwards interval before a long one, and both before a
+   * database round trip.
+   *
+   * Returns the hours, because computing them is how the length is checked and
+   * recomputing them afterwards is how the two drift apart.
+   */
+  private async assertRequestable(
+    employeeId: string,
+    workDate: Date,
+    startAt: Date,
+    endAt: Date,
+  ): Promise<Decimal> {
+    if (endAt <= startAt) {
+      throw new BusinessRuleError('INVALID_OT_INTERVAL', 'Overtime must end after it starts');
+    }
+
+    const hours = new Decimal(minutesBetween(startAt, endAt)).dividedBy(60).toDecimalPlaces(2);
+    if (hours.greaterThan(12)) {
+      throw new BusinessRuleError(
+        'OT_TOO_LONG',
+        'A single overtime request cannot exceed 12 hours',
+      );
+    }
+
+    const overlapping = await this.prisma.overtimeRequest.findFirst({
+      where: {
+        employeeId,
+        status: { in: [OvertimeStatus.PENDING, OvertimeStatus.APPROVED] },
+        startAt: { lt: endAt },
+        endAt: { gt: startAt },
+      },
+      select: { id: true, requestNo: true },
+    });
+    if (overlapping) {
+      throw new BusinessRuleError(
+        'OVERLAPPING_OVERTIME',
+        `This overlaps overtime request ${overlapping.requestNo}`,
+      );
+    }
+
+    // No compensation record at all is not a refusal: a new starter whose pay
+    // has not been entered yet can still be asked to work late.
+    const compensation = await this.prisma.employeeCompensation.findFirst({
+      where: {
+        employeeId,
+        effectiveFrom: { lte: workDate },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
+      },
+      orderBy: { effectiveFrom: 'desc' },
+      select: { isOvertimeEligible: true },
+    });
+    if (compensation && !compensation.isOvertimeEligible) {
+      throw new BusinessRuleError(
+        'NOT_OVERTIME_ELIGIBLE',
+        'This position is not eligible for paid overtime',
+      );
+    }
+
+    return hours;
+  }
+
   private async notifyEmployee(
     tx: Prisma.TransactionClient,
     requestId: string,

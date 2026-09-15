@@ -26,6 +26,23 @@ import { DEFAULT_OT_MULTIPLIERS } from '../attendance/overtime.service';
 import { buildPayslip, type OvertimeLine, type PayslipInput } from './domain/payroll-calculator';
 import type { CreatePayrollPeriodDto, CreatePayrollRunDto } from './dto/payroll.dto';
 
+/** The period fields a calculation reads — not the whole row. */
+type PayrollPeriodWindow = {
+  periodStart: Date;
+  periodEnd: Date;
+  cutoffDate: Date;
+  year: number;
+  month: number;
+};
+
+/** The employee fields a payslip needs. */
+type PayrollSubject = {
+  id: string;
+  employeeCode: string;
+  hireDate: Date;
+  lastWorkingDate: Date | null;
+};
+
 @Injectable()
 export class PayrollService {
   private readonly logger = new Logger(PayrollService.name);
@@ -144,24 +161,7 @@ export class PayrollService {
     });
 
     try {
-      const employees = await this.prisma.employee.findMany({
-        where: {
-          organizationId: user.organizationId,
-          deletedAt: null,
-          hireDate: { lte: run.period.periodEnd },
-          OR: [{ lastWorkingDate: null }, { lastWorkingDate: { gte: run.period.periodStart } }],
-          status: { notIn: ['PRE_BOARDING'] },
-        },
-        select: {
-          id: true,
-          employeeCode: true,
-          firstNameTh: true,
-          lastNameTh: true,
-          userId: true,
-          hireDate: true,
-          lastWorkingDate: true,
-        },
-      });
+      const employees = await this.employeesInPeriod(user.organizationId, run.period);
 
       const workingDaysInPeriod = await this.countWorkingDays(
         user.organizationId,
@@ -172,38 +172,12 @@ export class PayrollService {
       // Replace, don't patch: stale payslips from a previous attempt must go.
       await this.prisma.payslip.deleteMany({ where: { runId } });
 
-      const totals = {
-        gross: new Decimal(0),
-        deduction: new Decimal(0),
-        net: new Decimal(0),
-        employer: new Decimal(0),
-      };
-      let count = 0;
-      const skipped: Array<{ employeeCode: string; reason: string }> = [];
-
-      for (const employee of employees) {
-        const result = await this.calculateEmployeePayslip(
-          user.organizationId,
-          run.id,
-          run.period,
-          employee,
-          workingDaysInPeriod,
-        );
-
-        if (!result) {
-          skipped.push({
-            employeeCode: employee.employeeCode,
-            reason: 'No effective compensation record',
-          });
-          continue;
-        }
-
-        totals.gross = totals.gross.plus(result.grossEarnings);
-        totals.deduction = totals.deduction.plus(result.totalDeductions);
-        totals.net = totals.net.plus(result.netPay);
-        totals.employer = totals.employer.plus(result.employerCost);
-        count += 1;
-      }
+      const { totals, count, skipped } = await this.payslipsFor(
+        user.organizationId,
+        run,
+        employees,
+        workingDaysInPeriod,
+      );
 
       const organization = await this.organization.getOrganization(user.organizationId);
 
@@ -238,6 +212,86 @@ export class PayrollService {
       });
       throw error;
     }
+  }
+
+  /**
+   * Everyone the run has to pay.
+   *
+   * Hired by the end of the period and not gone before it started, so somebody
+   * who left mid-month is still paid for the part they worked. `PRE_BOARDING`
+   * is excluded because an accepted offer is not employment yet.
+   */
+  private employeesInPeriod(
+    organizationId: string,
+    period: { periodStart: Date; periodEnd: Date },
+  ) {
+    return this.prisma.employee.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        hireDate: { lte: period.periodEnd },
+        OR: [{ lastWorkingDate: null }, { lastWorkingDate: { gte: period.periodStart } }],
+        status: { notIn: ['PRE_BOARDING'] },
+      },
+      select: {
+        id: true,
+        employeeCode: true,
+        firstNameTh: true,
+        lastNameTh: true,
+        userId: true,
+        hireDate: true,
+        lastWorkingDate: true,
+      },
+    });
+  }
+
+  /**
+   * One payslip per employee, and the run totals as they accumulate.
+   *
+   * An employee with no effective compensation is *skipped and reported*, not
+   * failed: one missing record must not stop the other three hundred people
+   * being paid, and a silent omission is worse than either.
+   */
+  private async payslipsFor(
+    organizationId: string,
+    run: { id: string; period: PayrollPeriodWindow },
+    employees: PayrollSubject[],
+    workingDaysInPeriod: number,
+  ) {
+    const totals = {
+      gross: new Decimal(0),
+      deduction: new Decimal(0),
+      net: new Decimal(0),
+      employer: new Decimal(0),
+    };
+    let count = 0;
+    const skipped: Array<{ employeeCode: string; reason: string }> = [];
+
+    for (const employee of employees) {
+      const result = await this.calculateEmployeePayslip(
+        organizationId,
+        run.id,
+        run.period,
+        employee,
+        workingDaysInPeriod,
+      );
+
+      if (!result) {
+        skipped.push({
+          employeeCode: employee.employeeCode,
+          reason: 'No effective compensation record',
+        });
+        continue;
+      }
+
+      totals.gross = totals.gross.plus(result.grossEarnings);
+      totals.deduction = totals.deduction.plus(result.totalDeductions);
+      totals.net = totals.net.plus(result.netPay);
+      totals.employer = totals.employer.plus(result.employerCost);
+      count += 1;
+    }
+
+    return { totals, count, skipped };
   }
 
   async approveRun(user: AuthenticatedUser, runId: string) {

@@ -93,21 +93,7 @@ export class ApprovalService {
     });
 
     if (!task) throw new NotFoundError('ApprovalTask', taskId);
-    if (task.approverUserId !== userId && task.delegatedToId !== userId) {
-      throw new BusinessRuleError('NOT_YOUR_APPROVAL', 'This approval is assigned to someone else');
-    }
-    if (task.status !== ApprovalTaskStatus.PENDING) {
-      throw new BusinessRuleError(
-        ErrorCode.APPROVAL_NOT_PENDING,
-        'This approval has already been decided',
-      );
-    }
-    if (task.instance.status !== ApprovalStatus.PENDING) {
-      throw new BusinessRuleError(
-        ErrorCode.APPROVAL_NOT_PENDING,
-        'This request is no longer pending',
-      );
-    }
+    assertDecidable(task, userId);
 
     await this.prisma.approvalTask.update({
       where: { id: task.id },
@@ -128,27 +114,7 @@ export class ApprovalService {
       return { instanceStatus: ApprovalStatus.REJECTED };
     }
 
-    const step = task.instance.policy?.steps.find((s) => s.orderIndex === task.stepIndex);
-    const siblings = await this.prisma.approvalTask.findMany({
-      where: { instanceId: task.instanceId, stepIndex: task.stepIndex },
-    });
-
-    const stepSatisfied = step?.anyOf
-      ? siblings.some((t) => t.status === ApprovalTaskStatus.APPROVED)
-      : siblings.every((t) => t.status === ApprovalTaskStatus.APPROVED);
-
-    if (!stepSatisfied) return { instanceStatus: ApprovalStatus.PENDING };
-
-    if (step?.anyOf) {
-      await this.prisma.approvalTask.updateMany({
-        where: {
-          instanceId: task.instanceId,
-          stepIndex: task.stepIndex,
-          status: ApprovalTaskStatus.PENDING,
-        },
-        data: { status: ApprovalTaskStatus.SKIPPED },
-      });
-    }
+    if (!(await this.stepIsSatisfied(task))) return { instanceStatus: ApprovalStatus.PENDING };
 
     const subjectEmployeeId = (task.instance.snapshot as Record<string, unknown>)?.employeeId as
       string | undefined;
@@ -238,6 +204,44 @@ export class ApprovalService {
         },
       },
     });
+  }
+
+  /**
+   * Whether this step is done, and tidying up behind it if so.
+   *
+   * `anyOf` is the difference between "two of you must agree" and "either of
+   * you will do". In the second case the approvers who did not answer have
+   * their tasks skipped, so the request stops appearing in a queue where
+   * pressing the button would achieve nothing.
+   */
+  private async stepIsSatisfied(task: {
+    instanceId: string;
+    stepIndex: number;
+    instance: { policy?: { steps: { orderIndex: number; anyOf: boolean }[] } | null };
+  }): Promise<boolean> {
+    const step = task.instance.policy?.steps.find((s) => s.orderIndex === task.stepIndex);
+    const siblings = await this.prisma.approvalTask.findMany({
+      where: { instanceId: task.instanceId, stepIndex: task.stepIndex },
+    });
+
+    const satisfied = step?.anyOf
+      ? siblings.some((t) => t.status === ApprovalTaskStatus.APPROVED)
+      : siblings.every((t) => t.status === ApprovalTaskStatus.APPROVED);
+
+    if (!satisfied) return false;
+
+    if (step?.anyOf) {
+      await this.prisma.approvalTask.updateMany({
+        where: {
+          instanceId: task.instanceId,
+          stepIndex: task.stepIndex,
+          status: ApprovalTaskStatus.PENDING,
+        },
+        data: { status: ApprovalTaskStatus.SKIPPED },
+      });
+    }
+
+    return true;
   }
 
   // ------------------------------------------------------------------ policies
@@ -425,5 +429,37 @@ export class ApprovalService {
       decidedByUserId,
       comment,
     });
+  }
+}
+
+/**
+ * Everything that makes a decision impossible, checked before anything is
+ * written. Ordered so the message names the most specific reason: whose
+ * approval it is, then whether it is still open, then whether the request
+ * behind it still is.
+ */
+function assertDecidable(
+  task: {
+    approverUserId: string;
+    delegatedToId: string | null;
+    status: ApprovalTaskStatus;
+    instance: { status: ApprovalStatus };
+  },
+  userId: string,
+): void {
+  if (task.approverUserId !== userId && task.delegatedToId !== userId) {
+    throw new BusinessRuleError('NOT_YOUR_APPROVAL', 'This approval is assigned to someone else');
+  }
+  if (task.status !== ApprovalTaskStatus.PENDING) {
+    throw new BusinessRuleError(
+      ErrorCode.APPROVAL_NOT_PENDING,
+      'This approval has already been decided',
+    );
+  }
+  if (task.instance.status !== ApprovalStatus.PENDING) {
+    throw new BusinessRuleError(
+      ErrorCode.APPROVAL_NOT_PENDING,
+      'This request is no longer pending',
+    );
   }
 }
