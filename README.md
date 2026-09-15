@@ -30,6 +30,11 @@ Three deployables, one database:
 | **Employee app** | Flutter. Clock in/out, leave, payslips, approvals — offline-tolerant. |
 | **API** | NestJS modular monolith over PostgreSQL 16. |
 
+No Redis, no message broker, no Kubernetes. Running several API instances needs
+one setting (`THROTTLE_STORAGE=postgres`) rather than another service to operate
+— an HRIS that needs a Kafka cluster to send a leave notification is one nobody
+can self-host.
+
 ## Try it in five minutes
 
 ```bash
@@ -141,7 +146,7 @@ expense reimbursement — and payslips you can still explain a year later.
 **Whoever calculates a run cannot approve it**, enforced by the API rather than
 by policy.
 
-<img src="./docs/screenshots/19-payroll-run.png" alt="Payroll run" width="860">
+<img src="./docs/screenshots/07-payroll.png" alt="Payroll periods and runs" width="49%"> <img src="./docs/screenshots/19-payroll-run.png" alt="Payroll run" width="49%">
 
 ### Approvals
 
@@ -220,6 +225,12 @@ national IDs, run payroll or hand out permissions needs a second factor. TOTP is
 implemented against RFC 6238's own test vectors rather than pulled in as a
 dependency, and a code cannot be spent twice even inside its validity window.
 
+**Uploads are scanned before they are stored.** Résumés arrive from a public
+careers page — the least trusted input the system takes. The bytes go to clamd
+first, so malware is never written anywhere for a later change to expose. And a
+scanner that is not working is never a pass: unreachable, timed out, or a reply
+that cannot be parsed all leave the file held and undownloadable.
+
 **The assistant's tools take no employee id.** Every one resolves the subject from
 the authenticated principal, so there is no parameter a prompt injection could set
 to read someone else's payslip. The blast radius of a fully compromised model is
@@ -266,10 +277,14 @@ tests, 17 web, 30 mobile, plus a 64-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
-**Not production-ready without work.** Before running real payroll, read
+Second-factor authentication, upload scanning and shared rate limiting are in
+place, so nothing is left in the backlog's P0 tier.
+
+**Still not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: no ภ.ง.ด.1 filing export, malware scanning is off until you point it at a
-clamd, and no penetration test.
+short: no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs,
+scheduled jobs still assume a single instance, and this code has never had a
+penetration test.
 
 ## Contributing
 
