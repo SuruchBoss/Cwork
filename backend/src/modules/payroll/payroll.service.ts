@@ -285,13 +285,16 @@ export class PayrollService {
 
     const employeeIds = run.payslips.map((p) => p.employeeId);
 
-    await this.prisma.$transaction([
-      this.prisma.payrollRun.update({
+    // Interactive rather than the array form, so the notifications commit with
+    // the payslips. "Published" and "everyone was told" are the same event as
+    // far as an employee is concerned.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.payrollRun.update({
         where: { id: runId },
         data: { status: PayrollRunStatus.PAID, paidAt: new Date() },
-      }),
-      this.prisma.payslip.updateMany({ where: { runId }, data: { publishedAt: new Date() } }),
-      this.prisma.overtimeRequest.updateMany({
+      });
+      await tx.payslip.updateMany({ where: { runId }, data: { publishedAt: new Date() } });
+      await tx.overtimeRequest.updateMany({
         where: {
           organizationId: user.organizationId,
           employeeId: { in: employeeIds },
@@ -300,8 +303,8 @@ export class PayrollService {
           workDate: { gte: run.period.periodStart, lte: run.period.periodEnd },
         },
         data: { isPaid: true, payrollRunId: runId },
-      }),
-      this.prisma.expenseClaim.updateMany({
+      });
+      await tx.expenseClaim.updateMany({
         where: {
           organizationId: user.organizationId,
           employeeId: { in: employeeIds },
@@ -310,9 +313,9 @@ export class PayrollService {
           decidedAt: { lte: run.period.cutoffDate },
         },
         data: { status: ExpenseClaimStatus.PAID, paidAt: new Date(), payrollRunId: runId },
-      }),
+      });
       // Locking prevents retroactive punch edits changing a paid month.
-      this.prisma.attendanceRecord.updateMany({
+      await tx.attendanceRecord.updateMany({
         where: {
           organizationId: user.organizationId,
           employeeId: { in: employeeIds },
@@ -320,28 +323,29 @@ export class PayrollService {
           lockedAt: null,
         },
         data: { lockedAt: new Date() },
-      }),
-      this.prisma.payrollPeriod.update({
+      });
+      await tx.payrollPeriod.update({
         where: { id: run.periodId },
         data: { status: PayrollPeriodStatus.CLOSED },
-      }),
-    ]);
+      });
 
-    const recipients = await this.prisma.employee.findMany({
-      where: { id: { in: employeeIds }, userId: { not: null } },
-      select: { userId: true },
+      const recipients = await tx.employee.findMany({
+        where: { id: { in: employeeIds }, userId: { not: null } },
+        select: { userId: true },
+      });
+
+      await this.notifications.notifyManyIn(
+        tx,
+        user.organizationId,
+        recipients.map((r) => r.userId!),
+        {
+          type: 'payslip.published',
+          title: 'สลิปเงินเดือนพร้อมแล้ว',
+          body: `สลิปเงินเดือนงวด ${run.period.code} เปิดให้ดูได้แล้ว`,
+          data: { runId, periodCode: run.period.code },
+        },
+      );
     });
-
-    await this.notifications.notifyMany(
-      user.organizationId,
-      recipients.map((r) => r.userId!),
-      {
-        type: 'payslip.published',
-        title: 'สลิปเงินเดือนพร้อมแล้ว',
-        body: `สลิปเงินเดือนงวด ${run.period.code} เปิดให้ดูได้แล้ว`,
-        data: { runId, periodCode: run.period.code },
-      },
-    );
 
     return this.prisma.payrollRun.findUniqueOrThrow({ where: { id: runId } });
   }

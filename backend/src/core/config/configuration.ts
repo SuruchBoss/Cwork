@@ -42,6 +42,14 @@ export interface StorageConfig {
   };
 }
 
+/** Where the malware scanner lives, and whether there is one at all. */
+export interface MalwareScanConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  timeoutMs: number;
+}
+
 export interface AssistantConfig {
   enabled: boolean;
   provider: 'anthropic' | 'openai-compatible' | 'none';
@@ -60,7 +68,20 @@ export interface RootConfig {
   auth: AuthConfig;
   storage: StorageConfig;
   assistant: AssistantConfig;
-  security: { fieldEncryptionKey: string; throttleTtl: number; throttleLimit: number };
+  security: {
+    fieldEncryptionKey: string;
+    throttleTtl: number;
+    throttleLimit: number;
+    throttleStorage: 'memory' | 'postgres';
+  };
+  malwareScan: MalwareScanConfig;
+  jobs: { lockTimeoutMs: number };
+  outbox: {
+    pollMs: number;
+    batchSize: number;
+    maxAttempts: number;
+    retentionDays: number;
+  };
   log: { level: string; pretty: boolean };
 }
 
@@ -106,6 +127,12 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
         forcePathStyle: env.S3_FORCE_PATH_STYLE,
       },
     },
+    malwareScan: {
+      enabled: env.MALWARE_SCAN_ENABLED,
+      host: env.CLAMAV_HOST,
+      port: env.CLAMAV_PORT,
+      timeoutMs: env.CLAMAV_TIMEOUT_MS,
+    },
     assistant: {
       enabled: env.ASSISTANT_ENABLED,
       provider: env.ASSISTANT_PROVIDER as AssistantConfig['provider'],
@@ -122,6 +149,14 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       fieldEncryptionKey: env.FIELD_ENCRYPTION_KEY,
       throttleTtl: env.THROTTLE_TTL,
       throttleLimit: env.THROTTLE_LIMIT,
+      throttleStorage: env.THROTTLE_STORAGE as 'memory' | 'postgres',
+    },
+    jobs: { lockTimeoutMs: env.JOB_LOCK_TIMEOUT_MS },
+    outbox: {
+      pollMs: env.OUTBOX_POLL_MS,
+      batchSize: env.OUTBOX_BATCH_SIZE,
+      maxAttempts: env.OUTBOX_MAX_ATTEMPTS,
+      retentionDays: env.OUTBOX_RETENTION_DAYS,
     },
     log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
   };

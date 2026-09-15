@@ -283,81 +283,88 @@ export class PerformanceService {
 
     const grade = resolveGrade(overallScore, (cycle.ratingScale as unknown as RatingBand[]) ?? []);
 
-    const review = await this.prisma.performanceReview.upsert({
-      where: {
-        cycleId_employeeId_reviewerEmployeeId_type: {
+    const review = await this.prisma.$transaction(async (tx) => {
+      const submitted = await tx.performanceReview.upsert({
+        where: {
+          cycleId_employeeId_reviewerEmployeeId_type: {
+            cycleId: dto.cycleId,
+            employeeId: dto.employeeId,
+            reviewerEmployeeId,
+            type: dto.type,
+          },
+        },
+        create: {
           cycleId: dto.cycleId,
           employeeId: dto.employeeId,
           reviewerEmployeeId,
           type: dto.type,
+          status: ReviewStatus.SUBMITTED,
+          kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
+          competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
+          overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
+          grade,
+          strengths: dto.strengths,
+          improvements: dto.improvements,
+          developmentPlan: dto.developmentPlan,
+          managerComment: dto.managerComment,
+          employeeComment: dto.employeeComment,
+          submittedAt: new Date(),
+          competencyScores: {
+            create: (dto.competencyScores ?? []).map((c, index) => ({
+              competency: c.competency,
+              weight: new Prisma.Decimal(c.weight),
+              score: new Prisma.Decimal(c.score),
+              comment: c.comment,
+              orderIndex: index,
+            })),
+          },
         },
-      },
-      create: {
-        cycleId: dto.cycleId,
-        employeeId: dto.employeeId,
-        reviewerEmployeeId,
-        type: dto.type,
-        status: ReviewStatus.SUBMITTED,
-        kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
-        competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
-        overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
-        grade,
-        strengths: dto.strengths,
-        improvements: dto.improvements,
-        developmentPlan: dto.developmentPlan,
-        managerComment: dto.managerComment,
-        employeeComment: dto.employeeComment,
-        submittedAt: new Date(),
-        competencyScores: {
-          create: (dto.competencyScores ?? []).map((c, index) => ({
-            competency: c.competency,
-            weight: new Prisma.Decimal(c.weight),
-            score: new Prisma.Decimal(c.score),
-            comment: c.comment,
-            orderIndex: index,
-          })),
+        update: {
+          status: ReviewStatus.SUBMITTED,
+          kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
+          competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
+          overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
+          grade,
+          strengths: dto.strengths,
+          improvements: dto.improvements,
+          developmentPlan: dto.developmentPlan,
+          managerComment: dto.managerComment,
+          employeeComment: dto.employeeComment,
+          submittedAt: new Date(),
+          competencyScores: {
+            deleteMany: {},
+            create: (dto.competencyScores ?? []).map((c, index) => ({
+              competency: c.competency,
+              weight: new Prisma.Decimal(c.weight),
+              score: new Prisma.Decimal(c.score),
+              comment: c.comment,
+              orderIndex: index,
+            })),
+          },
         },
-      },
-      update: {
-        status: ReviewStatus.SUBMITTED,
-        kpiScore: kpiScore ? new Prisma.Decimal(kpiScore.toFixed(2)) : null,
-        competencyScore: competencyScore ? new Prisma.Decimal(competencyScore.toFixed(2)) : null,
-        overallScore: overallScore ? new Prisma.Decimal(overallScore.toFixed(2)) : null,
-        grade,
-        strengths: dto.strengths,
-        improvements: dto.improvements,
-        developmentPlan: dto.developmentPlan,
-        managerComment: dto.managerComment,
-        employeeComment: dto.employeeComment,
-        submittedAt: new Date(),
-        competencyScores: {
-          deleteMany: {},
-          create: (dto.competencyScores ?? []).map((c, index) => ({
-            competency: c.competency,
-            weight: new Prisma.Decimal(c.weight),
-            score: new Prisma.Decimal(c.score),
-            comment: c.comment,
-            orderIndex: index,
-          })),
-        },
-      },
-      include: { competencyScores: true },
-    });
-
-    if (dto.type === ReviewType.MANAGER) {
-      const subject = await this.prisma.employee.findUnique({
-        where: { id: dto.employeeId },
-        select: { userId: true },
+        include: { competencyScores: true },
       });
-      if (subject?.userId) {
-        await this.notifications.notify(user.organizationId, subject.userId, {
-          type: 'performance.review.submitted',
-          title: 'ผลการประเมินพร้อมให้รับทราบ',
-          body: `รอบ ${cycle.name} — กรุณาเข้าดูและรับทราบผลการประเมิน`,
-          data: { reviewId: review.id, cycleId: cycle.id },
+
+      // A manager review the subject is never told about is the one thing this
+      // feature must not do, so the telling commits with the review.
+      if (dto.type === ReviewType.MANAGER) {
+        const subject = await tx.employee.findUnique({
+          where: { id: dto.employeeId },
+          select: { userId: true },
         });
+
+        if (subject?.userId) {
+          await this.notifications.notifyIn(tx, user.organizationId, subject.userId, {
+            type: 'performance.review.submitted',
+            title: 'ผลการประเมินพร้อมให้รับทราบ',
+            body: `รอบ ${cycle.name} — กรุณาเข้าดูและรับทราบผลการประเมิน`,
+            data: { reviewId: submitted.id, cycleId: cycle.id },
+          });
+        }
       }
-    }
+
+      return submitted;
+    });
 
     return review;
   }

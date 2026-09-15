@@ -259,17 +259,31 @@ model DeviceToken {
 
 /// Transactional outbox: domain events are written in the same transaction as the
 /// state change, then relayed by a worker. Keeps notifications/webhooks consistent.
+///
+/// A row is in exactly one of four states, and they are told apart by the
+/// nullable timestamps rather than an enum, so a query can ask for "still owed"
+/// without knowing the vocabulary:
+///   pending    processedAt IS NULL, failedAt IS NULL, nextAttemptAt <= now()
+///   waiting    the same, but nextAttemptAt is in the future after a failure
+///   delivered  processedAt set
+///   dead       failedAt set — out of attempts, nobody will pick it up again
 model OutboxEvent {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
   eventType      String
   aggregateType  String
   aggregateId    String
   payload        Json
-  occurredAt     DateTime @default(now())
+  occurredAt     DateTime  @default(now())
   processedAt    DateTime?
-  attempts       Int      @default(0)
+  attempts       Int       @default(0)
   lastError      String?
+  /// When this becomes eligible again. Now for a fresh event; pushed out by the
+  /// backoff after each failure.
+  nextAttemptAt  DateTime  @default(now())
+  /// Set once the event has exhausted its attempts. Kept rather than deleted:
+  /// a dead letter nobody can read is a bug report nobody can write.
+  failedAt       DateTime?
 
   @@index([processedAt, occurredAt])
   @@map("outbox_events")

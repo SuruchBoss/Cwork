@@ -78,6 +78,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       };
     }
 
+    if (isMulterError(exception)) {
+      return { ...base, ...mapMulterError(exception) };
+    }
+
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       return { ...base, ...mapPrismaError(exception) };
     }
@@ -117,6 +121,8 @@ function defaultCodeFor(status: number): string {
       return 'RESOURCE_NOT_FOUND';
     case HttpStatus.CONFLICT:
       return 'CONFLICT';
+    case HttpStatus.PAYLOAD_TOO_LARGE:
+      return 'PAYLOAD_TOO_LARGE';
     case HttpStatus.TOO_MANY_REQUESTS:
       return 'RATE_LIMITED';
     default:
@@ -156,4 +162,52 @@ function mapPrismaError(error: Prisma.PrismaClientKnownRequestError): {
         message: 'A database error occurred',
       };
   }
+}
+
+/**
+ * A multipart request the parser refused is the client's fault, not ours.
+ *
+ * Nest's own multer interceptor translates these, but it does so by matching
+ * the error *message* against a table it ships — and multer's messages are not
+ * that table's contract. Multer 2.4 renamed `LIMIT_UNEXPECTED_FILE` from
+ * "Unexpected field" to "Unexpected file field" and added three codes Nest has
+ * never heard of, and every one of them fell through to a 500 with a stack
+ * trace. Multer's own documentation says to check `err.code`, so that is what
+ * this does; whatever Nest still translates arrives here already an
+ * `HttpException` and is handled above, with the same status and code.
+ *
+ * Matched structurally rather than with `instanceof`: multer is a transitive
+ * dependency of `@nestjs/platform-express`, and importing it directly would
+ * claim a direct one.
+ */
+function isMulterError(exception: unknown): exception is Error & { code: string } {
+  return (
+    exception instanceof Error &&
+    exception.name === 'MulterError' &&
+    typeof (exception as { code?: unknown }).code === 'string'
+  );
+}
+
+function mapMulterError(error: Error & { code: string }): {
+  statusCode: number;
+  code: string;
+  message: string;
+} {
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return {
+      statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+      code: 'PAYLOAD_TOO_LARGE',
+      message: error.message,
+    };
+  }
+
+  // The message is multer's own and says nothing about the server. The
+  // offending field name is deliberately not echoed: it is attacker-chosen and
+  // can be megabytes long, which is the same denial of service the limits exist
+  // to prevent.
+  return {
+    statusCode: HttpStatus.BAD_REQUEST,
+    code: 'VALIDATION_FAILED',
+    message: error.message,
+  };
 }

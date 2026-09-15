@@ -324,51 +324,59 @@ export class OffboardingService implements OnModuleInit {
     decidedById?: string,
     note?: string,
   ): Promise<void> {
-    const resignation = await this.prisma.resignationRequest.update({
-      where: { id: resignationId },
-      data: {
-        status: ResignationStatus.APPROVED,
-        agreedLastWorkingDate: lastWorkingDate,
-        decidedAt: new Date(),
-        decidedById,
-        decisionNote: note,
-      },
-      include: { employee: { select: { id: true, userId: true, organizationId: true } } },
-    });
-
-    await this.prisma.employee.update({
-      where: { id: resignation.employeeId },
-      data: {
-        resignationDate: toDateOnly(new Date()),
-        lastWorkingDate,
-      },
-    });
-
-    await this.prisma.employmentEvent.create({
-      data: {
-        employeeId: resignation.employeeId,
-        type: EmploymentEventType.RESIGNATION,
-        effectiveDate: lastWorkingDate,
-        newValue: {
-          lastWorkingDate: lastWorkingDate.toISOString().slice(0, 10),
-        } as Prisma.InputJsonValue,
-        reason: resignation.reasonCategory ?? undefined,
-        recordedById: decidedById,
-      },
-    });
-
-    if (resignation.employee.userId) {
-      await this.notifications.notify(
-        resignation.employee.organizationId,
-        resignation.employee.userId,
-        {
-          type: 'resignation.approved',
-          title: 'คำขอลาออกได้รับการอนุมัติ',
-          body: `วันทำงานสุดท้ายของคุณคือ ${lastWorkingDate.toISOString().slice(0, 10)}`,
-          data: { resignationId },
+    // One transaction for all four writes. Three of them were already a set
+    // that has to hold together — a resignation approved without the leaving
+    // date on the employee, or without the employment event, is a record that
+    // contradicts itself — and the fourth, telling the person, belongs with
+    // them for the same reason.
+    await this.prisma.$transaction(async (tx) => {
+      const resignation = await tx.resignationRequest.update({
+        where: { id: resignationId },
+        data: {
+          status: ResignationStatus.APPROVED,
+          agreedLastWorkingDate: lastWorkingDate,
+          decidedAt: new Date(),
+          decidedById,
+          decisionNote: note,
         },
-      );
-    }
+        include: { employee: { select: { id: true, userId: true, organizationId: true } } },
+      });
+
+      await tx.employee.update({
+        where: { id: resignation.employeeId },
+        data: {
+          resignationDate: toDateOnly(new Date()),
+          lastWorkingDate,
+        },
+      });
+
+      await tx.employmentEvent.create({
+        data: {
+          employeeId: resignation.employeeId,
+          type: EmploymentEventType.RESIGNATION,
+          effectiveDate: lastWorkingDate,
+          newValue: {
+            lastWorkingDate: lastWorkingDate.toISOString().slice(0, 10),
+          } as Prisma.InputJsonValue,
+          reason: resignation.reasonCategory ?? undefined,
+          recordedById: decidedById,
+        },
+      });
+
+      if (resignation.employee.userId) {
+        await this.notifications.notifyIn(
+          tx,
+          resignation.employee.organizationId,
+          resignation.employee.userId,
+          {
+            type: 'resignation.approved',
+            title: 'คำขอลาออกได้รับการอนุมัติ',
+            body: `วันทำงานสุดท้ายของคุณคือ ${lastWorkingDate.toISOString().slice(0, 10)}`,
+            data: { resignationId },
+          },
+        );
+      }
+    });
   }
 
   /**

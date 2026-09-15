@@ -23,73 +23,28 @@ severity; this is the sequence work is actually taken in.
 | Phase | | |
 |---|---|---|
 | **0** | A baseline to measure from | CW-028 · CW-030 · CW-036 · CW-029 |
-| **1** | A stranger can evaluate it, then install it | CW-034 · CW-035 · CW-022 · CW-020 · CW-027 |
-| **2** | The pilot can run | CW-010 · CW-023 · CW-024 · CW-025 · CW-026 · CW-007 |
+| **1** | A stranger can install it | CW-022 · CW-027 |
+| **2** | The pilot can run | CW-010 · CW-023 · CW-024 · CW-025 · CW-026 |
 | **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 |
-| **4** | When someone actually needs it | CW-004 · CW-019 · CW-002 · CW-003 · CW-005 · CW-006 · CW-021 · CW-017 |
+| **4** | When someone actually needs it | CW-004 · CW-019 · CW-005 · CW-021 · CW-017 |
 
-Two deliberate departures from priority order:
+The plan was drawn up before CW-002, CW-003, CW-006, CW-007 and CW-020 landed,
+and those five came out of it as they were finished. Two consequences worth
+stating rather than leaving implicit:
 
-- **CW-007 is pulled into phase 2.** The pilot holds real people's leave
-  balances, and an accrual job that runs twice during a rolling restart grants
-  leave twice — hard to unpick afterwards, and a few hours to prevent.
-- **CW-002 and CW-003 sit in phase 4 despite being P0.** Both guard surfaces the
-  pilot does not use: the public careers page, and a second replica. They become
-  P0-in-practice the moment either is switched on.
+- **Phase 1 lost CW-020, CW-034 and CW-035** — the advisories are cleared, and
+  the README now carries screenshots and an English translation.
+- **Multiple instances are supported now, not forbidden.** The plan assumed one
+  instance scaled vertically; CW-003 and CW-007 made replicas a configuration
+  rather than a hazard. Nothing downstream depends on the old assumption.
 
-`CW-031` — a hosted demo — is the single largest thing that would help anyone
+`CW-031` — a hosted demo — is the largest single thing that would help anyone
 evaluate this project, and it sits in phase 3 only because it is blocked on an
-unanswered question about who pays for the assistant's API usage. Answer that
-and it belongs in phase 1, ahead of everything except the documentation pass.
+unanswered question about who pays for the assistant's API usage.
 
 ---
 
 ## P0 — blocks a real deployment
-
-### CW-002 · Scan uploads for malware
-`P0` · security · **M**
-
-`FileObject.scanStatus` exists and nothing ever sets it. Uploads are type- and
-magic-byte checked, which stops a renamed `.exe` but not a malicious PDF.
-Résumés arrive from the public careers page — this is the least trusted input
-the system takes.
-
-**Scope**
-- Queue an async scan on upload (ClamAV via `clamd` is the obvious default).
-- Hold files at `PENDING` and refuse download until `CLEAN`.
-- Quarantine on `INFECTED`, notify, and audit it.
-- Degrade explicitly when no scanner is configured — a documented setting, not a
-  silent pass.
-
-**Acceptance**
-- The EICAR test file is quarantined and never downloadable.
-- A clean file becomes downloadable once scanned.
-- With scanning disabled, boot logs say so plainly.
-
-**Files** `backend/src/modules/files/`
-
-> Phase 4: this guards the public careers page, which the pilot does not use. It
-> is P0 again the day that page goes live.
-
----
-
-### CW-003 · Move rate limiting to a shared store
-`P0` · security · **S** · 🌱
-
-`@nestjs/throttler` is in-memory, so the sign-in lockout is per-instance. Two
-replicas behind a load balancer means double the attempts, and the limit
-disappears entirely on restart.
-
-**Scope** Point the throttler at Redis (or Postgres, to avoid adding a
-dependency) behind a config switch, keeping in-memory as the single-instance
-default.
-
-**Acceptance** With two API instances against one store, the sixth failed
-sign-in is rejected regardless of which instance serves it.
-
-**Files** `backend/src/core/`, `docker-compose.yml`, `docs/operations.md`
-
----
 
 ### CW-022 · First-run setup for a clean install
 `P0` · platform · **M**
@@ -148,8 +103,8 @@ and can have it removed on request without anyone improvising.
 ### CW-030 · Correct the claims the documentation makes
 `P0` · docs · **S**
 
-Three statements in the docs are not true, and each one could lead somebody to
-rely on something that is not there.
+Two statements in the docs are not true, and each could lead somebody to rely on
+something that is not there.
 
 **Scope**
 - Remove "multi-tenant" as a property of the product. `organizationId` is
@@ -158,9 +113,9 @@ rely on something that is not there.
   `architecture.md` and `security.md` still need the pass.)*
 - State plainly that the Thai tax and social-security rules have **not** been
   reviewed by anyone qualified, in `README.md` and at the head of
-  `payroll-thailand.md`.
-- Say that location is captured only at the instant of a punch — it is true, it
-  is a real privacy property, and nothing currently says it.
+  `payroll-thailand.md`. They were written from published sources and
+  unit-tested for internal consistency, which proves the code matches what its
+  author believed — not that the belief is correct.
 - Open an issue inviting an accountant or payroll professional to review the
   rules. Open source is a reasonable way to find one.
 
@@ -168,8 +123,6 @@ rely on something that is not there.
 rules without meeting the warning first.
 
 **Files** `README.md`, `docs/`
-
----
 
 ## P1 — before payroll runs on real people
 
@@ -201,17 +154,24 @@ exists to remove.
 ### CW-005 · Deliver notifications by email and push
 `P1` · platform · **M**
 
-`NotificationsService` writes in-app rows and stops there. Nobody learns a leave
-request is waiting unless they open the console, which makes the approval chain
-feel broken even though it works.
+`NotificationsService` writes in-app rows and raises a `notification.raised`
+outbox event for each one. **Nobody is listening for it.** So nobody learns a
+leave request is waiting unless they open the console, which makes the approval
+chain feel broken even though it works.
+
+The transport is all that is missing: CW-006 put the queue, the retry schedule,
+the backoff and the dead-letter state in place, and an event with no handler is
+marked delivered and dropped. Registering a handler for `NOTIFICATION_RAISED` is
+the whole seam.
 
 **Scope**
 - SMTP transport with templates for approval-pending, approved/rejected, payslip
   published, document ready.
 - FCM/APNs push through the existing `DeviceToken` model.
 - Per-user preferences and an unsubscribe path.
-- Deliver from the outbox (CW-006) so a failed send retries and never blocks the
-  request that caused it.
+- Both registered as outbox handlers, so a failed send retries on the existing
+  backoff and never blocks the request that caused it. Handlers are called at
+  least once, so sending has to be safe to repeat.
 
 **Acceptance**
 - Submitting leave notifies the approver by email and push within a minute.
@@ -219,50 +179,6 @@ feel broken even though it works.
 - No notification is sent for a transaction that rolled back.
 
 **Files** `backend/src/modules/notifications/`
-
-> `CW-023` delivers the email half directly, before the outbox exists, so the
-> pilot is not held up. This ticket remains the full version: push, preferences,
-> unsubscribe, and delivery from the outbox.
-
----
-
-### CW-006 · Consume the outbox
-`P1` · platform · **M**
-
-`outbox_events` is written transactionally and nothing reads it. Until something
-does, any side effect (email, webhook, search index) is either lost on crash or
-sent for work that rolled back.
-
-**Scope** A poller that claims a batch with `FOR UPDATE SKIP LOCKED`, dispatches
-to registered handlers, retries with backoff, and parks poison messages in a
-dead-letter state after N attempts.
-
-**Acceptance**
-- An event whose transaction rolled back is never dispatched.
-- A handler that throws does not block other events.
-- Two pollers running at once never dispatch the same event twice.
-
-**Files** `backend/src/core/outbox/`, `backend/src/modules/jobs/`
-
----
-
-### CW-007 · Leader election for scheduled jobs
-`P1` · platform · **S**
-
-`ScheduledTasksService` assumes one instance. Run two replicas and nightly
-accrual runs twice, granting leave quota twice.
-
-**Scope** A Postgres advisory lock around each scheduled task, released on
-completion, with a heartbeat so a crashed holder does not block the next run.
-
-**Acceptance** With three instances, a task with a visible side effect executes
-exactly once per schedule.
-
-**Files** `backend/src/modules/jobs/scheduled-tasks.service.ts`
-
-> Pulled into phase 2 despite single-instance deployment being the supported
-> shape: a rolling restart briefly runs two processes, and nightly accrual
-> firing twice grants leave twice.
 
 ---
 
@@ -329,56 +245,29 @@ department or location; a calendar view of who is on which shift; bulk assign.
 
 ---
 
-### CW-020 · Clear the production dependency advisories
-`P1` · security · **S**
-
-`npm audit --omit=dev` reports nine high-severity advisories in shipped
-dependencies. The one that matters here is **multer**, reachable from the
-public careers page: a crafted multipart field name causes a denial of
-service, and résumé upload is the least trusted input the system takes. The
-rest come in through `@nestjs/core` and `@prisma/config` (deepmerge-ts stack
-exhaustion).
-
-**Scope** Upgrade `@nestjs/platform-express` and `prisma` to releases carrying
-the fixed transitive versions; where no fix exists yet, bound the exposure —
-multer already has size limits, so also cap field-name length and field count.
-
-**Acceptance**
-- `npm audit --omit=dev` reports no high or critical advisories.
-- Upload tests still pass, including the magic-byte rejection.
-- CI fails on a new high-severity production advisory.
-
-**Files** `backend/package.json`, `backend/src/modules/files/`
-
----
-
 ### CW-023 · Send notifications by email
 `P1` · platform · **M**
 
-`NotificationsService` writes in-app rows and stops. During the pilot that means
-an approver never learns a leave request is waiting unless they happen to open
-the console — a leave system nobody is told about is a broken leave system, even
-with every rule correct. `.env.example` has no mail configuration at all.
+`NotificationsService` writes in-app rows and an outbox event, and nothing
+delivers either. During the pilot that means an approver never learns a leave
+request is waiting unless they happen to open the console. `.env.example` has no
+mail configuration at all.
 
-This is the near-term slice of `CW-005`: SMTP only, no push, and dispatched
-directly rather than through the outbox. That is a deliberate trade — it will be
-rewritten when `CW-006` lands — because the pilot is worth more than the two
-weeks outbox-first would cost.
+CW-006 landed while this was being planned, so the original argument for
+bypassing the outbox is gone: register a handler with `OutboxRegistry` and the
+retry, backoff and dead-letter behaviour comes for free.
 
 **Scope**
 - `MAIL_ENABLED=false` by default: boots, logs plainly that notifications are
   in-app only.
 - `MAIL_ENABLED=true` with incomplete configuration: **refuses to boot**, the
   same rule `ASSISTANT_ENABLED` already follows.
-- Send after the transaction commits, for approval-pending, approved, rejected
-  and document-ready. A send that fails is logged and never fails the request
-  that triggered it.
-- Thai-capable templates.
+- An outbox handler for the notification event, with Thai-capable templates for
+  approval-pending, approved, rejected and document-ready.
 
 **Acceptance**
 - Submitting leave emails the approver.
-- SMTP being down loses the email and nothing else — the leave request is
-  unaffected.
+- SMTP being down parks the event for retry and leaves the leave request alone.
 - A rolled-back transaction sends nothing.
 
 **Files** `backend/src/modules/notifications/`, `backend/src/core/config/`
@@ -402,8 +291,7 @@ for an absent colleague needs nothing more than their password.
 
 **Acceptance**
 - A punch from a second device is accepted, flagged, and visible to HR.
-- Re-binding without approval is impossible, and every re-binding is in the
-  audit log.
+- Re-binding without approval is impossible, and every re-binding is audited.
 
 **Files** `backend/src/modules/attendance/`, `backend/src/modules/auth/`,
 `mobile/lib/core/storage/`
@@ -448,13 +336,11 @@ dependency in `pubspec.yaml`, so `ROOTED_DEVICE` can never be raised.
 
 There is no `CHANGELOG.md` and the repository has no tags. Anyone installing
 Cwork runs whatever `main` happened to be that day and cannot say which version
-they have. The next phase rewrites every UI string for `CW-016`; without a
-marker first there is nothing to compare against or fall back to.
+they have — and by now `main` has moved a long way in a short time.
 
-**Scope** Tag `v0.1.0` at the current tree — it works end to end and the suites
-pass, which is a fair baseline. Add `CHANGELOG.md` in Keep a Changelog form.
-State the 0.x contract in `README.md`: breaking changes allowed, recorded, no
-LTS before 1.0.
+**Scope** Tag `v0.1.0` at the current tree. Add `CHANGELOG.md` in Keep a
+Changelog form. State the 0.x contract in `README.md`: breaking changes allowed,
+recorded, no LTS before 1.0.
 
 **Acceptance** `git describe` names a release, and the changelog has an entry
 for it.
@@ -466,12 +352,12 @@ for it.
 ### CW-036 · Say how this code was written
 `P1` · project · **S**
 
-Nine of this repository's ten commits were authored by an AI agent working under
-direction; two of them add 39,901 and 10,860 lines. That is visible in `git log`
-to anyone who looks, and it matters to three different readers: a contributor
-judging how much to trust the code around their change, an operator deciding
-whether to run payroll on it, and a reviewer working out who to ask about a
-design decision.
+Almost every commit in this repository was authored by an AI agent working under
+direction, several of them adding thousands of lines at once. That is visible in
+`git log` to anyone who looks, and it matters to three different readers: a
+contributor judging how much to trust the code around their change, an operator
+deciding whether to run payroll on it, and a reviewer working out who to ask
+about a design decision.
 
 Leaving it unsaid is not neutral. It reads as concealment the moment someone
 runs `git log`, and it costs more credibility than stating it ever would.
@@ -483,12 +369,12 @@ runs `git log`, and it costs more credibility than stating it ever would.
 - Say what it implies about review status — the suites pass and the decisions
   are documented, but no independent human has read every line.
 - State in `CONTRIBUTING.md` how commits are expected to be shaped from here:
-  one change per commit, so the history becomes readable going forward.
+  one change per commit.
 - **Do not rewrite the existing history.** It is accurate, and rewriting it to
   look more human would be the actual dishonesty.
 
 **Acceptance** A contributor learns how this code was produced from the README,
-not by inferring it from a 40,000-line commit.
+not by inferring it from the commit sizes.
 
 **Files** `README.md`, `CONTRIBUTING.md`
 
@@ -575,11 +461,6 @@ breakage, and Thai remains the default.
 
 **Files** `web/src/`, `mobile/lib/`
 
-> Decided: keys are English, Thai ships as a translation file, Thai stays the
-> default. Content an organisation enters — leave type names, departments,
-> positions — is not translated. Store Gregorian years always; the Buddhist era
-> is a presentation concern only.
-
 ---
 
 ### CW-021 · Two-factor enrolment on mobile
@@ -610,7 +491,8 @@ only the phone, and the recovery codes are shown once with a way to save them.
 
 `ASSISTANT_ENABLED=false` is the default, so the standard install shows an
 assistant entry that cannot work. A control that fails when pressed reads as a
-broken product, not a disabled option.
+broken product, not a disabled option. The boot-time rule stays as it is; this
+is only about the UI.
 
 **Scope** Expose the flag on a public config endpoint and hide the assistant
 entry point in both clients when it is off.
@@ -627,8 +509,8 @@ it, and nothing 404s.
 
 Contributions are taken under Apache-2.0 with no CLA and no sign-off, so there
 is no record that a contributor had the right to submit what they submitted.
-Without a CLA the licence cannot realistically be changed later — that is an
-accepted consequence, but it should be a stated one.
+Without a CLA the licence cannot realistically be changed later — an accepted
+consequence, but it should be a stated one.
 
 **Scope** Document DCO in `CONTRIBUTING.md`, add the sign-off line to the pull
 request template, add a CI check for it, and note in `README.md` that there is
@@ -644,23 +526,22 @@ saying how to fix it.
 ### CW-031 · A public demo instance
 `P2` · project · **M**
 
-Evaluating Cwork currently means cloning it, writing an `.env`, running compose,
-migrating and seeding. Most people will not, and the assistant — the thing that
-distinguishes this from other open-source HR systems — is off by default, so
-nobody evaluating it ever sees the feature.
+Evaluating Cwork means cloning it, writing an `.env`, running compose, migrating
+and seeding. The README's screenshots help, but nobody can try an approval flow
+from a picture — and the assistant, the thing that distinguishes this from other
+open-source HR systems, is off by default.
 
-**Blocked on a decision:** who pays for the demo's LLM usage. Asking visitors
-for their own API key is not an option — it trains people to paste credentials
-into unfamiliar sites. If no budget is agreed, ship the demo with the assistant
-off and a short screen recording instead.
+**Blocked on a decision:** who pays for the demo's LLM usage. Asking visitors for
+their own API key is not an option — it trains people to paste credentials into
+unfamiliar sites. If no budget is agreed, ship the demo with the assistant off
+and a short screen recording instead.
 
 **Scope**
-- A hosted instance reset hourly, writable so that approval flows can actually
-  be tried.
+- A hosted instance reset hourly, writable so approval flows can be tried.
 - Sign-in as employee, manager or HR in one click.
 - If the assistant is on: cheapest model, a hard spending cap at the provider,
-  and per-IP rate limiting on the assistant routes specifically — the existing
-  per-user caps do nothing when everyone shares a demo account.
+  and per-IP rate limiting on the assistant routes — the existing per-user caps
+  do nothing when everyone shares a demo account.
 
 **Acceptance** Someone with no local setup can approve a leave request within a
 minute of opening the link, and no single visitor can exceed the spending cap.
@@ -673,12 +554,12 @@ minute of opening the link, and no single visitor can exceed the spending cap.
 `P2` · platform · **S**
 
 CI only ever runs `prisma migrate deploy` against an empty database, so nothing
-proves that an existing installation survives an upgrade. Once other people are
+proves an existing installation survives an upgrade. Once other people are
 running Cwork, a bad migration destroys their data, not ours.
 
 **Scope** A job that checks out the previous tag, migrates and seeds, then
 migrates up to the current commit and asserts the seeded data is still readable.
-Depends on `CW-028` for a first tag to upgrade from.
+Depends on CW-028 for a first tag to upgrade from.
 
 **Acceptance** A migration that drops a populated column fails CI.
 
@@ -698,58 +579,11 @@ The same argument settles kiosk devices: no `type` field on the device model
 until kiosk devices are actually built.
 
 **Scope** Drop `selfieFileId` in a migration, or implement capture. Do not leave
-it as it is. `isRootedDevice` is the opposite case and is handled by `CW-025`:
-the API already accepts it, so wire the app up to send it.
+it as it is. `isRootedDevice` is the opposite case and is handled by CW-025.
 
 **Acceptance** Every column in `attendance.prisma` is written by some code path.
 
 **Files** `backend/prisma/schema/attendance.prisma`
-
----
-
-### CW-034 · Show the system in the README
-`P2` · docs · **S** · 🌱
-
-The README describes seven modules and shows none of them. Seeing any screen at
-all currently costs a clone, an `.env`, a compose run, a migration and a seed —
-several minutes of commitment from someone who has not yet decided the project
-is worth any. Most people decide that in about thirty seconds.
-
-**Scope**
-- Screenshots of the console's main screens and of the app's clock-in, leave and
-  payslip screens, near the top of `README.md`.
-- One short recording of a complete flow across both clients — submit leave on
-  the phone, approve it in the console — which is the part prose conveys worst.
-- Note in `CONTRIBUTING.md` which images need refreshing when the UI changes. A
-  screenshot of a screen that no longer exists is worse than no screenshot.
-
-**Acceptance** Someone who has not cloned the repository can tell what Cwork
-looks like and what it does from the README alone.
-
-**Files** `README.md`, `docs/`, `CONTRIBUTING.md`
-
----
-
-### CW-035 · An English README
-`P2` · docs · **S**
-
-The interface is Thai and `CW-016` — a translation layer for both clients — is a
-week's work not scheduled until after the pilot. But the README, CONTRIBUTING,
-SECURITY and the issue templates are not the interface. They are what a stranger
-reads first, and today a reviewer who does not read Thai cannot assess the
-project at all. For something that wants contributors, that is a hard stop, and
-it is a day's work rather than a week's.
-
-**Scope**
-- English `README.md`, stating plainly that the interface itself is Thai-only for
-  now and pointing at CW-016.
-- English `CONTRIBUTING.md`, `SECURITY.md`, issue and pull request templates.
-- Repository description and topics.
-
-**Acceptance** Someone who reads no Thai can understand what Cwork is, what it
-deliberately does not do, and how to run it.
-
-**Files** `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.github/`
 
 ---
 
@@ -816,5 +650,12 @@ Kept so the reasoning survives.
 | | |
 |---|---|
 | **CW-000** · Docker quick start could not migrate or seed | The API image is pruned to production dependencies, so `docker compose exec api npx prisma migrate deploy` and `npm run db:seed` — both documented in the README — failed: no Prisma CLI, no ts-node. Fixed by splitting the prune into its own Dockerfile stage and adding a profiled `migrate` service built from the `build` stage. The runtime image is unchanged. |
-| **CW-011** · `npm run test:e2e` was a dangling script | It pointed at `./test/jest-e2e.json`, which did not exist, and `backend/test/` was an empty directory, so the command failed with a Jest config error. Rebuilt as a 36-check suite that boots the real application, migrates, truncates and seeds its own database, and runs in CI. Covers auth and deny-by-default, RBAC row scoping at all three visibility levels, the leave ledger, idempotent punch replay, geofence flagging, the payroll lifecycle with separation of duties, and the append-only audit trail. |
+| **CW-011** · `npm run test:e2e` was a dangling script | It pointed at `./test/jest-e2e.json`, which did not exist, and `backend/test/` was an empty directory, so the command failed with a Jest config error. Rebuilt as a suite that boots the real application, migrates, truncates and seeds its own database, and runs in CI — 36 checks at the time, 49 once CW-001 added its own. Covers auth and deny-by-default, RBAC row scoping at all three visibility levels, the leave ledger, idempotent punch replay, geofence flagging, the payroll lifecycle with separation of duties, and the append-only audit trail. |
 | **CW-001** · Privileged accounts could sign in with a password alone | TOTP (RFC 6238), implemented against the RFC's own test vectors rather than pulled in as a dependency, and required — not offered — for any account holding `employee:read:sensitive`, `payroll:run`, `payroll:approve` or `role:manage`. A correct password for such an account now yields a challenge token, not a session; that token carries a `typ` claim the access-token strategy rejects, which is the only thing separating it from a full session since both are signed with the same secret. Codes cannot be replayed inside their own window, recovery codes are single-use, a wrong code counts towards the password lockout, and disabling is refused for an account that must have one. Recovery codes are stored as SHA-256 digests rather than argon2 as the ticket originally said: at 100 bits of entropy a slow KDF buys nothing and only gives a half-authenticated endpoint a way to burn CPU, and refresh tokens already use the same treatment for the same reason. Mobile can present a code but not yet enrol — see CW-021. |
+| **CW-002** · Uploads were never scanned | `FileObject.scanStatus` existed and nothing ever set it, on a system that takes résumés from a public careers page. Uploads now stream to clamd *before* anything is written to storage, so malware is never stored for a later change to expose. The clamd INSTREAM protocol is implemented directly against its specification rather than pulled in as a dependency, and unit-tested. The rule throughout is that a scanner which is not working is never a pass: unreachable, timed out, or a reply that cannot be parsed all land the file at `PENDING`, which is refused on download and retried hourly. A detection is refused at upload with the signature named, audited and notified; quarantine destroys the bytes and keeps the record. Off by default, with a `clamav` compose profile to turn it on, and the API states which mode it is in at every boot. |
+| **CW-003** · Rate limiting was per-instance | `@nestjs/throttler` keeps counters in memory, so two replicas behind a load balancer handed out twice the budget and a restart forgot every counter. `THROTTLE_STORAGE=postgres` now shares them through the database that is already there — no Redis, nothing extra to run or back up — as one `INSERT … ON CONFLICT DO UPDATE` so two instances racing on a key cannot both decide they were first. In-memory stays the default for a single instance, and the API says which store it is using at boot. If the store is unreachable the limiter fails open and logs an error: a rate limiter is not worth locking everyone out of a healthy system for. **The ticket’s premise was wrong** and the fix is worth recording: it said the in-memory throttler made "the sign-in lockout per-instance". It never did. The account lockout lives in `users.failedLoginCount` / `users.lockedUntil` and has always been shared. What was per-instance is the per-client *request budget* — which is what catches the caller no single lockout would notice, one wrong password each against a hundred accounts. The e2e suite proves both halves by booting two applications against one database. |
+| **CW-007** · Every replica ran every scheduled job | CW-003 made more than one instance a supported configuration and left the cron schedule running on all of them. Each task now takes a **transaction-scoped Postgres advisory lock** before it does anything and the instances that do not get it stand down — no table, no migration, no lease, nothing to switch on, and nothing to clean up: an instance killed mid-job loses its connection and Postgres releases the lock by itself. Lock ids are written out by hand in `domain/job-locks.ts` rather than hashed from the job name, because a hash is one collision away from two unrelated jobs blocking each other for ever and a literal is what you can look for in `pg_locks`. **Two things in the ticket were wrong.** It said a double run would grant leave quota twice: it would not — `rolloverYear` *assigns* the carried balance rather than adding to it, separations are filtered by status, and the purges are `deleteMany`, so every task was already idempotent. What a double run actually costs is the work itself, the duplicated audit and notification rows, and write-write races between instances doing identical work at the same instant. It also asked for a heartbeat "so a crashed holder does not block the next run" — a transaction-scoped lock has nothing to heartbeat, and that is precisely the argument for it over a lease table. The cost, stated in [operations.md](./operations.md): the job runs with a transaction open, so `JOB_LOCK_TIMEOUT_MS` bounds it at fifteen minutes by default and an open transaction holds back vacuum meanwhile. The e2e suite boots three complete applications against one database and never relies on timing to decide the winner — where a race would be the point, the test takes the lock itself and holds it. |
+| **CW-006** · The outbox table had no producer and no consumer | The ticket said `outbox_events` "is written transactionally and nothing reads it". Half right: nothing read it, and **nothing wrote it either** — the table had been in the schema since the first migration with no reference to it anywhere in `src`, so the work was both halves rather than one. `OutboxService.record` takes the caller's transaction client and will not work without one, because an event written on the ordinary client is a plain dual write with extra steps and nothing at the call site would show the difference. `OutboxDispatcher` claims a batch with `SELECT … FOR UPDATE SKIP LOCKED`, dispatches to whoever registered for the type, backs off from 30 seconds doubling to a 30-minute cap, and parks an event as a dead letter after `OUTBOX_MAX_ATTEMPTS`. Dead letters are never purged — only delivered events are — because that row is the only record that somebody was owed a message and did not get it. Unlike the scheduled tasks of CW-007, **every instance polls**: `SKIP LOCKED` means each dispatcher takes rows nobody else holds, so three replicas drain three times faster rather than fighting. Delivery is at least once and says so. The producer shipped with it is notifications: the in-app row and the event that will carry it out by email or push are written in one transaction, so no message is ever sent for a notification that does not exist. Nobody is listening yet — an event with no handler is marked delivered rather than queued for ever, and the API warns at boot when no handlers are registered at all — which is exactly the seam CW-005 plugs into. Closed straight afterwards, in the same branch: every call site now passes its own transaction client, so the change and the message about it commit together. `notifyIn`/`notifyManyIn` take the caller's `tx` and throw rather than swallow — inside a transaction there is nothing else they could do, since PostgreSQL has already aborted and catching would only move the failure to the commit. Four of the call sites had no transaction to join and now have one: approving a resignation writes the request, the employee and the employment event together, which was three separate writes that could always have disagreed with each other. The best-effort `notify` survives for exactly one caller — an upload the scanner refused, where nothing was stored and there is nothing to be atomic with — and a unit test fails if a second one appears without being added to the list with a reason. |
+| **CW-020** · Nine high-severity advisories in shipped dependencies | Two root causes, not nine: multer below 2.3.0 (four advisories) and deepmerge-ts below 8.0.0 reached through `@prisma/config`. Everything else was npm reporting the parents. Both are fixed upstream but neither parent has picked the fix up — the latest NestJS 11 still pins multer 2.2.0, and Prisma 7 still pins deepmerge-ts 7 — so the fixed versions are pinned through npm `overrides` rather than by taking two major upgrades for a security patch. `npm audit --omit=dev` is clean, and a CI job re-checks it weekly as well as on every push, because an advisory is published against code that has not changed. The upload endpoint also now states its whole contract as multer limits (one part, named `file`, no text fields), which is what actually neutralises the two field-name advisories: they need a text part, and there is no longer one to send. **The ticket's premise was wrong** in a way worth recording: it called multer "reachable from the public careers page". It is not. `POST /careers/:orgCode/jobs/:slug/apply` takes JSON, and the only multipart route in the system, `POST /files/upload`, sits behind the global auth guard — so this was an authenticated denial of service, not an anonymous one. Still worth fixing; not the emergency the ticket described. The upgrade also broke something on the way in, which is the argument for the tests: Nest maps multer errors by matching their *message*, multer 2.4 reworded `LIMIT_UNEXPECTED_FILE`, and a file sent under the wrong field name started returning 500 with a stack trace. The exception filter now reads `err.code`, as multer's own documentation asks. |
+| **CW-035** · The README was Thai only | A reviewer who does not read Thai could not assess the project at all, which for something that wants contributors is a hard stop. `README.md` is now English with `README.th.md` alongside it and a switcher at the top of both. This is not CW-016: the *interface* is still Thai-only, and the translation layer for both clients remains open. |
+| **CW-034** · The README described the system and showed none of it | Seeing any screen cost a clone, an `.env`, a compose run, a migration and a seed — minutes of commitment from someone who had not yet decided the project was worth any. Twenty-one console screenshots and eight from the app now sit in `docs/screenshots/`, fourteen of them in the README itself. The cross-client recording the ticket also asked for — submit leave on the phone, approve it in the console — was not done; open a new ticket if it is wanted. |

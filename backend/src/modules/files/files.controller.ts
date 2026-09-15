@@ -19,6 +19,38 @@ import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { FilesService } from './files.service';
 
+/**
+ * What a single upload is allowed to be, stated in full.
+ *
+ * Multer's defaults are unbounded where it matters — `fields` and `parts` are
+ * `Infinity` — so a request that never sends a file at all can still keep a
+ * worker parsing. The advisories behind the multer upgrade
+ * (GHSA-wc9g-mqfw-jrwm, GHSA-535w-7cp7-47q4) are exactly that shape: crafted
+ * *field names*, not crafted file bytes. The upgrade fixes the parser; these
+ * limits mean the next one has nothing to work on.
+ *
+ * The endpoint's contract is one part, named `file`, and nothing else. Anything
+ * beyond that is refused with a 400 — by `AllExceptionsFilter`, which reads
+ * multer's error code — before a byte reaches the scanner or storage.
+ *
+ * `fields: 0` is what makes `fieldNestingDepth` and `fieldArrayIndexLimit`
+ * unnecessary here: busboy refuses a text part before multer ever parses its
+ * name. Both still default to `Infinity` in multer 2.4 — so if this endpoint
+ * ever accepts text fields, set them at the same time.
+ */
+const UPLOAD_LIMITS = {
+  fileSize: 20 * 1024 * 1024,
+  files: 1,
+  /** No text fields accompany the file, so none are accepted. */
+  fields: 0,
+  /** fields + files: the file part, and nothing after it. */
+  parts: 1,
+  /** Multer's own default, restated so a version bump cannot quietly raise it. */
+  fieldNameSize: 100,
+  /** A part normally carries two headers; 32 is slack, not room to abuse. */
+  headerPairs: 32,
+} as const;
+
 @ApiTags('Files')
 @ApiBearerAuth()
 @Controller('files')
@@ -26,7 +58,7 @@ export class FilesController {
   constructor(private readonly files: FilesService) {}
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024, files: 1 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: UPLOAD_LIMITS }))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },

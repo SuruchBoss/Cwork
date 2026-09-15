@@ -2,7 +2,9 @@
 
 What the system does, module by module. This is the reference for what
 "correct" means: when an implementation and this document disagree, one of them
-is a bug, and the tests in `*/domain/*.spec.ts` are the tie-breaker.
+is a bug. The tie-breaker is the tests: `*/domain/*.spec.ts` for the rules
+below, and `backend/test/*.e2e-spec.ts` for the ones that only show up when the
+whole thing runs.
 
 It describes the system as built, not as wished for. Work that is *not* built
 lives in [backlog.md](./backlog.md); the architecture behind these decisions is
@@ -68,8 +70,8 @@ what it does not do without reading the source.
 |---|---|
 | Licence | Apache-2.0, kept. Contributions under DCO (`Signed-off-by`), no CLA — which also means the licence cannot realistically be changed later (CW-029). |
 | Versioning | 0.x. Breaking changes are allowed and recorded in `CHANGELOG.md`. No LTS before 1.0 (CW-028). |
-| Deployment | One organisation per deployment, one instance, scaled vertically. Multiple replicas are not supported. |
-| Language | Thai is the default. English is a translation: keys are English, Thai ships as a translation file. Content an organisation types in — leave type names, departments, positions — is not translated (CW-016). |
+| Deployment | One organisation per deployment. One instance is the default and what the pilot will run on; several are supported rather than forbidden, since CW-003 and CW-007 made replicas a matter of configuration. |
+| Language | Thai is the interface default. English is a translation: keys are English, Thai ships as a translation file. Content an organisation types in — leave type names, departments, positions — is not translated (CW-016). The README is already bilingual (CW-035). |
 | Dates | The database stores Gregorian years, always. The Buddhist era exists only in Thai presentation. |
 
 ### Before real people use it
@@ -95,9 +97,9 @@ together with a retention period and a way to ask for erasure (CW-026).
 
 **An optional feature fails loudly when switched on and stays quiet when off.**
 `ASSISTANT_ENABLED=false` boots without complaint; `ASSISTANT_ENABLED=true` with
-no API key refuses to boot. Mail follows the same rule (CW-023). Anything
-disabled is hidden in the UI rather than shown as a control that cannot work
-(CW-027).
+no API key refuses to boot. Mail will follow the same rule (CW-023), as malware
+scanning already does. Anything disabled is hidden in the UI rather than shown
+as a control that cannot work (CW-027).
 
 **Attendance trusts the employee, within a ceiling.** A punch outside the
 geofence is flagged, not refused, and an offline punch is credited at capture
@@ -115,10 +117,6 @@ append-only at the database level and that has to stay true (CW-025).
 told to whoever reads the schema next. Kiosk devices get no `type` field until
 kiosk devices are built, and the unused anti-fraud columns are removed rather
 than left as decoration (CW-033).
-
-**Email before infrastructure.** Notifications go out over SMTP straight after
-the transaction commits, with failures logged and never blocking the request.
-Moving them onto the outbox is a later, separate change (CW-023, then CW-006).
 
 ### Open questions
 
@@ -140,7 +138,9 @@ Recorded because they are unanswered, not because they are unimportant.
 - Email and password. Passwords are hashed with **Argon2id** (19456 KiB memory,
   t=2, p=1). No other hash is accepted.
 - Sign-in returns a short-lived **access token** (JWT, 15 min default) and a
-  long-lived **refresh token** (30 days default).
+  long-lived **refresh token** (30 days default) — unless the account owes a
+  second factor, in which case it returns a challenge instead. See
+  [Second factor](#second-factor) below.
 - Refresh tokens **rotate** on every use. Presenting a refresh token that has
   already been used invalidates the entire token family — the signal of a stolen
   token is that it gets used twice.
@@ -150,6 +150,13 @@ Recorded because they are unanswered, not because they are unimportant.
   for `AUTH_LOCKOUT_MINUTES` (default 15).
 - Both clients refresh through a **single-flight** guard: concurrent 401s
   collapse into one refresh, never a stampede.
+- The credential endpoints — sign-in, MFA verify and enrolment — carry their own
+  rate limit, `AUTH_THROTTLE_LIMIT` (default 10/minute), far tighter than the
+  global one.
+- Rate-limit counters are in-process by default and shared through PostgreSQL
+  when `THROTTLE_STORAGE=postgres`, which is what a deployment with more than one
+  instance needs. The account lockout above is a separate mechanism and has
+  always been shared, since it lives on the user row.
 
 **Requirement:** no endpoint is reachable without a valid access token unless it
 is explicitly marked public. The `JwtAuthGuard` is registered globally, so the
@@ -328,6 +335,11 @@ early-leave minutes against the assigned shift, and a status of `PRESENT`,
 The derivation is pure and re-runnable: the punch stream is the source of truth,
 and the record is a cache of it.
 
+**Shift assignment is API-only.** Late and early-leave minutes are measured
+against the assigned shift, but nothing in the console defines a shift or
+assigns one, so in practice those numbers come from seeded or API-created data.
+See CW-010 in the [backlog](./backlog.md).
+
 ### 5.4 Offline capture
 
 The mobile app queues punches while offline in durable storage and replays them
@@ -337,8 +349,8 @@ forever.
 
 The server credits the instant the punch was *captured*, not the instant it
 arrived, so someone who clocked in at a warehouse with no signal is not punished
-for it. That trust is deliberate and it is bounded — see
-[Agreed direction](#agreed-direction) and [CW-025](./backlog.md), which are not
+for it. That trust is deliberate and it is meant to be bounded — see
+[Agreed direction](#agreed-direction) and [CW-025](./backlog.md), which is not
 yet implemented.
 
 ### 5.5 Overtime
@@ -446,6 +458,11 @@ into the run as recurring lines. `ExpenseClaim` has line items with categories
 and receipts, goes through the approval chain, and pays through payroll or
 outside it.
 
+**Benefits are API-only.** The endpoints, models and permissions are all there,
+but the console has no benefits screen, so enrolment means calling the API
+directly — and enrolments feed payroll. See CW-009 in the
+[backlog](./backlog.md).
+
 ---
 
 ## 7. Approvals
@@ -505,9 +522,36 @@ keeps leave, payroll and recruitment from forming an import cycle.
 `BANK_LOAN_LETTER` and `SOCIAL_SECURITY_LETTER`. An employee requests; someone
 with `document:issue` fulfils.
 
+**Nothing renders the document.** The API returns the *merge data* a certificate
+template needs, and `issue` records the id of a file somebody uploaded — so the
+approval trail ends in a manual step. See CW-008 in the
+[backlog](./backlog.md).
+
 Files go to local disk or S3-compatible storage behind one `StorageService`.
-Uploads are type- and size-checked. `FileObject.scanStatus` exists for malware
-scanning; **nothing populates it yet** — see the backlog.
+Uploads are checked against a MIME allow-list, a matching extension, and the
+type's magic bytes, with a 20 MB ceiling.
+
+The multipart parser is held to the same contract before any of that: one part,
+named `file`, and no text fields at all. Two of the four multer advisories this
+cleared are denial of service through a crafted *field name* rather than a file,
+and a request that cannot carry a field cannot carry one of those.
+
+**Requirement: uploads are scanned before they are stored.** The bytes are
+streamed to clamd (`MALWARE_SCAN_ENABLED`); a detection is refused at upload
+with the signature named, audited, and notified to the uploader, and nothing is
+written. `FileObject.scanStatus` records the verdict:
+
+| Status | Meaning | Downloadable |
+|---|---|---|
+| `CLEAN` | clamd passed it | yes |
+| `INFECTED` | quarantined — the row survives, the bytes do not | no |
+| `PENDING` | the scanner could not be reached, timed out, or replied unintelligibly | **no** |
+| `SKIPPED` | scanning is switched off for this deployment | yes |
+
+**Requirement: a scanner that is not working is never a pass.** Every failure
+mode lands at `PENDING`, which is held rather than served; an hourly sweep
+retries it. A file is served unscanned only when scanning is deliberately off,
+which the API announces at every boot.
 
 ---
 
@@ -578,19 +622,28 @@ Flutter with Riverpod, **no code generation** — see
 `flutter_secure_storage`. Tabs are computed by `visibleTabsFor(SessionUser)`,
 which is unit-tested rather than trusted.
 
+It can *present* a second factor — a generated code or a recovery code — but it
+cannot **enrol** one: scanning a QR code with the phone displaying it does not
+work. An account that must enrol is sent to the console. That is invisible while
+the requirement only reaches console roles, and a lock-out the moment an
+organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
+[backlog](./backlog.md).
+
 ---
 
 ## Non-functional requirements
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 158 backend, 17 web, 30 mobile. A 49-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 203 backend, 17 web, 33 mobile. An 89-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
 | **Input** | `ValidationPipe` with `whitelist` and `forbidNonWhitelisted`, so an unexpected field is rejected rather than ignored. |
 | **Localisation** | UI is Thai. Nothing in the architecture is Thailand-specific: tax rules are data, leave types are configuration, OT multipliers are settings. |
-| **Deployment** | Three containers plus PostgreSQL 16. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
+| **Scheduled work** | Nightly maintenance runs inside the API process. Every replica runs the same schedule and each job takes a Postgres advisory lock first, so it runs once per schedule however many instances there are. Nothing to configure; `JOB_LOCK_TIMEOUT_MS` bounds how long one may hold it. |
+| **Side effects** | Anything leaving the system is recorded as an outbox event in the transaction that caused it and relayed afterwards, so nothing is sent for work that rolled back and nothing is lost to a crash between the two. Notifications commit with the change they announce — an approval nobody was told about is not a state the system can reach. Delivery is at least once; every instance drains the queue, claiming with `FOR UPDATE SKIP LOCKED`. |
+| **Deployment** | Three containers — API, console, PostgreSQL 16 — plus a one-off `migrate` container behind a compose profile. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
 
 ### Known limits
 
@@ -598,12 +651,13 @@ Stated plainly, with the remedies in
 [security.md](./security.md#what-this-does-not-do) and tickets in
 [backlog.md](./backlog.md):
 
-- No malware scanning on uploads.
-- Rate limiting is per-instance and in-memory.
-- Scheduled jobs assume a single instance; no leader election.
+- Malware scanning is off by default; it needs a clamd to talk to.
+- Rate limiting is in-process unless `THROTTLE_STORAGE=postgres` is set.
 - No email or push dispatch — `NotificationsService` is the seam for it.
-- `outbox_events` exists but nothing consumes it.
 - No ภ.ง.ด.1 withholding-tax filing export.
+- Issued documents are not rendered; the API supplies merge data only.
+- Benefits and shift administration exist in the API but not in the console.
+- The mobile app can present a second factor but cannot enrol one.
 - **No first-run setup.** A clean install cannot create an organisation or a
   first administrator except through `db:seed`, which is demo data (CW-022).
 - **The Thai tax and social-security rules are unreviewed** by anyone qualified
