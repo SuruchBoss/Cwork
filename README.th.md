@@ -9,6 +9,7 @@
 
 [English](./README.md) · **ภาษาไทย**
 
+[![CI](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 [![Backend](https://img.shields.io/badge/backend-NestJS%2011-e0234e.svg)](./backend)
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
@@ -29,6 +30,27 @@
 | **เว็บคอนโซล** | React 19 + Vite สำหรับงาน HR เงินเดือน และหัวหน้างาน |
 | **แอปพนักงาน** | Flutter ลงเวลา ขอลา ดูสลิป อนุมัติ — ใช้งานต่อได้แม้เน็ตหลุด |
 | **API** | NestJS แบบ modular monolith บน PostgreSQL 16 |
+
+```mermaid
+flowchart TB
+    W["เว็บคอนโซล<br/><i>React 19 · Vite</i>"] --> API
+    M["แอปพนักงาน<br/><i>Flutter · ใช้ต่อได้แม้เน็ตหลุด</i>"] --> API
+    C["หน้าสมัครงานสาธารณะ"] --> API
+
+    API["<b>NestJS API</b> — modular monolith<br/>JWT → สิทธิ์ → จำกัดอัตรา<br/>โมดูลฟีเจอร์บนกฎ <i>domain/</i> ที่บริสุทธิ์"]
+
+    API --> DB[("PostgreSQL 16<br/><i>ข้อมูล · ล็อกงานตามเวลา · ตัวนับอัตรา · outbox</i>")]
+    DB --> OUT["Transactional outbox<br/><i>ส่งอย่างน้อยหนึ่งครั้ง ถอยเวลา เก็บ dead letter</i>"]
+    OUT --> MAIL["SMTP"]
+    OUT --> PUSH["FCM push"]
+    API -. ไม่บังคับ .-> CLAM["clamd<br/><i>สแกนไฟล์อัปโหลด</i>"]
+    API -. ปิดเป็นค่าตั้งต้น .-> LLM["Anthropic<br/><i>ผู้ช่วย HR</i>"]
+```
+
+งานที่ปกติต้องใช้ queue, lock server และ cache — PostgreSQL ทำให้ทั้งหมด:
+`FOR UPDATE SKIP LOCKED` สำหรับ outbox, advisory lock ให้มีเพียง replica เดียว
+ที่รันงานตามเวลาแต่ละตัว, และตารางตัวนับสำหรับการจำกัดอัตราแบบใช้ร่วมกัน
+นั่นคือเหตุผลทั้งหมดที่การเพิ่ม instance ที่สองเป็นแค่การตั้งค่า ไม่ใช่โปรเจกต์
 
 ไม่มี Redis ไม่มี message broker ไม่มี Kubernetes การรัน API หลาย instance ใช้
 การตั้งค่าเพียงบรรทัดเดียว (`THROTTLE_STORAGE=postgres`) ไม่ใช่การเพิ่มบริการใหม่
@@ -273,6 +295,18 @@ Flutter สำหรับทุกคนที่ไม่เคยเปิด
 วันที่ยังไม่ได้ปิดยอด เช่นวันในอนาคต หรือช่วงที่ยังทยอยติดตั้งระบบลงเวลา
 ต้องไม่ทำให้เงินเดือนลดลง พลาดตรงนี้คือการจ่ายขาดแบบเงียบ ๆ
 ซึ่งเป็นบั๊กเงินเดือนที่แย่ที่สุด
+
+**ระบบที่เพิ่งติดตั้งจะไม่ตกเป็นของคนที่มาถึงก่อน** ระหว่าง `docker compose up`
+จนถึงตอนตั้งค่าเสร็จ ระบบเข้าถึงได้และยังไม่มีเจ้าของ — สแกนเนอร์ที่กวาดพอร์ตอยู่
+มีโอกาสมาถึงก่อนคนที่ยังนั่งอ่าน log ตอนบูตอยู่ จึงไม่มีเช็คแบบ "ถ้ายังไม่มีองค์กร
+ก็ปล่อยผ่าน" เลย ผู้ดูแลคนแรกถูกสร้างได้สองทางเท่านั้น: CLI ที่ต้องมี shell
+บนเซิร์ฟเวอร์ หรือหน้าเว็บที่ถือโทเคนใช้ครั้งเดียวซึ่งมีแต่ CLI นั้นออกให้ได้
+
+**การแจ้งเตือนถูกเขียนใน transaction เดียวกับเรื่องที่มันแจ้ง** อนุมัติใบลาแล้ว
+ตัวใบลา ยอดวันลาคงเหลือ และการแจ้งเตือน commit หรือ rollback ไปด้วยกัน —
+ไม่มีช่องที่ใครจะได้รับแจ้งเรื่องที่ถูก rollback ไปแล้ว ส่วนการส่งจริงเป็นการ poll
+ตาราง outbox แยกต่างหากด้วย `FOR UPDATE SKIP LOCKED` เมล์เซิร์ฟเวอร์ล่ม
+จึงทำให้การอนุมัติล้มเหลวไม่ได้
 
 **บันทึกการใช้งานเขียนเพิ่มได้อย่างเดียวในระดับฐานข้อมูล** ทริกเกอร์จะโยน
 exception ทันทีที่มีคำสั่ง `UPDATE` หรือ `DELETE` กับ `audit_logs` และ

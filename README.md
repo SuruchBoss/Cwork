@@ -9,6 +9,7 @@ Built for Thai labour practice. Designed to be self-hosted.
 
 **English** · [ภาษาไทย](./README.th.md)
 
+[![CI](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 [![Backend](https://img.shields.io/badge/backend-NestJS%2011-e0234e.svg)](./backend)
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
@@ -29,6 +30,27 @@ Three deployables, one database:
 | **Admin console** | React 19 + Vite. Everything HR, payroll and managers do. |
 | **Employee app** | Flutter. Clock in/out, leave, payslips, approvals — offline-tolerant. |
 | **API** | NestJS modular monolith over PostgreSQL 16. |
+
+```mermaid
+flowchart TB
+    W["Admin console<br/><i>React 19 · Vite</i>"] --> API
+    M["Employee app<br/><i>Flutter · offline-tolerant</i>"] --> API
+    C["Public careers page"] --> API
+
+    API["<b>NestJS API</b> — modular monolith<br/>JWT → permissions → rate limit<br/>feature modules over pure <i>domain/</i> rules"]
+
+    API --> DB[("PostgreSQL 16<br/><i>records · job locks · rate-limit counters · outbox</i>")]
+    DB --> OUT["Transactional outbox<br/><i>at-least-once, backs off, dead-letters</i>"]
+    OUT --> MAIL["SMTP"]
+    OUT --> PUSH["FCM push"]
+    API -. optional .-> CLAM["clamd<br/><i>scans uploads</i>"]
+    API -. off by default .-> LLM["Anthropic<br/><i>HR assistant</i>"]
+```
+
+Everything a queue, a lock server and a cache would normally do, PostgreSQL does
+here: `FOR UPDATE SKIP LOCKED` for the outbox, advisory locks so only one replica
+runs each scheduled job, and a counter table for shared rate limits. That is the
+whole reason a second instance is a setting rather than a project.
 
 No Redis, no message broker, no Kubernetes. Running several API instances needs
 one setting (`THROTTLE_STORAGE=postgres`) rather than another service to operate
@@ -282,6 +304,19 @@ is paid the full month minus *explicit* unpaid leave and absence. Days that
 simply have not been closed out — future dates, or a clock-in rollout still in
 progress — must not reduce pay. Getting this wrong silently shorts people, which
 is the worst class of payroll bug.
+
+**A fresh deployment cannot be claimed by whoever finds it first.** Between
+`docker compose up` and the moment setup finishes, an install is reachable and
+unowned — and a scanner sweeping the port beats the person still reading startup
+logs. So there is no "if no organisation exists, let anyone through": the first
+administrator is created either by a CLI that needs a shell on the server, or by
+a wizard holding a single-use token only that CLI can mint.
+
+**A notification is written in the same transaction as the thing it is about.**
+Approve a leave request and the row, the balance and the notification commit or
+roll back together — there is no window where someone is told about a decision
+that was rolled back. Delivery is a separate poll over the outbox table with
+`FOR UPDATE SKIP LOCKED`, so a mail server being down cannot fail an approval.
 
 **The audit trail is append-only in the database.** A trigger raises an exception
 on `UPDATE` or `DELETE` against `audit_logs` and `attendance_punches`. A
