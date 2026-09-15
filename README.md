@@ -357,6 +357,14 @@ Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). The
 *good first issue* called out; they tend to be leave-policy variants, payroll edge
 cases, or a jurisdiction other than Thailand.
 
+Commits need a sign-off (`git commit -s`) under the
+[Developer Certificate of Origin](./DCO) — a statement that you had the right to
+submit the change, checked in CI. **There is no CLA**: a contributor licence
+agreement is a barrier in front of a one-line fix, and the DCO answers the
+question a CLA is usually reached for. The accepted consequence is that the
+licence cannot realistically be changed later, since that would need every
+contributor's agreement. Apache-2.0 is the answer, for good.
+
 ## Licence
 
 [Apache 2.0](./LICENSE).

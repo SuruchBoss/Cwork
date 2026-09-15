@@ -121,6 +121,36 @@ In the PR description, say what changed and **why** — the reasoning is the par
 that is hard to recover later. If you made a non-obvious trade-off, an
 [ADR](./docs/adr/) is welcome.
 
+## Signing off your work
+
+Every commit needs a `Signed-off-by` line. `git commit -s` adds it:
+
+```
+Signed-off-by: Somchai Jaidee <somchai@example.com>
+```
+
+It is the [Developer Certificate of Origin](./DCO) — a statement that you wrote
+the change, or that you have the right to submit it under this project's
+licence. It is not a copyright assignment and it takes nothing from you.
+
+Forgot it? Fix the last commit with `git commit --amend -s`, or a whole branch
+with:
+
+```bash
+git rebase --signoff origin/main
+git push --force-with-lease
+```
+
+CI checks every non-merge commit in a pull request and names the ones that are
+missing it.
+
+**There is no CLA**, deliberately. A contributor licence agreement is a barrier
+in front of a one-line fix, and the DCO covers the question a CLA is usually
+reached for: whether the contributor had the right to contribute. The accepted
+consequence is that the licence cannot realistically be changed later — doing so
+would need every contributor's agreement — and Apache-2.0 is the answer, for
+good.
+
 ## Tests
 
 - **Backend**: unit-test every `domain/` function. Verify payroll and tax
