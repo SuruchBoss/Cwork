@@ -17,7 +17,7 @@ class AppConfig {
 
   static const String appName = String.fromEnvironment(
     'APP_NAME',
-    defaultValue: 'MarMa HRIS',
+    defaultValue: 'Cwork',
   );
 
   /// Punches are queued locally when offline and flushed on reconnect.

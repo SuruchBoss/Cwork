@@ -97,7 +97,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'marma.session',
+      name: 'cwork.session',
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,

@@ -1,7 +1,7 @@
 /**
  * Minimal LLM abstraction.
  *
- * MarMa HRIS is provider-agnostic on purpose: an HRIS holds payroll and national
+ * Cwork is provider-agnostic on purpose: an HRIS holds payroll and national
  * ID data, and an operator must be able to choose (or self-host) the model that
  * sees it. Implement this interface and register it in AssistantModule.
  */

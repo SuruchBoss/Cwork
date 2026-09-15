@@ -56,7 +56,7 @@ export default function LoginPage() {
       <form className="auth__card" onSubmit={onSubmit} noValidate>
         <div className="auth__brand">
           <span className="sidebar__logo" aria-hidden>
-            MM
+            CW
           </span>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{env.appName}</div>
@@ -100,9 +100,9 @@ export default function LoginPage() {
           <div className="auth__hint">
             <strong>บัญชีทดสอบ (seed):</strong>
             <br />
-            hr.manager@marma.example · eng.manager@marma.example · dev2@marma.example
+            hr.manager@cwork.example · eng.manager@cwork.example · dev2@cwork.example
             <br />
-            รหัสผ่าน: <code className="mono">MarMaHris2026!</code>
+            รหัสผ่าน: <code className="mono">Cwork2026!</code>
           </div>
         )}
       </form>

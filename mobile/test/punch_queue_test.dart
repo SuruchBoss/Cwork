@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:marma_hris/features/attendance/data/punch_queue.dart';
-import 'package:marma_hris/features/attendance/domain/attendance_models.dart';
+import 'package:cwork/features/attendance/data/punch_queue.dart';
+import 'package:cwork/features/attendance/domain/attendance_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 QueuedPunch buildPunch(String id, {String type = 'CLOCK_IN'}) => QueuedPunch(

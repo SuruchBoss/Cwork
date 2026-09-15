@@ -7,8 +7,8 @@ the codebase suggests. That is the only reason any of the rules below exist.
 ## Getting set up
 
 ```bash
-git clone https://github.com/suruchboss/marmaai.git
-cd marmaai
+git clone https://github.com/SuruchBoss/Cwork.git
+cd Cwork
 
 # API
 cd backend

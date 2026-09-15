@@ -1,4 +1,4 @@
-package com.marma.marma_hris
+package com.cwork.app
 
 import io.flutter.embedding.android.FlutterActivity
 

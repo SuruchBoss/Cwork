@@ -26,13 +26,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Run as a non-root user: a compromised process should not own the filesystem.
-RUN useradd --system --create-home --uid 10001 marma
-USER marma
+RUN useradd --system --create-home --uid 10001 cwork
+USER cwork
 
-COPY --chown=marma:marma --from=build /app/node_modules ./node_modules
-COPY --chown=marma:marma --from=build /app/dist ./dist
-COPY --chown=marma:marma --from=build /app/prisma ./prisma
-COPY --chown=marma:marma prisma.config.ts package.json ./
+COPY --chown=cwork:cwork --from=build /app/node_modules ./node_modules
+COPY --chown=cwork:cwork --from=build /app/dist ./dist
+COPY --chown=cwork:cwork --from=build /app/prisma ./prisma
+COPY --chown=cwork:cwork prisma.config.ts package.json ./
 
 EXPOSE 3000
 

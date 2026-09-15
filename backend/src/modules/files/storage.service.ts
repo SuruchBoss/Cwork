@@ -36,7 +36,7 @@ export class StorageService {
     contentType: string,
   ): Promise<StoredObject> {
     const bucket =
-      this.config.storage.driver === 's3' ? (this.config.storage.s3.bucket ?? 'marma') : 'local';
+      this.config.storage.driver === 's3' ? (this.config.storage.s3.bucket ?? 'cwork') : 'local';
     const safeName = sanitiseFilename(filename);
     const objectKey = `${prefix}/${new Date().getUTCFullYear()}/${randomUUID()}-${safeName}`;
     const checksumSha256 = createHash('sha256').update(content).digest('hex');

@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @ApiProperty({ example: 'hr.admin@marma.example' })
+  @ApiProperty({ example: 'hr.admin@cwork.example' })
   @IsEmail()
   @MaxLength(255)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
@@ -23,7 +23,7 @@ export class LoginDto {
   @MaxLength(128)
   deviceId?: string;
 
-  @ApiPropertyOptional({ example: 'Pixel 8 · MarMa Mobile' })
+  @ApiPropertyOptional({ example: 'Pixel 8 · Cwork Mobile' })
   @IsOptional()
   @IsString()
   @MaxLength(128)

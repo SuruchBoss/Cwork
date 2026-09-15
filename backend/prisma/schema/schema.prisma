@@ -1,4 +1,4 @@
-// MarMa HRIS — Prisma schema (multi-file).
+// Cwork — Prisma schema (multi-file).
 //
 // Conventions used across every model in this folder:
 //   * Primary keys are UUIDv4 stored as `uuid` — never expose sequential ids.

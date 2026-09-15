@@ -1,4 +1,4 @@
-# MarMa HRIS — API
+# Cwork — API
 
 NestJS 11 + Prisma + PostgreSQL 16. A modular monolith: one process, real module
 boundaries. See [docs/architecture.md](../docs/architecture.md) for why.

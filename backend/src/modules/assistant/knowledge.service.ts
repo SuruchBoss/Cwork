@@ -32,7 +32,7 @@ export class KnowledgeService {
    * Retrieval for the assistant.
    *
    * Lexical search is the default because it needs no embedding provider and no
-   * pgvector data — MarMa HRIS must answer policy questions out of the box.
+   * pgvector data — Cwork must answer policy questions out of the box.
    * When embeddings are configured, vector results are merged in.
    */
   async search(

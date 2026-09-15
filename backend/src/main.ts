@@ -53,7 +53,7 @@ async function bootstrap(): Promise<void> {
 
   if (!config.app.isProduction) {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('MarMa HRIS API')
+      .setTitle('Cwork API')
       .setDescription(
         'Open-source HRIS: people, recruitment, leave, attendance, payroll and an HR assistant.',
       )
@@ -71,7 +71,7 @@ async function bootstrap(): Promise<void> {
 
   await app.listen(config.app.port, '0.0.0.0');
   // eslint-disable-next-line no-console
-  console.log(`MarMa HRIS API listening on :${config.app.port} (${config.app.env})`);
+  console.log(`Cwork API listening on :${config.app.port} (${config.app.env})`);
 }
 
 void bootstrap();

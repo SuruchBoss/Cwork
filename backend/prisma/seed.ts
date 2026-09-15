@@ -29,18 +29,18 @@ import { SYSTEM_ROLE_DEFINITIONS, SystemRole } from '../src/core/security/roles'
 
 const prisma = new PrismaClient();
 
-const ORG_CODE = 'MARMA';
-const DEFAULT_PASSWORD = process.env.SEED_PASSWORD ?? 'MarMaHris2026!';
+const ORG_CODE = 'CWORK';
+const DEFAULT_PASSWORD = process.env.SEED_PASSWORD ?? 'Cwork2026!';
 
 async function main(): Promise<void> {
-  console.log('Seeding MarMa HRIS…');
+  console.log('Seeding Cwork…');
 
   const organization = await prisma.organization.upsert({
     where: { code: ORG_CODE },
     create: {
       code: ORG_CODE,
-      name: 'บริษัท มาร์มา จำกัด',
-      legalName: 'MarMa Company Limited',
+      name: 'บริษัท ซีเวิร์ค จำกัด',
+      legalName: 'Cwork Company Limited',
       taxId: '0105560000000',
       timezone: 'Asia/Bangkok',
       currency: 'THB',
@@ -403,7 +403,7 @@ async function main(): Promise<void> {
       code: 'EMP-0001',
       first: 'สมศักดิ์',
       last: 'ธนาวงศ์',
-      email: 'ceo@marma.example',
+      email: 'ceo@cwork.example',
       dept: 'EXEC',
       position: 'CEO',
       role: SystemRole.SUPER_ADMIN,
@@ -415,7 +415,7 @@ async function main(): Promise<void> {
       code: 'EMP-0002',
       first: 'วราภรณ์',
       last: 'สุขสวัสดิ์',
-      email: 'hr.manager@marma.example',
+      email: 'hr.manager@cwork.example',
       dept: 'HR',
       position: 'HRM',
       role: SystemRole.HR_ADMIN,
@@ -427,7 +427,7 @@ async function main(): Promise<void> {
       code: 'EMP-0003',
       first: 'ณัฐพล',
       last: 'จันทร์เพ็ญ',
-      email: 'hr.officer@marma.example',
+      email: 'hr.officer@cwork.example',
       dept: 'HR',
       position: 'HRO',
       role: SystemRole.HR_OFFICER,
@@ -439,7 +439,7 @@ async function main(): Promise<void> {
       code: 'EMP-0004',
       first: 'พิมพ์ชนก',
       last: 'ศรีสุข',
-      email: 'payroll@marma.example',
+      email: 'payroll@cwork.example',
       dept: 'FIN',
       position: 'PAYO',
       role: SystemRole.PAYROLL_OFFICER,
@@ -451,7 +451,7 @@ async function main(): Promise<void> {
       code: 'EMP-0005',
       first: 'ธนกร',
       last: 'วิริยะกุล',
-      email: 'eng.manager@marma.example',
+      email: 'eng.manager@cwork.example',
       dept: 'ENG',
       position: 'EM',
       role: SystemRole.MANAGER,
@@ -463,7 +463,7 @@ async function main(): Promise<void> {
       code: 'EMP-0006',
       first: 'สุชานาถ',
       last: 'ประเสริฐ',
-      email: 'dev1@marma.example',
+      email: 'dev1@cwork.example',
       dept: 'ENG',
       position: 'SWE2',
       role: SystemRole.EMPLOYEE,
@@ -475,7 +475,7 @@ async function main(): Promise<void> {
       code: 'EMP-0007',
       first: 'อนุชา',
       last: 'แก้วมณี',
-      email: 'dev2@marma.example',
+      email: 'dev2@cwork.example',
       dept: 'ENG',
       position: 'SWE',
       role: SystemRole.EMPLOYEE,
@@ -487,7 +487,7 @@ async function main(): Promise<void> {
       code: 'EMP-0008',
       first: 'กมลชนก',
       last: 'บุญมี',
-      email: 'sales1@marma.example',
+      email: 'sales1@cwork.example',
       dept: 'SALES',
       position: 'SALES',
       role: SystemRole.EMPLOYEE,
@@ -671,7 +671,7 @@ async function main(): Promise<void> {
 - อายุงาน 10 ปีขึ้นไป: 15 วันต่อปี
 
 ## การยื่นคำขอ
-ต้องยื่นล่วงหน้าอย่างน้อย 3 วันทำการ ผ่านระบบ MarMa HRIS
+ต้องยื่นล่วงหน้าอย่างน้อย 3 วันทำการ ผ่านระบบ Cwork
 การลา 1-2 วัน อนุมัติโดยหัวหน้างานโดยตรง
 การลาเกิน 2 วัน ต้องผ่านหัวหน้างานและฝ่ายบุคคล
 
@@ -700,7 +700,7 @@ async function main(): Promise<void> {
       category: 'เวลาทำงาน',
       content: `# การทำงานล่วงเวลา
 
-การทำโอทีต้องได้รับอนุมัติจากหัวหน้างานล่วงหน้าผ่านระบบ MarMa HRIS
+การทำโอทีต้องได้รับอนุมัติจากหัวหน้างานล่วงหน้าผ่านระบบ Cwork
 ระบบจะจ่ายค่าล่วงเวลาตามจำนวนชั่วโมงที่ "ได้รับอนุมัติ" เท่านั้น ไม่ใช่ตามเวลาที่บันทึกเข้า-ออกงาน
 
 ## อัตราค่าล่วงเวลา (ตามพระราชบัญญัติคุ้มครองแรงงาน)
@@ -722,7 +722,7 @@ async function main(): Promise<void> {
 ผ่อนผันการเข้างานสาย 15 นาที หลังจากนั้นระบบจะบันทึกเป็น "มาสาย"
 
 ## วิธีลงเวลา
-ลงเวลาผ่านแอปมือถือ MarMa HRIS โดยเปิด GPS
+ลงเวลาผ่านแอปมือถือ Cwork โดยเปิด GPS
 ระบบจะตรวจสอบว่าอยู่ในรัศมี 250 เมตรจากสำนักงาน
 หากอยู่นอกพื้นที่ ระบบยังบันทึกเวลาให้ แต่จะติดธงให้ HR ตรวจสอบ
 
@@ -736,7 +736,7 @@ async function main(): Promise<void> {
       category: 'การเงิน',
       content: `# การเบิกค่าใช้จ่าย
 
-ยื่นคำขอเบิกผ่านระบบ MarMa HRIS พร้อมแนบใบเสร็จรับเงินทุกรายการ
+ยื่นคำขอเบิกผ่านระบบ Cwork พร้อมแนบใบเสร็จรับเงินทุกรายการ
 กำหนดส่งภายใน 30 วันนับจากวันที่เกิดค่าใช้จ่าย
 
 ## สายการอนุมัติ
@@ -777,7 +777,7 @@ async function main(): Promise<void> {
       content: `# ขั้นตอนการลาออก
 
 ## การแจ้งล่วงหน้า
-ต้องยื่นใบลาออกผ่านระบบ MarMa HRIS ล่วงหน้าอย่างน้อย 30 วัน
+ต้องยื่นใบลาออกผ่านระบบ Cwork ล่วงหน้าอย่างน้อย 30 วัน
 สายการอนุมัติ: หัวหน้างานโดยตรง จากนั้นผู้จัดการฝ่ายบุคคล
 
 ## การส่งมอบงาน

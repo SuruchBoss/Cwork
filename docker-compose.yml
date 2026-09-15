@@ -1,4 +1,4 @@
-# MarMa HRIS — full stack for local development and small self-hosted deployments.
+# Cwork — full stack for local development and small self-hosted deployments.
 #
 #   cp .env.example .env    # then fill in the secrets it asks for
 #   docker compose up -d
@@ -8,7 +8,7 @@
 # The web console is then at http://localhost:8080 and the API docs at
 # http://localhost:3000/api/docs.
 
-name: marma-hris
+name: cwork
 
 services:
   postgres:
@@ -17,13 +17,13 @@ services:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-marma}
+      POSTGRES_USER: ${POSTGRES_USER:-cwork}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-marma_hris}
+      POSTGRES_DB: ${POSTGRES_DB:-cwork}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marma} -d ${POSTGRES_DB:-marma_hris}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cwork} -d ${POSTGRES_DB:-cwork}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -42,7 +42,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-marma}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-marma_hris}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cwork}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cwork}?schema=public
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env}

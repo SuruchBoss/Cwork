@@ -1,5 +1,5 @@
-name: marma_hris
-description: MarMa HRIS — employee mobile app (clock in/out, leave, payslips, HR assistant).
+name: cwork
+description: Cwork — employee mobile app (clock in/out, leave, payslips, HR assistant).
 publish_to: "none"
 version: 0.1.0+1
 

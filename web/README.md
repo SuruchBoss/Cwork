@@ -1,4 +1,4 @@
-# MarMa HRIS — Admin console
+# Cwork — Admin console
 
 React 19 + Vite + TypeScript. The HR and administration interface.
 

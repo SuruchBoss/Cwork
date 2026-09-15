@@ -11,5 +11,5 @@ Future<void> main() async {
   // in the app renders in English.
   await initializeDateFormatting('th');
 
-  runApp(const ProviderScope(child: MarMaApp()));
+  runApp(const ProviderScope(child: CworkApp()));
 }

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:marma_hris/core/router/tabs.dart';
-import 'package:marma_hris/features/auth/domain/session.dart';
+import 'package:cwork/core/router/tabs.dart';
+import 'package:cwork/features/auth/domain/session.dart';
 
 SessionUser userWith(List<String> permissions) => SessionUser(
       id: 'u1',
-      email: 'somchai@marma.example',
+      email: 'somchai@cwork.example',
       organizationId: 'org1',
       employeeId: 'e1',
       displayName: 'สมชาย ใจดี',
@@ -56,7 +56,7 @@ void main() {
     test('falls back to email when there is no display name', () {
       const SessionUser user = SessionUser(
         id: 'u1',
-        email: 'nobody@marma.example',
+        email: 'nobody@cwork.example',
         organizationId: 'org1',
         employeeId: null,
         displayName: null,
@@ -65,7 +65,7 @@ void main() {
         locale: 'th',
       );
 
-      expect(user.name, 'nobody@marma.example');
+      expect(user.name, 'nobody@cwork.example');
     });
 
     test('canAny is true when any one permission is held', () {

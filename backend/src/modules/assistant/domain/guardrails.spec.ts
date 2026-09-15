@@ -7,7 +7,7 @@ const context = {
   department: 'ฝ่ายวิศวกรรม',
   hireDate: '2024-01-15',
   isManager: false,
-  organizationName: 'MarMa Co., Ltd.',
+  organizationName: 'Cwork Co., Ltd.',
   locale: 'th',
   today: '2026-09-15',
   timezone: 'Asia/Bangkok',

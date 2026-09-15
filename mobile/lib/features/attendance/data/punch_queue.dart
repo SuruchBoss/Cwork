@@ -15,7 +15,7 @@ import '../domain/attendance_models.dart';
 class PunchQueue {
   PunchQueue([SharedPreferences? prefs]) : _injected = prefs;
 
-  static const String _key = 'marma.punchQueue';
+  static const String _key = 'cwork.punchQueue';
   final SharedPreferences? _injected;
 
   Future<SharedPreferences> get _prefs async => _injected ?? await SharedPreferences.getInstance();

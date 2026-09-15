@@ -10,14 +10,14 @@ import 'features/auth/application/auth_controller.dart';
 import 'features/auth/domain/session.dart';
 import 'features/auth/presentation/login_screen.dart';
 
-class MarMaApp extends ConsumerStatefulWidget {
-  const MarMaApp({super.key});
+class CworkApp extends ConsumerStatefulWidget {
+  const CworkApp({super.key});
 
   @override
-  ConsumerState<MarMaApp> createState() => _MarMaAppState();
+  ConsumerState<CworkApp> createState() => _CworkAppState();
 }
 
-class _MarMaAppState extends ConsumerState<MarMaApp> {
+class _CworkAppState extends ConsumerState<CworkApp> {
   @override
   void initState() {
     super.initState();

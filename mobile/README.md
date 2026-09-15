@@ -1,4 +1,4 @@
-# MarMa HRIS — Mobile App
+# Cwork — Mobile App
 
 Flutter app for employees: clock in/out, leave, payslips, and the HR assistant.
 
@@ -18,7 +18,7 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000/api/v1
 ```
 
 Sign in with a seeded account (see the backend's `npm run db:seed` output), e.g.
-`dev2@marma.example` / `MarMaHris2026!`.
+`dev2@cwork.example` / `Cwork2026!`.
 
 ## Checks
 

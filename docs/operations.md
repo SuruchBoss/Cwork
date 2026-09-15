@@ -128,9 +128,9 @@ get dropped, search degrades to a sequential scan instead of breaking outright.
 
 ```bash
 docker compose stop api web
-docker compose exec -T postgres psql -U marma -d postgres -c 'DROP DATABASE marma_hris;'
-docker compose exec -T postgres psql -U marma -d postgres -c 'CREATE DATABASE marma_hris;'
-cat backup.sql | docker compose exec -T postgres psql -U marma -d marma_hris
+docker compose exec -T postgres psql -U cwork -d postgres -c 'DROP DATABASE cwork;'
+docker compose exec -T postgres psql -U cwork -d postgres -c 'CREATE DATABASE cwork;'
+cat backup.sql | docker compose exec -T postgres psql -U cwork -d cwork
 docker compose exec api npm run db:verify
 docker compose start api web
 ```

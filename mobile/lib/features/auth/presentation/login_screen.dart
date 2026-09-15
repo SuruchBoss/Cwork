@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'MM',
+                        'CW',
                         style: TextStyle(
                           color: theme.colorScheme.onPrimary,
                           fontWeight: FontWeight.w700,

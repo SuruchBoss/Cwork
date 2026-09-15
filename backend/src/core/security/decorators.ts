@@ -1,9 +1,9 @@
 import { SetMetadata } from '@nestjs/common';
 import type { PermissionKey } from './permissions';
 
-export const IS_PUBLIC_KEY = 'marma:isPublic';
-export const PERMISSIONS_KEY = 'marma:permissions';
-export const PERMISSIONS_MODE_KEY = 'marma:permissionsMode';
+export const IS_PUBLIC_KEY = 'cwork:isPublic';
+export const PERMISSIONS_KEY = 'cwork:permissions';
+export const PERMISSIONS_MODE_KEY = 'cwork:permissionsMode';
 
 /** Opts a route out of authentication entirely (login, health, careers page). */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);

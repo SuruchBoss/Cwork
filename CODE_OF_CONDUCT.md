@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement through
-[GitHub's private reporting](https://github.com/suruchboss/marmaai/security/advisories/new)
+[GitHub's private reporting](https://github.com/SuruchBoss/Cwork/security/advisories/new)
 or by opening a confidential issue with the maintainers.
 
 All complaints will be reviewed and investigated promptly and fairly. All

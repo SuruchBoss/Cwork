@@ -1,5 +1,5 @@
 /**
- * Shapes returned by the MarMa HRIS API.
+ * Shapes returned by the Cwork API.
  *
  * Hand-written rather than generated so the console depends on the documented
  * contract, not on Prisma's internals. Regenerate from /api/docs (OpenAPI) if

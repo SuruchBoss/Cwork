@@ -12,7 +12,7 @@ const COMMON_PASSWORDS = new Set([
   'qwertyuiop12',
   'administrator',
   'letmein12345',
-  'marmahris123',
+  'cworkhris123',
   'welcome12345',
 ]);
 

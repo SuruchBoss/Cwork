@@ -59,10 +59,10 @@ export class EnvironmentVariables {
   JWT_REFRESH_TTL: number = 2592000;
 
   @IsString()
-  JWT_ISSUER: string = 'marma-hris';
+  JWT_ISSUER: string = 'cwork';
 
   @IsString()
-  JWT_AUDIENCE: string = 'marma-hris-clients';
+  JWT_AUDIENCE: string = 'cwork-clients';
 
   /** base64-encoded 32-byte AES-256-GCM key for encrypted PII columns. */
   @IsString()

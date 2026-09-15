@@ -126,7 +126,7 @@ export function AppLayout() {
       <aside className={clsx('sidebar', sidebarOpen && 'sidebar--open')}>
         <div className="sidebar__brand">
           <span className="sidebar__logo" aria-hidden>
-            MM
+            CW
           </span>
           <span>{env.appName}</span>
         </div>

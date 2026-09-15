@@ -14,9 +14,9 @@ class TokenStorage {
 
   final FlutterSecureStorage _storage;
 
-  static const String _accessKey = 'marma.accessToken';
-  static const String _refreshKey = 'marma.refreshToken';
-  static const String _deviceKey = 'marma.deviceId';
+  static const String _accessKey = 'cwork.accessToken';
+  static const String _refreshKey = 'cwork.refreshToken';
+  static const String _deviceKey = 'cwork.deviceId';
 
   Future<String?> readAccessToken() => _storage.read(key: _accessKey);
 

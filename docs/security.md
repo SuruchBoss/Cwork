@@ -90,7 +90,7 @@ protects `attendance_punches` — corrections add new punches rather than editin
 old ones.
 
 ```
-marma_hris=> UPDATE audit_logs SET summary='tampered' WHERE ...;
+cwork=> UPDATE audit_logs SET summary='tampered' WHERE ...;
 ERROR:  audit_logs is append-only (attempted UPDATE)
 ```
 

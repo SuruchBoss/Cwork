@@ -80,6 +80,6 @@ class AuthRepository {
     } on Object {
       // Device name is cosmetic; never block sign-in on it.
     }
-    return 'MarMa Mobile';
+    return 'Cwork Mobile';
   }
 }

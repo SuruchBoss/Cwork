@@ -24,7 +24,7 @@ export const useUiStore = create<UiState>()(
       closeSidebar: () => set({ sidebarOpen: false }),
     }),
     {
-      name: 'marma.ui',
+      name: 'cwork.ui',
       partialize: (state) => ({ theme: state.theme }),
       onRehydrateStorage: () => (state) => {
         if (state) applyTheme(state.theme);

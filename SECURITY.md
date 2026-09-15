@@ -5,7 +5,7 @@
 **Please do not open a public issue for a security bug.**
 
 Report it privately through
-[GitHub's private vulnerability reporting](https://github.com/suruchboss/marmaai/security/advisories/new)
+[GitHub's private vulnerability reporting](https://github.com/SuruchBoss/Cwork/security/advisories/new)
 (Security → Report a vulnerability).
 
 Useful things to include:

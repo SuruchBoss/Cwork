@@ -1,7 +1,7 @@
 {
-  "name": "@marma/hris-web",
+  "name": "@cwork/web",
   "version": "0.1.0",
-  "description": "MarMa HRIS \u2014 administration console (React + Vite)",
+  "description": "Cwork \u2014 administration console (React + Vite)",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",

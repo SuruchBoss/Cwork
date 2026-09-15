@@ -1,6 +1,6 @@
 <div align="center">
 
-# MarMa HRIS
+# Cwork
 
 **Open-source HR information system — people, hiring, leave, attendance, payroll,
 and an HR assistant that actually knows your policies.**
@@ -34,8 +34,8 @@ app** for employees.
 ## Quick start
 
 ```bash
-git clone https://github.com/suruchboss/marmaai.git
-cd marmaai
+git clone https://github.com/SuruchBoss/Cwork.git
+cd Cwork
 cp .env.example .env
 # Fill in POSTGRES_PASSWORD, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET,
 # FIELD_ENCRYPTION_KEY — compose refuses to start without them:
@@ -51,7 +51,7 @@ docker compose exec api npm run db:seed      # demo data — evaluation only
 |---|---|
 | Admin console | http://localhost:8080 |
 | API docs | http://localhost:3000/api/docs |
-| Demo login | `hr.manager@marma.example` / `MarMaHris2026!` |
+| Demo login | `hr.manager@cwork.example` / `Cwork2026!` |
 
 The seed creates a company with eight employees, Thai statutory leave types,
 approval policies, a public-holiday calendar and eight HR policy documents for

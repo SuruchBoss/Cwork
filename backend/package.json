@@ -1,7 +1,7 @@
 {
-  "name": "@marma/hris-backend",
+  "name": "@cwork/backend",
   "version": "0.1.0",
-  "description": "MarMa HRIS \u2014 API server (NestJS + Prisma + PostgreSQL)",
+  "description": "Cwork \u2014 API server (NestJS + Prisma + PostgreSQL)",
   "license": "Apache-2.0",
   "private": true,
   "engines": {

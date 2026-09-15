@@ -16,7 +16,7 @@
 -- Knowledge base search
 -- ---------------------------------------------------------------------------
 
--- Lexical search is the DEFAULT retrieval path: MarMa HRIS answers policy
+-- Lexical search is the DEFAULT retrieval path: Cwork answers policy
 -- questions with no AI provider and no embeddings at all.
 --
 -- These are EXPRESSION indexes rather than a generated column, deliberately:
@@ -87,7 +87,7 @@ ALTER TABLE "review_cycles"
 
 -- Append-only tables: block UPDATE and DELETE at the database level, so a
 -- compromised application account still cannot rewrite history.
-CREATE OR REPLACE FUNCTION "marma_append_only"() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION "cwork_append_only"() RETURNS trigger AS $$
 BEGIN
   RAISE EXCEPTION '% is append-only (attempted %)', TG_TABLE_NAME, TG_OP;
 END;
@@ -96,13 +96,13 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS "audit_logs_append_only" ON "audit_logs";
 CREATE TRIGGER "audit_logs_append_only"
   BEFORE UPDATE OR DELETE ON "audit_logs"
-  FOR EACH ROW EXECUTE FUNCTION "marma_append_only"();
+  FOR EACH ROW EXECUTE FUNCTION "cwork_append_only"();
 
 -- Corrections add new punches; they never edit the original stream.
 DROP TRIGGER IF EXISTS "attendance_punches_append_only" ON "attendance_punches";
 CREATE TRIGGER "attendance_punches_append_only"
   BEFORE UPDATE OR DELETE ON "attendance_punches"
-  FOR EACH ROW EXECUTE FUNCTION "marma_append_only"();
+  FOR EACH ROW EXECUTE FUNCTION "cwork_append_only"();
 
 -- ---------------------------------------------------------------------------
 -- Hot-path partial indexes

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>MarMa HRIS</string>
+	<string>Cwork</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>marma_hris</string>
+	<string>cwork</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -46,8 +46,8 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>MarMa HRIS ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
+	<string>Cwork ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>MarMa HRIS ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
+	<string>Cwork ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
 </dict>
 </plist>
