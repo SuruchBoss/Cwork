@@ -326,10 +326,11 @@ own before a real run. If you have the standing to review them properly,
 
 Releases are tagged and recorded in [CHANGELOG.md](./CHANGELOG.md). Install a
 tag rather than `main` if you want to be able to say which version you are
-running:
+running — [the tag list](https://github.com/SuruchBoss/Cwork/tags) is the
+authority on what exists:
 
 ```bash
-git clone --branch v0.1.0 https://github.com/SuruchBoss/Cwork.git
+git clone --branch <tag> https://github.com/SuruchBoss/Cwork.git
 ```
 
 **This is 0.x, and breaking changes are allowed.** They will be in the changelog

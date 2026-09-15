@@ -19,9 +19,13 @@ Nothing yet.
 
 ## [0.1.0] — 2026-09-15
 
-The first tagged release. Everything below existed before the tag; naming it is
-what CW-028 was for, so that an installation can say which version it is running
-instead of "whatever `main` was that day".
+The first release. Everything below existed before it; naming it is what CW-028
+was for, so that an installation can say which version it is running instead of
+"whatever `main` was that day".
+
+> The `v0.1.0` tag is cut by a maintainer at `8ad1f41` — see
+> [#26](https://github.com/SuruchBoss/Cwork/issues/26). Until it is, the two
+> links at the foot of this file point at a tag that does not exist yet.
 
 ### Added
 

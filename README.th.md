@@ -320,10 +320,11 @@ API ที่รันอยู่
 ## เวอร์ชัน
 
 การปล่อยเวอร์ชันจะถูก tag ไว้และบันทึกใน [CHANGELOG.md](./CHANGELOG.md)
-หากต้องการบอกได้ว่ากำลังรันเวอร์ชันไหน ให้ติดตั้งจาก tag แทนที่จะใช้ `main`:
+หากต้องการบอกได้ว่ากำลังรันเวอร์ชันไหน ให้ติดตั้งจาก tag แทนที่จะใช้ `main` —
+ดูรายการ tag ที่มีจริงได้ที่ [หน้า tags](https://github.com/SuruchBoss/Cwork/tags):
 
 ```bash
-git clone --branch v0.1.0 https://github.com/SuruchBoss/Cwork.git
+git clone --branch <tag> https://github.com/SuruchBoss/Cwork.git
 ```
 
 **ตอนนี้ยังเป็น 0.x การเปลี่ยนแปลงที่ทำให้ของเดิมพังยังเกิดขึ้นได้**
