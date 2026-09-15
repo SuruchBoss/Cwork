@@ -19,6 +19,14 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.2.0] — 2026-09-15
+
+A stranger can install this now, and can see what it does without reading Thai.
+Phase 1 of the plan in [the backlog](./docs/backlog.md), plus the PDPA minimum a
+pilot needs.
+
 ### Added
 
 - **First-run setup for a clean install** (CW-022). `npm run db:init` creates an
@@ -194,5 +202,6 @@ this yet:
 - This code has never had a penetration test, and no independent human has read
   every line — see [How this was built](./README.md#how-this-was-built).
 
-[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.1.0

@@ -398,10 +398,10 @@ email/push delivery are all in place. What is left is tracked in the
 
 **Still not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: there is no way to create an organisation without loading the demo data,
-no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
-employee app cannot register for push yet, and this code has never had a
-penetration test.
+short: no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
+employee app cannot register for push yet, retention is a policy you have to
+enforce by hand ([how](./docs/privacy.md)), the interface is Thai only, and this
+code has never had a penetration test.
 
 **The Thai payroll and social-security rules have not been reviewed by anyone
 qualified.** They were written from published sources and unit-tested against
