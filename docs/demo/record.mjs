@@ -58,6 +58,44 @@ page.on('console', (m) => {
   if (m.type() === 'error') problems.push(m.text());
 });
 
+
+/**
+ * An English caption burned into the recording.
+ *
+ * The console is Thai and will be until CW-016 lands, so a viewer who does not
+ * read Thai gets nothing from thirty seconds of it. The caption says what the
+ * screen is; it does not pretend the interface is translated.
+ *
+ * Re-injected after every navigation, because each one is a new document.
+ */
+async function caption(text) {
+  await page.evaluate((line) => {
+    let bar = document.getElementById('cwork-demo-caption');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'cwork-demo-caption';
+      Object.assign(bar.style, {
+        position: 'fixed',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        zIndex: '2147483647',
+        // Never intercept a click: the walkthrough still has to drive the app.
+        pointerEvents: 'none',
+        padding: '14px 22px',
+        background: 'rgba(15,17,26,0.92)',
+        color: '#fff',
+        font: '500 17px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif',
+        letterSpacing: '0.2px',
+        transition: 'opacity 180ms ease',
+      });
+      document.body.appendChild(bar);
+    }
+    bar.textContent = line;
+    bar.style.opacity = line ? '1' : '0';
+  }, text);
+}
+
 /** Holds a screen long enough for a viewer to read it. */
 const beat = (ms = 1600) => page.waitForTimeout(ms);
 
@@ -78,7 +116,8 @@ console.log('walkthrough:');
 await step('open sign-in', async () => {
   await page.goto(BASE + '/login');
   await page.waitForSelector('.auth__card');
-  await beat(1200);
+  await caption('Cwork — open-source HR for Thai labour practice. Signing in as an administrator.');
+  await beat(1400);
 });
 
 await step('type credentials', async () => {
@@ -96,30 +135,33 @@ await step('second factor', async () => {
   // waits for a fresh 30-second step rather than re-using one an earlier take
   // already burned. That is the replay protection working, not a flake.
   await page.waitForSelector('.auth__card input', { timeout: 15000 });
-  await beat(1300);
+  await caption('A password alone is not a session: this account can read national IDs and run payroll, so it owes a second factor.');
+  await beat(1500);
   const field = page.locator('.auth__card input').first();
   await field.type(totp(SECRET), { delay: 110 });
   await beat(500);
   await page.getByRole('button', { name: 'ยืนยัน' }).click();
   await page.waitForSelector('.sidebar__nav', { timeout: 20000 });
-  await beat(2200);
+  await caption('Dashboard — two requests waiting, eight staff, last month\'s payroll closed at ฿640,978.');
+  await beat(2400);
 });
 
 const tour = [
-  ['/approvals', 'รออนุมัติ'],
-  ['/employees', 'ทะเบียนพนักงาน'],
-  ['/leave', 'การลา'],
-  ['/attendance', 'ลงเวลาทำงาน'],
-  ['/payroll', 'เงินเดือน'],
-  ['/recruitment', 'ผู้สมัครงาน'],
-  ['/performance', 'ประเมินผล / KPI'],
-  ['/audit', 'บันทึกการใช้งาน'],
+  ['/approvals', 'รออนุมัติ', 'Approvals — routed by policy to the line manager, or to a role, per request type.'],
+  ['/employees', 'ทะเบียนพนักงาน', 'Employee register — national IDs and bank accounts are encrypted at rest.'],
+  ['/leave', 'การลา', 'Leave — entitlement by years of service, holidays excluded from the count.'],
+  ['/attendance', 'ลงเวลาทำงาน', 'Attendance — location is recorded only at the moment of a punch, never continuously.'],
+  ['/payroll', 'เงินเดือน', 'Payroll — one run per period; whoever prepared it may not approve it.'],
+  ['/recruitment', 'ผู้สมัครงาน', 'Hiring — applications arrive from a public careers page, with PDPA consent.'],
+  ['/performance', 'ประเมินผล / KPI', 'Performance — KPI weights must total 100, and HR calibrates the grade.'],
+  ['/audit', 'บันทึกการใช้งาน', 'Audit trail — append-only in the database; a trigger blocks UPDATE and DELETE.'],
 ];
 
-for (const [href, label] of tour) {
+for (const [href, label, line] of tour) {
   await step(label, async () => {
     await show(href);
-    await beat(1700);
+    await caption(line);
+    await beat(1900);
 
     // The payroll run is the one screen worth opening: the payslips behind it
     // are computed by the real Thai tax and social-security code.
@@ -128,7 +170,8 @@ for (const [href, label] of tour) {
       if (await open.count()) {
         await open.click();
         await page.waitForSelector('.page', { timeout: 15000 });
-        await beat(2600);
+        await caption('Every payslip here was computed by the Thai tax, social-security and provident-fund code.');
+        await beat(2800);
       }
     }
   });
@@ -136,7 +179,8 @@ for (const [href, label] of tour) {
 
 await step('dark mode', async () => {
   await page.getByTitle('สลับธีมสว่าง/มืด').click();
-  await beat(2400);
+  await caption('The interface is Thai. An English locale is CW-016 on the backlog.');
+  await beat(2800);
 });
 
 console.log(problems.length ? `console errors: ${problems.length}` : 'no console errors');

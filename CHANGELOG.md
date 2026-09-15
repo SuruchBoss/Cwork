@@ -51,6 +51,8 @@ entry, tags it and publishes the notes.
 - **A recorded walkthrough** in both READMEs, and the script that produces it
   (`docs/demo/record.mjs`). It drives the real console against the seeded
   company, second factor included, so the demo cannot drift from the product.
+  English captions are burned in, because the interface is Thai until CW-016
+  lands and thirty seconds of a language you do not read tells you nothing.
 
 - **The PDPA minimum a pilot needs** (CW-026). [Personal data](./docs/privacy.md)
   lists every class of personal data the schema holds and where, the retention

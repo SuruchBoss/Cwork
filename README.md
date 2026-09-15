@@ -18,8 +18,9 @@ Built for Thai labour practice. Designed to be self-hosted.
 <img src="./docs/demo/walkthrough.gif" alt="Signing in with two-factor authentication, then the approvals inbox, employee register, leave, attendance, a closed payroll run, the hiring pipeline, KPIs and the audit log" width="860">
 
 <sub>Real console, real second factor, real payroll run — recorded against the
-company `npm run db:seed` builds, by <a href="./docs/demo/record.mjs">a script in
-this repository</a>. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
+company <code>npm run db:seed</code> builds, by <a href="./docs/demo/record.mjs">a
+script in this repository</a>. The interface is Thai (<a href="./docs/backlog.md">CW-016</a>),
+so the captions are burned in. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
 
 </div>
 
