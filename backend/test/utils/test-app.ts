@@ -56,6 +56,13 @@ export class Api {
     return { status: res.status, body: res.body };
   }
 
+  async delete<T = any>(path: string, token?: string): Promise<ApiResponse<T>> {
+    const req = request(this.server()).delete(this.base + path);
+    if (token) req.set('Authorization', `Bearer ${token}`);
+    const res = await req;
+    return { status: res.status, body: res.body };
+  }
+
   async patch<T = any>(path: string, token?: string, body?: unknown): Promise<ApiResponse<T>> {
     const req = request(this.server()).patch(this.base + path);
     if (token) req.set('Authorization', `Bearer ${token}`);
