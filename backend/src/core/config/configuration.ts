@@ -82,6 +82,29 @@ export interface RootConfig {
     maxAttempts: number;
     retentionDays: number;
   };
+  delivery: {
+    publicWebUrl: string;
+    email: {
+      enabled: boolean;
+      host: string;
+      port: number;
+      security: 'starttls' | 'tls' | 'none';
+      username?: string;
+      password?: string;
+      fromAddress: string;
+      fromName: string;
+      timeoutMs: number;
+    };
+    push: {
+      enabled: boolean;
+      projectId?: string;
+      clientEmail?: string;
+      privateKey?: string;
+      tokenUri: string;
+      endpoint: string;
+      timeoutMs: number;
+    };
+  };
   log: { level: string; pretty: boolean };
 }
 
@@ -157,6 +180,32 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       batchSize: env.OUTBOX_BATCH_SIZE,
       maxAttempts: env.OUTBOX_MAX_ATTEMPTS,
       retentionDays: env.OUTBOX_RETENTION_DAYS,
+    },
+    delivery: {
+      publicWebUrl: env.PUBLIC_WEB_URL.replace(/\/+$/, ''),
+      email: {
+        enabled: env.EMAIL_ENABLED,
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
+        security: env.SMTP_SECURITY as 'starttls' | 'tls' | 'none',
+        username: env.SMTP_USERNAME,
+        password: env.SMTP_PASSWORD,
+        fromAddress: env.SMTP_FROM_ADDRESS,
+        fromName: env.SMTP_FROM_NAME,
+        timeoutMs: env.SMTP_TIMEOUT_MS,
+      },
+      push: {
+        enabled: env.PUSH_ENABLED,
+        projectId: env.FCM_PROJECT_ID,
+        clientEmail: env.FCM_CLIENT_EMAIL,
+        // Service-account keys are carried through the environment with their
+        // newlines escaped, because a PEM with real newlines in a .env file is
+        // a PEM that arrives truncated.
+        privateKey: env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        tokenUri: env.FCM_TOKEN_URI,
+        endpoint: env.FCM_ENDPOINT.replace(/\/+$/, ''),
+        timeoutMs: env.FCM_TIMEOUT_MS,
+      },
     },
     log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
   };

@@ -237,6 +237,90 @@ An event type nobody has registered a handler for is marked delivered rather
 than retried, and the API logs at boot which types have listeners. That is why a
 deployment with no email provider configured does not slowly fill this table.
 
+## Sending email and push
+
+Nothing is sent until a relay is configured, and the API says which mode it is
+in at every boot — a deployment can never quietly believe it is notifying people
+when it is not:
+
+```bash
+docker compose logs api | grep -i delivery
+# [DeliveryService] Email delivery on via smtp.example.com:587
+# [DeliveryService] Push delivery is off (PUSH_ENABLED is false)
+```
+
+### Email
+
+```bash
+EMAIL_ENABLED=true
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURITY=starttls        # or `tls` for implicit TLS on 465
+SMTP_USERNAME=...
+SMTP_PASSWORD=...
+SMTP_FROM_ADDRESS=no-reply@yourcompany.co.th
+PUBLIC_WEB_URL=https://hr.yourcompany.co.th
+```
+
+`starttls` **refuses to send** if the server does not offer STARTTLS, rather
+than falling back to plaintext with the relay password on the wire. `none` is
+for a relay on localhost and nothing else.
+
+`PUBLIC_WEB_URL` is where the button in every email points, and where the
+unsubscribe link lives. An email that says something is waiting but not where is
+an email that may as well not have been sent.
+
+### Push
+
+Firebase Cloud Messaging's HTTP v1 API. iOS goes through FCM as well — the app
+registers an FCM token either way — so there is no separate APNs setup:
+
+```bash
+PUSH_ENABLED=true
+FCM_PROJECT_ID=your-project
+FCM_CLIENT_EMAIL=push@your-project.iam.gserviceaccount.com
+FCM_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+```
+
+All three come from a service-account JSON key. The newlines in the private key
+must be written as `\n`: a PEM with real newlines in a `.env` file is a PEM that
+arrives truncated.
+
+A device FCM reports as `UNREGISTERED` — the app was uninstalled — has its row
+deleted rather than retried. Note that the employee app does not yet register a
+token, so push has no devices to send to until it does.
+
+### What is retried and what is not
+
+| Answer | What happens |
+|---|---|
+| SMTP 4xx, FCM 5xx | Retried on the outbox backoff: 30s, doubling, capped at 30 minutes |
+| SMTP 5xx (no such mailbox) | Dead-lettered immediately — the eighth attempt is refused for the same reason as the first |
+| FCM 401/403 | Dead-lettered immediately, naming the credential problem |
+| FCM `UNREGISTERED` | Device row deleted, event delivered |
+
+Failures are visible in `outbox_events` — see [The outbox](#the-outbox) for the
+queries.
+
+### Preferences and unsubscribe
+
+`GET /api/v1/notifications/preferences` and `PUT` the same path set a rule per
+notification type, with `*` as the catch-all. A rule for a specific type wins
+over the catch-all, and no rule at all means every channel is on: somebody who
+has never opened the settings page should still hear that their leave was
+approved.
+
+Every email carries a `List-Unsubscribe` header and a footer link. The link is
+public and signed — nobody should have to sign in to stop receiving email, which
+is the difference between an unsubscribe link and a complaint to the spam
+filter. It turns off **email only**; push is untouched, because the click
+happened in an email and answering a question nobody asked is how preferences
+become untrustworthy. In-app notifications are never affected: that row is the
+record, not the message.
+
+The signature is derived from `JWT_ACCESS_SECRET`, so rotating it invalidates
+old unsubscribe links — the same bargain as rotating it signing everybody out.
+
 ## Observability
 
 - **Logs** are structured. Every request carries a correlation id, echoed in the

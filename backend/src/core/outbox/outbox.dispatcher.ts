@@ -10,6 +10,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { APP_CONFIG } from '../config/config.module';
 import type { RootConfig } from '../config/configuration';
 import { PrismaService } from '../prisma/prisma.service';
+import { PermanentDeliveryError } from './delivery-error';
 import { isExhausted, nextAttemptAt } from './domain/retry-schedule';
 import { OutboxRegistry, type OutboxEventRecord } from './outbox.registry';
 
@@ -178,14 +179,19 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
           const attempts = row.attempts + 1;
           const lastError = outcome.error.slice(0, MAX_ERROR_LENGTH);
 
-          if (isExhausted(attempts, this.config.outbox.maxAttempts)) {
+          // A handler that knows the failure is permanent is believed. Seven
+          // more attempts at an address that does not exist is an hour spent
+          // learning nothing.
+          if (outcome.permanent || isExhausted(attempts, this.config.outbox.maxAttempts)) {
             await tx.outboxEvent.update({
               where: { id: row.id },
               data: { attempts, lastError, failedAt: new Date() },
             });
             result.deadLettered += 1;
             this.logger.error(
-              `[${row.eventType} ${row.id}] gave up after ${attempts} attempts: ${lastError}`,
+              outcome.permanent
+                ? `[${row.eventType} ${row.id}] refused permanently: ${lastError}`
+                : `[${row.eventType} ${row.id}] gave up after ${attempts} attempts: ${lastError}`,
             );
             continue;
           }
@@ -212,7 +218,9 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
    * Errors are caught here rather than left to the caller so that one bad event
    * cannot take its whole batch down with it.
    */
-  private async dispatch(row: ClaimedRow): Promise<{ ok: true } | { ok: false; error: string }> {
+  private async dispatch(
+    row: ClaimedRow,
+  ): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean }> {
     const handlers = this.registry.handlersFor(row.eventType);
 
     if (handlers.length === 0) {
@@ -238,7 +246,11 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
       try {
         await withTimeout(handler(event), HANDLER_TIMEOUT_MS, row.eventType);
       } catch (error) {
-        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+          permanent: error instanceof PermanentDeliveryError,
+        };
       }
     }
 

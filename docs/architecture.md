@@ -60,7 +60,7 @@ modules/leave/
 
 The `domain/` directory is the important one. Leave arithmetic, attendance
 derivation, Thai tax, KPI scoring and assessment grading are all pure functions
-of their inputs. That is why there are 203 backend tests that run in ten seconds
+of their inputs. That is why there are 238 backend tests that run in ten seconds
 with no database: the rules that are expensive to get wrong are the ones that
 are cheapest to test.
 
@@ -157,9 +157,10 @@ still there.
   relayed by a poller claiming batches with `FOR UPDATE SKIP LOCKED`. One
   table, no Kafka, and the consistency guarantee a broker would not have given
   on its own anyway.
-- **No email or push dispatch yet.** Notifications raise an outbox event with
-  nobody listening for it; registering a handler is what turns it into a
-  message — see CW-005 in the backlog.
+- **No mail or push library.** SMTP is a few hundred lines of RFC 5321 and
+  FCM's HTTP v1 API is two requests, so both are written out and unit-tested
+  against their own specifications rather than brought in with a transport
+  abstraction and a dependency tree.
 
 These are all deliberate: an HRIS that needs a Kafka cluster to send a leave
 notification is an HRIS nobody can self-host.

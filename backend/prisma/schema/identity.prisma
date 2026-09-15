@@ -46,6 +46,7 @@ model User {
   auditLogs             AuditLog[]
   notifications         Notification[]
   deviceTokens          DeviceToken[]
+  notificationPrefs     NotificationPreference[]
   approvalTasks         ApprovalTask[]        @relation("ApprovalTaskApprover")
   delegatedTasks        ApprovalTask[]        @relation("ApprovalTaskDelegate")
   approvalInstances     ApprovalInstance[]
@@ -241,6 +242,27 @@ model Notification {
 
   @@index([userId, readAt, createdAt])
   @@map("notifications")
+}
+
+/// What a person wants to be told about, and how.
+///
+/// A row for a specific `type` wins over the catch-all `*` row, and no row at
+/// all means every channel is on: somebody who has never opened the settings
+/// page should still hear that their leave was approved. Turning a channel off
+/// never suppresses the in-app notification — that one is the record, not a
+/// message, and a person who silenced email should still find it in the console.
+model NotificationPreference {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// A notification type, or `*` for everything without a rule of its own.
+  type      String   @default("*")
+  email     Boolean  @default(true)
+  push      Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
 }
 
 model DeviceToken {

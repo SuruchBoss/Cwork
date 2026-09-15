@@ -535,7 +535,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 203 backend, 17 web, 33 mobile. An 89-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 238 backend, 17 web, 33 mobile. A 103-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |
@@ -543,6 +543,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 | **Localisation** | UI is Thai. Nothing in the architecture is Thailand-specific: tax rules are data, leave types are configuration, OT multipliers are settings. |
 | **Scheduled work** | Nightly maintenance runs inside the API process. Every replica runs the same schedule and each job takes a Postgres advisory lock first, so it runs once per schedule however many instances there are. Nothing to configure; `JOB_LOCK_TIMEOUT_MS` bounds how long one may hold it. |
 | **Side effects** | Anything leaving the system is recorded as an outbox event in the transaction that caused it and relayed afterwards, so nothing is sent for work that rolled back and nothing is lost to a crash between the two. Notifications commit with the change they announce — an approval nobody was told about is not a state the system can reach. Delivery is at least once; every instance drains the queue, claiming with `FOR UPDATE SKIP LOCKED`. |
+| **Notification delivery** | In-app always; email over SMTP and push over FCM when configured, both relayed from the outbox and both off by default. A 4xx is retried on the backoff, a 5xx is dead-lettered at once. Per-user preferences, with a signed public unsubscribe link in every email. |
 | **Deployment** | Three containers — API, console, PostgreSQL 16 — plus a one-off `migrate` container behind a compose profile. No broker, no Redis, no Kubernetes. An HRIS that needs a Kafka cluster to send a leave notification is one nobody can self-host. |
 
 ### Known limits
@@ -553,7 +554,7 @@ Stated plainly, with the remedies in
 
 - Malware scanning is off by default; it needs a clamd to talk to.
 - Rate limiting is in-process unless `THROTTLE_STORAGE=postgres` is set.
-- No email or push dispatch — `NotificationsService` is the seam for it.
+- The employee app does not register a push token yet, so push has no devices to reach.
 - No ภ.ง.ด.1 withholding-tax filing export.
 - Issued documents are not rendered; the API supplies merge data only.
 - Benefits and shift administration exist in the API but not in the console.

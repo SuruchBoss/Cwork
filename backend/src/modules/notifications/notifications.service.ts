@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel, Prisma } from '@prisma/client';
 import { OutboxService } from '../../core/outbox/outbox.service';
+import { CATCH_ALL } from './domain/delivery-rules';
 import { PrismaService } from '../../core/prisma/prisma.service';
 
 /**
@@ -168,6 +169,50 @@ export class NotificationsService {
       data: { readAt: new Date() },
     });
     return result.count;
+  }
+
+  // ---------------------------------------------------------------- preferences
+
+  /** Every rule this person has set. Absence means every channel is on. */
+  listPreferences(userId: string) {
+    return this.prisma.notificationPreference.findMany({
+      where: { userId },
+      orderBy: { type: 'asc' },
+      select: { type: true, email: true, push: true, updatedAt: true },
+    });
+  }
+
+  /**
+   * Sets one rule. `type` is `*` for everything without a rule of its own.
+   *
+   * Only the channels named are changed, so turning email off does not quietly
+   * re-enable push for somebody who had turned it off last month.
+   */
+  async setPreference(userId: string, type: string, channels: { email?: boolean; push?: boolean }) {
+    return this.prisma.notificationPreference.upsert({
+      where: { userId_type: { userId, type } },
+      create: { userId, type, email: channels.email ?? true, push: channels.push ?? true },
+      update: {
+        ...(channels.email === undefined ? {} : { email: channels.email }),
+        ...(channels.push === undefined ? {} : { push: channels.push }),
+      },
+      select: { type: true, email: true, push: true, updatedAt: true },
+    });
+  }
+
+  /**
+   * What an unsubscribe link does: email off for everything, push untouched.
+   *
+   * Untouched on purpose. The link is in an email, clicked by somebody who has
+   * had enough of email; silencing their phone as well would be answering a
+   * question they did not ask.
+   */
+  async unsubscribeFromEmail(userId: string): Promise<void> {
+    await this.prisma.notificationPreference.upsert({
+      where: { userId_type: { userId, type: CATCH_ALL } },
+      create: { userId, type: CATCH_ALL, email: false, push: true },
+      update: { email: false },
+    });
   }
 
   async registerDevice(

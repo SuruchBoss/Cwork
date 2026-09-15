@@ -194,6 +194,90 @@ export class EnvironmentVariables {
   @Max(3650)
   OUTBOX_RETENTION_DAYS: number = 14;
 
+  /**
+   * Email delivery. Off by default because there is no sensible default relay,
+   * and the API says which mode it is in at every boot — a deployment can never
+   * quietly believe it is sending mail when it is not.
+   */
+  @toBool()
+  @IsBoolean()
+  EMAIL_ENABLED: boolean = false;
+
+  @IsString()
+  SMTP_HOST: string = 'localhost';
+
+  @toInt()
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT: number = 587;
+
+  /** `starttls` upgrades a plain connection; `tls` is implicit TLS (port 465). */
+  @IsIn(['starttls', 'tls', 'none'])
+  SMTP_SECURITY: string = 'starttls';
+
+  @IsOptional()
+  @IsString()
+  SMTP_USERNAME?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASSWORD?: string;
+
+  @IsString()
+  SMTP_FROM_ADDRESS: string = 'no-reply@cwork.local';
+
+  @IsString()
+  SMTP_FROM_NAME: string = 'Cwork';
+
+  @toInt()
+  @IsInt()
+  @Min(1000)
+  @Max(120000)
+  SMTP_TIMEOUT_MS: number = 15000;
+
+  /**
+   * Where links in an email point. Without it a message can say something is
+   * waiting but not where, which is the same as not sending it.
+   */
+  @IsString()
+  PUBLIC_WEB_URL: string = 'http://localhost:8080';
+
+  /**
+   * Push delivery through Firebase Cloud Messaging's HTTP v1 API. iOS goes
+   * through FCM too — the app registers an FCM token either way — so there is
+   * no separate APNs path.
+   */
+  @toBool()
+  @IsBoolean()
+  PUSH_ENABLED: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  FCM_PROJECT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  FCM_CLIENT_EMAIL?: string;
+
+  /** The service account's private key, PEM, newlines escaped as `\n`. */
+  @IsOptional()
+  @IsString()
+  FCM_PRIVATE_KEY?: string;
+
+  /** Overridable so tests can point the client at a server they control. */
+  @IsString()
+  FCM_TOKEN_URI: string = 'https://oauth2.googleapis.com/token';
+
+  @IsString()
+  FCM_ENDPOINT: string = 'https://fcm.googleapis.com';
+
+  @toInt()
+  @IsInt()
+  @Min(1000)
+  @Max(120000)
+  FCM_TIMEOUT_MS: number = 10000;
+
   @IsIn(['local', 's3'])
   STORAGE_DRIVER: string = 'local';
 
