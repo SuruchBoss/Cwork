@@ -18,8 +18,13 @@ for the honest limits.
 
 ## 1. Scope
 
-Cwork is a self-hosted HR information system for a single organisation per
-deployment (the schema is multi-tenant; the product is not sold as one).
+Cwork is a self-hosted HR information system. **One deployment serves exactly
+one organisation.**
+
+Every tenant-owned table carries `organizationId` and every query filters on it,
+but that is defence in depth — not a guaranteed tenant boundary, and not a claim
+that two organisations may share a database. Nothing in the test suite exercises
+that case, so nothing should depend on it.
 
 | In scope | Out of scope |
 |---|---|
@@ -43,6 +48,86 @@ deployment (the schema is multi-tenant; the product is not sold as one).
 | Finance approver | Web console — approves payroll runs they did not prepare |
 | System administrator | Web console — roles, org structure, audit |
 | Candidate | Public careers page; no account |
+
+---
+
+## Agreed direction
+
+Recorded 2026-09-15, from a design review of the whole system. These are
+*decisions*, not shipped behaviour — where one is not yet implemented it names
+the ticket that will implement it. [backlog.md](./backlog.md) holds the work;
+this holds the reasoning, so that a contributor can tell a deliberate choice
+from an oversight.
+
+### What this project is
+
+Cwork is an **open-source product meant for other people to run**, not an
+internal system that happens to be public. That is the bar everything below is
+set against: a stranger has to be able to install it, evaluate it, and find out
+what it does not do without reading the source.
+
+| | |
+|---|---|
+| Licence | Apache-2.0, kept. Contributions under DCO (`Signed-off-by`), no CLA — which also means the licence cannot realistically be changed later (CW-029). |
+| Versioning | 0.x. Breaking changes are allowed and recorded in `CHANGELOG.md`. No LTS before 1.0 (CW-028). |
+| Deployment | One organisation per deployment. One instance is the default and what the pilot will run on; several are supported rather than forbidden, since CW-003 and CW-007 made replicas a matter of configuration. |
+| Language | Thai is the interface default. English is a translation: keys are English, Thai ships as a translation file. Content an organisation types in — leave type names, departments, positions — is not translated (CW-016). The README is already bilingual (CW-035). |
+| Dates | The database stores Gregorian years, always. The Buddhist era exists only in Thai presentation. |
+
+### Before real people use it
+
+There is no production user. The first is a **pilot: one organisation, 5–20
+employees, four weeks, leave and attendance only — no payroll.**
+
+Three measures, agreed before it starts:
+
+1. **How often HR corrects data by hand.** This is the readiness signal. If it
+   exceeds what the pilot organisation will tolerate, feature work stops until
+   it comes down.
+2. **What share of punches are flagged.** A high number means the geofence or
+   the offline ceiling is set wrong — not that employees are cheating.
+3. **What employees ask a manager because they could not find it in the app.**
+   That is the missing-feature list, observed rather than guessed.
+
+**Location is captured when a punch is made and at no other time.** The app does
+not track anyone continuously. Before the pilot, employees get that in writing
+together with a retention period and a way to ask for erasure (CW-026).
+
+### Decisions a contributor would otherwise have to guess at
+
+**An optional feature fails loudly when switched on and stays quiet when off.**
+`ASSISTANT_ENABLED=false` boots without complaint; `ASSISTANT_ENABLED=true` with
+no API key refuses to boot. Mail will follow the same rule (CW-023), as malware
+scanning already does. Anything disabled is hidden in the UI rather than shown
+as a control that cannot work (CW-027).
+
+**Attendance trusts the employee, within a ceiling.** A punch outside the
+geofence is flagged, not refused, and an offline punch is credited at capture
+time. Both are open to abuse and both are kept, because an employee must always
+be able to prove they turned up. The bound is that a punch held offline beyond a
+configured window, or taken on a rooted device, is flagged for a manager to
+confirm (CW-025).
+
+**A flagged punch is confirmed, never rewritten.** Confirmation runs through the
+existing approval engine, but its only outcomes are *acknowledge* and *reject
+the flag*. It never creates or deletes a punch, because `attendance_punches` is
+append-only at the database level and that has to stay true (CW-025).
+
+**No schema for features that do not exist.** A column nothing writes is a lie
+told to whoever reads the schema next. Kiosk devices get no `type` field until
+kiosk devices are built, and the unused anti-fraud columns are removed rather
+than left as decoration (CW-033).
+
+### Open questions
+
+Recorded because they are unanswered, not because they are unimportant.
+
+| | |
+|---|---|
+| How long may a punch sit offline before it needs confirming? | 12 hours is a placeholder. The pilot's flag rate decides it. |
+| Who pays for the AI in a public demo? | Unresolved. If nothing is decided, the demo ships with the assistant off and a screen recording in its place (CW-031). |
+| Who reviews the Thai tax and social-security rules? | Nobody yet (CW-030). |
+| Keep or delete `AttendancePunch.selfieFileId`? | Proposed: delete it (CW-033). |
 
 ---
 
@@ -137,6 +222,9 @@ Every tenant-owned table carries `organizationId`, and every query filters on
 the caller's organisation. There is no global "current tenant" — it is an
 explicit parameter, because an implicit one is a cross-tenant leak waiting for a
 forgotten `await`. See [ADR-0003](./adr/0003-explicit-tenant-scoping.md).
+
+To be explicit: this is a safety net inside a single-organisation deployment. It
+is not multi-tenancy, and must not be described as such — see [§1](#1-scope).
 
 ---
 
@@ -259,6 +347,12 @@ on reconnect. The queue is bounded (50) and drops oldest-first. A punch the
 server rejects permanently (4xx) is dropped from the queue rather than retried
 forever.
 
+The server credits the instant the punch was *captured*, not the instant it
+arrived, so someone who clocked in at a warehouse with no signal is not punished
+for it. That trust is deliberate and it is meant to be bounded — see
+[Agreed direction](#agreed-direction) and [CW-025](./backlog.md), which is not
+yet implemented.
+
 ### 5.5 Overtime
 
 `OvertimeRequest` is submitted, approved through the chain, then paid in the
@@ -276,6 +370,12 @@ Organisations that pay more override these in `settings.overtime`.
 ---
 
 ## 6. Payroll
+
+> **These rules have not been reviewed by an accountant, a payroll bureau, or
+> anyone else qualified to confirm them.** They were written from published
+> sources and are unit-tested for internal consistency, which proves the code
+> matches what its author believed — not that the belief is correct. Verify them
+> yourself before paying anyone. See [CW-030](./backlog.md).
 
 ### 6.1 Run lifecycle
 
@@ -559,4 +659,14 @@ Stated plainly, with the remedies in
 - Issued documents are not rendered; the API supplies merge data only.
 - Benefits and shift administration exist in the API but not in the console.
 - The mobile app can present a second factor but cannot enrol one.
+- **No first-run setup.** A clean install cannot create an organisation or a
+  first administrator except through `db:seed`, which is demo data (CW-022).
+- **The Thai tax and social-security rules are unreviewed** by anyone qualified
+  (CW-030).
+- **No device binding.** `deviceId` is recorded on every punch and authorises
+  nothing (CW-024).
+- **The offline punch queue is editable by the device owner** — it is in
+  `SharedPreferences`, not the keystore (CW-025).
+- `AttendancePunch.selfieFileId` is never written, and the `isRootedDevice` the
+  API accepts is never sent by the app (CW-025, CW-033).
 - No penetration test. This code has not been audited.
