@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  The 1280x640 card GitHub shows when this repository's link is pasted into
+  LinkedIn, Slack, X or a chat. Rendered by build.mjs; do not edit the PNG.
+
+  Two constraints shaped it. It is often shown at about a third of this size,
+  so exactly one thing may be large and everything else has to survive being
+  small. And GitHub prints the repository description directly underneath, so
+  repeating that description here would waste the only picture anyone sees.
+
+  Deliberately no test counts or version numbers: a figure baked into a PNG is
+  the one claim `verify:docs` cannot read, and stale numbers on a shared image
+  are worse than none.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* The landing page's palette, so a link preview and the site it points at
+     are recognisably the same product. */
+  :root {
+    --pine:     #123f38;
+    --pine-ink: #e8f1ed;
+    --pine-dim: #9dbcb2;
+    --pop:      #f9a97e;  /* the accent, in the tint that reads on pine */
+    --line:     rgb(232 241 237 / .16);
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+
+  body {
+    width: 1280px; height: 640px; overflow: hidden;
+    display: flex; align-items: stretch;
+    background: var(--pine);
+    color: var(--pine-ink);
+    font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+    /* A wash from the corner the screenshot enters, so the two halves read as
+       one image rather than a panel stuck beside some text. */
+    background-image: radial-gradient(120% 100% at 100% 0%, #1b544a 0%, #123f38 58%);
+  }
+
+  .say {
+    flex: none; width: 700px;
+    padding: 72px 0 68px 76px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .mark {
+    width: 52px; height: 52px; flex: none; border-radius: 14px;
+    background: var(--pine-ink); color: var(--pine);
+    display: grid; place-items: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; font-weight: 500;
+    letter-spacing: .02em;
+  }
+  .brand b {
+    font-family: "Bai Jamjuree", sans-serif; font-weight: 700;
+    font-size: 2.1rem; letter-spacing: -.02em;
+  }
+
+  h1 {
+    font-family: "Bai Jamjuree", sans-serif; font-weight: 700;
+    font-size: 4.2rem; line-height: 1.12; letter-spacing: -.028em;
+  }
+  /* Broken by hand: left to wrap, "on" ends up hanging alone at the end of
+     the first line, which is the sort of thing only a person notices. */
+  h1 span { display: block; }
+  h1 em { font-style: normal; color: var(--pop); }
+
+  .sub {
+    margin-top: 22px; font-size: 1.32rem; font-weight: 300; line-height: 1.5;
+    color: var(--pine-dim); max-width: 31ch;
+  }
+
+  .stack {
+    display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+    font-family: "IBM Plex Mono", monospace; font-size: .92rem;
+    color: var(--pine-dim); letter-spacing: .01em;
+  }
+  .stack span { white-space: nowrap; }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line); flex: none; }
+  .stack .lic { color: var(--pine-ink); }
+
+  /* The product itself, running and in Thai — the one thing here that cannot
+     be claimed, only shown. Bled off two edges so it reads as a window onto
+     something larger rather than a pasted thumbnail. */
+  .shot {
+    flex: 1; position: relative; overflow: hidden;
+  }
+  .shot img {
+    position: absolute; top: 96px; left: 44px;
+    width: 760px; height: auto;
+    border-radius: 14px 0 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    box-shadow: -34px 34px 80px -28px rgb(0 0 0 / .55);
+  }
+</style>
+</head>
+<body>
+  <div class="say">
+    <div class="brand">
+      <span class="mark">CW</span>
+      <b>Cwork</b>
+    </div>
+
+    <div>
+      <h1><span>All of HR,</span><span>on <em>your</em> own server</span></h1>
+      <p class="sub">Thai payroll, leave, attendance and an offline-tolerant employee app.</p>
+    </div>
+
+    <div class="stack">
+      <span class="lic">Apache-2.0</span><span class="dot"></span>
+      <span>NestJS</span><span class="dot"></span>
+      <span>React</span><span class="dot"></span>
+      <span>Flutter</span><span class="dot"></span>
+      <span>PostgreSQL</span>
+    </div>
+  </div>
+
+  <div class="shot">
+    <img src="../../landing/assets/dashboard.png"
+         alt="The Cwork console in Thai, showing pending approvals, headcount and the latest payroll run">
+  </div>
+</body>
+</html>
