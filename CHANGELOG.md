@@ -19,7 +19,27 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- The five-minute demo in the README did not work on a clean clone. The
+  `migrate` compose service is what `npm run db:seed` and `npm run db:init` are
+  documented to run through, and both boot Nest, which validates the whole
+  environment before any module starts — but the service passed no JWT secrets.
+  The seed stopped half way, leaving a console that contradicted the README,
+  and `db:init` failed outright.
+- Layout and contrast faults on the landing page: the hero headline overflowed
+  its column and painted across the product video, anchor jumps left section
+  headings under the sticky bar, the download button set its label in muted
+  grey on orange, the savings figure was drawn at 1.9:1 on the dark band, and
+  the page scrolled sideways at 320px. Every text and background pair now
+  clears WCAG AA in both themes.
+
+### Added
+
+- `npm run verify:compose` — checks in CI that every compose service which
+  boots application code is handed the environment the application refuses to
+  start without, derived from the real validation schema rather than a second
+  list that can drift.
 
 ## [0.2.0] — 2026-09-15
 
