@@ -34,6 +34,8 @@
     "db:demo": "ts-node --transpile-only prisma/demo-activity.ts",
     "db:verify": "node scripts/verify-db-objects.mjs",
     "verify:compose": "ts-node --transpile-only scripts/verify-compose-env.ts",
+    "verify:docs": "ts-node --transpile-only scripts/verify-doc-counts.ts",
+    "verify:sql": "ts-node --transpile-only scripts/verify-raw-sql.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
