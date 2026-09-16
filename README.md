@@ -116,7 +116,8 @@ account works.
 <summary><b>Running without Docker</b></summary>
 
 ```bash
-# API — needs PostgreSQL 16 (pgvector optional)
+# API — needs PostgreSQL 16 with the pgvector extension (the first migration
+#       creates it; `pgvector/pgvector:pg16` is what CI and compose run)
 cd backend
 cp .env.example .env    # set DATABASE_URL and the secrets
 npm install
@@ -306,7 +307,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 271 backend tests run in ten
+no database, no framework and no I/O. That is why 240 domain tests run in ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -387,7 +388,7 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 271 backend unit
+Working and verified end to end — sign-in through payroll. 279 backend unit
 tests, 29 web, 35 mobile, plus a 173-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
@@ -447,7 +448,7 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 271 backend unit tests, 29 web,
+- Every suite passes, in CI, on every push — 279 backend unit tests, 29 web,
   35 mobile, 173 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
