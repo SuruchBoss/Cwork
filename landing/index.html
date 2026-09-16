@@ -300,29 +300,27 @@
   .lineitem--free b { color: var(--pop-lift); }
 
   /* ================================================================ plates */
-  /* Three screenshots side by side are three thumbnails nobody can read. One
-     per row, alternating sides, is wide enough to show the actual product. */
-  .plates { display: grid; gap: clamp(44px, 5vw, 78px); }
-  .plate {
-    margin: 0; display: grid; align-items: center;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: clamp(24px, 3.2vw, 50px);
+  /* These are 1280px console screenshots. Beside a column of text each one is
+     shown at about half size, which puts the interface's own 14px labels at
+     7px — a picture of the product nobody can read is not evidence of it. So
+     the caption goes above and the screenshot takes the full measure. */
+  .plates { display: grid; gap: clamp(48px, 5.5vw, 88px); }
+  .plate { margin: 0; display: grid; gap: clamp(16px, 1.8vw, 24px); }
+  .plate figcaption {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: clamp(8px, 2vw, 44px); align-items: baseline;
   }
-  .plate > img { grid-column: 1; grid-row: 1; }
-  .plate > figcaption { grid-column: 2; grid-row: 1; }
-  .plate:nth-child(even) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); }
-  .plate:nth-child(even) > img { grid-column: 2; }
-  .plate:nth-child(even) > figcaption { grid-column: 1; }
-  .plate img {
-    display: block; width: 100%; border-radius: var(--r);
-    border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
-  }
-  .plate figcaption { display: grid; gap: 9px; }
   .plate figcaption b {
     font-family: "Bai Jamjuree", sans-serif; font-weight: 600;
     font-size: var(--t-h3); line-height: 1.32; color: var(--ink);
   }
   .plate figcaption span { color: var(--ink-soft); }
+  /* height: auto, or the width/height attributes act as a presentational
+     hint and the CSS width alone stretches every screenshot vertically. */
+  .plate img {
+    display: block; width: 100%; height: auto; border-radius: var(--r);
+    border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
+  }
 
   /* ============================================================== features */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
@@ -367,8 +365,8 @@
   /* =================================================================== app */
   .phones { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
   .phones img {
-    width: 196px; height: auto;
-    border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow);
+    width: min(258px, calc(50% - 11px)); height: auto;
+    border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow);
   }
 
   /* =============================================================== install */
@@ -418,9 +416,7 @@
 
   @media (max-width: 880px) {
     .hero__say { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; }
-    .plate, .plate:nth-child(even) { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-    .plate > img, .plate:nth-child(even) > img { grid-column: 1; grid-row: 1; }
-    .plate > figcaption, .plate:nth-child(even) > figcaption { grid-column: 1; grid-row: 2; }
+    .plate figcaption { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .bar nav a:not(.btn) { display: none; }
     .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   }
@@ -572,25 +568,25 @@
 
       <div class="plates">
         <figure class="plate">
-          <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
           <figcaption>
             <b>ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว</b>
             <span>ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย</span>
           </figcaption>
+          <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
         </figure>
         <figure class="plate">
-          <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
           <figcaption>
             <b>ทะเบียนพนักงานที่ค้นเจอใน 2 วินาที</b>
             <span>ชื่อ รหัส ตำแหน่ง แผนก อายุงาน สัญญา และเอกสารประจำตัว รวมอยู่ที่เดียว ไม่ต้องเปิดไฟล์ Excel หลายไฟล์</span>
           </figcaption>
+          <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
         </figure>
         <figure class="plate">
-          <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
           <figcaption>
             <b>ปิดรอบเงินเดือนแล้วเห็นยอดทันที</b>
             <span>รายได้รวม ภาษีหัก ณ ที่จ่าย ประกันสังคม และยอดจ่ายสุทธิ พร้อมสลิปที่พนักงานเปิดดูเองได้จากมือถือ</span>
           </figcaption>
+          <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
         </figure>
       </div>
     </div>
