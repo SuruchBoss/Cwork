@@ -47,6 +47,14 @@ jobs:
         with:
           enablement: true
 
+      # landing/en/index.html is generated from landing/index.html. If the two
+      # are out of step the English page is quietly stale, so this blocks the
+      # deploy rather than publishing it.
+      - name: The English page is up to date with the Thai one
+        run: |
+          node landing/build-en.mjs
+          git diff --exit-code -- landing/en/index.html
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: landing

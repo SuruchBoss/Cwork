@@ -1,27 +1,27 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <!-- Without this every phone lays the page out at ~980px and zooms out. The
      Artifact preview injects one of its own, which is why this was invisible
      right up until the page was served from GitHub Pages. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cwork — ระบบ HR ครบทั้งบริษัท ติดตั้งเอง ไม่จ่ายรายหัว</title>
-<meta name="description" content="ระบบบริหารงานบุคคลโอเพนซอร์สสำหรับ SME ไทย — ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือนตามกฎหมายไทย และแอปพนักงาน ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง จ่ายแค่ค่าเครื่อง">
-<link rel="canonical" href="https://suruchboss.github.io/Cwork/">
+<title>Cwork — all of HR, self-hosted, with no per-seat fee</title>
+<meta name="description" content="Open-source HR information system for Thai companies — people, leave, attendance, Thai payroll and an employee app. Runs on your own server; you pay for the machine and nothing else.">
+<link rel="canonical" href="https://suruchboss.github.io/Cwork/en/">
 <link rel="alternate" hreflang="th" href="https://suruchboss.github.io/Cwork/">
 <link rel="alternate" hreflang="en" href="https://suruchboss.github.io/Cwork/en/">
 <link rel="alternate" hreflang="x-default" href="https://suruchboss.github.io/Cwork/en/">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="th_TH">
-<meta property="og:locale:alternate" content="en_GB">
-<meta property="og:url" content="https://suruchboss.github.io/Cwork/">
-<meta property="og:title" content="Cwork — ระบบ HR ครบทั้งบริษัท ติดตั้งเอง ไม่จ่ายรายหัว">
-<meta property="og:description" content="ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือนตามกฎหมายไทย และแอปพนักงาน ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง จ่ายแค่ค่าเครื่อง ไม่มีค่าใช้จ่ายต่อพนักงาน">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="th_TH">
+<meta property="og:url" content="https://suruchboss.github.io/Cwork/en/">
+<meta property="og:title" content="Cwork — all of HR, self-hosted, with no per-seat fee">
+<meta property="og:description" content="People, leave, attendance, Thai payroll and an employee app, on your own server. No charge per employee, no annual contract.">
 <meta property="og:image" content="https://suruchboss.github.io/Cwork/assets/dashboard.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="800">
-<meta property="og:image:alt" content="แดชบอร์ด Cwork ภาษาไทย แสดงรายการรออนุมัติ จำนวนพนักงาน และรอบเงินเดือนล่าสุด">
+<meta property="og:image:alt" content="The Cwork dashboard, showing pending approvals, headcount and the latest payroll run">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4f5f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101312" media="(prefers-color-scheme: dark)">
@@ -465,14 +465,14 @@
       <span class="mark" aria-hidden="true">CW</span>
       <span>Cwork</span>
     </a>
-    <nav aria-label="เมนูหลัก">
-      <a href="#calc">คิดค่าใช้จ่าย</a>
-      <a href="#screens">หน้าตาระบบ</a>
-      <a href="#features">ความสามารถ</a>
-      <a href="#pdpa">ข้อมูลพนักงาน</a>
-      <a href="#install">สำหรับฝ่าย IT</a>
-      <a class="lang" href="en/" hreflang="en" lang="en">English</a>
-      <a class="btn btn--pop" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรี</a>
+    <nav aria-label="Main menu">
+      <a href="#calc">What it costs</a>
+      <a href="#screens">The screens</a>
+      <a href="#features">What it does</a>
+      <a href="#pdpa">Employee data</a>
+      <a href="#install">For IT</a>
+      <a class="lang" href="../" hreflang="th" lang="th">ภาษาไทย</a>
+      <a class="btn btn--pop" href="https://github.com/SuruchBoss/Cwork">Download free</a>
     </nav>
   </div>
 </header>
@@ -483,41 +483,39 @@
   <section class="hero">
     <div class="wrap">
       <div class="tagrow">
-        <span class="tag tag--live">ใช้งานได้แล้ว · v0.2.0</span>
-        <span class="tag">ติดตั้งบนเครื่องของคุณเอง</span>
-        <span class="tag">ทำตามกฎหมายแรงงานไทย</span>
+        <span class="tag tag--live">Working today · v0.2.0</span>
+        <span class="tag">Runs on your own server</span>
+        <span class="tag">Built for Thai labour law</span>
       </div>
 
-      <h1><span class="line">งาน HR ครบทั้งบริษัท</span><span class="line">ไม่ต้องจ่าย<em>รายหัว</em></span></h1>
+      <h1><span class="line">All of HR, company-wide</span><span class="line">with no <em>per-seat fee</em></span></h1>
 
       <div class="hero__say">
         <p class="lede hero__lede">
-            ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือน และการอนุมัติ ครบในระบบเดียว
-            ติดตั้งบนเครื่องของบริษัทคุณเอง จ่ายแค่ค่าเซิร์ฟเวอร์
-          ไม่มีค่าใช้จ่ายต่อพนักงาน และไม่มีสัญญารายปี
+            People, leave, attendance, payroll and approvals in one system, installed on your own server. You pay for the machine and nothing else — no charge per employee, no annual contract.
         </p>
 
         <div>
           <div class="cta-row">
             <a class="btn btn--pop" href="#calc">
-              ดูว่าประหยัดได้เท่าไหร่
+              See what you would save
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a class="btn btn--ghost" href="#screens">ดูหน้าตาระบบ</a>
+            <a class="btn btn--ghost" href="#screens">See the screens</a>
           </div>
 
           <p class="handoff">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10M8 9l3 2.5L8 14"/></svg>
-            <span>ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง — <a href="#install">ส่งขั้นตอนให้เขา</a></span>
+            <span>Your IT team installs it with three Docker commands — <a href="#install">send them the steps</a></span>
           </p>
         </div>
       </div>
 
       <figure class="hero__shot">
-        <video src="assets/walkthrough.mp4" autoplay muted loop playsinline
-               poster="assets/dashboard.png"
-               aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
-        <figcaption>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</figcaption>
+        <video src="../assets/walkthrough.mp4" autoplay muted loop playsinline
+               poster="../assets/dashboard.png"
+               aria-label="A walkthrough of Cwork, from signing in to a closed payroll run"></video>
+        <figcaption>The running product, not a mock-up</figcaption>
       </figure>
     </div>
   </section>
@@ -526,59 +524,58 @@
   <section id="calc" class="calc">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">คิดค่าใช้จ่าย</span>
-        <h2>ปีหนึ่งคุณจ่ายค่าระบบ HR ไปเท่าไหร่</h2>
+        <span class="eyebrow">What it costs</span>
+        <h2>What does your HR system cost you a year?</h2>
         <p class="lede">
-          ระบบ HR ส่วนใหญ่คิดเป็นรายหัวต่อเดือน ยิ่งบริษัทโต ค่าใช้จ่ายยิ่งโตตาม
-          ลองใส่ตัวเลขของคุณเองดู
+          Most HR systems charge per employee per month, so the bill grows every time you hire. Put your own numbers in.
         </p>
       </div>
 
       <div class="calc__grid">
         <div>
           <div class="field">
-            <label for="headcount">พนักงานในระบบ</label>
+            <label for="headcount">Employees in the system</label>
             <div class="field__in">
               <input id="headcount" type="number" min="1" max="100000" step="1" value="50" inputmode="numeric">
-              <span class="field__unit">คน</span>
+              <span class="field__unit">people</span>
             </div>
           </div>
 
           <div class="field">
-            <label for="rate">ค่าระบบที่จ่ายอยู่ ต่อคนต่อเดือน</label>
+            <label for="rate">What you pay now, per person per month</label>
             <div class="field__in">
               <span class="field__unit">฿</span>
               <input id="rate" type="number" min="0" max="100000" step="10" value="120" inputmode="numeric">
             </div>
-            <p class="hint">ใส่ราคาที่คุณจ่ายอยู่จริง ตัวเลขที่ใส่ไว้เป็นแค่ตัวอย่าง</p>
+            <p class="hint">Use the price you actually pay — the number filled in is only an example.</p>
           </div>
 
           <div class="field">
-            <label for="server">ค่าเซิร์ฟเวอร์ที่จะใช้รัน Cwork ต่อเดือน</label>
+            <label for="server">What a server to run Cwork would cost, per month</label>
             <div class="field__in">
               <span class="field__unit">฿</span>
               <input id="server" type="number" min="0" max="100000" step="100" value="900" inputmode="numeric">
             </div>
-            <p class="hint">VPS ขนาดเล็กก็พอสำหรับบริษัทหลักร้อยคน ถ้ามีเซิร์ฟเวอร์อยู่แล้วใส่ 0</p>
+            <p class="hint">A small VPS is enough for a company of a few hundred. Enter 0 if you already have a server.</p>
           </div>
         </div>
 
         <div class="result">
-          <p class="result__label">ประหยัดได้ปีละ</p>
+          <p class="result__label">You would save, per year</p>
           <p class="result__big" id="saved">฿0</p>
           <p class="result__sub" id="savedNote">&nbsp;</p>
 
           <div class="result__split">
             <div class="lineitem">
-              <span>ระบบเดิม · <span id="hcEcho">50</span> คน × ฿<span id="rateEcho">120</span> × 12 เดือน</span>
+              <span>Your system now · <span id="hcEcho">50</span> people × ฿<span id="rateEcho">120</span> × 12 months</span>
               <b id="current">฿0</b>
             </div>
             <div class="lineitem lineitem--free">
-              <span>Cwork · ค่าลิขสิทธิ์</span>
+              <span>Cwork · licence</span>
               <b>฿0</b>
             </div>
             <div class="lineitem">
-              <span>Cwork · ค่าเซิร์ฟเวอร์ปีละ</span>
+              <span>Cwork · server, per year</span>
               <b id="serverYear">฿0</b>
             </div>
           </div>
@@ -586,8 +583,8 @@
       </div>
 
       <div class="cta-row" style="margin-top:38px">
-        <a class="btn btn--onpine" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรี</a>
-        <a class="btn btn--outpine" href="#install">ดูขั้นตอนติดตั้ง</a>
+        <a class="btn btn--onpine" href="https://github.com/SuruchBoss/Cwork">Download free</a>
+        <a class="btn btn--outpine" href="#install">See the install steps</a>
       </div>
     </div>
   </section>
@@ -596,32 +593,32 @@
   <section id="screens">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">หน้าตาระบบ</span>
-        <h2>หน้าจอที่ฝ่ายบุคคลเปิดทุกวัน</h2>
-        <p class="lede">ภาษาไทยทั้งระบบ วันที่แบบไทย เงินบาท และคำที่ HR ใช้จริง</p>
+        <span class="eyebrow">The screens</span>
+        <h2>The screens HR opens every day</h2>
+        <p class="lede">The interface is Thai throughout — Thai dates, baht, and the words Thai HR teams actually use. An English locale is planned and not built yet.</p>
       </div>
 
       <div class="plates">
         <figure class="plate">
           <figcaption>
-            <b>ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว</b>
-            <span>ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย</span>
+            <b>Every leave request in one place</b>
+            <span>Who asked, what kind of leave, how many days — counted against your own holiday calendar. Managers approve from here.</span>
           </figcaption>
-          <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
+          <img src="../assets/leave.png" alt="The leave request list, showing employee names, leave types, date ranges, day counts and pending status" loading="lazy" width="1280" height="800">
         </figure>
         <figure class="plate">
           <figcaption>
-            <b>ทะเบียนพนักงานที่ค้นเจอโดยไม่ต้องเปิด Excel</b>
-            <span>ชื่อ รหัส ตำแหน่ง แผนก อายุงาน สัญญา และเอกสารประจำตัว รวมอยู่ที่เดียว ไม่ต้องเปิดไฟล์ Excel หลายไฟล์</span>
+            <b>An employee register you do not keep in Excel</b>
+            <span>Name, ID, job title, department, length of service, contracts and identity documents — one record instead of a folder of spreadsheets.</span>
           </figcaption>
-          <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
+          <img src="../assets/employees.png" alt="The employee register, showing names, employee IDs, job titles, departments and length of service" loading="lazy" width="1280" height="800">
         </figure>
         <figure class="plate">
           <figcaption>
-            <b>ปิดรอบเงินเดือนแล้วเห็นยอดทันที</b>
-            <span>รายได้รวม ภาษีหัก ณ ที่จ่าย ประกันสังคม และยอดจ่ายสุทธิ พร้อมสลิปที่พนักงานเปิดดูเองได้จากมือถือ</span>
+            <b>Close a payroll run and see the figures</b>
+            <span>Gross pay, withholding tax, social security and net pay — with payslips employees open on their own phones.</span>
           </figcaption>
-          <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
+          <img src="../assets/payroll.png" alt="The payroll summary, showing the latest run, headcount, gross pay and net pay" loading="lazy" width="1280" height="800">
         </figure>
       </div>
     </div>
@@ -631,69 +628,69 @@
   <section id="features" style="background:var(--sunk);border-block:1px solid var(--line-soft)">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">ความสามารถ</span>
-        <h2>ครบตั้งแต่วันแรกที่พนักงานเข้างาน จนถึงวันที่ลาออก</h2>
+        <span class="eyebrow">What it does</span>
+        <h2>Everything from an employee’s first day to their last</h2>
       </div>
 
       <div class="grid">
         <div class="cell">
-          <span class="cell__key">เงินเดือน</span>
-          <h3>คำนวณตามกฎหมายไทย ไม่ใช่สูตรต่างประเทศที่ดัดแปลงมา</h3>
-          <p>ภาษีหัก ณ ที่จ่ายแบบขั้นบันได ประกันสังคม กองทุนสำรองเลี้ยงชีพ และอัตราโอทีตาม พ.ร.บ. คุ้มครองแรงงาน</p>
+          <span class="cell__key">Payroll</span>
+          <h3>Computed to Thai law, not a foreign formula bent to fit</h3>
+          <p>Progressive withholding tax, social security, provident fund, and overtime rates from the Labour Protection Act.</p>
           <ul>
-            <li>ย้อนดูที่มาของทุกตัวเลขในสลิปได้ แม้ผ่านไปเป็นปี</li>
-            <li>แยกให้เห็นว่าอะไรคือเงินสมทบฝั่งนายจ้าง ไม่ได้หักจากพนักงาน</li>
-            <li>พนักงานรายเดือนได้เต็มเดือน ไม่ถูกหารตามจำนวนวันที่มีข้อมูลลงเวลา</li>
+            <li>Trace where any figure on a payslip came from, a year later</li>
+            <li>Employer contributions shown separately from what is deducted from the employee</li>
+            <li>Monthly salaries are not pro-rated by however many days have attendance data</li>
           </ul>
         </div>
 
         <div class="cell">
-          <span class="cell__key">การลา</span>
-          <h3>ยอดวันลาที่ตรงกับความจริงเสมอ</h3>
-          <p>ประเภทการลาตามกฎหมายไทย สะสมตามอายุงาน ลาครึ่งวันและลาเป็นชั่วโมงได้</p>
+          <span class="cell__key">Leave</span>
+          <h3>Leave balances that are always true</h3>
+          <p>Thai statutory leave types, accrual by length of service, half-days and hours.</p>
           <ul>
-            <li>คำขอที่ยังไม่อนุมัติ <strong>กันวันไว้ทันที</strong> สองคำขอที่ทับกันจึงแย่งวันเดียวกันไม่ได้</li>
-            <li>ระบบตัดวันหยุดนักขัตฤกษ์ออกจากการนับให้เอง</li>
+            <li>A request still waiting  <strong>holds the days immediately</strong>  — two overlapping requests cannot claim the same day</li>
+            <li>Public holidays come out of the count on their own</li>
           </ul>
         </div>
 
         <div class="cell">
-          <span class="cell__key">ลงเวลา</span>
-          <h3>กำหนดพื้นที่ลงเวลาได้ โดยไม่กันคนเข้างาน</h3>
-          <p>ลงเวลาเข้า-ออกพร้อมพิกัดและการตรวจจับความผิดปกติ ตารางกะ และการแก้ไขเวลาย้อนหลังที่มีร่องรอย</p>
+          <span class="cell__key">Attendance</span>
+          <h3>Geofencing that never locks anyone out</h3>
+          <p>Clock in and out with coordinates and anomaly detection, shift rosters, and back-dated corrections that leave a trail.</p>
           <ul>
-            <li>ลงเวลานอกพื้นที่จะ<em>ขึ้นเตือนให้ตรวจ</em> ไม่ใช่ถูกปฏิเสธ — คนที่มาทำงานจริงต้องลงเวลาได้เสมอ</li>
-            <li>HR มาไล่ดูทีหลังได้ ดีกว่าปล่อยให้พนักงานยืนเถียงกับโทรศัพท์อยู่หน้างาน</li>
+            <li>A punch outside the fence is <em>flagged for review</em> , never refused — someone who genuinely turned up must always be able to record it</li>
+            <li>HR reviews the flags afterwards, rather than leaving an employee arguing with a phone at the gate</li>
           </ul>
         </div>
 
         <div class="cell">
-          <span class="cell__key">การอนุมัติ</span>
-          <h3>ระบบอนุมัติชุดเดียว ใช้กับทุกเรื่อง</h3>
-          <p>ลา โอที เบิกค่าใช้จ่าย แก้ไขเวลา ลาออก คำขออัตรากำลัง ใบเสนอจ้าง รอบเงินเดือน และคำขอเอกสาร</p>
+          <span class="cell__key">Approvals</span>
+          <h3>One approval system for everything</h3>
+          <p>Leave, overtime, expenses, time corrections, resignations, headcount requests, job offers, payroll runs and document requests.</p>
           <ul>
-            <li>กำหนดผู้อนุมัติจากหัวหน้าสายงาน หัวหน้าแผนก บทบาท หรือระบุตัวบุคคล</li>
-            <li>ตั้งเงื่อนไขได้ เช่น วงเงินเกินเท่าไรถึงต้องผ่านอีกขั้น</li>
+            <li>Route to the line manager, the department head, a role, or a named person</li>
+            <li>Add conditions — over this amount, it needs one more signature</li>
           </ul>
         </div>
 
         <div class="cell">
-          <span class="cell__key">สรรหา</span>
-          <h3>เปิดหน้าสมัครงานให้คนนอก พร้อมขอความยินยอมตาม PDPA</h3>
-          <p>ตั้งแต่คำขออัตรากำลัง ประกาศงาน แบบทดสอบที่ตรวจอัตโนมัติ สัมภาษณ์ ไปจนถึงใบเสนอจ้างที่กดครั้งเดียวกลายเป็นพนักงานในระบบ</p>
+          <span class="cell__key">Hiring</span>
+          <h3>A public applications page, with PDPA consent built in</h3>
+          <p>From the headcount request and the job posting through auto-marked tests and interviews, to an offer that becomes an employee record in one click.</p>
           <ul>
-            <li>ไม่ให้ความยินยอม PDPA ระบบไม่รับใบสมัครตั้งแต่ต้น</li>
-            <li>ข้อมูลผู้สมัครที่ไม่ได้รับเข้าทำงานถูกลบอัตโนมัติใน 12 เดือน</li>
+            <li>Without PDPA consent the application is not accepted at all</li>
+            <li>Unsuccessful applicants are deleted automatically after 12 months</li>
           </ul>
         </div>
 
         <div class="cell">
-          <span class="cell__key">ประเมินผล</span>
-          <h3>KPI ถ่วงน้ำหนักได้ และปรับเทียบกันทั้งองค์กร</h3>
-          <p>รอบประเมินที่มีการตั้งเป้า เช็คอินระหว่างทาง ประเมินตนเอง ประเมินโดยหัวหน้า และการปรับเทียบโดย HR</p>
+          <span class="cell__key">Performance</span>
+          <h3>Weighted KPIs, calibrated across the company</h3>
+          <p>Review cycles with goal setting, check-ins along the way, self-assessment, manager assessment and calibration by HR.</p>
           <ul>
-            <li>น้ำหนัก KPI รวมกันเกิน 100 ไม่ได้ เพราะมันคือตัวหารของคะแนน</li>
-            <li>หัวหน้าที่ให้เกรดไม่สามารถปรับเทียบเกรดของตัวเองได้</li>
+            <li>KPI weights cannot total more than 100, because that total is the divisor</li>
+            <li>A manager who graded someone cannot calibrate their own grades</li>
           </ul>
         </div>
       </div>
@@ -704,12 +701,10 @@
   <section id="pdpa">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">ข้อมูลพนักงาน · PDPA</span>
-        <h2>ข้อมูลพนักงานคือภาระ ไม่ใช่สินทรัพย์</h2>
+        <span class="eyebrow">Employee data · PDPA</span>
+        <h2>Employee data is a liability, not an asset</h2>
         <p class="lede">
-          ระบบ HR เก็บของที่อ่อนไหวที่สุดในบริษัท — เลขบัตรประชาชน เลขบัญชีธนาคาร
-          ประวัติการลาป่วย และพิกัดของคน Cwork ออกแบบมาโดยถือว่าของพวกนี้คือภาระที่ต้องรับผิดชอบ
-          ไม่ใช่ข้อมูลที่ยิ่งเก็บยิ่งดี
+          An HR system holds the most sensitive records in the company — national ID numbers, bank accounts, sick leave history, and where people were standing. Cwork is built on the assumption that this is a responsibility to carry, not data to accumulate.
         </p>
       </div>
 
@@ -718,41 +713,40 @@
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div>
-              <strong>พิกัดบันทึกเฉพาะตอนกดลงเวลา</strong>
-              <span>ไม่มีการตามตำแหน่งระหว่างวัน ไม่มีอะไรทำงานอยู่เบื้องหลัง และไม่บันทึกพิกัดในจังหวะอื่นเลย</span>
+              <strong>Location is recorded only at the moment someone clocks in</strong>
+              <span>No tracking through the day, nothing running in the background, and no coordinates captured at any other moment.</span>
             </div>
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div>
-              <strong>เลขบัตรประชาชนและเลขบัญชีเข้ารหัสในฐานข้อมูล</strong>
-              <span>ฝ่ายบุคคลเห็นแค่สี่หลักท้าย จะดูเลขเต็มต้องกดขอ และทุกครั้งที่กดถูกบันทึกไว้</span>
+              <strong>National ID and bank account numbers are encrypted in the database</strong>
+              <span>HR sees the last four digits. Revealing the full number takes a deliberate action, and every reveal is recorded.</span>
             </div>
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div>
-              <strong>มีเอกสารกำหนดว่าเก็บข้อมูลนานแค่ไหน และลบอย่างไร</strong>
-              <span>พร้อมแบบร่างประกาศความเป็นส่วนตัวภาษาไทยสำหรับแจกพนักงาน และขั้นตอนที่ทดสอบกับฐานข้อมูลจริงมาแล้ว</span>
+              <strong>There is a written retention period and a real erasure procedure</strong>
+              <span>Including a draft Thai privacy notice to hand to employees, and steps that have been run against a real database.</span>
             </div>
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div>
-              <strong>ถ้าไม่เปิดเอง ไม่มีข้อมูลออกนอกเครื่องเลย</strong>
-              <span>อีเมล แจ้งเตือนเข้ามือถือ ผู้ช่วย AI และที่เก็บไฟล์ภายนอก ปิดไว้ทั้งหมดจนกว่าคุณจะเปิดเอง</span>
+              <strong>Nothing leaves the machine unless you switch it on</strong>
+              <span>Email, push notifications, the AI assistant and external file storage are all off until you turn them on.</span>
             </div>
           </li>
         </ul>
 
         <div class="aside">
-          <strong>ข้อที่เราบอกตรง ๆ:</strong>
-          ระบบยังไม่ลบข้อมูลพนักงานให้อัตโนมัติเมื่อครบกำหนด — ผู้ดูแลต้องกำหนดนโยบายและลงมือเอง
-          เอกสารบอกไว้ว่าต้องทำอย่างไรทีละขั้น รวมถึงข้อเท็จจริงที่ไม่สวย เช่น
-          <strong>พนักงานที่เคยลงเวลาแล้วจะลบออกจากฐานข้อมูลไม่ได้</strong>
-          เพราะตารางลงเวลาถูกล็อกให้เขียนเพิ่มได้อย่างเดียว วิธีที่ถูกคือลบข้อมูลระบุตัวตนออก แล้วเก็บเวลาทำงานไว้
+          <strong>Said plainly:</strong>
+          Cwork does not yet delete employee data automatically when its retention period ends — the operator sets the policy and runs the procedure. The documentation walks through it step by step, including the awkward parts. For instance:
+          <strong>an employee who has ever clocked in cannot be deleted from the database</strong>
+          , because the attendance table is append-only at the database level. The right move is to strip what identifies them and keep the hours worked.
           <br><br>
-          <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">อ่านเอกสารข้อมูลส่วนบุคคลฉบับเต็ม →</a>
+          <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">Read the full data-protection document →</a>
         </div>
       </div>
     </div>
@@ -762,34 +756,34 @@
   <section style="background:var(--sunk);border-block:1px solid var(--line-soft)">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">ความปลอดภัย</span>
-        <h2>กฎที่ผู้ดูแลระบบก็แหกไม่ได้</h2>
+        <span class="eyebrow">Security</span>
+        <h2>Rules the administrator cannot break either</h2>
       </div>
 
       <div class="schedule">
         <div class="row">
-          <h3>แก้ประวัติย้อนหลังไม่ได้</h3>
-          <p>ฐานข้อมูลปฏิเสธการแก้และการลบรายการเก่า แม้คำสั่งนั้นจะมาจากตัวระบบเอง ถึงมีคนเจาะเข้ามาได้ ก็เพิ่มรายการใหม่ได้อย่างเดียว ลบร่องรอยของตัวเองไม่ได้</p>
+          <h3>History cannot be rewritten</h3>
+          <p>The database refuses updates and deletes on past records, even when the instruction comes from the application itself. Someone who breaks in can add rows; they cannot remove their own tracks.</p>
         </div>
         <div class="row">
-          <h3>รหัสผ่านอย่างเดียวเข้าไม่ได้</h3>
-          <p>ใครที่อ่านเลขบัตรประชาชนได้ ทำเงินเดือนได้ หรือแจกสิทธิ์ให้คนอื่นได้ ต้องใส่รหัสจากแอปยืนยันตัวตนทุกครั้ง และรหัสหนึ่งตัวใช้ได้ครั้งเดียว</p>
+          <h3>A password alone gets you nowhere</h3>
+          <p>Anyone who can read a national ID, run payroll or grant permissions enters a code from an authenticator app every time, and each code works once.</p>
         </div>
         <div class="row">
-          <h3>คนเตรียมรอบเงินเดือน อนุมัติเองไม่ได้</h3>
-          <p>เจ้าหน้าที่เงินเดือนเตรียมรอบ ผู้จัดการ HR เป็นคนเซ็นอนุมัติ ระบบบังคับไว้เอง ไม่ใช่แค่นโยบายบนกระดาษที่ใครก็ข้ามได้</p>
+          <h3>Whoever prepares payroll cannot approve it</h3>
+          <p>The payroll officer prepares the run and the HR manager signs it off. The software enforces that, rather than leaving it as a policy on paper that anyone can step around.</p>
         </div>
         <div class="row">
-          <h3>สแกนไฟล์ที่อัปโหลดเข้ามาก่อนเก็บเสมอ</h3>
-          <p>เรซูเม่ที่คนนอกอัปโหลดเข้ามาคือไฟล์ที่ไว้ใจได้น้อยที่สุดในระบบ ระบบจึงส่งไปสแกนก่อนทุกไฟล์ และสแกนเนอร์ที่ใช้งานไม่ได้ไม่เคยแปลว่า “ผ่าน”</p>
+          <h3>Uploads are scanned before they are stored</h3>
+          <p>A CV uploaded by a stranger is the least trustworthy file in the system, so every one goes to the scanner first — and a scanner that is unreachable never counts as a pass.</p>
         </div>
         <div class="row">
-          <h3>ระบบที่เพิ่งติดตั้ง ไม่ตกเป็นของคนที่เข้ามาก่อน</h3>
-          <p>ผู้ดูแลคนแรกสร้างได้สองทางเท่านั้น: คำสั่งที่ต้องมีสิทธิ์เข้าถึงเซิร์ฟเวอร์ หรือหน้าเว็บที่ถือโทเคนใช้ครั้งเดียวซึ่งมีแต่คำสั่งนั้นออกให้ได้</p>
+          <h3>A fresh install does not belong to whoever finds it first</h3>
+          <p>There are exactly two ways to create the first administrator: a command that requires access to the server, or a web page holding a single-use token that only that command can issue.</p>
         </div>
         <div class="row">
-          <h3>ผู้ช่วย AI ถามแทนคนอื่นไม่ได้</h3>
-          <p>ผู้ช่วยไม่มีช่องทางให้ระบุว่า “ขอดูข้อมูลของคนนั้น” ได้เลย มันเห็นได้แค่ข้อมูลของคนที่กำลังถามอยู่ ต่อให้ถูกหลอกสำเร็จก็ไม่มีอะไรให้หลุด และระบบปิดผู้ช่วยไว้เป็นค่าตั้งต้น</p>
+          <h3>The AI assistant cannot ask on anyone else’s behalf</h3>
+          <p>There is no way to say “show me that person’s record” — the assistant sees only the data of whoever is asking. Talk it into anything you like; there is nothing there to leak. It is off by default.</p>
         </div>
       </div>
     </div>
@@ -801,40 +795,39 @@
       <div class="split">
         <div>
           <div class="shead">
-            <span class="eyebrow">แอปพนักงาน</span>
-            <h2>ออกแบบมาสำหรับโทรศัพท์ที่สัญญาณหลุด</h2>
+            <span class="eyebrow">Employee app</span>
+            <h2>Built for phones that lose signal</h2>
             <p class="lede">
-              ไซต์ก่อสร้าง ห้องเย็น ชั้นใต้ดินของห้าง — ที่ที่พนักงานต้องลงเวลาจริง
-              มักเป็นที่ที่เน็ตไม่มี
+              Building sites, cold rooms, the basement of a shopping centre — the places people actually clock in are the places with no connection.
             </p>
           </div>
           <ul class="claims">
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               <div>
-                <strong>ลงเวลาตอนออฟไลน์ได้</strong>
-                <span>รายการที่ยังส่งไม่ได้ถูกเก็บไว้ในเครื่อง แล้วส่งให้เองเมื่อกลับมาออนไลน์</span>
+                <strong>Clocking in works offline</strong>
+                <span>Anything that cannot be sent is kept on the device and goes out by itself once there is a connection.</span>
               </div>
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               <div>
-                <strong>ส่งซ้ำไม่กลายเป็นลงเวลาสองครั้ง</strong>
-                <span>ทุกรายการมีรหัสประจำตัวที่เครื่องสร้างขึ้นเอง เซิร์ฟเวอร์จึงรู้ว่ารายการไหนซ้ำ</span>
+                <strong>A retry never becomes a second punch</strong>
+                <span>Every entry carries an identifier the device generated, so the server knows which ones it has already seen.</span>
               </div>
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
               <div>
-                <strong>ดูสลิป ขอลา และอนุมัติได้ในเครื่องเดียว</strong>
-                <span>หัวหน้างานกดอนุมัติจากมือถือได้ ไม่ต้องรอกลับไปเปิดคอม</span>
+                <strong>Payslips, leave requests and approvals on one device</strong>
+                <span>A supervisor approves from their phone instead of waiting to get back to a desk.</span>
               </div>
             </li>
           </ul>
         </div>
-        <div class="phones" aria-label="ภาพหน้าจอแอปพนักงาน">
-          <img src="assets/mobile-home.png" alt="หน้าแรกของแอปพนักงาน แสดงปุ่มลงเวลาและสรุปวันลา" loading="lazy" width="390" height="844">
-          <img src="assets/mobile-payslip.png" alt="หน้าสลิปเงินเดือนในแอปพนักงาน" loading="lazy" width="390" height="844">
+        <div class="phones" aria-label="Screenshots of the employee app">
+          <img src="../assets/mobile-home.png" alt="The employee app home screen, showing the clock-in button and a leave summary" loading="lazy" width="390" height="844">
+          <img src="../assets/mobile-payslip.png" alt="The payslip screen in the employee app" loading="lazy" width="390" height="844">
         </div>
       </div>
     </div>
@@ -844,12 +837,10 @@
   <section id="install" style="background:var(--sunk);border-block:1px solid var(--line-soft)">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">สำหรับฝ่าย IT</span>
-        <h2>เครื่องเดียวจบ ไม่ต้องมีทีมดูแล</h2>
+        <span class="eyebrow">For IT</span>
+        <h2>One machine, and nobody to keep it running</h2>
         <p class="lede">
-          ส่งหัวข้อนี้ให้คนที่ดูแลเซิร์ฟเวอร์ของบริษัทได้เลย สิ่งที่ต้องมีคือเครื่องหนึ่งเครื่องกับ Docker —
-          ไม่ต้องมี Redis ไม่ต้องมี message broker ไม่ต้องมี Kubernetes
-          เพราะ PostgreSQL ตัวเดียวทำงานทั้งหมดนั้นแทน
+          Send this section to whoever looks after your servers. It needs one machine and Docker — no Redis, no message broker, no Kubernetes, because a single PostgreSQL does all of that instead.
         </p>
       </div>
 
@@ -857,53 +848,53 @@
         <div class="steps">
           <div class="step">
             <div>
-              <h3>เตรียมเครื่องและความลับ</h3>
-              <p>compose จะไม่ยอมเริ่มทำงานถ้ายังไม่ได้ตั้งคีย์พวกนี้</p>
+              <h3>Prepare the machine and its secrets</h3>
+              <p>compose refuses to start until these are set</p>
               <div class="cmd"><span class="p">$</span> cp .env.example .env
 <span class="p">$</span> openssl rand -base64 48   <span class="c"># JWT secrets</span>
-<span class="p">$</span> openssl rand -base64 32   <span class="c"># คีย์เข้ารหัสข้อมูล</span></div>
+<span class="p">$</span> openssl rand -base64 32   <span class="c"># field encryption key</span></div>
             </div>
           </div>
           <div class="step">
             <div>
-              <h3>เริ่มระบบ แล้วสร้างตารางฐานข้อมูล</h3>
-              <p>ขั้นนี้ยังไม่มีข้อมูลอะไรในระบบ</p>
+              <h3>Start it, then create the tables</h3>
+              <p>Nothing is in the system yet at this point</p>
               <div class="cmd"><span class="p">$</span> docker compose up -d --build
 <span class="p">$</span> docker compose run --rm --build migrate</div>
             </div>
           </div>
           <div class="step">
             <div>
-              <h3>เลือกทางที่ต้องการ</h3>
-              <p><strong>ลองดูก่อน</strong> — โหลดบริษัทตัวอย่างที่มีพนักงาน 8 คน รอบเงินเดือนที่ปิดแล้ว ใบลาที่รออนุมัติ และผู้สมัครงานกลางขั้นตอน ทุกหน้ามีของให้ดู</p>
+              <h3>Pick a path</h3>
+              <p><strong>Just looking</strong>  — loads a demo company of 8 people, a closed payroll run, leave waiting for approval and candidates part-way through hiring. Every screen has something on it.</p>
               <div class="cmd"><span class="p">$</span> docker compose run --rm migrate npm run db:seed</div>
-              <p style="margin-top:14px"><strong>ใช้งานจริง</strong> — สร้างองค์กรของคุณเอง หนึ่งองค์กร บทบาทระบบ 8 บทบาท ผู้ดูแลหนึ่งบัญชี ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</p>
+              <p style="margin-top:14px"><strong>Using it for real</strong>  — creates your own organisation: one organisation, the eight system roles, one administrator. No demo data to hunt down and delete afterwards.</p>
               <div class="cmd"><span class="p">$</span> docker compose run --rm migrate npm run db:init</div>
             </div>
           </div>
           <div class="step">
             <div>
-              <h3>เปิดใช้งาน</h3>
-              <p>เข้าที่ <code>http://localhost:8080</code> — ผู้ดูแลคนแรกถือสิทธิ์ทั้งหมด ระบบจึงบังคับให้ตั้งการยืนยันตัวตนสองขั้นตอนก่อนเข้าใช้งานครั้งแรก เตรียมแอป Authenticator ไว้ด้วย</p>
+              <h3>Open it</h3>
+              <p>Go to <code>http://localhost:8080</code>  — the first administrator holds every permission, so Cwork makes you set up two-factor authentication before the first session. Have an authenticator app ready.</p>
             </div>
           </div>
         </div>
 
-        <div class="term" role="img" aria-label="ตัวอย่างการติดตั้ง จบด้วยการสร้างองค์กรและผู้ดูแลคนแรก">
+        <div class="term" role="img" aria-label="An example install, ending with the organisation and the first administrator created">
           <div class="term__bar">
             <span class="term__dot"></span><span class="term__dot"></span><span class="term__dot"></span>
-            <span style="margin-inline-start:6px">เซิร์ฟเวอร์ของบริษัท</span>
+            <span style="margin-inline-start:6px">your company’s server</span>
           </div>
           <div class="term__body">
 <p><span class="p">$</span> npm run db:init</p>
 <p>&nbsp;</p>
-<p><span class="c">  ชื่อองค์กร   :</span> บริษัท ตัวอย่าง จำกัด</p>
-<p><span class="c">  เขตเวลา     :</span> Asia/Bangkok</p>
-<p><span class="c">  อีเมลผู้ดูแล :</span> owner@example.co.th</p>
-<p><span class="c">  รหัสผ่าน    :</span> ••••••••••••••</p>
+<p><span class="c">  organisation :</span> Example Co., Ltd.</p>
+<p><span class="c">  timezone    :</span> Asia/Bangkok</p>
+<p><span class="c">  admin email :</span> owner@example.co.th</p>
+<p><span class="c">  password    :</span> ••••••••••••••</p>
 <p>&nbsp;</p>
-<p><span class="ok">  ✓</span> องค์กร · 8 บทบาท · ผู้ดูแล 1 บัญชี</p>
-<p><span class="c">  ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</span></p>
+<p><span class="ok">  ✓</span> organisation · 8 roles · 1 administrator</p>
+<p><span class="c">  no demo data to clean up afterwards</span></p>
           </div>
         </div>
       </div>
@@ -918,14 +909,14 @@
       <span class="mark" aria-hidden="true">CW</span>
       <div>
         <p style="font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:1.04rem;color:var(--ink)">Cwork</p>
-        <p>ระบบบริหารทรัพยากรบุคคลแบบโอเพนซอร์ส · Apache-2.0</p>
+        <p>Open-source HR information system · Apache-2.0</p>
       </div>
     </div>
     <div class="foot__links">
-      <a href="https://github.com/SuruchBoss/Cwork">ซอร์สโค้ด</a>
-      <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">ข้อมูลส่วนบุคคล</a>
-      <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/security.md">ความปลอดภัย</a>
-      <a href="https://github.com/SuruchBoss/Cwork/releases">เวอร์ชัน</a>
+      <a href="https://github.com/SuruchBoss/Cwork">Source code</a>
+      <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">Data protection</a>
+      <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/security.md">Security</a>
+      <a href="https://github.com/SuruchBoss/Cwork/releases">Releases</a>
     </div>
   </div>
 </footer>
@@ -934,7 +925,7 @@
   /* The calculator. Plain arithmetic the owner could do on paper — which is
      the point: nothing here is doing anything clever with their numbers. */
   (function () {
-    var baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
+    var baht = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
     var el = function (id) { return document.getElementById(id); };
     var headcount = el('headcount'), rate = el('rate'), server = el('server');
 
@@ -954,15 +945,15 @@
 
       el('current').textContent = baht.format(current);
       el('serverYear').textContent = baht.format(serverYear);
-      el('hcEcho').textContent = people.toLocaleString('th-TH');
-      el('rateEcho').textContent = perSeat.toLocaleString('th-TH');
+      el('hcEcho').textContent = people.toLocaleString('en-GB');
+      el('rateEcho').textContent = perSeat.toLocaleString('en-GB');
 
       el('saved').textContent = baht.format(Math.abs(saved));
       el('savedNote').textContent = saved > 0
-        ? 'เทียบกับค่าระบบเดิม หลังหักค่าเซิร์ฟเวอร์แล้ว'
+        ? 'against your current bill, with the server already paid for'
         : saved === 0
-          ? 'เท่าทุนพอดีในปีแรก — ปีถัดไปค่าเซิร์ฟเวอร์เท่าเดิม แต่ค่าระบบเดิมมักขึ้นตามจำนวนคน'
-          : 'ค่าเซิร์ฟเวอร์สูงกว่าค่าระบบเดิม — ลองใช้เครื่องที่มีอยู่แล้ว หรือดูใหม่เมื่อพนักงานเพิ่มขึ้น';
+          ? 'Break-even in year one. The server costs the same next year; a per-seat bill usually does not.'
+          : 'The server costs more than your current bill — try a machine you already own, or look again as you hire.';
       el('saved').style.color = saved >= 0 ? 'var(--pop-lift)' : 'var(--pine-dim)';
     }
 

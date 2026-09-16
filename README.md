@@ -7,7 +7,7 @@ and an HR assistant that actually knows your policies.**
 
 Built for Thai labour practice. Designed to be self-hosted.
 
-**English** · [ภาษาไทย](./README.th.md) · [หน้าแนะนำ (Thai landing page)](https://suruchboss.github.io/Cwork/)
+**English** · [ภาษาไทย](./README.th.md) · [Overview page](https://suruchboss.github.io/Cwork/en/)
 
 [![CI](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
