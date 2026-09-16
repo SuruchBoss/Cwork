@@ -42,8 +42,8 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | CW-010 · CW-024 · CW-025 · CW-038 |
-| **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 |
-| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-017 |
+| **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 · CW-039 · CW-040 |
+| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-017 · CW-041 |
 
 The plan was drawn up before CW-002, CW-003, CW-006, CW-007 and CW-020 landed,
 and those five came out of it as they were finished. CW-005 and CW-023 have
@@ -265,8 +265,18 @@ documented in the code and tracked by CW-018.
 - **Make it true (M).** Implement an OpenAI-compatible provider so an operator
   can point a base URL at Ollama, vLLM or LiteLLM and keep the data in-house.
 
-**Recommendation:** take the S now, so nothing in the repository claims what it
-cannot do, and let CW-018 carry the M when somebody asks for it.
+**Decided: take the M.** The S was the earlier recommendation and it is
+withdrawn. Cwork is taking on AI features that put payroll and identity data in
+front of a model (CW-039, CW-040, CW-041), and an operator who cannot send that
+to a third party must be able to point it at one they run. Deleting the option
+would have made the promise honest by abandoning it; the promise is worth
+keeping.
+
+Implement the provider: a base URL, an API key that may be empty for a local
+server, and the same tool-calling contract `LlmProvider` already defines.
+Ollama, vLLM and LiteLLM all speak it. The S is still included — nothing may
+validate a value it does not honour, and an enabled assistant with an
+unimplemented provider must fail at boot.
 
 **Acceptance**
 - No `ASSISTANT_*` variable accepts a value that changes nothing.
@@ -276,6 +286,129 @@ cannot do, and let CW-018 carry the M when somebody asks for it.
 
 **Files** `backend/src/core/config/env.validation.ts`,
 `backend/src/modules/assistant/`, `docs/ai-assistant.md`
+
+---
+
+### CW-039 · Explain attendance flags to a manager
+`P2` · assistant · attendance · **M**
+
+Attendance already raises `OUTSIDE_GEOFENCE`, `IMPOSSIBLE_TRAVEL`,
+`MOCK_LOCATION`, `CLOCK_DRIFT`, `LOW_GPS_ACCURACY` and `NO_LOCATION`. A manager
+sees a list of them and has to work out for themselves whether they are looking
+at a dishonest employee or a badly drawn geofence. Almost always it is the
+geofence, and the flag list does not say so.
+
+**Scope**
+- A read-only tool returning the caller's team's flagged punches for a period.
+  It takes **no employee id** — scope comes from the caller's permissions
+  through `employeeVisibilityFilter`, the same path the console uses.
+- A prompt that groups by location and flag type and states the likely cause,
+  with the distances and counts that support it.
+- An "explain this" affordance on the attendance screen. The flag list stays
+  exactly as it is underneath.
+
+**Acceptance**
+- A manager gets an explanation covering their reports and nobody else's,
+  verified against the three visibility levels the e2e suite already exercises.
+- Every number in the explanation is traceable to a punch record.
+- With the assistant disabled, the screen is unchanged and offers nothing.
+
+**Files** `backend/src/modules/assistant/`, `backend/src/modules/attendance/`,
+`web/src/features/attendance/`
+
+---
+
+### CW-040 · Explain a payroll run before it is approved
+`P2` · assistant · payroll · **M**
+
+Separation of duties means the person approving a run did not prepare it. What
+they actually see is a total, and no practical way to interrogate it — so the
+control is real on paper and thin in practice. This is the one AI feature here
+that strengthens an existing control rather than adding a new surface.
+
+**Scope**
+- A read-only tool returning a run's totals beside the previous period's, broken
+  down by the components the payslip already stores — overtime, joiners,
+  leavers, unpaid leave, benefit changes.
+- A prompt that narrates the variance and names what drove it.
+- Shown on the approval screen, above the existing figures rather than instead
+  of them.
+
+**Numbers come from the tool. The model must not do arithmetic** — see
+[spec.md § Agreed direction](./spec.md#agreed-direction). A test should
+fail if a figure appears in the narration that is not in the tool output.
+
+**Acceptance**
+- The explanation reconciles exactly with the run's own totals.
+- The tool refuses a run outside the caller's organisation, and requires
+  `payroll:approve`.
+- With the assistant disabled, the approval screen is unchanged.
+
+**Files** `backend/src/modules/assistant/`, `backend/src/modules/payroll/`,
+`web/src/features/payroll/`
+
+---
+
+### CW-041 · Draft the manager's half of a review
+`P3` · assistant · performance · **M**
+
+A manager writing a review has already recorded the evidence — KPI scores,
+weights and check-ins are in the system. Assembling that into prose is the part
+they put off.
+
+**This one carries a real risk and it is accepted deliberately:** drafted
+reviews tend towards sameness, and a manager who accepts a draft unedited has
+outsourced a judgement that is theirs to make. The guardrails below are the
+reason it is worth doing anyway, and they are not optional.
+
+**Scope**
+- A tool taking a **review id**, not an employee id, and refusing unless the
+  caller is that review's `reviewerEmployeeId`. A review binds reviewer to
+  subject already, so this does not widen the caller's reach.
+- It returns only what the manager themselves recorded: KPI goals, weights,
+  scores, their own check-in notes. **No attendance, no leave, no salary** —
+  those are not review evidence and hoovering them in is how this feature would
+  become something nobody asked for.
+- Output is a draft in an editable field, labelled as a draft, never saved
+  directly as the review.
+- The review cannot be submitted unedited: if the text still matches the draft
+  byte for byte, submission is refused with an explanation.
+- The final rating is the manager's. The model never proposes a score.
+
+**Acceptance**
+- A manager can draft, edit and submit; submitting an unedited draft is refused.
+- The tool refuses a review the caller does not own.
+- The draft cites only KPI and check-in data, proven by a test that puts
+  distinctive attendance and salary values in the fixture and asserts they never
+  appear.
+- With the assistant disabled, review writing works exactly as it does today.
+
+**Files** `backend/src/modules/assistant/`, `backend/src/modules/performance/`,
+`web/src/features/performance/`
+
+---
+
+### CW-042 · Amend ADR-0004 to say what the rule actually is
+`P2` · docs · **S** · 🌱
+
+ADR-0004 is titled *Assistant tools take no employee id*, and names
+`get_leave_balance(employeeId)` — "lets a manager ask about their team" — as the
+signature it rejected. CW-039, CW-040 and CW-041 are all manager-facing, so on a
+literal reading the ADR forbids them.
+
+It should not. The property that matters is that **no tool parameter extends the
+caller's reach**: a payroll run id or a review id the caller already owns does
+not, an employee id does, and manager-facing tools take no subject at all and
+derive their scope from the caller's permissions.
+
+**Scope** Amend ADR-0004 to state the rule that way, keeping the original
+reasoning and recording why it was widened. Do not supersede it with a new ADR —
+the decision did not change, only its wording.
+
+**Acceptance** A contributor reading ADR-0004 can tell whether a proposed
+manager-facing tool is allowed.
+
+**Files** `docs/adr/0004-assistant-tool-scoping.md`
 
 ---
 

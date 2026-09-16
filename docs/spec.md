@@ -114,6 +114,34 @@ existing approval engine, but its only outcomes are *acknowledge* and *reject
 the flag*. It never creates or deletes a punch, because `attendance_punches` is
 append-only at the database level and that has to stay true (CW-025).
 
+**The assistant is everywhere and required nowhere.** AI features are welcome on
+any screen, under one rule: whatever the assistant does, a person must be able
+to do without it — slower, more clicks, but reachable. An organisation running
+`ASSISTANT_ENABLED=false` gets a slower product, never a broken one. That rule
+is what keeps the system installable where payroll data cannot leave the
+building, and it is precisely why the AI features are allowed to be ambitious.
+
+**The model narrates; it never computes.** Every figure an AI feature shows
+comes from a tool backed by the same pure domain functions the console uses.
+The model may say what a number means. It may not work out what the number is.
+A payroll figure the model arrived at by itself is a defect, not a rounding
+difference.
+
+**A tool may not widen who the caller can see.** [ADR-0004](./adr/0004-assistant-tool-scoping.md)
+says assistant tools take no employee id. The rule it is reaching for is
+slightly broader: *no tool parameter may extend the caller's reach*. A payroll
+run id or a review id the caller already owns does not extend it; an employee
+id does. Manager-facing tools take no subject at all — they resolve their scope
+from the caller's permissions through the same `employeeVisibilityFilter` the
+console uses, so a manager sees their reports and nobody else's, by the same
+code path, whether they clicked or asked.
+
+**Self-hosting the model is a requirement, not a convenience.** The more the
+assistant does, the more payroll and identity data passes through it. An
+operator who cannot send that to a third party must be able to point it at a
+model they run (CW-038). This reverses an earlier recommendation to simply
+delete the unimplemented provider option.
+
 **No schema for features that do not exist.** A column nothing writes is a lie
 told to whoever reads the schema next. Kiosk devices get no `type` field until
 kiosk devices are built, and the unused anti-fraud columns are removed rather
