@@ -221,13 +221,45 @@
 
   .hero__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-    gap: clamp(32px, 5vw, 64px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
+    gap: clamp(32px, 4vw, 52px);
     align-items: start;
   }
 
-  /* The terminal is the hero image. The most characteristic thing about a
-     self-hosted product is the command that installs it. */
+  /* The hero belongs to the person who decides, not the person who installs:
+     the product, moving, with a still frame that loads first. */
+  .hero__shot { margin: 0; min-width: 0; }
+  .hero__shot video {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    background: var(--surface-sunk);
+  }
+  .hero__shot figcaption {
+    margin-top: 10px;
+    font-size: .84rem;
+    color: var(--ink-faint);
+  }
+
+  /* One line for the second reader — the IT person who has to install it —
+     so they are answered without taking the hero from the first. */
+  .handoff {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 0;
+    padding: 11px 15px;
+    border: 1px dashed var(--rule);
+    border-radius: 9px;
+    background: var(--surface);
+    font-size: .9rem;
+    color: var(--ink-soft);
+  }
+  .handoff svg { width: 19px; height: 19px; flex: none; color: var(--brass); }
+  .handoff a { color: var(--brass); font-weight: 600; text-underline-offset: 3px; }
+
+  /* The install command block, now where it belongs: the IT section. */
   .term {
     min-width: 0;
     background: var(--term-bg);
@@ -438,10 +470,11 @@
       <span>Cwork</span>
     </a>
     <nav aria-label="ส่วนต่าง ๆ ของหน้านี้">
+      <a href="#screens">หน้าตาระบบ</a>
       <a href="#features">ความสามารถ</a>
       <a href="#pdpa">PDPA</a>
       <a href="#app">แอปพนักงาน</a>
-      <a href="#install">ติดตั้ง</a>
+      <a href="#install">สำหรับฝ่าย IT</a>
       <a href="https://github.com/SuruchBoss/Cwork">GitHub</a>
     </nav>
   </div>
@@ -453,78 +486,76 @@
   <section class="hero">
     <div class="wrap">
       <div class="tagrow">
-        <span class="tag">โอเพนซอร์ส · Apache-2.0</span>
-        <span class="tag tag--live">v0.2.0 · เผยแพร่แล้ว</span>
-        <span class="tag">สำหรับแรงงานไทย</span>
+        <span class="tag">ติดตั้งบนเครื่องของคุณเอง</span>
+        <span class="tag tag--live">v0.2.0 · ใช้งานได้แล้ว</span>
+        <span class="tag">ทำตามกฎหมายแรงงานไทย</span>
       </div>
 
       <div class="hero__grid">
         <div>
-          <h1>ระบบ HR ที่อยู่บน<br>เซิร์ฟเวอร์<em>ของคุณเอง</em></h1>
+          <h1>งาน HR ทั้งบริษัท<br>จบใน<em>ระบบเดียว</em></h1>
           <p class="lede hero__lede">
-            ทะเบียนพนักงาน วันลา ลงเวลา และเงินเดือน ครบในระบบเดียว
-            ข้อมูลอยู่ในฐานข้อมูลที่คุณถือกุญแจ ไม่มีค่ารายหัว ไม่มีสัญญารายปี
-            และไม่มีอะไรออกจากเครื่องคุณจนกว่าคุณจะสั่ง
+            ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือน และการอนุมัติ
+            ไม่คิดค่ารายหัว ไม่มีสัญญารายปี
+            และข้อมูลพนักงานอยู่ในเครื่องของบริษัทคุณเอง ไม่ได้ฝากไว้กับใคร
           </p>
 
           <div class="cta-row">
-            <a class="btn btn--primary" href="#install">
-              ติดตั้งใน 5 นาที
+            <a class="btn btn--primary" href="#screens">
+              ดูหน้าตาระบบ
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a class="btn btn--ghost" href="https://github.com/SuruchBoss/Cwork">ดูซอร์สโค้ดบน GitHub</a>
+            <a class="btn btn--ghost" href="#pdpa">ข้อมูลพนักงานปลอดภัยแค่ไหน</a>
           </div>
 
+          <p class="handoff">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10M8 9l3 2.5L8 14"/></svg>
+            <span>ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง — <a href="#install">ส่งขั้นตอนให้เขา</a></span>
+          </p>
+
           <dl class="facts">
-            <div class="fact"><dt>ค่าลิขสิทธิ์ต่อผู้ใช้</dt><dd>฿0</dd></div>
-            <div class="fact"><dt>ชุดทดสอบอัตโนมัติ</dt><dd>508</dd></div>
-            <div class="fact"><dt>บริการที่ต้องดูแล</dt><dd>1</dd></div>
+            <div class="fact"><dt>ค่าใช้จ่ายต่อพนักงาน</dt><dd>฿0</dd></div>
+            <div class="fact"><dt>ข้อมูลอยู่ที่</dt><dd>เครื่องคุณ</dd></div>
+            <div class="fact"><dt>ผูกสัญญา</dt><dd>ไม่มี</dd></div>
           </dl>
         </div>
 
-        <div class="term" role="img" aria-label="ตัวอย่างการติดตั้งด้วย docker compose สามคำสั่ง จบด้วยการสร้างองค์กรและผู้ดูแลคนแรก">
-          <div class="term__bar">
-            <span class="term__dot"></span><span class="term__dot"></span><span class="term__dot"></span>
-            <span style="margin-inline-start:6px">เซิร์ฟเวอร์ของคุณ</span>
-          </div>
-          <div class="term__body">
-<p><span class="c"># ดึงโค้ดและสตาร์ท</span></p>
-<p><span class="p">$</span> git clone https://github.com/SuruchBoss/Cwork.git</p>
-<p><span class="p">$</span> docker compose up -d --build</p>
-<p>&nbsp;</p>
-<p><span class="c"># สร้างองค์กรและผู้ดูแลคนแรก</span></p>
-<p><span class="p">$</span> npm run db:init</p>
-<p>&nbsp;</p>
-<p><span class="c">  ชื่อองค์กร:</span> บริษัท ตัวอย่าง จำกัด</p>
-<p><span class="c">  เขตเวลา  :</span> Asia/Bangkok</p>
-<p><span class="c">  อีเมลผู้ดูแล:</span> owner@example.co.th</p>
-<p>&nbsp;</p>
-<p><span class="ok">  ✓</span> องค์กร · 8 บทบาท · ผู้ดูแล 1 บัญชี</p>
-<p><span class="c">  ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</span></p>
-          </div>
-        </div>
+        <figure class="hero__shot">
+          <video src="assets/walkthrough.mp4" autoplay muted loop playsinline
+                 poster="assets/dashboard.png"
+                 aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
+          <figcaption>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</figcaption>
+        </figure>
       </div>
     </div>
   </section>
 
-  <!-- ===================================================== demo -->
-  <section class="demo">
+  <!-- ===================================================== screens -->
+  <section id="screens" class="demo">
     <div class="wrap">
       <div class="head">
-        <span class="eyebrow ruled">ของจริง ไม่ใช่ภาพจำลอง</span>
-        <h2>สามสิบหกวินาที ตั้งแต่เข้าระบบจนถึงรอบเงินเดือนที่ปิดแล้ว</h2>
+        <span class="eyebrow ruled">หน้าตาระบบ</span>
+        <h2>หน้าจอที่ฝ่ายบุคคลเปิดทุกวัน</h2>
         <p class="lede">
-          คลิปนี้ถูกอัดจากระบบจริงที่รันอยู่ ด้วยสคริปต์ที่อยู่ในรีโพ
-          รวมถึงการยืนยันตัวตนสองขั้นตอนที่ไม่ได้ข้ามไป
-          ถ้าหน้าจอไหนพัง คลิปก็อัดไม่ผ่าน
+          ภาษาไทยทั้งระบบ วันที่แบบไทย เงินบาท และคำที่ HR ใช้จริง
+          ทุกภาพด้านล่างคือหน้าจอจริงจากบริษัทตัวอย่างที่ติดมากับระบบ
         </p>
       </div>
-      <div class="demo__frame">
-        <video src="assets/walkthrough.mp4" autoplay muted loop playsinline
-               poster="assets/dashboard.png"
-               aria-label="วิดีโอสาธิตการใช้งานคอนโซล Cwork"></video>
+
+      <div class="shots">
+        <figure class="shot">
+          <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
+          <figcaption>คำขอลาที่รออนุมัติ พร้อมจำนวนวันที่คำนวณให้แล้ว</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
+          <figcaption>ทะเบียนพนักงาน ตำแหน่ง แผนก และอายุงาน</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
+          <figcaption>สรุปรอบเงินเดือน รายได้รวมและยอดจ่ายสุทธิ</figcaption>
+        </figure>
       </div>
-      <p class="demo__cap">หน้าจอเป็นภาษาไทย คำบรรยายในคลิปเป็นภาษาอังกฤษสำหรับผู้ที่ไม่อ่านไทย</p>
     </div>
   </section>
 
@@ -583,7 +614,7 @@
           <h3>หน้าสมัครงานสาธารณะ พร้อมความยินยอม</h3>
           <p>ตั้งแต่คำขออัตรากำลัง ประกาศงาน แบบทดสอบที่ตรวจอัตโนมัติ สัมภาษณ์ ไปจนถึงใบเสนอจ้างที่แปลงเป็นข้อมูลพนักงานได้เลย</p>
           <ul>
-            <li>ใบสมัครที่ไม่มีความยินยอม PDPA ถูกปฏิเสธที่ระดับโค้ด ไม่ใช่แค่ติ๊กในฟอร์ม</li>
+            <li>ไม่ให้ความยินยอม PDPA ระบบไม่รับใบสมัครตั้งแต่ต้น</li>
             <li>ข้อมูลผู้สมัครที่ไม่ได้รับเข้าทำงานถูกลบอัตโนมัติใน 12 เดือน</li>
           </ul>
         </div>
@@ -626,7 +657,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div>
               <strong>เลขบัตรประชาชนและเลขบัญชีเข้ารหัสในฐานข้อมูล</strong>
-              <span>AES-256-GCM · ฝ่ายบุคคลเห็นเพียงสี่หลักท้าย เว้นแต่จะเปิดดูเต็มโดยเจตนา ซึ่งการเปิดดูนั้นถูกบันทึกไว้</span>
+              <span>ฝ่ายบุคคลเห็นเพียงสี่หลักท้าย เว้นแต่จะเปิดดูเต็มโดยเจตนา ซึ่งการเปิดดูนั้นถูกบันทึกไว้</span>
             </div>
           </li>
           <li>
@@ -670,17 +701,17 @@
         <div class="cell">
           <span class="cell__key">บันทึกการใช้งาน</span>
           <h3>แก้ประวัติย้อนหลังไม่ได้</h3>
-          <p>ตาราง audit log และตารางลงเวลาถูกล็อกที่ระดับฐานข้อมูล — ทริกเกอร์จะโยน exception ทันทีที่มีคำสั่ง UPDATE หรือ DELETE บัญชีแอปที่ถูกยึดจึงเพิ่มรายการได้ แต่ลบของเก่าไม่ได้</p>
+          <p>ฐานข้อมูลปฏิเสธการแก้และการลบรายการเก่า แม้คำสั่งนั้นจะมาจากตัวระบบเอง ถึงมีคนเจาะเข้ามาได้ ก็เพิ่มรายการใหม่ได้อย่างเดียว ลบร่องรอยของตัวเองไม่ได้</p>
         </div>
         <div class="cell">
           <span class="cell__key">สิทธิ์สูง</span>
           <h3>รหัสผ่านอย่างเดียวเข้าไม่ได้</h3>
-          <p>ใครที่อ่านเลขบัตรประชาชนได้ ทำเงินเดือนได้ หรือแจกสิทธิ์ได้ ต้องมีปัจจัยที่สอง และรหัส TOTP หนึ่งตัวใช้ซ้ำไม่ได้แม้จะยังไม่หมดอายุ</p>
+          <p>ใครที่อ่านเลขบัตรประชาชนได้ ทำเงินเดือนได้ หรือแจกสิทธิ์ให้คนอื่นได้ ต้องใส่รหัสจากแอปยืนยันตัวตนทุกครั้ง และรหัสหนึ่งตัวใช้ได้ครั้งเดียว</p>
         </div>
         <div class="cell">
           <span class="cell__key">แบ่งแยกหน้าที่</span>
           <h3>คนเตรียมรอบเงินเดือน อนุมัติเองไม่ได้</h3>
-          <p>ระบบปฏิเสธที่ระดับโค้ด ไม่ใช่นโยบายบนกระดาษ — เจ้าหน้าที่เงินเดือนเตรียม ผู้จัดการ HR เซ็นอนุมัติ</p>
+          <p>เจ้าหน้าที่เงินเดือนเตรียมรอบ ผู้จัดการ HR เป็นคนเซ็นอนุมัติ ระบบบังคับไว้เอง ไม่ใช่แค่นโยบายบนกระดาษที่ใครก็ข้ามได้</p>
         </div>
         <div class="cell">
           <span class="cell__key">ไฟล์อัปโหลด</span>
@@ -695,7 +726,7 @@
         <div class="cell">
           <span class="cell__key">ผู้ช่วย AI</span>
           <h3>ถามแทนคนอื่นไม่ได้</h3>
-          <p>เครื่องมือทุกตัวของผู้ช่วยไม่รับรหัสพนักงานเป็นพารามิเตอร์ แต่อ่านจากตัวตนของผู้ถามเสมอ ต่อให้โมเดลถูกหลอกสำเร็จก็เห็นได้แค่สิ่งที่คนนั้นเห็นอยู่แล้ว (และปิดเป็นค่าตั้งต้น)</p>
+          <p>ผู้ช่วยไม่มีช่องทางให้ระบุว่า “ขอดูข้อมูลของคนนั้น” ได้เลย มันเห็นได้แค่ข้อมูลของคนที่กำลังถามอยู่ ต่อให้ถูกหลอกสำเร็จก็ไม่มีอะไรให้หลุด และระบบปิดผู้ช่วยไว้เป็นค่าตั้งต้น</p>
         </div>
       </div>
 
@@ -759,12 +790,32 @@
   <section id="install">
     <div class="wrap">
       <div class="head">
-        <span class="eyebrow ruled">ติดตั้ง</span>
-        <h2>ไม่มี Redis ไม่มี message broker ไม่มี Kubernetes</h2>
+        <span class="eyebrow ruled">สำหรับฝ่าย IT</span>
+        <h2>ติดตั้งครึ่งชั่วโมง ดูแลแทบไม่ต้อง</h2>
         <p class="lede">
-          งานที่ปกติต้องใช้คิว lock server และ cache — PostgreSQL ตัวเดียวทำให้ทั้งหมด
-          ระบบ HR ที่ต้องมีคลัสเตอร์ Kafka เพื่อส่งแจ้งเตือนการลา คือระบบที่ไม่มีใครติดตั้งใช้เองได้
+          ส่งหัวข้อนี้ให้คนที่ดูแลเซิร์ฟเวอร์ของบริษัทได้เลย
+          สิ่งที่ต้องมีคือเครื่องหนึ่งเครื่องกับ Docker — ไม่ต้องมี Redis ไม่ต้องมี message broker
+          ไม่ต้องมี Kubernetes เพราะ PostgreSQL ตัวเดียวทำงานทั้งหมดนั้นแทน
         </p>
+      </div>
+
+      <div class="term" style="margin-top:36px;max-width:660px" role="img" aria-label="ตัวอย่างการติดตั้ง จบด้วยการสร้างองค์กรและผู้ดูแลคนแรก">
+        <div class="term__bar">
+          <span class="term__dot"></span><span class="term__dot"></span><span class="term__dot"></span>
+          <span style="margin-inline-start:6px">เซิร์ฟเวอร์ของบริษัท</span>
+        </div>
+        <div class="term__body">
+<p><span class="p">$</span> git clone https://github.com/SuruchBoss/Cwork.git</p>
+<p><span class="p">$</span> docker compose up -d --build</p>
+<p><span class="p">$</span> npm run db:init</p>
+<p>&nbsp;</p>
+<p><span class="c">  ชื่อองค์กร   :</span> บริษัท ตัวอย่าง จำกัด</p>
+<p><span class="c">  เขตเวลา     :</span> Asia/Bangkok</p>
+<p><span class="c">  อีเมลผู้ดูแล :</span> owner@example.co.th</p>
+<p>&nbsp;</p>
+<p><span class="ok">  ✓</span> องค์กร · 8 บทบาท · ผู้ดูแล 1 บัญชี</p>
+<p><span class="c">  ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</span></p>
+        </div>
       </div>
 
       <div class="steps">
