@@ -39,9 +39,9 @@ severity; this is the sequence work is actually taken in.
 
 | Phase | | |
 |---|---|---|
-| **0** | A baseline to measure from | CW-028 · CW-030 · CW-036 · CW-029 |
-| **1** | A stranger can install it | CW-022 · CW-027 |
-| **2** | The pilot can run | CW-010 · CW-024 · CW-025 · CW-026 |
+| **0** | A baseline to measure from | ✅ closed 2026-09-16 |
+| **1** | A stranger can install it | ✅ closed 2026-09-16 |
+| **2** | The pilot can run | CW-010 · CW-024 · CW-025 · CW-038 |
 | **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 |
 | **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-017 |
 
@@ -57,91 +57,24 @@ than leaving implicit:
   instance scaled vertically; CW-003 and CW-007 made replicas a configuration
   rather than a hazard. Nothing downstream depends on the old assumption.
 
+Phases 0 and 1 closed on 2026-09-16. A landing page and a recorded demo
+walkthrough were built alongside them with no tickets of their own, and the
+walkthrough covers the recording CW-034 asked for and did not get. Recorded
+here so the history is not misleading about where that work came from.
+
 `CW-031` — a hosted demo — is the largest single thing that would help anyone
 evaluate this project, and it sits in phase 3 only because it is blocked on an
-unanswered question about who pays for the assistant's API usage.
+unanswered question about who pays for the assistant's API usage. The recorded
+walkthrough is the fallback that ticket names, so the blocker now costs less
+than it did.
 
 ---
 
 ## P0 — blocks a real deployment
 
-### CW-022 · First-run setup for a clean install
-`P0` · platform · **M**
+Nothing open.
 
-There is no way to create an organisation or a first administrator. The only
-`organization.upsert` in the codebase is in `prisma/seed.ts`, which the README
-itself labels *demo data — evaluation only*, and there is no `@Post` on
-`organization.controller.ts` and no registration route on `auth.controller.ts`.
-Anyone installing Cwork for a real organisation has to load fake data and then
-clean up after it.
 
-**Scope**
-- `npm run db:init` — an interactive CLI taking organisation name, timezone and
-  the first administrator's email, creating the org, the default role set and
-  that one account.
-- A web setup wizard for the same thing, reachable only with a one-time setup
-  token that `db:init` prints. No token, no wizard — a bare "if no org exists,
-  let anyone through" check is an account-takeover waiting to happen.
-- Keep `db:seed` strictly for demo data and say so when it runs.
-- The first administrator holds `role:manage`, so it is required to have a
-  second factor. The existing `@Public() POST /auth/mfa/enroll` path already
-  covers enrolling before a session exists; the CLI must not print the secret.
-
-**Acceptance**
-- A fresh database plus `db:init` yields a usable sign-in with no demo rows.
-- The wizard refuses every request without a valid, unspent setup token.
-- Running `db:init` a second time on a populated database refuses rather than
-  creating a second organisation.
-
-**Files** `backend/src/modules/organization/`, `backend/prisma/`, `web/src/`
-
----
-
-### CW-026 · The PDPA minimum the pilot needs
-`P0` · compliance · **S**
-
-The pilot runs leave and attendance for real employees, so it collects real
-location data and sick-leave records. `CW-015` — proper retention and purge — is
-too large to precede it, but going in with nothing is not an option either.
-
-**Scope**
-- A notice for pilot employees: what is collected, that **location is recorded
-  only at the moment of a punch and never continuously**, how long it is kept,
-  and how to ask for erasure.
-- A retention period written down, per record class.
-- An erasure path. A documented manual procedure is acceptable here; an
-  undocumented one is not.
-
-**Acceptance** A pilot employee can be told, in writing, what is held about them
-and can have it removed on request without anyone improvising.
-
-**Files** `docs/`, `README.md`
-
----
-
-### CW-030 · Correct the claims the documentation makes
-`P0` · docs · **S**
-
-Two statements in the docs are not true, and each could lead somebody to rely on
-something that is not there.
-
-**Scope**
-- Remove "multi-tenant" as a property of the product. `organizationId` is
-  defence in depth inside a single-organisation deployment and no test covers
-  two organisations sharing a database. *(Done in `spec.md`; `README.md`,
-  `architecture.md` and `security.md` still need the pass.)*
-- State plainly that the Thai tax and social-security rules have **not** been
-  reviewed by anyone qualified, in `README.md` and at the head of
-  `payroll-thailand.md`. They were written from published sources and
-  unit-tested for internal consistency, which proves the code matches what its
-  author believed — not that the belief is correct.
-- Open an issue inviting an accountant or payroll professional to review the
-  rules. Open source is a reasonable way to find one.
-
-**Acceptance** No document claims multi-tenancy; no reader can reach the payroll
-rules without meeting the warning first.
-
-**Files** `README.md`, `docs/`
 
 ## P1 — before payroll runs on real people
 
@@ -290,52 +223,59 @@ dependency in `pubspec.yaml`, so `ROOTED_DEVICE` can never be raised.
 
 ---
 
-### CW-028 · A release baseline and a CHANGELOG
-`P1` · project · **S** · 🌱
 
-There is no `CHANGELOG.md` and the repository has no tags. Anyone installing
-Cwork runs whatever `main` happened to be that day and cannot say which version
-they have — and by now `main` has moved a long way in a short time.
 
-**Scope** Tag `v0.1.0` at the current tree. Add `CHANGELOG.md` in Keep a
-Changelog form. State the 0.x contract in `README.md`: breaking changes allowed,
-recorded, no LTS before 1.0.
+### CW-038 · Make the assistant's configuration tell the truth
+`P1` · assistant · **S**
 
-**Acceptance** `git describe` names a release, and the changelog has an entry
-for it.
+`ASSISTANT_PROVIDER` validates against `['anthropic', 'openai-compatible', 'none']`
+in `env.validation.ts:315`, but `assistant.module.ts:41` reads
 
-**Files** `CHANGELOG.md`, `README.md`
+```ts
+return config.assistant.provider === 'anthropic' ? anthropic : disabled;
+```
 
----
+and no OpenAI-compatible provider exists anywhere in `src`. Setting
+`ASSISTANT_PROVIDER=openai-compatible` therefore **boots cleanly, reports the
+assistant as enabled, and silently hands back a disabled provider.** The
+boot-time check that demands an API key fires only for `anthropic`, so nothing
+catches it either.
 
-### CW-036 · Say how this code was written
-`P1` · project · **S**
+This matters more than an ordinary missing feature, because `llm-provider.ts`
+opens with:
 
-Almost every commit in this repository was authored by an AI agent working under
-direction, several of them adding thousands of lines at once. That is visible in
-`git log` to anyone who looks, and it matters to three different readers: a
-contributor judging how much to trust the code around their change, an operator
-deciding whether to run payroll on it, and a reviewer working out who to ask
-about a design decision.
+> *Cwork is provider-agnostic on purpose: an HRIS holds payroll and national ID
+> data, and an operator must be able to choose (or self-host) the model that
+> sees it.*
 
-Leaving it unsaid is not neutral. It reads as concealment the moment someone
-runs `git log`, and it costs more credibility than stating it ever would.
+That is a promise about data sovereignty, and it is the reason an organisation
+that cannot send payroll data to a third party would pick this project. It is
+not true today.
 
-**Scope**
-- A "How this was built" section in `README.md`: the code was generated by an AI
-  agent; the architecture, security model and priorities were decided, argued
-  over and recorded by a human; `spec.md` § Agreed direction is that record.
-- Say what it implies about review status — the suites pass and the decisions
-  are documented, but no independent human has read every line.
-- State in `CONTRIBUTING.md` how commits are expected to be shaped from here:
-  one change per commit.
-- **Do not rewrite the existing history.** It is accurate, and rewriting it to
-  look more human would be the actual dishonesty.
+`ASSISTANT_EMBEDDING_PROVIDER` has the same shape — it accepts `openai` while
+`embedQuery()` is deliberately unimplemented — though that one is at least
+documented in the code and tracked by CW-018.
 
-**Acceptance** A contributor learns how this code was produced from the README,
-not by inferring it from the commit sizes.
+**Scope** — one of two, and choosing is the point of the ticket:
 
-**Files** `README.md`, `CONTRIBUTING.md`
+- **Tell the truth (S).** Drop `openai-compatible` from the validated set, and
+  refuse to boot on an enabled assistant whose provider has no implementation,
+  the way a missing API key already does. Rewrite the `llm-provider.ts` comment
+  to describe the seam that exists rather than a capability that does not.
+- **Make it true (M).** Implement an OpenAI-compatible provider so an operator
+  can point a base URL at Ollama, vLLM or LiteLLM and keep the data in-house.
+
+**Recommendation:** take the S now, so nothing in the repository claims what it
+cannot do, and let CW-018 carry the M when somebody asks for it.
+
+**Acceptance**
+- No `ASSISTANT_*` variable accepts a value that changes nothing.
+- An assistant enabled with a provider that has no implementation fails at boot,
+  with a message naming the variable.
+- No comment or document claims provider-agnosticism the code does not deliver.
+
+**Files** `backend/src/core/config/env.validation.ts`,
+`backend/src/modules/assistant/`, `docs/ai-assistant.md`
 
 ---
 
@@ -476,42 +416,7 @@ only the phone, and the recovery codes are shown once with a way to save them.
 
 ---
 
-### CW-027 · Hide the assistant when it is disabled
-`P2` · web · mobile · **S** · 🌱
 
-`ASSISTANT_ENABLED=false` is the default, so the standard install shows an
-assistant entry that cannot work. A control that fails when pressed reads as a
-broken product, not a disabled option. The boot-time rule stays as it is; this
-is only about the UI.
-
-**Scope** Expose the flag on a public config endpoint and hide the assistant
-entry point in both clients when it is off.
-
-**Acceptance** With the assistant disabled, neither client offers any route to
-it, and nothing 404s.
-
-**Files** `web/src/`, `mobile/lib/`, `backend/src/modules/assistant/`
-
----
-
-### CW-029 · Require DCO sign-off on contributions
-`P2` · project · **S** · 🌱
-
-Contributions are taken under Apache-2.0 with no CLA and no sign-off, so there
-is no record that a contributor had the right to submit what they submitted.
-Without a CLA the licence cannot realistically be changed later — an accepted
-consequence, but it should be a stated one.
-
-**Scope** Document DCO in `CONTRIBUTING.md`, add the sign-off line to the pull
-request template, add a CI check for it, and note in `README.md` that there is
-no CLA and why.
-
-**Acceptance** A pull request without `Signed-off-by` fails CI with a message
-saying how to fix it.
-
-**Files** `CONTRIBUTING.md`, `.github/`
-
----
 
 ### CW-031 · A public demo instance
 `P2` · project · **M**
@@ -651,3 +556,10 @@ Kept so the reasoning survives.
 | **CW-020** · Nine high-severity advisories in shipped dependencies | Two root causes, not nine: multer below 2.3.0 (four advisories) and deepmerge-ts below 8.0.0 reached through `@prisma/config`. Everything else was npm reporting the parents. Both are fixed upstream but neither parent has picked the fix up — the latest NestJS 11 still pins multer 2.2.0, and Prisma 7 still pins deepmerge-ts 7 — so the fixed versions are pinned through npm `overrides` rather than by taking two major upgrades for a security patch. `npm audit --omit=dev` is clean, and a CI job re-checks it weekly as well as on every push, because an advisory is published against code that has not changed. The upload endpoint also now states its whole contract as multer limits (one part, named `file`, no text fields), which is what actually neutralises the two field-name advisories: they need a text part, and there is no longer one to send. **The ticket's premise was wrong** in a way worth recording: it called multer "reachable from the public careers page". It is not. `POST /careers/:orgCode/jobs/:slug/apply` takes JSON, and the only multipart route in the system, `POST /files/upload`, sits behind the global auth guard — so this was an authenticated denial of service, not an anonymous one. Still worth fixing; not the emergency the ticket described. The upgrade also broke something on the way in, which is the argument for the tests: Nest maps multer errors by matching their *message*, multer 2.4 reworded `LIMIT_UNEXPECTED_FILE`, and a file sent under the wrong field name started returning 500 with a stack trace. The exception filter now reads `err.code`, as multer's own documentation asks. |
 | **CW-035** · The README was Thai only | A reviewer who does not read Thai could not assess the project at all, which for something that wants contributors is a hard stop. `README.md` is now English with `README.th.md` alongside it and a switcher at the top of both. This is not CW-016: the *interface* is still Thai-only, and the translation layer for both clients remains open. |
 | **CW-034** · The README described the system and showed none of it | Seeing any screen cost a clone, an `.env`, a compose run, a migration and a seed — minutes of commitment from someone who had not yet decided the project was worth any. Twenty-one console screenshots and eight from the app now sit in `docs/screenshots/`, fourteen of them in the README itself. The cross-client recording the ticket also asked for — submit leave on the phone, approve it in the console — was not done; open a new ticket if it is wanted. |
+| **CW-022** · A clean install had no way to create an organisation | The only `organization.upsert` was in `prisma/seed.ts`, which the README itself labels demo data, so anyone installing Cwork for a real organisation had to load fake rows and then clean up after them. `npm run db:init` now creates the organisation, the default roles and the first administrator; the web wizard behind a one-time token covers operators with no shell access. 22c746f. |
+| **CW-026** · The pilot would have collected real location data with nothing written down | Leave and attendance for real employees means real GPS and real sick-leave records, and full retention and purge (CW-015) was too large to precede it. Two documents instead — one for whoever is accountable, one for the employees themselves — stating what is held, that **location is recorded only at the instant of a punch and never continuously**, how long it is kept, and how to have it removed. bf74102. |
+| **CW-027** · The standard install offered an assistant that could not work | `ASSISTANT_ENABLED=false` is the default, so every out-of-the-box deployment showed an entry point that failed when pressed — which reads as a broken product rather than a disabled option. Both clients now read the flag and hide it. 75e3184. |
+| **CW-028** · No tags, no changelog, no way to say which version you were running | Anyone installing Cwork ran whatever `main` happened to be that day. `CHANGELOG.md` in Keep a Changelog form, the 0.x contract stated in the README, releases cut from a workflow rather than by hand, and 0.2.0 tagged. 8ad1f41, 0186861, 14ecc0e — and 14894e5, which stopped the docs telling people to clone a tag that did not exist yet. |
+| **CW-029** · Contributions had no provenance | Apache-2.0 with no CLA and no sign-off meant no record that a contributor had the right to submit what they submitted. DCO is now enforced in CI. Worth restating rather than discovering later: with no CLA the licence cannot realistically be changed, which is an accepted consequence and not an oversight. d73a589. |
+| **CW-030** · Three claims in the documentation were not true | Multi-tenancy the product does not offer, Thai payroll rules nobody qualified has reviewed, and a privacy property that was real but unstated. Each corrected where a reader meets it rather than in a footnote. 419d1e2. |
+| **CW-036** · `git log` told the story before the README did | Almost every commit here was written by an AI agent under direction, several of them adding thousands of lines at once. Saying so costs less credibility than having it inferred, and the existing history was left exactly as it stands — rewriting it to look more human would have been the actual dishonesty. c9ba70a. |
