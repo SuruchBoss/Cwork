@@ -36,8 +36,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # `enablement: true` turns Pages on the first time this runs, so the
-      # repository does not need to be configured by hand beforehand.
+      # Pages has to be switched on once, by hand, under
+      # Settings → Pages → Build and deployment → Source: GitHub Actions.
+      # `enablement: true` asks the API to do it instead, but GITHUB_TOKEN is
+      # refused ("Resource not accessible by integration") on a repository that
+      # has never had Pages, so the first run fails until somebody flips it.
+      # It is kept because it makes every later run a no-op rather than a
+      # second thing to remember if Pages is ever turned off again.
       - uses: actions/configure-pages@v5
         with:
           enablement: true
