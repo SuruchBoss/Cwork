@@ -234,7 +234,8 @@ The API validates its entire environment on boot and refuses to start on:
 - a secret still containing the placeholder from `.env.example`;
 - `CORS_ORIGINS` empty or wildcarded, in production;
 - `FIELD_ENCRYPTION_KEY` that does not decode to exactly 32 bytes;
-- `ASSISTANT_ENABLED=true` with no provider key.
+- `ASSISTANT_ENABLED=true` with no provider, or a provider with no key — at
+  every tier, not only in production.
 
 A misconfigured deploy fails loudly rather than running insecurely.
 

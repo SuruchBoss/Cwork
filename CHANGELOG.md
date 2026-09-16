@@ -34,6 +34,19 @@ entry, tags it and publishes the notes.
   the page scrolled sideways at 320px. Every text and background pair now
   clears WCAG AA in both themes.
 
+- **The assistant reported itself as available when it was not** (CW-038). Three
+  configurations reached `GET /config` as `assistantEnabled: true` while the
+  module handed back the disabled provider, so both clients drew an assistant
+  that answered every question with `ASSISTANT_DISABLED`: the provider name
+  `openai-compatible`, which validates but has no implementation anywhere in
+  `src`; `ASSISTANT_PROVIDER=none` with the assistant switched on; and the
+  Anthropic provider with no API key, outside production. `spec.md` and
+  `security.md` both already stated the rule — an optional feature fails loudly
+  when switched on — but the check ran only in production and only for one
+  provider. **If your `.env` has `ASSISTANT_ENABLED=true` without a usable
+  provider, the API now refuses to start and names what is missing.** The
+  shipped `backend/.env.example` was one such file, and is fixed.
+
 ### Added
 
 - `npm run verify:compose` — checks in CI that every compose service which

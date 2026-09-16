@@ -52,7 +52,7 @@ export interface MalwareScanConfig {
 
 export interface AssistantConfig {
   enabled: boolean;
-  provider: 'anthropic' | 'openai-compatible' | 'none';
+  provider: 'anthropic' | 'none';
   apiKey?: string;
   model: string;
   maxTokens: number;

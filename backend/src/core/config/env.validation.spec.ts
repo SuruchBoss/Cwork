@@ -68,3 +68,63 @@ describe('delivery configuration', () => {
     expect(() => validateEnv({ ...BASE, EMAIL_ENABLED: 'false', SMTP_HOST: '' })).not.toThrow();
   });
 });
+
+/**
+ * An assistant that is switched on and cannot answer.
+ *
+ * spec.md states the rule and security.md lists it among the things that refuse
+ * to boot, but the check ran only in production and only for the Anthropic
+ * provider. Every other way of switching the assistant on reached `GET /config`
+ * as `assistantEnabled: true`, both clients drew it, and every question came
+ * back ASSISTANT_DISABLED — a deployment reporting a capability it lacks.
+ */
+describe('assistant configuration', () => {
+  it('boots with the assistant off, which is the default', () => {
+    const config = validateEnv({ ...BASE });
+
+    expect(config.ASSISTANT_ENABLED).toBe(false);
+    expect(config.ASSISTANT_PROVIDER).toBe('none');
+  });
+
+  it('rejects a provider name that has no implementation', () => {
+    expect(() =>
+      validateEnv({ ...BASE, ASSISTANT_ENABLED: 'true', ASSISTANT_PROVIDER: 'openai-compatible' }),
+    ).toThrow(/ASSISTANT_PROVIDER must be one of the following values: anthropic, none/);
+  });
+
+  it('refuses to boot with the assistant on and no provider named', () => {
+    expect(() =>
+      validateEnv({ ...BASE, ASSISTANT_ENABLED: 'true', ASSISTANT_PROVIDER: 'none' }),
+    ).toThrow(/requires ASSISTANT_PROVIDER to name a provider/);
+  });
+
+  /** The case the production-only check used to miss everywhere else. */
+  it('refuses to boot with anthropic and no key, outside production too', () => {
+    expect(() =>
+      validateEnv({
+        ...BASE,
+        NODE_ENV: 'development',
+        ASSISTANT_ENABLED: 'true',
+        ASSISTANT_PROVIDER: 'anthropic',
+      }),
+    ).toThrow(/requires ANTHROPIC_API_KEY/);
+  });
+
+  it('boots when the assistant is on and can actually answer', () => {
+    const config = validateEnv({
+      ...BASE,
+      ASSISTANT_ENABLED: 'true',
+      ASSISTANT_PROVIDER: 'anthropic',
+      ANTHROPIC_API_KEY: 'sk-ant-example',
+    });
+
+    expect(config.ASSISTANT_ENABLED).toBe(true);
+    expect(config.ASSISTANT_PROVIDER).toBe('anthropic');
+  });
+
+  it('says nothing about an assistant that is off, however it is configured', () => {
+    expect(() =>
+      validateEnv({ ...BASE, ASSISTANT_ENABLED: 'false', ASSISTANT_PROVIDER: 'none' }),
+    ).not.toThrow();
+  });
+});

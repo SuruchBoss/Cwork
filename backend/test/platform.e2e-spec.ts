@@ -15,7 +15,15 @@ describe('Platform config (e2e)', () => {
     let ctx: TestContext;
 
     beforeAll(async () => {
-      ctx = await createTestApp({ env: { ASSISTANT_ENABLED: 'true' } });
+      // A provider and a key, because switching the assistant on without one
+      // is now refused at boot rather than reported as an assistant that works.
+      ctx = await createTestApp({
+        env: {
+          ASSISTANT_ENABLED: 'true',
+          ASSISTANT_PROVIDER: 'anthropic',
+          ANTHROPIC_API_KEY: 'sk-ant-not-a-real-key-never-called-in-this-test',
+        },
+      });
     });
 
     afterAll(async () => {

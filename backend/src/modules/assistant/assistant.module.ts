@@ -38,7 +38,22 @@ import { LLM_PROVIDER, type LlmProvider } from './providers/llm-provider';
         disabled: DisabledProvider,
       ): LlmProvider => {
         if (!config.assistant.enabled) return disabled;
-        return config.assistant.provider === 'anthropic' ? anthropic : disabled;
+
+        // Exhaustive on purpose. A `?:` falling through to `disabled` is how a
+        // provider named in the environment but never implemented turned into a
+        // deployment that reported an assistant and refused every question.
+        // Validation already rejects an unknown name, so this only fires if the
+        // two lists drift apart — and then it fails at boot, not at a question.
+        switch (config.assistant.provider) {
+          case 'anthropic':
+            return anthropic;
+          case 'none':
+            return disabled;
+          default: {
+            const unreachable: never = config.assistant.provider;
+            throw new Error(`ASSISTANT_PROVIDER="${String(unreachable)}" has no implementation`);
+          }
+        }
       },
     },
   ],

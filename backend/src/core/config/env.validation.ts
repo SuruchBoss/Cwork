@@ -312,7 +312,10 @@ export class EnvironmentVariables {
   @IsBoolean()
   ASSISTANT_ENABLED: boolean = false;
 
-  @IsIn(['anthropic', 'openai-compatible', 'none'])
+  // Every value here must name a provider that exists in
+  // `modules/assistant/providers`. A value the factory cannot honour boots
+  // clean and hands back a disabled assistant, which is worse than refusing.
+  @IsIn(['anthropic', 'none'])
   ASSISTANT_PROVIDER: string = 'none';
 
   @IsOptional()
@@ -382,6 +385,7 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   // mistake at every tier, and the symptom — a queue quietly filling with
   // retries nobody is watching — reads nothing like its cause.
   assertDeliveryConfiguration(config);
+  assertAssistantConfiguration(config);
 
   if (config.NODE_ENV === 'production') {
     assertProductionSafety(config);
@@ -435,6 +439,41 @@ function assertDeliveryConfiguration(config: EnvironmentVariables): void {
 }
 
 /**
+ * `ASSISTANT_ENABLED=true` has to mean an assistant that can answer.
+ *
+ * spec.md states the rule — an optional feature fails loudly when switched on
+ * and stays quiet when off — and security.md lists it among the things that
+ * refuse to boot, but the code only enforced it in production and only for the
+ * Anthropic provider. Everywhere else the flag reached `GET /config`, both
+ * clients drew the assistant, and every question came back
+ * ASSISTANT_DISABLED: the deployment reporting a capability it does not have.
+ *
+ * Not production-only, for the same reason the delivery channels are not: a
+ * feature switched on and left unconfigured is a mistake at every tier.
+ */
+function assertAssistantConfiguration(config: EnvironmentVariables): void {
+  if (!config.ASSISTANT_ENABLED) return;
+
+  const problems: string[] = [];
+
+  if (config.ASSISTANT_PROVIDER === 'none') {
+    problems.push(
+      'ASSISTANT_ENABLED=true requires ASSISTANT_PROVIDER to name a provider — currently "anthropic"',
+    );
+  }
+  if (config.ASSISTANT_PROVIDER === 'anthropic' && !config.ANTHROPIC_API_KEY) {
+    problems.push('ASSISTANT_ENABLED=true with provider "anthropic" requires ANTHROPIC_API_KEY');
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `The assistant is switched on but cannot answer:\n${problems.map((p) => `  - ${p}`).join('\n')}\n` +
+        '  Set ASSISTANT_ENABLED=false to run without it; everything else works unchanged.',
+    );
+  }
+}
+
+/**
  * Guardrails that only matter in production. Keeping them here means a
  * misconfigured deploy refuses to start instead of quietly running insecurely.
  */
@@ -453,14 +492,6 @@ function assertProductionSafety(config: EnvironmentVariables): void {
   if (config.CORS_ORIGINS.includes('*')) {
     problems.push('CORS_ORIGINS must not contain a wildcard in production');
   }
-  if (
-    config.ASSISTANT_ENABLED &&
-    config.ASSISTANT_PROVIDER === 'anthropic' &&
-    !config.ANTHROPIC_API_KEY
-  ) {
-    problems.push('ASSISTANT_ENABLED=true with provider "anthropic" requires ANTHROPIC_API_KEY');
-  }
-
   if (problems.length > 0) {
     throw new Error(
       `Unsafe production configuration:\n${problems.map((p) => `  - ${p}`).join('\n')}`,

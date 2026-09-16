@@ -102,10 +102,17 @@ Anthropic (`claude-sonnet-5`); `DisabledProvider` is selected when the assistant
 is off, so the endpoints return a clear
 `ASSISTANT_DISABLED` rather than failing oddly.
 
-Implementing a provider — including against a self-hosted model — means
-implementing `complete()` and registering it in `AssistantModule`. This matters
-for an HRIS: an operator must be able to choose which model sees payroll data,
-or run one themselves.
+`ASSISTANT_PROVIDER` accepts exactly the two names that have an implementation,
+`anthropic` and `none`, and `ASSISTANT_ENABLED=true` without a provider that can
+answer is refused at boot. A name the factory cannot honour would otherwise boot
+clean, report the assistant through `GET /config`, and fail every question.
+
+Implementing another provider — including against a self-hosted model — means
+implementing `complete()`, registering it in `AssistantModule` and adding its
+name to the validated set. This matters for an HRIS: an operator must be able to
+choose which model sees payroll data, or run one themselves. That is not
+something the project ships today; [CW-018](https://github.com/SuruchBoss/Cwork/issues/16)
+tracks it for the OpenAI-compatible APIs that Ollama, vLLM and LiteLLM expose.
 
 ## Operating it
 

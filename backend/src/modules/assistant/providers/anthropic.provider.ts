@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { APP_CONFIG } from '../../../core/config/config.module';
 import type { RootConfig } from '../../../core/config/configuration';
 import { BusinessRuleError } from '../../../core/errors/domain.errors';
@@ -8,19 +8,14 @@ import type { LlmContentBlock, LlmProvider, LlmRequest, LlmResponse } from './ll
 @Injectable()
 export class AnthropicProvider implements LlmProvider {
   readonly name = 'anthropic';
-  private readonly logger = new Logger(AnthropicProvider.name);
   private readonly client: Anthropic | null;
 
+  // Enabled-with-no-key is refused at boot, so the client is null only when the
+  // assistant is off — there is nothing left here to warn about.
   constructor(@Inject(APP_CONFIG) private readonly config: RootConfig) {
     this.client = config.assistant.apiKey
       ? new Anthropic({ apiKey: config.assistant.apiKey })
       : null;
-
-    if (config.assistant.enabled && !this.client) {
-      this.logger.warn(
-        'ASSISTANT_ENABLED is true but ANTHROPIC_API_KEY is missing; the assistant will stay off',
-      );
-    }
   }
 
   isAvailable(): boolean {

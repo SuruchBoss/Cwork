@@ -1,9 +1,15 @@
 /**
  * Minimal LLM abstraction.
  *
- * Cwork is provider-agnostic on purpose: an HRIS holds payroll and national
- * ID data, and an operator must be able to choose (or self-host) the model that
- * sees it. Implement this interface and register it in AssistantModule.
+ * This is a seam, not a capability: two implementations ship, `AnthropicProvider`
+ * and `DisabledProvider`, and `ASSISTANT_PROVIDER` accepts exactly those two
+ * names. An operator who needs the model that sees payroll and national ID data
+ * to be one they run has to write an implementation of this interface and
+ * register it in `AssistantModule` — CW-018 tracks doing that for the
+ * OpenAI-compatible APIs that Ollama, vLLM and LiteLLM expose.
+ *
+ * Until then nothing here claims otherwise. A provider name the factory cannot
+ * honour is rejected at boot rather than quietly resolving to the disabled one.
  */
 
 export interface LlmTextBlock {
