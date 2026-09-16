@@ -7,7 +7,7 @@
 
 ออกแบบตามแนวปฏิบัติด้านแรงงานไทย ติดตั้งใช้งานบนเซิร์ฟเวอร์ของคุณเองได้
 
-[English](./README.md) · **ภาษาไทย**
+[English](./README.md) · **ภาษาไทย** · [หน้าแนะนำระบบ](https://suruchboss.github.io/Cwork/)
 
 [![CI](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)

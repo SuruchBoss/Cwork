@@ -1,0 +1,50 @@
+name: Landing page
+
+# Publishes landing/ to https://suruchboss.github.io/Cwork/.
+#
+# The page references its assets relatively, so it works unchanged under the
+# repository subpath. Nothing else in the repository is published: the artifact
+# is the landing directory and only the landing directory.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'landing/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and never cancel one in flight — a half-finished
+# deployment would take the page down rather than leave the last one up.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # `enablement: true` turns Pages on the first time this runs, so the
+      # repository does not need to be configured by hand beforehand.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: landing
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
