@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { AttendanceModule } from '../attendance/attendance.module';
 import { DocumentsModule } from '../documents/documents.module';

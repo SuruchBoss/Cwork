@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { APP_CONFIG } from '../config/config.module';
+import { APP_CONFIG } from '../config/config.token';
 import type { RootConfig } from '../config/configuration';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermanentDeliveryError } from './delivery-error';

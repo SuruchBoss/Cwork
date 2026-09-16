@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AuditAction, Prisma, UserStatus } from '@prisma/client';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { BusinessRuleError, ConflictError } from '../../core/errors/domain.errors';
 import { ADVISORY_LOCKS, ADVISORY_LOCK_NAMESPACE } from '../../core/prisma/advisory-lock';

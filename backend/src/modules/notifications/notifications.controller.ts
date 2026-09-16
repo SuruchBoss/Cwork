@@ -18,7 +18,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { Public } from '../../core/security/decorators';

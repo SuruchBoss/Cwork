@@ -7,7 +7,7 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
-import { APP_CONFIG } from '../config/config.module';
+import { APP_CONFIG } from '../config/config.token';
 import type { RootConfig } from '../config/configuration';
 
 const ALGORITHM = 'aes-256-gcm';

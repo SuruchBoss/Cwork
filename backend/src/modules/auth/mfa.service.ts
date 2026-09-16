@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuditAction, type User } from '@prisma/client';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { BusinessRuleError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';

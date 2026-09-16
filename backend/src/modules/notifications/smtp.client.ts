@@ -1,7 +1,7 @@
 import { connect as netConnect, type Socket } from 'node:net';
 import { connect as tlsConnect, type TLSSocket } from 'node:tls';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { PermanentDeliveryError } from '../../core/outbox/delivery-error';
 import {

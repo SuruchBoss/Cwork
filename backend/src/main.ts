@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { APP_CONFIG } from './core/config/config.module';
+import { APP_CONFIG } from './core/config/config.token';
 import type { RootConfig } from './core/config/configuration';
 import { PrismaService } from './core/prisma/prisma.service';
 

@@ -21,7 +21,8 @@
 import { createInterface, type Interface } from 'node:readline/promises';
 import { Logger, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { APP_CONFIG, AppConfigModule } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
+import { AppConfigModule } from '../../core/config/config.module';
 import type { RootConfig } from '../../core/config/configuration';
 import { DomainError } from '../../core/errors/domain.errors';
 import { PrismaModule } from '../../core/prisma/prisma.module';

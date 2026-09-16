@@ -74,7 +74,14 @@ jobs:
       - name: Verify hand-written database objects
         run: npm run db:verify
 
-      - run: npm test
+      # Unset, deliberately: the unit tests must pass on a clean clone, and this
+      # job's env block would otherwise hide a file that reads process.env at
+      # import time. That is exactly what happened — naming APP_CONFIG pulled in
+      # AppConfigModule, whose decorator validated the environment on load, so
+      # `git clone && npm ci && npm test` failed on a suite that touches neither
+      # a database nor a config. CI was green throughout.
+      - name: Unit tests, with the environment a fresh clone has
+        run: env -u DATABASE_URL -u JWT_ACCESS_SECRET -u JWT_REFRESH_SECRET -u FIELD_ENCRYPTION_KEY npm test
 
       # Black-box run against the real application: auth, RBAC row scoping,
       # the leave ledger, idempotent punch replay, the payroll lifecycle with
@@ -128,6 +135,24 @@ jobs:
       - run: dart format --line-length 100 --set-exit-if-changed lib test
       - run: flutter analyze --fatal-infos
       - run: flutter test
+
+  landing:
+    name: Landing page
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # pages.yml checks this too, but only when it deploys — which is only on
+      # a push to main that touches landing/. A pull request editing the Thai
+      # page and forgetting to regenerate the English one would go green.
+      - name: The English page is regenerated from the Thai one
+        run: |
+          node landing/build-en.mjs
+          git diff --exit-code -- landing/en/index.html
 
   security:
     name: Dependency advisories

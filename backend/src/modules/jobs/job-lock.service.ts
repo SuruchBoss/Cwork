@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { JOB_LOCK_NAMESPACE, lockIdFor, type JobName } from './domain/job-locks';

@@ -1,6 +1,6 @@
 import { createSign } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { PermanentDeliveryError } from '../../core/outbox/delivery-error';
 

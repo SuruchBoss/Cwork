@@ -16,7 +16,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/app.module';
 import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
-import { APP_CONFIG } from 'src/core/config/config.module';
+import { APP_CONFIG } from 'src/core/config/config.token';
 import type { RootConfig } from 'src/core/config/configuration';
 
 /**

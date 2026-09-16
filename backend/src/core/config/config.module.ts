@@ -1,9 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule, ConfigService } from '@nestjs/config';
+import { APP_CONFIG } from './config.token';
 import { buildConfig, RootConfig } from './configuration';
 import { validateEnv } from './env.validation';
-
-export const APP_CONFIG = Symbol('APP_CONFIG');
 
 /**
  * Wraps @nestjs/config so the rest of the app injects a typed `RootConfig`

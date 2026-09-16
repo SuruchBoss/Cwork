@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { APP_CONFIG } from '../../core/config/config.module';
+import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { PermanentDeliveryError } from '../../core/outbox/delivery-error';
 import { OutboxRegistry, type OutboxEventRecord } from '../../core/outbox/outbox.registry';

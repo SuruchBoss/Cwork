@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Inject, Injectable } from '@nestjs/common';
-import { APP_CONFIG } from '../../../core/config/config.module';
+import { APP_CONFIG } from '../../../core/config/config.token';
 import type { RootConfig } from '../../../core/config/configuration';
 import { BusinessRuleError } from '../../../core/errors/domain.errors';
 import type { LlmContentBlock, LlmProvider, LlmRequest, LlmResponse } from './llm-provider';
