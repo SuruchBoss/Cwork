@@ -46,6 +46,10 @@ export class KnowledgeService {
 
     const lexical = await this.lexicalSearch(organizationId, trimmed, roleKeys, limit);
 
+    // 'none' is the only value ASSISTANT_EMBEDDING_PROVIDER accepts today, so
+    // this always returns and everything below is waiting on CW-018 to
+    // implement embedQuery. The branch stays because it is the seam that work
+    // plugs into; what was removed is the setting that pretended to switch it.
     if (this.config.assistant.embeddingProvider === 'none') return lexical;
 
     try {

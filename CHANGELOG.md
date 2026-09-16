@@ -33,7 +33,6 @@ entry, tags it and publishes the notes.
   grey on orange, the savings figure was drawn at 1.9:1 on the dark band, and
   the page scrolled sideways at 320px. Every text and background pair now
   clears WCAG AA in both themes.
-
 - **The assistant reported itself as available when it was not** (CW-038). Three
   configurations reached `GET /config` as `assistantEnabled: true` while the
   module handed back the disabled provider, so both clients drew an assistant
@@ -46,6 +45,20 @@ entry, tags it and publishes the notes.
   provider. **If your `.env` has `ASSISTANT_ENABLED=true` without a usable
   provider, the API now refuses to start and names what is missing.** The
   shipped `backend/.env.example` was one such file, and is fixed.
+  `ASSISTANT_EMBEDDING_PROVIDER` had the same shape and is restricted the same
+  way: `openai` validated, routed knowledge search through the vector path, and
+  returned exactly what `none` returns, because the embedding call is not
+  implemented until CW-018. It accepts `none` until that lands.
+- **The landing page had no document head**, so every phone laid it out at
+  around 980px and zoomed out. It now has a doctype, a language, a viewport,
+  a description, canonical and hreflang links, and Open Graph cards.
+- **Every console screenshot on the landing page was stretched 93% too tall.**
+  The width and height attributes on an `<img>` map to the CSS properties, and
+  the rule set only `width`, leaving the attribute's height standing.
+- The Thai copy on the landing page read like a translation — calques
+  (ติดธง for "flagged"), transliterations (เอนจิน, สตาร์ท, ไมเกรชัน, เซสชัน),
+  literal renderings (หน่วยความจำถาวร, ฝั่งเครื่อง, โดยค่าตั้งต้น), English
+  passive voice, and one invented benchmark. Rewritten throughout.
 
 ### Added
 
@@ -53,6 +66,11 @@ entry, tags it and publishes the notes.
   boots application code is handed the environment the application refuses to
   start without, derived from the real validation schema rather than a second
   list that can drift.
+- **An English landing page** at `/en/`, generated from the Thai one by
+  `landing/build-en.mjs` so the two cannot drift. A Thai string with no
+  translation fails the build. The Pages workflow regenerates it and fails on a
+  diff.
+- The landing page is published to GitHub Pages and linked from both READMEs.
 
 ## [0.2.0] — 2026-09-15
 

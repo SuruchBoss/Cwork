@@ -56,7 +56,7 @@ export interface AssistantConfig {
   apiKey?: string;
   model: string;
   maxTokens: number;
-  embeddingProvider: 'none' | 'openai';
+  embeddingProvider: 'none';
   embeddingModel: string;
   openAiApiKey?: string;
   dailyMessageLimit: number;
@@ -162,7 +162,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       apiKey: env.ANTHROPIC_API_KEY,
       model: env.ASSISTANT_MODEL,
       maxTokens: env.ASSISTANT_MAX_TOKENS,
-      embeddingProvider: env.ASSISTANT_EMBEDDING_PROVIDER as 'none' | 'openai',
+      embeddingProvider: env.ASSISTANT_EMBEDDING_PROVIDER as 'none',
       embeddingModel: env.ASSISTANT_EMBEDDING_MODEL,
       openAiApiKey: env.OPENAI_API_KEY,
       dailyMessageLimit: env.ASSISTANT_DAILY_MESSAGE_LIMIT,

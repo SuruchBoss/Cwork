@@ -330,7 +330,11 @@ export class EnvironmentVariables {
   @Min(256)
   ASSISTANT_MAX_TOKENS: number = 1500;
 
-  @IsIn(['none', 'openai'])
+  // 'openai' will come back with CW-018, which is what implements embedQuery.
+  // Until then it validates, routes search through semanticSearch, and returns
+  // exactly what 'none' returns — a setting the operator can change with no
+  // effect whatsoever.
+  @IsIn(['none'])
   ASSISTANT_EMBEDDING_PROVIDER: string = 'none';
 
   @IsString()

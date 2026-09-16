@@ -128,3 +128,21 @@ describe('assistant configuration', () => {
     ).not.toThrow();
   });
 });
+
+/**
+ * The same rule one field further down: a setting the operator can change with
+ * no effect is a setting that lies. `openai` validated, sent knowledge search
+ * through `semanticSearch`, and came back with exactly what `none` returns,
+ * because `embedQuery` is not implemented until CW-018.
+ */
+describe('assistant embeddings', () => {
+  it('accepts only a provider that changes the result', () => {
+    expect(() => validateEnv({ ...BASE, ASSISTANT_EMBEDDING_PROVIDER: 'openai' })).toThrow(
+      /ASSISTANT_EMBEDDING_PROVIDER must be one of the following values: none/,
+    );
+  });
+
+  it('defaults to none', () => {
+    expect(validateEnv({ ...BASE }).ASSISTANT_EMBEDDING_PROVIDER).toBe('none');
+  });
+});
