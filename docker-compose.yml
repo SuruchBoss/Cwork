@@ -135,6 +135,14 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-cwork}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cwork}?schema=public
       # The seed writes encrypted columns, so it needs the same key as the API.
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env}
+      # `prisma migrate deploy` needs neither of these, but the two commands
+      # this service is documented to run — `db:seed`, which drives the real
+      # services to give the demo company a history, and `db:init`, which
+      # creates the first organisation — both boot Nest, and Nest validates the
+      # whole environment before any module starts. Without them the seed stops
+      # half way and `db:init` never runs at all.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env}
     command: ["npx", "prisma", "migrate", "deploy"]
     restart: "no"
 

@@ -33,6 +33,7 @@
     "db:seed:base": "ts-node --transpile-only prisma/seed.ts",
     "db:demo": "ts-node --transpile-only prisma/demo-activity.ts",
     "db:verify": "node scripts/verify-db-objects.mjs",
+    "verify:compose": "ts-node --transpile-only scripts/verify-compose-env.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {

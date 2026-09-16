@@ -61,6 +61,12 @@ jobs:
       - run: npx prisma generate
       - run: npm run typecheck
       - run: npm run lint
+
+      # Nothing else exercises docker-compose.yml, so a service can quietly
+      # stop being able to boot the code it is documented to run.
+      - name: Compose services can boot what they are documented to run
+        run: npm run verify:compose
+
       - run: npx prisma migrate deploy
 
       # Guards against a generated Prisma migration silently dropping the
