@@ -13,7 +13,7 @@
     --sunk:      #e9ebe6;
     --ink:       #191c1b;
     --ink-soft:  #4b534f;
-    --ink-faint: #767f7a;
+    --ink-faint: #646d68;
     --line:      #d8ddd7;
     --line-soft: #e6eae4;
 
@@ -22,9 +22,11 @@
     --pine-ink:  #e8f1ed;
     --pine-dim:  #9dbcb2;
 
-    --pop:       #d4531c;      /* money, and the one loud thing on the page */
+    --pop:       #bd450f;      /* money, and the one loud thing on the page */
     --pop-ink:   #fff4ee;
     --pop-soft:  #fae6dc;
+    --pop-deep:  #8f3910;      /* small text in the accent colour */
+    --pop-lift:  #f9a97e;      /* the same, over the dark pine band */
 
     --term-bg:   #11201d;
     --term-ink:  #dceae5;
@@ -33,7 +35,7 @@
     --shadow-sm: 0 1px 2px rgb(25 28 27 / .06);
     --shadow:    0 2px 4px rgb(25 28 27 / .04), 0 14px 32px -16px rgb(25 28 27 / .28);
 
-    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --mono: "IBM Plex Mono", "IBM Plex Sans Thai", ui-monospace, monospace;
 
     /* Thai display type stacks vowel and tone marks, so leading never drops
        below ~1.2 no matter how large the size gets. */
@@ -70,6 +72,8 @@
       --pop:       #f0703a;
       --pop-ink:   #1d0f08;
       --pop-soft:  #2d1a11;
+      --pop-deep:  #f5a37b;
+      --pop-lift:  #f9a97e;
 
       --term-bg:   #080f0e;
       --term-ink:  #dceae5;
@@ -98,6 +102,8 @@
     --pop:       #f0703a;
     --pop-ink:   #1d0f08;
     --pop-soft:  #2d1a11;
+    --pop-deep:  #f5a37b;
+    --pop-lift:  #f9a97e;
 
     --term-bg:   #080f0e;
     --term-ink:  #dceae5;
@@ -138,12 +144,14 @@
   .wrap { width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: 22px; }
 
   section { padding-block: clamp(62px, 8vw, 112px); }
+  /* The bar is sticky, so anything jumped to by anchor has to clear it. */
+  :target, section[id], main[id] { scroll-margin-top: 96px; }
 
   .eyebrow {
     display: inline-block;
     font-family: var(--mono); font-size: var(--t-micro); font-weight: 500;
     letter-spacing: .14em; text-transform: uppercase;
-    color: var(--pop); margin-bottom: 14px;
+    color: var(--pop-deep); margin-bottom: 14px;
   }
   .lede { color: var(--ink-soft); font-size: var(--t-lede); font-weight: 300; max-width: var(--prose); }
   .shead { margin-bottom: clamp(34px, 4vw, 54px); display: grid; gap: 16px; }
@@ -167,11 +175,13 @@
     font-family: var(--mono); font-size: .68rem; font-weight: 500;
   }
   .bar nav { display: flex; gap: 26px; margin-inline-start: auto; flex-wrap: wrap; align-items: center; }
-  .bar nav a {
+  /* :not(.btn) — otherwise this beats .btn--pop and sets the download
+     button's label in muted grey on orange. */
+  .bar nav a:not(.btn) {
     text-decoration: none; color: var(--ink-soft); font-size: var(--t-small);
     padding-block: 5px; border-bottom: 1.5px solid transparent; transition: color .15s, border-color .15s;
   }
-  .bar nav a:hover { color: var(--ink); border-bottom-color: var(--pop); }
+  .bar nav a:not(.btn):hover { color: var(--ink); border-bottom-color: var(--pop); }
   .bar .btn { padding: 8px 16px; font-size: var(--t-small); }
 
   /* ================================================================ button */
@@ -197,26 +207,34 @@
 
   /* ================================================================== hero */
   .hero { padding-block: clamp(54px, 7vw, 92px) clamp(46px, 6vw, 80px); }
-  .hero__grid {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
-    gap: clamp(34px, 4vw, 58px); align-items: center;
-  }
-  .hero h1 { max-width: 14ch; }
+  /* The headline spans the full measure and the two columns sit under it.
+     Thai has no word spaces, so each phrase is its own block: that fixes the
+     break where it belongs instead of letting the line breaker pick, and a
+     phrase too wide for a phone still wraps on its own without overflowing. */
+  .hero h1 { margin-bottom: clamp(24px, 2.6vw, 36px); }
+  .hero h1 .line { display: block; }
   .hero h1 em { font-style: normal; color: var(--pop); }
-  .nb { white-space: nowrap; }
-  .hero__lede { margin-top: 22px; max-width: 48ch; }
+  /* The headline, the promise and the product each get the full measure in
+     turn. Nothing sits beside the headline, so a long Thai phrase has room
+     to be set large without crowding anything. */
+  .hero__say {
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: clamp(24px, 3vw, 52px); align-items: end;
+    margin-bottom: clamp(38px, 4.4vw, 64px);
+  }
+  .hero__lede { max-width: 46ch; }
 
   .tagrow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
   .tag {
     font-size: var(--t-micro); padding: 5px 12px; border-radius: 999px;
     border: 1px solid var(--line); color: var(--ink-faint); background: var(--card);
   }
-  .tag--live { color: var(--pine-soft); background: var(--pop-soft); border-color: transparent; font-weight: 500; }
+  .tag--live { color: var(--pop-deep); background: var(--pop-soft); border-color: transparent; font-weight: 500; }
 
-  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
   .handoff {
-    display: flex; align-items: center; gap: 11px; margin-top: 24px;
+    display: flex; align-items: center; gap: 11px; margin-top: 18px;
     font-size: var(--t-small); color: var(--ink-faint);
   }
   .handoff svg { width: 18px; height: 18px; flex: none; color: var(--ink-faint); }
@@ -224,21 +242,29 @@
 
   .hero__shot { margin: 0; min-width: 0; }
   .hero__shot video {
-    width: 100%; border-radius: var(--r); border: 1px solid var(--line);
+    display: block; width: 100%; border-radius: var(--r);
+    border: 1px solid var(--line);
     box-shadow: var(--shadow); background: var(--sunk);
   }
-  .hero__shot figcaption { margin-top: 12px; font-size: var(--t-small); color: var(--ink-faint); }
+  .hero__shot figcaption {
+    margin-top: 13px; font-size: var(--t-small); color: var(--ink-faint);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero__shot figcaption::before {
+    content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%;
+    background: var(--pop);
+  }
 
   /* ============================================================ calculator
      The one thing an owner came here to work out, so it is the one loud
      object on the page and it opens with a plausible company already in it. */
   .calc { background: var(--pine); color: var(--pine-ink); }
-  .calc .eyebrow { color: var(--pop); }
+  .calc .eyebrow { color: var(--pop-lift); }
   .calc h2 { max-width: 18ch; }
   .calc .lede { color: var(--pine-dim); }
 
   .calc__grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr));
     gap: clamp(28px, 4vw, 56px); align-items: start;
   }
   .field { display: grid; gap: 7px; margin-bottom: 22px; }
@@ -264,26 +290,42 @@
   .result__label { font-size: var(--t-small); color: var(--pine-dim); }
   .result__big {
     font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
-    font-size: var(--t-huge); line-height: 1.1; color: var(--pop);
+    font-size: var(--t-huge); line-height: 1.1; color: var(--pop-lift);
     letter-spacing: -.02em; margin: 6px 0 2px; word-break: break-word;
   }
   .result__sub { font-size: var(--t-small); color: var(--pine-dim); }
   .result__split { display: grid; gap: 14px; margin-top: 24px; padding-top: 22px; border-top: 1px solid color-mix(in srgb, var(--pine-ink) 18%, transparent); }
   .lineitem { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; font-size: .95rem; }
   .lineitem b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .lineitem--free b { color: var(--pop); }
+  .lineitem--free b { color: var(--pop-lift); }
 
   /* ================================================================ plates */
-  .plates { display: grid; grid-template-columns: repeat(auto-fit, minmax(292px, 1fr)); gap: 26px; }
-  .plate { margin: 0; min-width: 0; }
-  .plate img {
-    width: 100%; border-radius: var(--r); border: 1px solid var(--line);
-    box-shadow: var(--shadow-sm); background: var(--card);
+  /* Three screenshots side by side are three thumbnails nobody can read. One
+     per row, alternating sides, is wide enough to show the actual product. */
+  .plates { display: grid; gap: clamp(44px, 5vw, 78px); }
+  .plate {
+    margin: 0; display: grid; align-items: center;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: clamp(24px, 3.2vw, 50px);
   }
-  .plate figcaption { margin-top: 12px; font-size: var(--t-small); color: var(--ink-faint); }
+  .plate > img { grid-column: 1; grid-row: 1; }
+  .plate > figcaption { grid-column: 2; grid-row: 1; }
+  .plate:nth-child(even) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); }
+  .plate:nth-child(even) > img { grid-column: 2; }
+  .plate:nth-child(even) > figcaption { grid-column: 1; }
+  .plate img {
+    display: block; width: 100%; border-radius: var(--r);
+    border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
+  }
+  .plate figcaption { display: grid; gap: 9px; }
+  .plate figcaption b {
+    font-family: "Bai Jamjuree", sans-serif; font-weight: 600;
+    font-size: var(--t-h3); line-height: 1.32; color: var(--ink);
+  }
+  .plate figcaption span { color: var(--ink-soft); }
 
   /* ============================================================== features */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
   .cell {
     background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r);
     padding: 28px 26px 30px; display: flex; flex-direction: column; gap: 11px;
@@ -295,7 +337,12 @@
   .cell li { margin-bottom: 5px; }
 
   /* ================================================================== pdpa */
-  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(30px, 4vw, 58px); align-items: start; }
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: clamp(30px, 4vw, 58px); align-items: start; }
+  /* The steps run twice as long as the terminal beside them; let it ride down
+     rather than leaving half the column empty. */
+  @media (min-width: 881px) {
+    #install .term { position: sticky; top: 92px; }
+  }
   .claims { list-style: none; margin: 0; padding: 0; }
   .claims li { display: grid; grid-template-columns: 22px 1fr; gap: 13px; padding: 15px 0; align-items: start; border-bottom: 1px solid var(--line-soft); }
   .claims li:first-child { border-top: 1px solid var(--line-soft); }
@@ -308,7 +355,7 @@
     padding: 24px 26px; font-size: .94rem; color: var(--ink-soft);
   }
   .aside strong { color: var(--ink); }
-  .aside a { color: var(--pop); font-weight: 600; text-underline-offset: 3px; }
+  .aside a { color: var(--pop-deep); font-weight: 600; text-underline-offset: 3px; }
 
   /* ============================================================ guarantees
      A schedule, not another card grid — these are undertakings, and the eye
@@ -318,8 +365,11 @@
   .row p { color: var(--ink-soft); font-size: .97rem; max-width: 58ch; }
 
   /* =================================================================== app */
-  .phones { display: flex; gap: 20px; flex-wrap: wrap; }
-  .phones img { width: 186px; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .phones { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .phones img {
+    width: 196px; height: auto;
+    border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
 
   /* =============================================================== install */
   .term {
@@ -345,7 +395,7 @@
     counter-increment: step; content: counter(step);
     font-family: var(--mono); font-size: .8rem; font-weight: 500;
     width: 28px; height: 28px; border-radius: 50%;
-    background: var(--pop-soft); color: var(--pop);
+    background: var(--pop-soft); color: var(--pop-deep);
     display: grid; place-items: center;
   }
   .step h3 { font-size: var(--t-body); font-weight: 600; margin-bottom: 5px; }
@@ -358,12 +408,6 @@
   .cmd .p { color: #e8a87c; }
   .cmd .c { color: var(--term-dim); }
 
-  /* =============================================================== honesty */
-  .honest { background: var(--sunk); border-block: 1px solid var(--line-soft); }
-  .honest ul { margin: 0; padding-inline-start: 1.15em; color: var(--ink-soft); max-width: var(--prose); }
-  .honest li { margin-bottom: 11px; }
-  .honest strong { color: var(--ink); }
-
   /* ================================================================ footer */
   footer { border-top: 1px solid var(--line); padding-block: 44px 60px; }
   .foot { display: flex; flex-wrap: wrap; gap: 26px 48px; align-items: flex-start; justify-content: space-between; }
@@ -373,7 +417,10 @@
   .foot p { font-size: var(--t-small); color: var(--ink-faint); }
 
   @media (max-width: 880px) {
-    .hero__grid { grid-template-columns: minmax(0, 1fr); }
+    .hero__say { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; }
+    .plate, .plate:nth-child(even) { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .plate > img, .plate:nth-child(even) > img { grid-column: 1; grid-row: 1; }
+    .plate > figcaption, .plate:nth-child(even) > figcaption { grid-column: 1; grid-row: 2; }
     .bar nav a:not(.btn) { display: none; }
     .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   }
@@ -410,15 +457,16 @@
         <span class="tag">ทำตามกฎหมายแรงงานไทย</span>
       </div>
 
-      <div class="hero__grid">
-        <div>
-          <h1><span class="nb">งาน HR ครบทั้งบริษัท</span> <span class="nb">ไม่ต้องจ่าย<em>รายหัว</em></span></h1>
-          <p class="lede hero__lede">
+      <h1><span class="line">งาน HR ครบทั้งบริษัท</span><span class="line">ไม่ต้องจ่าย<em>รายหัว</em></span></h1>
+
+      <div class="hero__say">
+        <p class="lede hero__lede">
             ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือน และการอนุมัติ ครบในระบบเดียว
             ติดตั้งบนเครื่องของบริษัทคุณเอง จ่ายแค่ค่าเซิร์ฟเวอร์
-            ไม่มีค่าใช้จ่ายต่อพนักงาน และไม่มีสัญญารายปี
-          </p>
+          ไม่มีค่าใช้จ่ายต่อพนักงาน และไม่มีสัญญารายปี
+        </p>
 
+        <div>
           <div class="cta-row">
             <a class="btn btn--pop" href="#calc">
               ดูว่าประหยัดได้เท่าไหร่
@@ -432,14 +480,14 @@
             <span>ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง — <a href="#install">ส่งขั้นตอนให้เขา</a></span>
           </p>
         </div>
-
-        <figure class="hero__shot">
-          <video src="assets/walkthrough.mp4" autoplay muted loop playsinline
-                 poster="assets/dashboard.png"
-                 aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
-          <figcaption>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</figcaption>
-        </figure>
       </div>
+
+      <figure class="hero__shot">
+        <video src="assets/walkthrough.mp4" autoplay muted loop playsinline
+               poster="assets/dashboard.png"
+               aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
+        <figcaption>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -525,15 +573,24 @@
       <div class="plates">
         <figure class="plate">
           <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
-          <figcaption>คำขอลาที่รออนุมัติ พร้อมจำนวนวันที่คำนวณให้แล้ว</figcaption>
+          <figcaption>
+            <b>ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว</b>
+            <span>ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย</span>
+          </figcaption>
         </figure>
         <figure class="plate">
           <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
-          <figcaption>ทะเบียนพนักงาน ตำแหน่ง แผนก และอายุงาน</figcaption>
+          <figcaption>
+            <b>ทะเบียนพนักงานที่ค้นเจอใน 2 วินาที</b>
+            <span>ชื่อ รหัส ตำแหน่ง แผนก อายุงาน สัญญา และเอกสารประจำตัว รวมอยู่ที่เดียว ไม่ต้องเปิดไฟล์ Excel หลายไฟล์</span>
+          </figcaption>
         </figure>
         <figure class="plate">
           <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
-          <figcaption>สรุปรอบเงินเดือน รายได้รวมและยอดจ่ายสุทธิ</figcaption>
+          <figcaption>
+            <b>ปิดรอบเงินเดือนแล้วเห็นยอดทันที</b>
+            <span>รายได้รวม ภาษีหัก ณ ที่จ่าย ประกันสังคม และยอดจ่ายสุทธิ พร้อมสลิปที่พนักงานเปิดดูเองได้จากมือถือ</span>
+          </figcaption>
         </figure>
       </div>
     </div>
@@ -822,25 +879,6 @@
     </div>
   </section>
 
-  <!-- ==================================================== honesty -->
-  <section class="honest">
-    <div class="wrap">
-      <div class="shead">
-        <span class="eyebrow">ก่อนตัดสินใจ</span>
-        <h2>สิ่งที่ยังไม่พร้อม และเราไม่ซ่อนไว้</h2>
-        <p class="lede">ซอฟต์แวร์ HR ที่โฆษณาว่าพร้อมทุกอย่าง คือซอฟต์แวร์ที่ยังไม่มีใครเอาไปใช้จริง</p>
-      </div>
-      <ul>
-        <li><strong>กฎภาษีและประกันสังคมยังไม่เคยผ่านการตรวจสอบจากผู้มีคุณวุฒิ</strong> — เขียนจากเอกสารสาธารณะและทดสอบกับตัวอย่างที่คำนวณด้วยมือ ซึ่งพิสูจน์ได้แค่ว่าโค้ดตรงกับที่ผู้เขียนเข้าใจ กรุณาตรวจตัวเลขกับของท่านเองก่อนใช้จริง</li>
-        <li><strong>ยังไม่เคยผ่านการทดสอบเจาะระบบ</strong> — และยังไม่มีใครอ่านโค้ดทุกบรรทัดอย่างเป็นอิสระ</li>
-        <li><strong>หน้าจอเป็นภาษาไทยอย่างเดียว</strong> — ภาษาอังกฤษอยู่ในแผนงาน ยังไม่ได้ทำ</li>
-        <li><strong>ระยะเวลาเก็บข้อมูลต้องบังคับใช้เอง</strong> — ระบบลบข้อมูลผู้สมัครงานและเซสชันที่หมดอายุให้เอง ส่วนที่เหลือต้องกำหนดนโยบายและลงมือเอง โดยมีเอกสารบอกขั้นตอนไว้</li>
-        <li><strong>ยังไม่มีการส่งออก ภ.ง.ด.1</strong> และเอกสารที่ออกให้ยังไม่ถูกแปลงเป็น PDF ให้อัตโนมัติ</li>
-        <li><strong>หนึ่งการติดตั้งต่อหนึ่งองค์กร</strong> — ไม่ได้ออกแบบให้หลายบริษัทใช้ฐานข้อมูลร่วมกัน</li>
-      </ul>
-    </div>
-  </section>
-
 </main>
 
 <footer>
@@ -894,7 +932,7 @@
         : saved === 0
           ? 'เท่าทุนพอดีในปีแรก — ปีถัดไปค่าเซิร์ฟเวอร์เท่าเดิม แต่ค่าระบบเดิมมักขึ้นตามจำนวนคน'
           : 'ค่าเซิร์ฟเวอร์สูงกว่าค่าระบบเดิม — ลองใช้เครื่องที่มีอยู่แล้ว หรือดูใหม่เมื่อพนักงานเพิ่มขึ้น';
-      el('saved').style.color = saved >= 0 ? 'var(--pop)' : 'var(--pine-dim)';
+      el('saved').style.color = saved >= 0 ? 'var(--pop-lift)' : 'var(--pine-dim)';
     }
 
     [headcount, rate, server].forEach(function (input) {
