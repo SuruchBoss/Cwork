@@ -75,8 +75,8 @@ their own subject, not because a rule said so.
 
 The `domain/` directory is the one that earns its boundary. Leave arithmetic,
 attendance derivation, Thai tax, KPI scoring and assessment grading are all pure
-functions of their inputs. That is why there are 240 backend tests that run in
-eight seconds with no database: the rules that are expensive to get wrong are the
+functions of their inputs. That is why there are 240 domain tests that run in
+under ten seconds with no database: the rules that are expensive to get wrong are the
 ones that are cheapest to test.
 
 It is also what makes "why was I charged 2.5 days?" answerable. The calculation

@@ -116,8 +116,8 @@ account works.
 <summary><b>Running without Docker</b></summary>
 
 ```bash
-# API — needs PostgreSQL 16 with pgvector (the first migration creates the
-#       extension, and knowledge chunks are a vector(1536) column)
+# API — needs PostgreSQL 16 with the pgvector extension (the first migration
+#       creates it; `pgvector/pgvector:pg16` is what CI and compose run)
 cd backend
 cp .env.example .env    # set DATABASE_URL and the secrets
 npm install
@@ -307,7 +307,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 240 backend tests run in eight
+no database, no framework and no I/O. That is why 240 domain tests run in under ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
