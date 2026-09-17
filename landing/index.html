@@ -322,10 +322,14 @@
     border-radius: 14px; padding: clamp(24px, 3vw, 34px);
   }
   .result__label { font-size: var(--t-small); color: var(--pine-dim); }
+  /* The figure never wraps; fitInto() in the script below shrinks it instead.
+     Fixed size steps were tried and cannot work: ฿99,999,999 fits at one size
+     on a wide screen and overflows at the same size on a narrow one, so the
+     threshold would have to know the viewport. Measuring does. */
   .result__big {
     font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
     font-size: var(--t-huge); line-height: 1.1; color: var(--pop-lift);
-    letter-spacing: -.02em; margin: 6px 0 2px; word-break: break-word;
+    letter-spacing: -.02em; margin: 6px 0 2px; white-space: nowrap;
   }
   .result__sub { font-size: var(--t-small); color: var(--pine-dim); }
   .result__split { display: grid; gap: 14px; margin-top: 24px; padding-top: 22px; border-top: 1px solid color-mix(in srgb, var(--pine-ink) 18%, transparent); }
@@ -934,13 +938,37 @@
   /* The calculator. Plain arithmetic the owner could do on paper — which is
      the point: nothing here is doing anything clever with their numbers. */
   (function () {
-    var baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
+    var baht = new Intl.NumberFormat('th-TH', {
+      style: 'currency', currency: 'THB', currencyDisplay: 'narrowSymbol',
+      maximumFractionDigits: 0,
+    });
     var el = function (id) { return document.getElementById(id); };
     var headcount = el('headcount'), rate = el('rate'), server = el('server');
 
     function num(input, fallback) {
       var v = parseFloat(input.value);
       return isFinite(v) && v >= 0 ? v : fallback;
+    }
+
+    /**
+     * Shrinks the figure until it fits its card on one line.
+     *
+     * It wrapped mid-number for any company over about eighty people — the
+     * single number this section exists to show, broken between two digits.
+     * Nothing caught it because the default inputs produce a short figure.
+     */
+    function fitInto(node) {
+      var card = node.parentNode;
+      node.style.fontSize = '';
+      var size = parseFloat(window.getComputedStyle(node).fontSize);
+      var room = function () {
+        var pad = parseFloat(window.getComputedStyle(card).paddingLeft);
+        return card.clientWidth - 2 * pad;
+      };
+      while (node.scrollWidth > room() && size > 18) {
+        size -= 2;
+        node.style.fontSize = size + 'px';
+      }
     }
 
     function render() {
@@ -958,6 +986,7 @@
       el('rateEcho').textContent = perSeat.toLocaleString('th-TH');
 
       el('saved').textContent = baht.format(Math.abs(saved));
+      fitInto(el('saved'));
       el('savedNote').textContent = saved > 0
         ? 'เทียบกับค่าระบบเดิม หลังหักค่าเซิร์ฟเวอร์แล้ว'
         : saved === 0
@@ -969,6 +998,8 @@
     [headcount, rate, server].forEach(function (input) {
       input.addEventListener('input', render);
     });
+    // Rotating a phone changes the room available, so the fit has to be redone.
+    window.addEventListener('resize', function () { fitInto(el('saved')); });
     render();
   })();
 </script>
