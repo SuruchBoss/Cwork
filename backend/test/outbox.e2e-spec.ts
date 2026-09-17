@@ -309,8 +309,6 @@ describe('Outbox (e2e)', () => {
   describe('the notification producer', () => {
     it('records an event alongside every notification it writes', async () => {
       const token = await instanceA.api.token(EMPLOYEE);
-      const before = await instanceA.api.get('/notifications', token);
-
       const user = await prisma.user.findFirstOrThrow({
         where: { email: EMPLOYEE },
         select: { id: true, organizationId: true },
@@ -332,10 +330,16 @@ describe('Outbox (e2e)', () => {
       // The in-app row is still written synchronously — the console reads it
       // back immediately, and making that wait for a poll would be a
       // regression dressed up as architecture.
+      //
+      // Asserted by looking for the row, not by counting the list. The status
+      // check is the point: this used to read `.length` off an unchecked body,
+      // so when the request was refused the whole failure read "Expected: NaN,
+      // Received: undefined" and named neither the status nor the route. And
+      // `list()` takes 50, so a difference of one stops being visible as soon
+      // as this account has fifty notifications.
       const after = await instanceA.api.get('/notifications', token);
-      const beforeCount = (before.body.data ?? before.body).length;
-      const afterCount = (after.body.data ?? after.body).length;
-      expect(afterCount).toBe(beforeCount + 1);
+      expect(after.status).toBe(200);
+      expect(after.body.map((n: { type: string }) => n.type)).toContain('test.notification');
     });
   });
 });

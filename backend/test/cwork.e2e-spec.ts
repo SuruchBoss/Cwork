@@ -14,6 +14,7 @@
  * attendance coverage, and the seed silently creating none of the public
  * holidays. Both are asserted here so they cannot come back.
  */
+import { PrismaService } from 'src/core/prisma/prisma.service';
 import {
   createTestApp,
   currentDemoCode,
@@ -84,6 +85,49 @@ describe('Cwork API (e2e)', () => {
       const res = await api.get('/employees');
 
       expect(res.status).toBe(401);
+    });
+
+    it('honours a sign-in that lands in the same second as a forced sign-out', async () => {
+      // `sessionsValidFrom` invalidates every token issued before it. It is
+      // stored in milliseconds; a JWT's `iat` is whole seconds. Comparing them
+      // directly read a token issued *after* the sign-out as older than it
+      // whenever the two shared a second — so someone who changed their
+      // password and signed straight back in had every request refused with
+      // "session has been invalidated", and signing in again fixed it.
+      //
+      // It reached CI as a flake in the outbox suite: `setup.e2e-spec.ts`
+      // reseeds the demo company, `sessionsValidFrom` defaults to `now()` with
+      // milliseconds, and the next spec's sign-in sometimes landed in that same
+      // second. The assertion that failed could only report "Expected: NaN".
+      //
+      // Pinned to the token's own `iat` rather than to the wall clock, so it
+      // cannot go vacuously green by crossing a second boundary.
+      const prisma = ctx.app.get(PrismaService);
+      const account = await prisma.user.findFirstOrThrow({
+        where: { email: EMPLOYEE },
+        select: { id: true, sessionsValidFrom: true },
+      });
+
+      const token = await api.token(EMPLOYEE);
+      const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()) as {
+        iat: number;
+      };
+
+      try {
+        await prisma.user.update({
+          where: { id: account.id },
+          // The same second the token was minted in, 740ms further on.
+          data: { sessionsValidFrom: new Date(claims.iat * 1000 + 740) },
+        });
+
+        const res = await api.get('/notifications', token);
+        expect(res.status).toBe(200);
+      } finally {
+        await prisma.user.update({
+          where: { id: account.id },
+          data: { sessionsValidFrom: account.sessionsValidFrom },
+        });
+      }
     });
 
     it('rejects an unknown field rather than ignoring it', async () => {

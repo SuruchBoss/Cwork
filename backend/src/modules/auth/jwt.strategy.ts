@@ -5,6 +5,7 @@ import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
+import { tokenPredatesInvalidation } from './domain/session-validity';
 import { UserContextService } from './user-context.service';
 
 export interface AccessTokenPayload {
@@ -50,13 +51,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     // A global password reset or forced logout bumps `sessionsValidFrom`, which
-    // invalidates every access token issued before that moment.
+    // invalidates every access token issued before that moment. The two clocks
+    // do not share a resolution — see `tokenPredatesInvalidation`.
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { sessionsValidFrom: true },
     });
     if (!user) throw new UnauthorizedException('Account no longer exists');
-    if (payload.iat * 1000 < user.sessionsValidFrom.getTime()) {
+    if (tokenPredatesInvalidation(payload.iat, user.sessionsValidFrom)) {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
     }
 

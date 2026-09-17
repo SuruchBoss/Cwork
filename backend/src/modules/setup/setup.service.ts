@@ -188,14 +188,15 @@ export class SetupService {
           /**
            * `sessionsValidFrom` marks the instant a forced sign-out invalidated
            * every token issued before it — and for an account being created,
-           * there has not been one. That matters here because the column's
-           * `now()` default stores milliseconds while an access token carries
-           * `iat` in whole seconds: an administrator who finishes setup and
-           * signs in inside the same second would be handed a token the JWT
-           * guard reads as *older* than the account, and refused with "session
-           * has been invalidated" on their very first request. Recording the
-           * instant at the resolution the token can express is the honest
+           * there has not been one. Recorded at whole-second resolution because
+           * that is all an access token's `iat` can express, which is the honest
            * version of "nothing has been invalidated yet".
+           *
+           * The guard no longer depends on this: `tokenPredatesInvalidation`
+           * compares the two clocks at the resolution they share, so a
+           * millisecond timestamp here would be handled correctly too. Kept
+           * because storing a precision the claim cannot carry only invites the
+           * same confusion back.
            */
           sessionsValidFrom: new Date(Math.floor(now.getTime() / 1000) * 1000),
           roles: { create: { roleId: superAdmin.id } },

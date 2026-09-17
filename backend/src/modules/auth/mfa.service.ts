@@ -15,6 +15,7 @@ import {
   normaliseRecoveryCode,
   verifyTotp,
 } from './domain/totp';
+import { tokenPredatesInvalidation } from './domain/session-validity';
 import { UserContextService } from './user-context.service';
 
 /**
@@ -336,7 +337,7 @@ export class MfaService {
       select: { sessionsValidFrom: true },
     });
     if (!user) throw new UnauthorizedException('Account no longer exists');
-    if (payload.iat * 1000 < user.sessionsValidFrom.getTime()) {
+    if (tokenPredatesInvalidation(payload.iat, user.sessionsValidFrom)) {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
     }
     return payload.sub;
