@@ -359,6 +359,19 @@
     display: block; width: 100%; height: auto; border-radius: var(--r);
     border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
   }
+  /* Giving the screenshot the full measure is enough on a laptop — a 1280px
+     capture lands at 1136px, so the interface's own 14px labels stay at 12px.
+     On a phone the full measure is 346px: the same labels land at 3.8px, and
+     the picture stops being evidence of anything. There is no width to find,
+     so the image opens on a tap instead and the phone's own zoom takes over. */
+  .plate a { display: block; text-decoration: none; border-radius: var(--r); }
+  .plate__hint { display: none; }
+  @media (max-width: 880px) {
+    .plate__hint {
+      display: block; margin-top: 9px;
+      font-size: var(--t-micro); color: var(--ink-faint);
+    }
+  }
 
   /* ============================================================== features */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
@@ -455,7 +468,10 @@
   @media (max-width: 880px) {
     .hero__say { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; }
     .plate figcaption { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-    .bar nav a:not(.btn) { display: none; }
+    /* The section links go; the language switch stays. `:not(.btn)` alone took
+       it with them, so a phone had no way to reach the other language at all —
+       and the page is bilingual mainly for people who arrive on a phone. */
+    .bar nav a:not(.btn):not(.lang) { display: none; }
     .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -608,21 +624,30 @@
             <b>Every leave request in one place</b>
             <span>Who asked, what kind of leave, how many days — counted against your own holiday calendar. Managers approve from here.</span>
           </figcaption>
-          <img src="../assets/leave.png" alt="The leave request list, showing employee names, leave types, date ranges, day counts and pending status" loading="lazy" width="1280" height="800">
+          <a href="../assets/leave.png" target="_blank" rel="noopener">
+            <img src="../assets/leave.png" alt="The leave request list, showing employee names, leave types, date ranges, day counts and pending status" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">Tap to open full size</span>
+          </a>
         </figure>
         <figure class="plate">
           <figcaption>
             <b>An employee register you do not keep in Excel</b>
             <span>Name, ID, job title, department, length of service, contracts and identity documents — one record instead of a folder of spreadsheets.</span>
           </figcaption>
-          <img src="../assets/employees.png" alt="The employee register, showing names, employee IDs, job titles, departments and length of service" loading="lazy" width="1280" height="800">
+          <a href="../assets/employees.png" target="_blank" rel="noopener">
+            <img src="../assets/employees.png" alt="The employee register, showing names, employee IDs, job titles, departments and length of service" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">Tap to open full size</span>
+          </a>
         </figure>
         <figure class="plate">
           <figcaption>
             <b>Close a payroll run and see the figures</b>
             <span>Gross pay, withholding tax, social security and net pay — with payslips employees open on their own phones.</span>
           </figcaption>
-          <img src="../assets/payroll.png" alt="The payroll summary, showing the latest run, headcount, gross pay and net pay" loading="lazy" width="1280" height="800">
+          <a href="../assets/payroll.png" target="_blank" rel="noopener">
+            <img src="../assets/payroll.png" alt="The payroll summary, showing the latest run, headcount, gross pay and net pay" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">Tap to open full size</span>
+          </a>
         </figure>
       </div>
     </div>

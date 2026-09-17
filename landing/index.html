@@ -359,6 +359,19 @@
     display: block; width: 100%; height: auto; border-radius: var(--r);
     border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
   }
+  /* Giving the screenshot the full measure is enough on a laptop — a 1280px
+     capture lands at 1136px, so the interface's own 14px labels stay at 12px.
+     On a phone the full measure is 346px: the same labels land at 3.8px, and
+     the picture stops being evidence of anything. There is no width to find,
+     so the image opens on a tap instead and the phone's own zoom takes over. */
+  .plate a { display: block; text-decoration: none; border-radius: var(--r); }
+  .plate__hint { display: none; }
+  @media (max-width: 880px) {
+    .plate__hint {
+      display: block; margin-top: 9px;
+      font-size: var(--t-micro); color: var(--ink-faint);
+    }
+  }
 
   /* ============================================================== features */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
@@ -455,7 +468,10 @@
   @media (max-width: 880px) {
     .hero__say { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; }
     .plate figcaption { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-    .bar nav a:not(.btn) { display: none; }
+    /* The section links go; the language switch stays. `:not(.btn)` alone took
+       it with them, so a phone had no way to reach the other language at all —
+       and the page is bilingual mainly for people who arrive on a phone. */
+    .bar nav a:not(.btn):not(.lang) { display: none; }
     .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -611,21 +627,30 @@
             <b>ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว</b>
             <span>ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย</span>
           </figcaption>
-          <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
+          <a href="assets/leave.png" target="_blank" rel="noopener">
+            <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+          </a>
         </figure>
         <figure class="plate">
           <figcaption>
             <b>ทะเบียนพนักงานที่ค้นเจอโดยไม่ต้องเปิด Excel</b>
             <span>ชื่อ รหัส ตำแหน่ง แผนก อายุงาน สัญญา และเอกสารประจำตัว รวมอยู่ที่เดียว ไม่ต้องเปิดไฟล์ Excel หลายไฟล์</span>
           </figcaption>
-          <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
+          <a href="assets/employees.png" target="_blank" rel="noopener">
+            <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+          </a>
         </figure>
         <figure class="plate">
           <figcaption>
             <b>ปิดรอบเงินเดือนแล้วเห็นยอดทันที</b>
             <span>รายได้รวม ภาษีหัก ณ ที่จ่าย ประกันสังคม และยอดจ่ายสุทธิ พร้อมสลิปที่พนักงานเปิดดูเองได้จากมือถือ</span>
           </figcaption>
-          <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
+          <a href="assets/payroll.png" target="_blank" rel="noopener">
+            <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
+            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+          </a>
         </figure>
       </div>
     </div>

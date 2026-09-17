@@ -31,6 +31,7 @@ const COPY = {
   // ---------------------------------------------------------------- nav
   'คิดค่าใช้จ่าย': 'What it costs',
   'หน้าตาระบบ': 'The screens',
+  'แตะเพื่อดูภาพขนาดเต็ม': 'Tap to open full size',
   'ความสามารถ': 'What it does',
   'ข้อมูลพนักงาน · PDPA': 'Employee data · PDPA',
   'ข้อมูลพนักงาน': 'Employee data',
