@@ -255,7 +255,7 @@ and document requests — scoped so it can only ever see the asker's own data.
 full-text plus trigram matching, which needs no embeddings and copes with Thai's
 lack of word boundaries.
 
-<img src="./docs/screenshots/14-knowledge.png" alt="HR knowledge base" width="49%"> <img src="./docs/screenshots/15-assistant.png" alt="Assistant, disabled by default" width="49%">
+<img src="./docs/screenshots/14-knowledge.png" alt="The HR knowledge base, which answers policy questions with no AI provider configured" width="80%">
 
 
 ### The employee app
@@ -358,6 +358,7 @@ backend/     NestJS API — modular monolith over PostgreSQL
 web/         React 19 + Vite admin console
 mobile/      Flutter employee app
 docs/        Spec, architecture, security, data model, API, ADRs, backlog
+landing/     The overview page, published to GitHub Pages
 .github/     CI workflow, issue and pull-request templates
 ```
 

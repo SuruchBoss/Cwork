@@ -247,7 +247,7 @@ docker compose run --rm migrate npm run db:init -- --web
 PostgreSQL ร่วมกับ trigram ซึ่งไม่ต้องใช้ embedding และรับมือกับภาษาไทยที่
 ไม่มีการเว้นวรรคระหว่างคำได้
 
-<img src="./docs/screenshots/14-knowledge.png" alt="ฐานความรู้ HR" width="49%"> <img src="./docs/screenshots/15-assistant.png" alt="ผู้ช่วย HR ปิดไว้เป็นค่าเริ่มต้น" width="49%">
+<img src="./docs/screenshots/14-knowledge.png" alt="ฐานความรู้ HR ที่ตอบคำถามระเบียบได้โดยไม่ต้องตั้งค่าผู้ให้บริการ AI" width="80%">
 
 
 ### แอปพนักงาน
@@ -349,6 +349,7 @@ backend/     NestJS API — modular monolith บน PostgreSQL
 web/         เว็บคอนโซล React 19 + Vite
 mobile/      แอปพนักงาน Flutter
 docs/        ข้อกำหนด สถาปัตยกรรม ความปลอดภัย โครงสร้างข้อมูล API ADR และ backlog
+landing/     หน้าแนะนำระบบ ที่เผยแพร่ผ่าน GitHub Pages
 .github/     CI workflow, เทมเพลต issue และ pull request
 ```
 
