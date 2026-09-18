@@ -55,11 +55,6 @@ export class PunchDto {
   @IsUUID()
   workLocationId?: string;
 
-  @ApiPropertyOptional({ description: 'Selfie captured at punch time' })
-  @IsOptional()
-  @IsUUID()
-  selfieFileId?: string;
-
   @ApiPropertyOptional({
     description: 'Device clock at punch time; compared with the server clock to detect tampering',
   })

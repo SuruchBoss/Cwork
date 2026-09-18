@@ -115,7 +115,6 @@ export class AttendanceService {
         workLocationId: workLocation?.id ?? null,
         distanceM: geofence?.distanceM ?? null,
         isOutsideGeofence: geofence ? !geofence.isInside : false,
-        selfieFileId: dto.selfieFileId,
         deviceId: dto.deviceId,
         deviceModel: dto.deviceModel,
         appVersion: dto.appVersion,

@@ -137,7 +137,6 @@ model AttendancePunch {
   workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: SetNull)
   distanceM      Int?
   isOutsideGeofence Boolean @default(false)
-  selfieFileId   String?  @db.Uuid
   deviceId       String?
   deviceModel    String?
   appVersion     String?

@@ -108,6 +108,16 @@ entry, tags it and publishes the notes.
   assistant tool to take an id, which CW-042 amended ADR-0004 to allow. With the
   assistant switched off the approval screen is unchanged.
 
+### Removed
+
+- **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`
+  was never written to — there is no camera capture anywhere in the app, and
+  selfie capture was considered and not adopted, partly because biometric data
+  drags consent and retention obligations along with it. A column nothing writes
+  misleads whoever reads the schema next, so it is dropped along with the API
+  field that fed it. Every column in `attendance.prisma` is now written by some
+  code path.
+
 ### Changed
 
 - **ADR-0004 is amended, not superseded** (CW-042): the rule is stated as its
