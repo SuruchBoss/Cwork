@@ -391,6 +391,11 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   assertDeliveryConfiguration(config);
   assertAssistantConfiguration(config);
 
+  // A forgeable signing secret is not a production-only mistake. A dev server
+  // binds 0.0.0.0 like any other, and a token signed with the placeholder from
+  // .env.example is accepted the same in every mode — so this runs everywhere.
+  assertSecretsAreReal(config);
+
   if (config.NODE_ENV === 'production') {
     assertProductionSafety(config);
   }
@@ -478,18 +483,42 @@ function assertAssistantConfiguration(config: EnvironmentVariables): void {
 }
 
 /**
- * Guardrails that only matter in production. Keeping them here means a
- * misconfigured deploy refuses to start instead of quietly running insecurely.
+ * The signing secrets have to be real, at every tier.
+ *
+ * These used to sit inside the production-only block, on the assumption that a
+ * weak secret in development is nobody's problem. It is: the dev server binds
+ * `0.0.0.0`, and a token signed with the placeholder that ships in
+ * `.env.example` is accepted exactly the same in development as in production.
+ * A blind test proved it — an admin token forged with the published string read
+ * the employee register over the network. So the check that knows the string is
+ * dangerous now runs whenever the app boots, the same as the delivery and
+ * assistant checks above and for the same reason: an insecure default is a
+ * mistake in every mode, and the one it protects is the mode nobody hardened.
  */
-function assertProductionSafety(config: EnvironmentVariables): void {
+function assertSecretsAreReal(config: EnvironmentVariables): void {
   const problems: string[] = [];
 
   if (config.JWT_ACCESS_SECRET === config.JWT_REFRESH_SECRET) {
     problems.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ');
   }
   if (/change-me/i.test(config.JWT_ACCESS_SECRET) || /change-me/i.test(config.JWT_REFRESH_SECRET)) {
-    problems.push('JWT secrets still contain the placeholder value from .env.example');
+    problems.push(
+      'JWT secrets still contain the placeholder value from .env.example — ' +
+        'generate real ones with `openssl rand -base64 48`',
+    );
   }
+  if (problems.length > 0) {
+    throw new Error(`Unsafe secrets:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+  }
+}
+
+/**
+ * Guardrails that only matter in production. Keeping them here means a
+ * misconfigured deploy refuses to start instead of quietly running insecurely.
+ */
+function assertProductionSafety(config: EnvironmentVariables): void {
+  const problems: string[] = [];
+
   if (!config.CORS_ORIGINS.trim()) {
     problems.push('CORS_ORIGINS must list the exact allowed origins in production');
   }

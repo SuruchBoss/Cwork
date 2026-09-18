@@ -146,3 +146,40 @@ describe('assistant embeddings', () => {
     expect(validateEnv({ ...BASE }).ASSISTANT_EMBEDDING_PROVIDER).toBe('none');
   });
 });
+
+/**
+ * The signing secrets, checked at every tier rather than only in production.
+ *
+ * A blind test forged an admin token with the `change-me` placeholder that used
+ * to ship in `backend/.env.example` and read the employee register over the
+ * network — on a development boot, where the old check did not run. The dev
+ * server binds `0.0.0.0` and validates a forged token exactly as production
+ * does, so the check moved out of the production-only block.
+ */
+describe('signing secrets', () => {
+  it('refuses the placeholder secret outside production too', () => {
+    expect(() =>
+      validateEnv({
+        ...BASE,
+        NODE_ENV: 'development',
+        JWT_ACCESS_SECRET: 'change-me-access-secret-at-least-32-characters-long',
+      }),
+    ).toThrow(/placeholder value/);
+  });
+
+  it('refuses identical access and refresh secrets outside production too', () => {
+    const same = 'a-single-secret-that-is-at-least-32-characters-long';
+    expect(() =>
+      validateEnv({
+        ...BASE,
+        NODE_ENV: 'development',
+        JWT_ACCESS_SECRET: same,
+        JWT_REFRESH_SECRET: same,
+      }),
+    ).toThrow(/must differ/);
+  });
+
+  it('boots with two distinct real secrets', () => {
+    expect(() => validateEnv({ ...BASE })).not.toThrow();
+  });
+});
