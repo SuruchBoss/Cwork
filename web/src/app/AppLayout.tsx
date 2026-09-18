@@ -89,8 +89,9 @@ export function AppLayout() {
               size="sm"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title="สลับธีมสว่าง/มืด"
+              aria-label={theme === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'}
             >
-              {theme === 'dark' ? '☀' : '☾'}
+              <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => void logout()} style={{ flex: 1 }}>
               ออกจากระบบ
@@ -101,8 +102,15 @@ export function AppLayout() {
 
       <div className="main">
         <header className="topbar">
-          <Button variant="ghost" size="sm" className="sidebar-toggle" onClick={toggleSidebar}>
-            ☰
+          <Button
+            variant="ghost"
+            size="sm"
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label="เปิด/ปิดเมนู"
+            aria-expanded={sidebarOpen}
+          >
+            <span aria-hidden="true">☰</span>
           </Button>
           <span className="topbar__title">{currentLabel}</span>
           <span className="topbar__spacer" />
