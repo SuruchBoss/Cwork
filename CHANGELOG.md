@@ -21,6 +21,23 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **CI upgrades a database from the previous release** (CW-032). CI only ever
+  ran `prisma migrate deploy` against an empty database, so nothing proved that
+  an existing installation survives an upgrade — a migration that adds a NOT
+  NULL column with no default, or drops a column that still holds data, runs
+  cleanly on empty tables and only destroys real data. A new job checks out the
+  most recent release tag, lets its own migrations and seed populate a database,
+  then migrates that populated database up to the current commit and reads the
+  seed back through the current Prisma client. A migration that drops a
+  populated column the code still reads, or that fails on a non-empty table, now
+  fails CI here rather than in someone's production. Alongside it,
+  `verify:migrations` guards the mirror-image mistake — a change to
+  `schema.prisma` with no matching migration — by replaying the migration
+  history into a scratch database and diffing it against the schema, so in a
+  healthy tree the only difference is the two hand-written search indexes Prisma
+  cannot model and anything else fails the build; the two can no longer quietly
+  describe different databases.
+
 - **Employee data retention and purge** (CW-015). Candidate records already
   expire under PDPA, but employee records had no equivalent, and a leaver who
   asked to be forgotten had no path. Once a leaver is far enough past their last

@@ -457,6 +457,27 @@ So:
 `db:verify` asserts every hand-written object still exists and fails loudly if
 one went missing. It runs in CI for exactly this reason.
 
+`db:verify` catches a migration that dropped too much; the opposite mistake —
+changing `schema.prisma` and forgetting the migration — is caught by
+`npm run verify:migrations`. CI runs `prisma migrate deploy` against an empty
+database, which proves the migrations *run* but not that they build the schema
+`schema.prisma` describes; a model with no matching migration would only fail
+on the first query that touched the missing column, in production. `verify:migrations`
+replays the migrations into a scratch database and diffs the result against the
+schema: in a healthy tree the only difference is the two hand-written search
+indexes above (`knowledge_chunks_content_trgm_idx` and
+`knowledge_chunks_embedding_hnsw`), which Prisma reports as drift every time.
+Anything else — an added column, a dropped one — fails the build with the
+statement printed.
+
+Neither of those runs a migration against *data*. The `upgrade` CI job does:
+it checks out the most recent release tag, lets its own migrations and seed
+populate a database, then migrates that populated database up to the current
+commit and reads the seed back through the current Prisma client. A migration
+that is safe on empty tables but not on populated ones — a `NOT NULL` column
+with no default, or a dropped column the code still reads — passes `migrate
+deploy` and fails here, before it reaches an installation that has data in it.
+
 The lexical-search indexes are expression indexes rather than a stored generated
 column, and the query computes `to_tsvector(...)` inline — so if an index does
 get dropped, search degrades to a sequential scan instead of breaking outright.

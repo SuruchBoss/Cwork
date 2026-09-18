@@ -74,6 +74,13 @@ jobs:
       - name: Verify hand-written database objects
         run: npm run db:verify
 
+      # `migrate deploy` above proves the migrations run on an EMPTY database.
+      # This proves the database they build is the one schema.prisma describes:
+      # a model changed without a migration would otherwise only surface as a
+      # failing query in production, never in CI.
+      - name: Migrations and schema.prisma have not drifted apart
+        run: npm run verify:migrations
+
       # Unset, deliberately: the unit tests must pass on a clean clone, and this
       # job's env block would otherwise hide a file that reads process.env at
       # import time. That is exactly what happened — naming APP_CONFIG pulled in
@@ -105,6 +112,77 @@ jobs:
         run: npm run verify:docs
 
       - run: npm run build
+
+  upgrade:
+    name: Upgrade from the previous release
+    runs-on: ubuntu-latest
+
+    # The Backend job proves the migrations apply to an EMPTY database. That
+    # says nothing about an existing installation: a migration that adds a NOT
+    # NULL column with no default, or drops a column that still holds data, runs
+    # fine on empty tables and destroys a real deployment. This job seeds a
+    # database at the previous release and migrates it up to this commit, so a
+    # data-losing migration fails here instead of in someone's production. (CW-032)
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cwork
+          POSTGRES_PASSWORD: cwork
+          POSTGRES_DB: cwork_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cwork"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://cwork:cwork@localhost:5432/cwork_test?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-that-is-at-least-32-characters
+      JWT_REFRESH_SECRET: ci-refresh-secret-that-is-at-least-32-chars
+      FIELD_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      NODE_ENV: test
+
+    steps:
+      # Full history so the previous release tag and its tree are available.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # Check out the most recent release into a worktree, install it, and let
+      # its own migrations and seed populate the database — real data written by
+      # the code that shipped, not a fixture that drifts from the schema.
+      - name: Seed a database at the previous release
+        run: |
+          PREV="$(git describe --tags --abbrev=0)"
+          echo "Upgrading from $PREV"
+          git worktree add --detach "$RUNNER_TEMP/previous" "$PREV"
+          cd "$RUNNER_TEMP/previous/backend"
+          npm ci
+          npx prisma migrate deploy
+          npx prisma generate
+          npx ts-node --transpile-only prisma/seed.ts
+
+      # Apply the migrations added since that release ON TOP of the populated
+      # database, then read the seed back through this commit's Prisma client.
+      # check-upgraded-data.ts fails if a migration dropped a column the current
+      # code still reads, or did not apply cleanly on non-empty tables.
+      - name: Migrate the populated database up to this commit
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma migrate deploy
+          npx prisma generate
+          npx ts-node --transpile-only scripts/check-upgraded-data.ts
 
   web:
     name: Web console
