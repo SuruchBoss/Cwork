@@ -163,7 +163,7 @@ export default function PerformancePage() {
                 </div>
               ) : (
                 <EmptyState
-                  icon="🎯"
+                  icon="◈"
                   title="ยังไม่มีข้อมูล KPI ของทีม"
                   description="ตั้งเป้าหมายให้ผู้ใต้บังคับบัญชาก่อน"
                 />
@@ -174,7 +174,7 @@ export default function PerformancePage() {
       ) : (
         <Card>
           <EmptyState
-            icon="📈"
+            icon="◈"
             title="ยังไม่มีรอบการประเมิน"
             description="สร้างรอบการประเมินเพื่อเริ่มตั้ง KPI"
           />

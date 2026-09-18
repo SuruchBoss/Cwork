@@ -114,7 +114,7 @@ export default function RecruitmentPage() {
       ) : total === 0 ? (
         <Card>
           <EmptyState
-            icon="📋"
+            icon="⚑"
             title="ยังไม่มีใบสมัคร"
             description="เผยแพร่ประกาศงานเพื่อเริ่มรับสมัคร"
           />

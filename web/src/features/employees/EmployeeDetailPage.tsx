@@ -227,7 +227,7 @@ export default function EmployeeDetailPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="🗂" title="ยังไม่มีประวัติ" />
+            <EmptyState icon="☰" title="ยังไม่มีประวัติ" />
           )}
         </Card>
       )}

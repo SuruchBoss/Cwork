@@ -126,7 +126,7 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="✅" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
+            <EmptyState icon="✓" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
           )}
         </Card>
 
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <EmptyState icon="🌤" title="ไม่มีคำขอลารออนุมัติ" />
+              <EmptyState icon="⏸" title="ไม่มีคำขอลารออนุมัติ" />
             )}
           </Card>
         )}

@@ -158,7 +158,7 @@ export default function KnowledgePage() {
           </div>
         ) : (
           <EmptyState
-            icon="📚"
+            icon="◫"
             title="ยังไม่มีเอกสารนโยบาย"
             description="เพิ่มระเบียบบริษัทเพื่อให้ผู้ช่วยตอบคำถามพนักงานได้"
           />

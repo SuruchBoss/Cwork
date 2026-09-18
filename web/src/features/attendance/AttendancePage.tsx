@@ -164,7 +164,7 @@ export default function AttendancePage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="⏱" title="ไม่มีข้อมูลการลงเวลาในช่วงนี้" />
+          <EmptyState icon="◔" title="ไม่มีข้อมูลการลงเวลาในช่วงนี้" />
         )}
       </Card>
     </div>

@@ -189,7 +189,7 @@ export default function PayrollPage() {
           </div>
         ) : (
           <EmptyState
-            icon="📅"
+            icon="฿"
             title="ยังไม่มีงวดเงินเดือน"
             description="สร้างงวดแรกเพื่อเริ่มคำนวณเงินเดือน"
           />
@@ -235,7 +235,7 @@ export default function PayrollPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="🧮" title="ยังไม่มีรอบการคำนวณ" />
+          <EmptyState icon="฿" title="ยังไม่มีรอบการคำนวณ" />
         )}
       </Card>
     </div>

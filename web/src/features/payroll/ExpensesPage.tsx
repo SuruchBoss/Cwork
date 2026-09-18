@@ -158,7 +158,7 @@ export default function ExpensesPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="🧾" title="ไม่มีคำขอเบิกตามเงื่อนไข" />
+          <EmptyState icon="▤" title="ไม่มีคำขอเบิกตามเงื่อนไข" />
         )}
       </Card>
     </div>

@@ -121,7 +121,7 @@ export default function DocumentsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="📄" title="ไม่มีคำขอเอกสารตามเงื่อนไข" />
+          <EmptyState icon="▣" title="ไม่มีคำขอเอกสารตามเงื่อนไข" />
         )}
       </Card>
     </div>

@@ -175,7 +175,7 @@ export default function EmployeeListPage() {
             )}
           </>
         ) : (
-          <EmptyState icon="🔍" title="ไม่พบพนักงานตามเงื่อนไข" description="ลองปรับตัวกรอง" />
+          <EmptyState icon="☰" title="ไม่พบพนักงานตามเงื่อนไข" description="ลองปรับตัวกรอง" />
         )}
       </Card>
     </div>

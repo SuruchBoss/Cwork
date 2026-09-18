@@ -182,7 +182,7 @@ export default function LeavePage() {
             )}
           </>
         ) : (
-          <EmptyState icon="🗓" title="ไม่มีคำขอลาตามเงื่อนไข" />
+          <EmptyState icon="⏸" title="ไม่มีคำขอลาตามเงื่อนไข" />
         )}
       </Card>
     </div>

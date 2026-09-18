@@ -168,7 +168,7 @@ export default function OffboardingPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="👋" title="ไม่มีคำขอลาออกตามเงื่อนไข" />
+          <EmptyState icon="↪" title="ไม่มีคำขอลาออกตามเงื่อนไข" />
         )}
       </Card>
 

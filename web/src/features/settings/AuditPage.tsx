@@ -147,7 +147,7 @@ export default function AuditPage() {
             </div>
           </>
         ) : (
-          <EmptyState icon="🗒" title="ไม่มีบันทึกตามเงื่อนไข" />
+          <EmptyState icon="⎙" title="ไม่มีบันทึกตามเงื่อนไข" />
         )}
       </Card>
     </div>

@@ -82,7 +82,7 @@ export default function OrganizationPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState icon="🏢" title="ยังไม่มีแผนก" />
+            <EmptyState icon="⌗" title="ยังไม่มีแผนก" />
           )}
         </Card>
 
@@ -104,7 +104,7 @@ export default function OrganizationPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="📆" title="ยังไม่ได้ตั้งวันหยุด" />
+            <EmptyState icon="⌗" title="ยังไม่ได้ตั้งวันหยุด" />
           )}
         </Card>
       </div>

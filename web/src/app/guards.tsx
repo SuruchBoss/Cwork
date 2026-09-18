@@ -36,7 +36,7 @@ export function RequirePermission({ any }: { any: string[] }) {
     return (
       <div className="page">
         <EmptyState
-          icon="🔒"
+          icon="⊘"
           title="คุณไม่มีสิทธิ์เข้าถึงหน้านี้"
           description="หากคิดว่าเป็นความผิดพลาด กรุณาติดต่อผู้ดูแลระบบ"
         />

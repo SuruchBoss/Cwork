@@ -110,7 +110,7 @@ export default function AssistantPage() {
         <PageHeader title="ผู้ช่วย HR" />
         <Card>
           <EmptyState
-            icon="🔌"
+            icon="✦"
             title="ผู้ช่วย HR ยังไม่เปิดใช้งาน"
             description="ตั้งค่า ASSISTANT_ENABLED และคีย์ของผู้ให้บริการโมเดลในไฟล์ .env ของ backend เพื่อเปิดใช้ ระบบ HRIS ส่วนอื่นทำงานได้ตามปกติโดยไม่ต้องใช้ AI"
           />

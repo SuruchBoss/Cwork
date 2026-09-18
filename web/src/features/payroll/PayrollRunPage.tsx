@@ -191,7 +191,7 @@ export default function PayrollRunPage() {
           </div>
         ) : (
           <EmptyState
-            icon="🧾"
+            icon="฿"
             title="ยังไม่มีสลิปในรอบนี้"
             description="กด “คำนวณเงินเดือน” เพื่อสร้างสลิปของพนักงานทุกคน"
           />

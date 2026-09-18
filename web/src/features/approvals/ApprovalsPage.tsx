@@ -162,7 +162,7 @@ export default function ApprovalsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="✅" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
+          <EmptyState icon="✓" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
         )}
       </Card>
 

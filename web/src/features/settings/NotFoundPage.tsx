@@ -5,7 +5,7 @@ export default function NotFoundPage() {
   return (
     <div className="page">
       <EmptyState
-        icon="🧭"
+        icon="◌"
         title="ไม่พบหน้าที่คุณต้องการ"
         description="ลิงก์อาจเปลี่ยนไปแล้ว หรือคุณไม่มีสิทธิ์เข้าถึงส่วนนี้"
         action={
