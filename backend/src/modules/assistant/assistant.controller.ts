@@ -56,6 +56,22 @@ export class AssistantController {
     });
   }
 
+  @Post('payroll-runs/:runId/explanation')
+  @RequirePermissions(Permission.ASSISTANT_USE, Permission.PAYROLL_APPROVE)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Explain a payroll run before it is approved',
+    description:
+      "Narrates a run's variance against the previous period from figures the tool " +
+      'computes; the model states them, it does not work them out. Requires payroll:approve.',
+  })
+  explainPayrollRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('runId', ParseUUIDPipe) runId: string,
+  ) {
+    return this.assistant.explainPayrollRun(user, runId);
+  }
+
   @Get('conversations')
   @RequirePermissions(Permission.ASSISTANT_USE)
   @ApiOperation({ summary: 'My assistant conversations' })

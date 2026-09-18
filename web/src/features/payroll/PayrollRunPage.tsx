@@ -31,6 +31,62 @@ interface RunDetail extends PayrollRun {
   payslips: PayslipSummary[];
 }
 
+interface RunExplanation {
+  reply: string;
+}
+
+/**
+ * The assistant's explanation of a run's variance, offered to an approver
+ * before they sign (CW-040).
+ *
+ * It renders nothing at all unless the deployment has the assistant switched
+ * on — an organisation running with `ASSISTANT_ENABLED=false` sees the approval
+ * screen exactly as it was. The model is not called until the approver asks:
+ * the panel is a button, and the explanation is fetched on demand.
+ */
+function RunExplanationPanel({ runId }: { runId: string }) {
+  const status = useQuery({
+    queryKey: ['assistant', 'status'],
+    queryFn: () => api.get<{ enabled: boolean }>('/assistant/status'),
+    staleTime: 5 * 60_000,
+  });
+
+  const explain = useMutation({
+    mutationFn: () =>
+      api.post<RunExplanation>(`/assistant/payroll-runs/${runId}/explanation`),
+  });
+
+  if (!status.data?.enabled) return null;
+
+  return (
+    <Card
+      title="อธิบายด้วย AI"
+      actions={
+        <Button
+          variant="secondary"
+          size="sm"
+          loading={explain.isPending}
+          onClick={() => explain.mutate()}
+        >
+          {explain.data ? 'อธิบายอีกครั้ง' : 'อธิบายรอบนี้'}
+        </Button>
+      }
+    >
+      {explain.isError ? (
+        <div className="alert alert--danger" role="alert">
+          {explain.error instanceof Error ? explain.error.message : 'อธิบายไม่สำเร็จ'}
+        </div>
+      ) : explain.data ? (
+        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{explain.data.reply}</p>
+      ) : (
+        <p className="subtle" style={{ margin: 0 }}>
+          เทียบรอบนี้กับงวดก่อน แล้วสรุปว่าอะไรทำให้ยอดเปลี่ยน — ตัวเลขทั้งหมดมาจากรอบจริง ไม่ใช่การประมาณ
+        </p>
+      )}
+    </Card>
+  );
+}
+
 export default function PayrollRunPage() {
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
@@ -135,6 +191,10 @@ export default function PayrollRunPage() {
         <div className="alert alert--info">
           ผู้ที่คำนวณรอบนี้ไม่สามารถอนุมัติรอบของตัวเองได้ — ต้องให้ผู้มีสิทธิ์อีกคนอนุมัติ
         </div>
+      )}
+
+      {canApprove && ['CALCULATED', 'PENDING_APPROVAL'].includes(data.status) && (
+        <RunExplanationPanel runId={data.id} />
       )}
 
       <div className="grid grid--4">

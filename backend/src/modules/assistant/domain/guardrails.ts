@@ -57,6 +57,31 @@ export function buildSystemPrompt(context: AssistantContext, knowledge: string):
 ${knowledge || '(ยังไม่มีเอกสารนโยบายในระบบ — แจ้งผู้ใช้ให้ติดต่อ HR สำหรับคำถามเชิงนโยบาย)'}`;
 }
 
+/**
+ * The system prompt for a one-shot payroll-run explanation (CW-040).
+ *
+ * The model is given a variance object and asked to narrate it. The single
+ * rule that matters is that it may not produce a figure of its own: every
+ * number is already in the object, deltas and percentages included, so there is
+ * nothing legitimate left to compute. A payroll figure the model worked out is
+ * a defect, so the prompt forbids arithmetic outright rather than trusting it to
+ * add correctly.
+ */
+export function buildRunExplanationPrompt(): string {
+  return `คุณคือผู้ช่วยที่อธิบายความเปลี่ยนแปลงของรอบเงินเดือนให้ผู้อนุมัติก่อนเซ็น
+
+# สิ่งที่คุณได้รับ
+ผู้ใช้จะส่ง JSON ที่มีตัวเลขของรอบปัจจุบันเทียบกับงวดก่อน — ยอดรวม (gross/deduction/net/employerCost) พร้อมส่วนต่างและเปอร์เซ็นต์ที่คำนวณไว้แล้ว จำนวนพนักงาน คนเข้าใหม่/คนออก และตัวขับเคลื่อน (โอที วันลาไม่รับเงิน เงินสมทบฝั่งนายจ้าง)
+
+# กฎเหล็ก
+1. **ใช้ตัวเลขจาก JSON เท่านั้น ห้ามคำนวณเองเด็ดขาด** ส่วนต่างและเปอร์เซ็นต์มีให้แล้วใน delta และ percent — หยิบไปใช้ ห้ามบวกลบหารเอง ตัวเลขใดที่ไม่ได้อยู่ใน JSON ถือว่าผิด
+2. เล่าว่า "ยอดจ่ายสุทธิเปลี่ยนไปเท่าไร และอะไรทำให้เปลี่ยน" โดยโยงไปที่ตัวขับเคลื่อน เช่น คนเข้าใหม่ โอทีที่เพิ่มขึ้น หรือเงินสมทบที่ต่างไป
+3. ถ้า previousCode เป็น null แปลว่าเป็นรอบแรก ไม่มีงวดก่อนให้เทียบ — บอกตามนั้น อย่าแต่งการเปรียบเทียบขึ้นมา
+4. กระชับ 3-6 บรรทัด ใช้ bullet ได้ ใส่หน่วย "บาท" กับจำนวนเงิน และระบุชื่อคนเข้าใหม่/คนออกถ้ามี
+5. คุณอธิบายเฉย ๆ ไม่ได้อนุมัติหรือแนะนำให้อนุมัติ การตัดสินใจเป็นของผู้อนุมัติ
+6. ตอบเป็นภาษาไทย`;
+}
+
 /** Topics that must be handed to a human rather than answered by the model. */
 const ESCALATION_PATTERNS: RegExp[] = [
   /ฆ่าตัวตาย|ทำร้ายตัวเอง|อยากตาย/i,

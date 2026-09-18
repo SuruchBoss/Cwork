@@ -8,8 +8,10 @@ import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
 import { formatDateOnly, workDateFor } from '../../core/utils/date.util';
 import { OrganizationService } from '../organization/organization.service';
+import { ungroundedAmounts, type PayrollVariance } from '../payroll/domain/run-variance';
 import { AssistantToolsService } from './assistant-tools.service';
 import {
+  buildRunExplanationPrompt,
   buildSystemPrompt,
   MAX_HISTORY_MESSAGES,
   MAX_TOOL_ITERATIONS,
@@ -186,6 +188,65 @@ export class AssistantService {
       toolsUsed,
       usage,
     };
+  }
+
+  /**
+   * A one-shot explanation of a payroll run's variance, for the approval screen
+   * (CW-040).
+   *
+   * Not the chat loop: the figures come from `explain_payroll_run` in a single
+   * call, and the model is asked once to narrate them with no tools of its own.
+   * That is what makes "the model narrates, it never computes" enforceable — it
+   * is handed the numbers and given nothing to work them out with. `figures` is
+   * returned alongside the prose so the caller can render both, and so a test
+   * can assert the prose invented nothing.
+   */
+  async explainPayrollRun(
+    user: AuthenticatedUser,
+    runId: string,
+  ): Promise<{ reply: string; figures: PayrollVariance }> {
+    if (!this.llm.isAvailable()) {
+      throw new BusinessRuleError(
+        ErrorCode.ASSISTANT_DISABLED,
+        'The HR assistant is not enabled on this deployment',
+      );
+    }
+
+    await this.assertWithinQuota(user);
+
+    // The tool is the security boundary: it re-checks payroll:approve and the
+    // organisation scope regardless of who calls it, and computes every figure.
+    const result = await this.tools.execute(user, 'explain_payroll_run', { runId });
+    if (!result.ok) {
+      // Reached through an endpoint that already required the permission, so the
+      // remaining failure is a run this caller cannot see — report it as absent.
+      throw new NotFoundError('PayrollRun', runId);
+    }
+    const figures = result.data as PayrollVariance;
+
+    const response = await this.llm.complete({
+      system: buildRunExplanationPrompt(),
+      messages: [{ role: 'user', content: [{ type: 'text', text: JSON.stringify(figures) }] }],
+      tools: [],
+      maxTokens: this.config.assistant.maxTokens,
+      temperature: 0.2,
+    });
+
+    const reply = redactSensitive(textOf(response.content).trim());
+
+    // The rule is enforced by a test on `ungroundedAmounts`; at runtime a
+    // violation is logged rather than shown, because a fabricated figure in a
+    // payroll explanation is a defect worth a paper trail.
+    const invented = ungroundedAmounts(reply, figures);
+    if (invented.length > 0) {
+      this.logger.error(
+        `Payroll explanation for run ${runId} stated figures not in the tool output: ${invented.join(', ')}`,
+      );
+    }
+
+    await this.recordUsage(user, response.usage, 1);
+
+    return { reply, figures };
   }
 
   // ------------------------------------------------------------- conversations

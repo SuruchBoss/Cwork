@@ -19,7 +19,26 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **Explain a payroll run before it is approved** (CW-040). Separation of duties
+  means the approver did not prepare the run, and what they are shown is a total
+  with no way to interrogate it. On the approval screen the assistant now
+  narrates the run's variance against the previous period — net movement,
+  joiners and leavers, overtime, unpaid leave, employer cost — so the approver
+  can see *why* the net moved before signing. Every figure comes from a pure
+  function (`computePayrollVariance`); the model states the numbers, it does not
+  work them out, and a test fails on any figure in the narration that the tool
+  did not produce. The tool requires `payroll:approve` and treats a run from
+  another organisation as absent, both proven in an e2e test. It is the first
+  assistant tool to take an id, which CW-042 amended ADR-0004 to allow. With the
+  assistant switched off the approval screen is unchanged.
+
+### Changed
+
+- **ADR-0004 is amended, not superseded** (CW-042): the rule is stated as its
+  intended "no tool parameter may extend the caller's reach", rather than the
+  literal "no employee id" that read as forbidding every manager-facing tool.
 
 ## [0.3.0] — 2026-09-18
 

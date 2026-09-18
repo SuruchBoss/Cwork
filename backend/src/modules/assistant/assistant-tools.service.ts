@@ -1,6 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AuditAction, DayPortion, DocumentRequestType, LeaveRequestStatus } from '@prisma/client';
+import {
+  AuditAction,
+  DayPortion,
+  DocumentRequestType,
+  LeaveRequestStatus,
+  Prisma,
+  PayrollRunStatus,
+} from '@prisma/client';
 import { DomainError } from '../../core/errors/domain.errors';
+import {
+  computePayrollVariance,
+  type EmployeeRunLine,
+  type RunSnapshot,
+} from '../payroll/domain/run-variance';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
@@ -89,6 +101,8 @@ export class AssistantToolsService {
           return await this.listHolidays(user, input);
         case 'get_pending_approvals':
           return await this.getPendingApprovals(user);
+        case 'explain_payroll_run':
+          return await this.explainPayrollRun(user, input);
         default:
           return { ok: false, error: `ไม่รู้จักเครื่องมือ "${toolName}"` };
       }
@@ -430,6 +444,62 @@ export class AssistantToolsService {
     };
   }
 
+  /**
+   * The variance of a payroll run against the previous period (CW-040).
+   *
+   * The first tool to take an id, and the case ADR-0004 was amended for: a run
+   * id names a record the caller can already open, not a person the model
+   * chose. The permission check and the organisation scope run on every call
+   * regardless of who — or what — supplied the id, so a prompt injection that
+   * fills `runId` in gains nothing the caller could not already reach.
+   *
+   * Read-only. Every figure it returns is computed by `computePayrollVariance`;
+   * the model narrates this object and works nothing out for itself.
+   */
+  private async explainPayrollRun(
+    user: AuthenticatedUser,
+    input: Record<string, unknown>,
+  ): Promise<ToolExecutionResult> {
+    if (!user.permissions.includes(Permission.PAYROLL_APPROVE)) {
+      return { ok: false, error: 'บัญชีนี้ไม่มีสิทธิ์อนุมัติเงินเดือน จึงดูคำอธิบายรอบไม่ได้' };
+    }
+
+    const runId = asString(input.runId);
+    if (!runId) return { ok: false, error: 'ต้องระบุรอบเงินเดือนที่ต้องการคำอธิบาย' };
+
+    const current = await this.prisma.payrollRun.findFirst({
+      where: { id: runId, organizationId: user.organizationId },
+      include: { period: true, payslips: { include: PAYSLIP_LINE_INCLUDE } },
+    });
+    // Not found rather than forbidden: a run id from another organisation is
+    // indistinguishable from one that does not exist, by design.
+    if (!current) return { ok: false, error: 'ไม่พบรอบเงินเดือนนี้' };
+
+    // The most recent regular run that was actually signed off, in a period
+    // before this one — the baseline an approver would compare against.
+    const previous = await this.prisma.payrollRun.findFirst({
+      where: {
+        organizationId: user.organizationId,
+        type: current.type,
+        status: { in: [PayrollRunStatus.APPROVED, PayrollRunStatus.PAID] },
+        id: { not: current.id },
+        OR: [
+          { period: { year: { lt: current.period.year } } },
+          { period: { year: current.period.year, month: { lt: current.period.month } } },
+        ],
+      },
+      include: { period: true, payslips: { include: PAYSLIP_LINE_INCLUDE } },
+      orderBy: [{ period: { year: 'desc' } }, { period: { month: 'desc' } }],
+    });
+
+    const variance = computePayrollVariance(
+      snapshotOf(current),
+      previous ? snapshotOf(previous) : null,
+    );
+
+    return { ok: true, data: variance };
+  }
+
   // --------------------------------------------------------------- write tools
 
   private async submitLeaveRequest(
@@ -520,6 +590,56 @@ export class AssistantToolsService {
       where: { organizationId, code: code.toUpperCase(), isActive: true, deletedAt: null },
     });
   }
+}
+
+/** The employee name a variance line needs, alongside the payslip's own fields. */
+const PAYSLIP_LINE_INCLUDE = {
+  employee: { select: { firstNameTh: true, lastNameTh: true } },
+} satisfies Prisma.PayslipInclude;
+
+/** A payslip reduced to what `snapshotOf` reads; Prisma's richer row satisfies it. */
+interface PayslipLineRow {
+  employeeId: string;
+  netPay: Prisma.Decimal;
+  overtimeHours: Prisma.Decimal;
+  unpaidLeaveDays: Prisma.Decimal;
+  ssoEmployer: Prisma.Decimal;
+  pvdEmployer: Prisma.Decimal;
+  employee: { firstNameTh: string; lastNameTh: string };
+}
+
+interface PayrollRunRow {
+  currency: string;
+  totalGross: Prisma.Decimal;
+  totalDeduction: Prisma.Decimal;
+  totalNet: Prisma.Decimal;
+  totalEmployerCost: Prisma.Decimal;
+  period: { code: string };
+  payslips: PayslipLineRow[];
+}
+
+/** Maps a persisted run into the plain-number snapshot the pure variance takes. */
+function snapshotOf(run: PayrollRunRow): RunSnapshot {
+  const employees: EmployeeRunLine[] = run.payslips.map((slip) => ({
+    employeeId: slip.employeeId,
+    name: `${slip.employee.firstNameTh} ${slip.employee.lastNameTh}`,
+    netPay: Number(slip.netPay),
+    overtimeHours: Number(slip.overtimeHours),
+    unpaidLeaveDays: Number(slip.unpaidLeaveDays),
+    // Employer-side cost: the SSO and provident-fund employer share, which is
+    // where a benefit change shows up on the payslip.
+    employerContribution: Number(slip.ssoEmployer) + Number(slip.pvdEmployer),
+  }));
+
+  return {
+    code: run.period.code,
+    currency: run.currency,
+    totalGross: Number(run.totalGross),
+    totalDeduction: Number(run.totalDeduction),
+    totalNet: Number(run.totalNet),
+    totalEmployerCost: Number(run.totalEmployerCost),
+    employees,
+  };
 }
 
 function asString(value: unknown): string | undefined {
