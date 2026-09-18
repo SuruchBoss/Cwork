@@ -2,15 +2,25 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AssistantChannel, AssistantMessageRole, Prisma } from '@prisma/client';
 import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
-import { BusinessRuleError, ErrorCode, NotFoundError } from '../../core/errors/domain.errors';
+import {
+  AccessDeniedError,
+  BusinessRuleError,
+  ErrorCode,
+  NotFoundError,
+} from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
 import { formatDateOnly, workDateFor } from '../../core/utils/date.util';
+import {
+  ungroundedFlagAmounts,
+  type AttendanceFlagSummary,
+} from '../attendance/domain/flag-summary';
 import { OrganizationService } from '../organization/organization.service';
 import { ungroundedAmounts, type PayrollVariance } from '../payroll/domain/run-variance';
 import { AssistantToolsService } from './assistant-tools.service';
 import {
+  buildFlagExplanationPrompt,
   buildRunExplanationPrompt,
   buildSystemPrompt,
   MAX_HISTORY_MESSAGES,
@@ -241,6 +251,64 @@ export class AssistantService {
     if (invented.length > 0) {
       this.logger.error(
         `Payroll explanation for run ${runId} stated figures not in the tool output: ${invented.join(', ')}`,
+      );
+    }
+
+    await this.recordUsage(user, response.usage, 1);
+
+    return { reply, figures };
+  }
+
+  /**
+   * A one-shot explanation of a team's flagged attendance punches, for a manager
+   * (CW-039).
+   *
+   * The same shape as the payroll explanation: the figures come from
+   * `explain_attendance_flags` in a single call, and the model narrates them
+   * with no tools of its own. The tool is the security boundary — it requires a
+   * team-or-wider attendance read and scopes the punches to the caller's own
+   * team, so a caller the tool refuses gets an access error, not someone else's
+   * data. `figures` is returned alongside the prose so a test can assert the
+   * narration invented nothing.
+   */
+  async explainAttendanceFlags(
+    user: AuthenticatedUser,
+    range: { from?: string; to?: string },
+  ): Promise<{ reply: string; figures: AttendanceFlagSummary }> {
+    if (!this.llm.isAvailable()) {
+      throw new BusinessRuleError(
+        ErrorCode.ASSISTANT_DISABLED,
+        'The HR assistant is not enabled on this deployment',
+      );
+    }
+
+    await this.assertWithinQuota(user);
+
+    const result = await this.tools.execute(user, 'explain_attendance_flags', {
+      from: range.from,
+      to: range.to,
+    });
+    if (!result.ok) {
+      // The only failure the tool returns is the team-attendance permission
+      // refusal; surface it as forbidden rather than a generic error.
+      throw new AccessDeniedError(result.error ?? 'ดูสรุปธงลงเวลาไม่ได้');
+    }
+    const figures = result.data as AttendanceFlagSummary;
+
+    const response = await this.llm.complete({
+      system: buildFlagExplanationPrompt(),
+      messages: [{ role: 'user', content: [{ type: 'text', text: JSON.stringify(figures) }] }],
+      tools: [],
+      maxTokens: this.config.assistant.maxTokens,
+      temperature: 0.2,
+    });
+
+    const reply = redactSensitive(textOf(response.content).trim());
+
+    const invented = ungroundedFlagAmounts(reply, figures);
+    if (invented.length > 0) {
+      this.logger.error(
+        `Attendance-flag explanation stated figures not in the tool output: ${invented.join(', ')}`,
       );
     }
 

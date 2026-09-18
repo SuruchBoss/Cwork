@@ -13,10 +13,17 @@ import {
   type EmployeeRunLine,
   type RunSnapshot,
 } from '../payroll/domain/run-variance';
+import { summariseAttendanceFlags, type FlaggedPunch } from '../attendance/domain/flag-summary';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
+import { employeeVisibilityFilter } from '../../core/security/employee-access';
 import { Permission } from '../../core/security/permissions';
-import { formatDateOnly, yearsOfService } from '../../core/utils/date.util';
+import {
+  formatDateOnly,
+  toDateOnly,
+  workDateFor,
+  yearsOfService,
+} from '../../core/utils/date.util';
 import { ApprovalService } from '../approvals/approval.service';
 import { AttendanceService } from '../attendance/attendance.service';
 import { AuditService } from '../audit/audit.service';
@@ -103,6 +110,8 @@ export class AssistantToolsService {
           return await this.getPendingApprovals(user);
         case 'explain_payroll_run':
           return await this.explainPayrollRun(user, input);
+        case 'explain_attendance_flags':
+          return await this.explainAttendanceFlags(user, input);
         default:
           return { ok: false, error: `ไม่รู้จักเครื่องมือ "${toolName}"` };
       }
@@ -498,6 +507,77 @@ export class AssistantToolsService {
     );
 
     return { ok: true, data: variance };
+  }
+
+  /**
+   * The team's flagged attendance punches, grouped so their likely cause is
+   * legible (CW-039).
+   *
+   * Manager-facing, and so it takes no subject — the ADR-0004 shape for a tool
+   * the model must not aim at a person. The range `[from, to]` is a period, not
+   * a subject; the employees in scope are resolved from the caller with
+   * `employeeVisibilityFilter`, exactly the team the attendance report already
+   * shows them. It requires a team-or-wider attendance read, so an employee who
+   * can only see their own punches cannot reach it however the range is filled.
+   *
+   * Read-only. Every figure comes from `summariseAttendanceFlags`; the model
+   * narrates the groups and works nothing out for itself.
+   */
+  private async explainAttendanceFlags(
+    user: AuthenticatedUser,
+    input: Record<string, unknown>,
+  ): Promise<ToolExecutionResult> {
+    const canSeeTeam = [
+      Permission.ATTENDANCE_READ_TEAM,
+      Permission.ATTENDANCE_READ,
+      Permission.ATTENDANCE_MANAGE,
+    ].some((permission) => user.permissions.includes(permission));
+    if (!canSeeTeam) {
+      return { ok: false, error: 'บัญชีนี้ไม่มีสิทธิ์ดูการลงเวลาของทีม จึงดูสรุปธงลงเวลาไม่ได้' };
+    }
+
+    const organization = await this.organization.getOrganization(user.organizationId);
+    const toStr = asString(input.to);
+    const fromStr = asString(input.from);
+    const to = toStr ? toDateOnly(toStr) : workDateFor(new Date(), organization.timezone);
+    // Default window is the calendar month the range ends in — the unit a
+    // manager reviews before a payroll cut.
+    const from = fromStr
+      ? toDateOnly(fromStr)
+      : new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1));
+
+    const punches = await this.prisma.attendancePunch.findMany({
+      where: {
+        organizationId: user.organizationId,
+        employee: employeeVisibilityFilter(user),
+        workDate: { gte: from, lte: to },
+        OR: [{ isOutsideGeofence: true }, { anomalyFlags: { isEmpty: false } }],
+      },
+      select: {
+        employeeId: true,
+        anomalyFlags: true,
+        isOutsideGeofence: true,
+        distanceM: true,
+        accuracyM: true,
+        workLocation: { select: { name: true } },
+      },
+    });
+
+    const flagged: FlaggedPunch[] = punches.map((punch) => ({
+      employeeId: punch.employeeId,
+      // A punch can be outside the fence without the flag being in its array
+      // (older rows); fold it in so a group is never silently short a flag.
+      flags:
+        punch.isOutsideGeofence && !punch.anomalyFlags.includes('OUTSIDE_GEOFENCE')
+          ? [...punch.anomalyFlags, 'OUTSIDE_GEOFENCE']
+          : punch.anomalyFlags,
+      locationName: punch.workLocation?.name ?? null,
+      distanceM: punch.distanceM,
+      accuracyM: punch.accuracyM,
+    }));
+
+    const summary = summariseAttendanceFlags(flagged, formatDateOnly(from), formatDateOnly(to));
+    return { ok: true, data: summary };
   }
 
   // --------------------------------------------------------------- write tools

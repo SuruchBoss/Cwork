@@ -31,6 +31,20 @@ export class ChatDto {
   channel?: AssistantChannel;
 }
 
+export class ExplainAttendanceFlagsDto {
+  @ApiPropertyOptional({
+    description: 'ต้นช่วง (YYYY-MM-DD). ค่าเริ่มต้นคือวันแรกของเดือนที่ to ตกอยู่',
+  })
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'ปลายช่วง (YYYY-MM-DD). ค่าเริ่มต้นคือวันนี้' })
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+}
+
 export class RateMessageDto {
   @ApiProperty({ enum: ['UP', 'DOWN'] })
   @IsIn(['UP', 'DOWN'])

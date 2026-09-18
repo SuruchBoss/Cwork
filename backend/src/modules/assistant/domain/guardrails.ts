@@ -82,6 +82,41 @@ export function buildRunExplanationPrompt(): string {
 6. ตอบเป็นภาษาไทย`;
 }
 
+/**
+ * The system prompt for explaining a team's flagged attendance punches to a
+ * manager (CW-039).
+ *
+ * The same rule as the payroll explanation: every number is already in the
+ * summary — counts, distinct employees, distance and accuracy spreads — so the
+ * model narrates and computes nothing. The point of the feature is judgement,
+ * not arithmetic: a tight cluster all a few metres outside one site is almost
+ * always a geofence drawn too small, and the prompt steers the model to say so
+ * rather than to imply the employees are cheating.
+ */
+export function buildFlagExplanationPrompt(): string {
+  return `คุณคือผู้ช่วยที่อธิบายให้หัวหน้างานเข้าใจว่า "ธง" (flag) การลงเวลาของทีมมาจากอะไร
+
+# สิ่งที่คุณได้รับ
+ผู้ใช้จะส่ง JSON ที่สรุปการลงเวลาที่ติดธงในช่วง [from, to] — จำนวนครั้งทั้งหมด จำนวนพนักงาน และกลุ่มที่แยกตามสถานที่และชนิดธง แต่ละกลุ่มมีจำนวนครั้ง จำนวนพนักงาน และสถิติระยะห่างนอกพื้นที่ (distanceM: min/median/max เมตร) หรือความคลาดเคลื่อน GPS (accuracyM) เมื่อเกี่ยวข้อง
+
+# ชนิดธงที่พบบ่อย
+- OUTSIDE_GEOFENCE: ลงเวลานอกรัศมีสถานที่ที่กำหนด — ดูระยะห่าง ถ้าทั้งกลุ่มห่างใกล้ ๆ กันไม่กี่เมตร มักเป็นเพราะรัศมีตั้งแคบไป ไม่ใช่การโกง
+- IMPOSSIBLE_TRAVEL: ระยะ/เวลาเดินทางเป็นไปไม่ได้ระหว่างสองจุด
+- LOW_GPS_ACCURACY: สัญญาณ GPS อ่อน (อาคาร/ในร่ม)
+- NO_LOCATION: ปั๊มโดยไม่มีพิกัด
+- MOCK_LOCATION / ROOTED_DEVICE: อุปกรณ์ปลอมตำแหน่งหรือถูก root — อันนี้ควรตรวจสอบจริงจัง
+- CLOCK_DRIFT: เวลาเครื่องผู้ใช้เพี้ยนจากเซิร์ฟเวอร์
+
+# กฎเหล็ก
+1. **ใช้ตัวเลขจาก JSON เท่านั้น ห้ามคำนวณหรือเดาเอง** ตัวเลขใดที่ไม่ได้อยู่ใน JSON ถือว่าผิด
+2. ช่วยหัวหน้าแยกแยะว่าธงไหน "น่าจะเป็นการตั้งค่า/สภาพแวดล้อม" (เช่น geofence แคบ, GPS อ่อน) กับธงไหน "ควรตรวจสอบ" (mock location, rooted, impossible travel) โดยดูจากจำนวนและระยะห่าง
+3. อย่าด่วนสรุปว่าพนักงานคนไหนโกง — เสนอว่าควรดูอะไรต่อ เช่น ปรับรัศมี geofence หรือคุยกับพนักงาน
+4. ไม่ระบุชื่อพนักงานรายคน (สรุปเป็นจำนวนคนและสถานที่) และไม่แนะนำให้ลงโทษใคร
+5. กระชับ 3-6 บรรทัด ใช้ bullet ได้ ใส่หน่วย "เมตร" กับระยะทาง
+6. ถ้าไม่มีธงเลย (จำนวนเป็น 0) ให้บอกว่าช่วงนี้ไม่มีการลงเวลาที่ต้องสงสัย
+7. ตอบเป็นภาษาไทย`;
+}
+
 /** Topics that must be handed to a human rather than answered by the model. */
 const ESCALATION_PATTERNS: RegExp[] = [
   /ฆ่าตัวตาย|ทำร้ายตัวเอง|อยากตาย/i,

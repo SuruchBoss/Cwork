@@ -22,6 +22,7 @@ import { AssistantService } from './assistant.service';
 import {
   ChatDto,
   CreateKnowledgeDocumentDto,
+  ExplainAttendanceFlagsDto,
   RateMessageDto,
   SetKnowledgeStatusDto,
   UpdateKnowledgeDocumentDto,
@@ -70,6 +71,24 @@ export class AssistantController {
     @Param('runId', ParseUUIDPipe) runId: string,
   ) {
     return this.assistant.explainPayrollRun(user, runId);
+  }
+
+  @Post('attendance/flag-explanation')
+  @RequirePermissions(Permission.ASSISTANT_USE)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Explain a team’s flagged attendance punches to a manager',
+    description:
+      'Groups the flagged punches the caller may already see by location and flag, with the ' +
+      'distances and counts that tell a badly-drawn geofence from something worth a look; the ' +
+      'model narrates the groups and computes nothing. Takes no employee — scope is the caller’s ' +
+      'own team — and requires a team-or-wider attendance read.',
+  })
+  explainAttendanceFlags(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ExplainAttendanceFlagsDto,
+  ) {
+    return this.assistant.explainAttendanceFlags(user, { from: dto.from, to: dto.to });
   }
 
   @Get('conversations')

@@ -21,6 +21,20 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Explain flagged attendance to a manager** (CW-039). A manager reviewing
+  attendance sees a flat list of flags — `OUTSIDE_GEOFENCE`, `LOW_GPS_ACCURACY`,
+  `MOCK_LOCATION` and the rest — with no way to tell a badly-drawn geofence from
+  something worth a look. The assistant now groups the team's flagged punches by
+  location and flag, with the distances and counts that tell the two apart:
+  forty punches a median 45 m outside one site reads as a fence set too tight;
+  one punch 8 km out is worth a question. Manager-facing, so it takes no
+  employee — the scope is the caller's own team, resolved server-side — and it
+  requires a team-or-wider attendance read, so an employee who can see only
+  their own punches is refused (proven in an e2e test). Every figure comes from
+  a pure function (`summariseAttendanceFlags`); the model narrates the groups
+  and computes nothing, and a test fails on any figure it invents. Renders only
+  when the assistant is switched on, and the model is not called until the
+  manager asks.
 - **Explain a payroll run before it is approved** (CW-040). Separation of duties
   means the approver did not prepare the run, and what they are shown is a total
   with no way to interrogate it. On the approval screen the assistant now

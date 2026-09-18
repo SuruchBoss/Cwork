@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { subDays } from 'date-fns';
 import { useState } from 'react';
 import { qk } from '@/app/query-client';
 import {
   Badge,
+  Button,
   Card,
   EmptyState,
   ErrorState,
@@ -18,13 +19,76 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate, formatMinutes, formatTime, isoDate, todayIso } from '@/lib/format';
 import { anomalyFlagLabels, attendanceStatusLabels, statusTone } from '@/lib/labels';
+import { P } from '@/lib/permissions';
+import { useAuthStore } from '@/stores/auth.store';
 import type { AttendanceRecord, Page } from '@/types/api';
+
+interface FlagExplanation {
+  reply: string;
+}
+
+/**
+ * The assistant's read of a team's flagged attendance punches, for a manager
+ * (CW-039).
+ *
+ * It renders nothing unless the deployment has the assistant switched on, and
+ * the caller who reaches the endpoint must be able to see their team's
+ * attendance — so it is only offered to a viewer who holds that permission. The
+ * model is not called until the manager asks: the panel is a button, and it
+ * explains exactly the date window the table is showing.
+ */
+function FlagExplanationPanel({ from, to }: { from: string; to: string }) {
+  const status = useQuery({
+    queryKey: ['assistant', 'status'],
+    queryFn: () => api.get<{ enabled: boolean }>('/assistant/status'),
+    staleTime: 5 * 60_000,
+  });
+
+  const explain = useMutation({
+    mutationFn: () =>
+      api.post<FlagExplanation>('/assistant/attendance/flag-explanation', { from, to }),
+  });
+
+  if (!status.data?.enabled) return null;
+
+  return (
+    <Card
+      title="อธิบายด้วย AI"
+      actions={
+        <Button
+          variant="secondary"
+          size="sm"
+          loading={explain.isPending}
+          onClick={() => explain.mutate()}
+        >
+          {explain.data ? 'อธิบายอีกครั้ง' : 'อธิบายธงลงเวลา'}
+        </Button>
+      }
+    >
+      {explain.isError ? (
+        <div className="alert alert--danger" role="alert">
+          {explain.error instanceof Error ? explain.error.message : 'อธิบายไม่สำเร็จ'}
+        </div>
+      ) : explain.data ? (
+        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{explain.data.reply}</p>
+      ) : (
+        <p className="subtle" style={{ margin: 0 }}>
+          จัดกลุ่มรายการที่ต้องตรวจสอบตามสถานที่และชนิดธง พร้อมระยะห่างและจำนวน
+          เพื่อช่วยแยกว่าเป็นเพราะตั้งค่าพื้นที่แคบไป หรือควรตรวจสอบจริง — ตัวเลขทั้งหมดมาจากข้อมูลจริง
+        </p>
+      )}
+    </Card>
+  );
+}
 
 export default function AttendancePage() {
   const [from, setFrom] = useState(isoDate(subDays(new Date(), 6)));
   const [to, setTo] = useState(todayIso());
   const [status, setStatus] = useState('');
   const [anomaliesOnly, setAnomaliesOnly] = useState(false);
+  const canReadTeam = useAuthStore((s) =>
+    s.canAny(P.ATTENDANCE_READ_TEAM, P.ATTENDANCE_READ, P.ATTENDANCE_MANAGE),
+  );
 
   const records = useQuery({
     queryKey: qk.attendanceRecords({ from, to, status, anomaliesOnly }),
@@ -102,6 +166,8 @@ export default function AttendancePage() {
           </Field>
         </div>
       </Card>
+
+      {canReadTeam && summary.flagged > 0 && <FlagExplanationPanel from={from} to={to} />}
 
       <Card flush>
         {records.isLoading ? (

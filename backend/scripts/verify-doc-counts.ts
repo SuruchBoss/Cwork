@@ -53,7 +53,7 @@ const counts: Record<string, number> = {
   // Update here, not in the prose: that is the whole point of this file.
   web: 29,
   mobile: 35,
-  e2e: 178,
+  e2e: 181,
 };
 
 /**
