@@ -369,6 +369,10 @@ out =
 
 // ------------------------------------------------- paths, one level down
 out = out.replace(/(src|href|poster)="assets\//g, '$1="../assets/');
+// The walkthrough is recorded twice, once per language of burned-in caption
+// (docs/demo/record.mjs, LANG_). The English page gets the English take —
+// without this it would inherit the Thai one along with the path.
+out = out.replace(/walkthrough\.th\.mp4/g, 'walkthrough.en.mp4');
 
 // ------------------------------------------------------ number formatting
 out = out
@@ -399,6 +403,11 @@ if (strays.length > 0) {
   console.error('Thai left in the English page:', strays.map(norm));
   process.exit(1);
 }
+if (/walkthrough\.th\.mp4/.test(out)) {
+  console.error('The English page still points at the Thai-captioned walkthrough.');
+  process.exit(1);
+}
+
 if (/(src|href|poster)="assets\//.test(out)) {
   console.error('asset paths were not rewritten');
   process.exit(1);
