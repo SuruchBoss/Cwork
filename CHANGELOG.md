@@ -21,6 +21,20 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Issued documents render as PDFs** (CW-008). A `DocumentRequest` used to
+  resolve to *merge data* — the fields, not a document — and HR produced the
+  certificate by hand, so the approval trail ended in a manual step nobody could
+  audit. Issuing an approved request now renders the actual PDF server-side, with
+  the Thai-capable Sarabun font embedded (SIL OFL) so the text survives rather
+  than turning to tofu boxes, the organisation's name and a signature block, and
+  a verification code. The rendered file is stored and linked to the request, and
+  is reachable only by the requester and a `document:issue` holder — narrower
+  than the organisation-wide file download, which is too wide for a salary
+  certificate. Re-issuing renders a fresh PDF and supersedes rather than
+  overwrites: the previous file is left in place and both issuances are audited.
+  A new public endpoint confirms a document is genuine from its reference number
+  and printed code, disclosing only enough to verify authenticity — never salary.
+
 - **Benefits administration in the console** (CW-009). The benefits API,
   `BenefitPlan` / `BenefitEnrollment` models and permissions existed, but the
   console had no benefits screen, so enrolment was only possible by calling the

@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuditAction, DocumentRequestStatus } from '@prisma/client';
+import type { Response } from 'express';
 import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
-import { RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
+import { Public, RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentRequestDto, IssueDocumentDto, RejectDocumentDto } from './dto/document.dto';
@@ -68,7 +69,34 @@ export class DocumentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: IssueDocumentDto,
   ) {
-    return this.documents.issue(user, id, dto.fileId, dto.note);
+    return this.documents.issue(user, id, dto.note);
+  }
+
+  @Get('requests/:id/pdf')
+  @RequireAnyPermission(Permission.DOCUMENT_ISSUE, Permission.DOCUMENT_REQUEST_SELF)
+  @ApiOperation({ summary: 'Download the issued certificate PDF (requester or document:issue)' })
+  async pdf(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { file, content, referenceNo } = await this.documents.getPdf(user, id);
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${referenceNo}.pdf"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(content);
+  }
+
+  @Public()
+  @Get('verify')
+  @ApiOperation({
+    summary: 'Verify a certificate is genuine',
+    description:
+      'Public. Confirms a document from its reference number and printed code, disclosing only ' +
+      'enough to confirm authenticity — never salary.',
+  })
+  verify(@Query('ref') ref: string, @Query('code') code: string) {
+    return this.documents.verify(ref ?? '', code ?? '');
   }
 
   @Post('requests/:id/reject')
