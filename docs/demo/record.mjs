@@ -270,9 +270,31 @@ async function step(label, fn) {
   console.log(`  ${label} — ${Date.now() - started}ms`);
 }
 
-async function show(href) {
+/**
+ * Moves to a screen, then captions it — in that order, and never the other way.
+ *
+ * The console is a single-page app: routing swaps the view without reloading
+ * the document, so the caption bar survives the navigation. Setting the new
+ * line after a fixed settle left the *previous* screen's caption sitting over
+ * the new one for the length of that settle — about 600ms a move, ten moves,
+ * a sixth of the recording describing the wrong screen. It is not subtle
+ * either: it reads as the payroll page claiming to be about attendance.
+ *
+ * So the old line is dropped before the click and the new one goes up only
+ * once the topbar agrees we have arrived. Waiting on the title rather than on
+ * a timer is also the assertion: rename a screen and the recording fails
+ * instead of quietly captioning whatever happened to load.
+ */
+async function show(href, label, key) {
+  await caption('');
   await page.locator(`a.nav-link[href="${href}"]`).click();
+  await page.waitForFunction(
+    (want) => document.querySelector('.topbar__title')?.textContent?.trim() === want,
+    label,
+    { timeout: 15000 },
+  );
   await page.waitForSelector('.page', { timeout: 15000 });
+  await caption(line(key));
   await page.waitForTimeout(600);
 }
 
@@ -308,6 +330,7 @@ await step('second factor', async () => {
   const field = page.locator('.auth__card input').first();
   await field.type(totp(SECRET), { delay: 110 });
   await beat(500);
+  await caption('');
   await page.getByRole('button', { name: 'ยืนยัน' }).click();
   await page.waitForSelector('.sidebar__nav', { timeout: 20000 });
   await caption(line('dashboard'));
@@ -328,8 +351,7 @@ const tour = [
 
 for (const [href, label, key] of tour) {
   await step(label, async () => {
-    await show(href);
-    await caption(line(key));
+    await show(href, label, key);
     await beat(1900);
 
     // The payroll run is the one screen worth opening: the payslips behind it
@@ -337,8 +359,13 @@ for (const [href, label, key] of tour) {
     if (href === '/payroll') {
       const open = page.locator('a.btn', { hasText: 'เปิดดู' }).first();
       if (await open.count()) {
+        // Opening a run keeps the topbar title, so there is no arrival to wait
+        // for. Clearing still means the worst case is a moment with no caption
+        // rather than a moment with the wrong one.
+        await caption('');
         await open.click();
         await page.waitForSelector('.page', { timeout: 15000 });
+        await page.waitForTimeout(400);
         await caption(line('payslip'));
         await beat(2800);
       }
@@ -347,6 +374,7 @@ for (const [href, label, key] of tour) {
 }
 
 await step('dark mode', async () => {
+  await caption('');
   await page.getByTitle('สลับธีมสว่าง/มืด').click();
   await caption(line('close'));
   await beat(2800);
