@@ -15,6 +15,7 @@ const EmployeeDetailPage = lazy(() => import('@/features/employees/EmployeeDetai
 const OffboardingPage = lazy(() => import('@/features/employees/OffboardingPage'));
 const LeavePage = lazy(() => import('@/features/leave/LeavePage'));
 const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage'));
+const RosterPage = lazy(() => import('@/features/attendance/RosterPage'));
 const PayrollPage = lazy(() => import('@/features/payroll/PayrollPage'));
 const PayrollRunPage = lazy(() => import('@/features/payroll/PayrollRunPage'));
 const ExpensesPage = lazy(() => import('@/features/payroll/ExpensesPage'));
@@ -103,6 +104,15 @@ export const router = createBrowserRouter([
                 path: 'attendance',
                 element: <RequirePermission any={[P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM]} />,
                 children: [{ index: true, element: <AttendancePage /> }],
+              },
+              {
+                path: 'roster',
+                element: (
+                  <RequirePermission
+                    any={[P.SHIFT_MANAGE, P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM]}
+                  />
+                ),
+                children: [{ index: true, element: <RosterPage /> }],
               },
               {
                 path: 'payroll',

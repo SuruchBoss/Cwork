@@ -21,6 +21,20 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Shift and roster management in the console** (CW-010). The `Shift`,
+  `WorkSchedule`, `ScheduleAssignment` and `ShiftAssignment` models existed and
+  attendance already measured late and early-leave minutes against them — but
+  there was no way to define a shift or assign one, so those numbers came from
+  seeded data alone and attendance could not really be used. This adds the write
+  side: define shifts and weekly schedules, assign a schedule to an employee, a
+  department or a location (with a bulk path), edit a single day's roster, and a
+  calendar view of who is on which shift, resolved with the same precedence as
+  the punch-time calculation. A schedule assignment that would overlap another
+  for the same employee is refused with a clear error rather than leaving the
+  roster ambiguous, and a shift created here is what a late punch is then
+  measured against — both proven end to end. Writing requires `shift:manage`;
+  reading the roster is open to anyone who can already read team attendance.
+
 - **Explain flagged attendance to a manager** (CW-039). A manager reviewing
   attendance sees a flat list of flags — `OUTSIDE_GEOFENCE`, `LOW_GPS_ACCURACY`,
   `MOCK_LOCATION` and the rest — with no way to tell a badly-drawn geofence from

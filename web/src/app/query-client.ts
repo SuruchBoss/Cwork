@@ -49,6 +49,12 @@ export const qk = {
   attendanceCorrections: (status?: string) => ['attendance', 'corrections', status] as const,
   overtimeRequests: (filters?: unknown) => ['overtime', filters] as const,
 
+  shifts: (includeInactive?: boolean) => ['shifts', includeInactive] as const,
+  workSchedules: (includeInactive?: boolean) => ['work-schedules', includeInactive] as const,
+  scheduleAssignments: (employeeId?: string) => ['schedule-assignments', employeeId] as const,
+  roster: (from: string, to: string, departmentId?: string) =>
+    ['roster', from, to, departmentId] as const,
+
   approvalTasks: (status?: string) => ['approvals', 'tasks', status] as const,
   approvalInstance: (entityType: string, entityId: string) =>
     ['approvals', entityType, entityId] as const,

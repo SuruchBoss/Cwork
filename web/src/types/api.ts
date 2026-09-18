@@ -234,6 +234,67 @@ export interface AttendanceRecord {
   shift: { id: string; name: string; startTime: string; endTime: string } | null;
 }
 
+export interface Shift {
+  id: string;
+  code: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  crossesMidnight: boolean;
+  breakMinutes: number;
+  graceInMinutes: number;
+  graceOutMinutes: number;
+  standardWorkMinutes: number;
+  isFlexible: boolean;
+  coreStartTime: string | null;
+  coreEndTime: string | null;
+  isActive: boolean;
+}
+
+export interface WorkSchedule {
+  id: string;
+  code: string;
+  name: string;
+  type: 'FIXED' | 'SHIFT' | 'FLEXIBLE';
+  workingDays: number[];
+  defaultShiftId: string | null;
+  isActive: boolean;
+  defaultShift: { id: string; code: string; name: string } | null;
+}
+
+export interface ScheduleAssignment {
+  id: string;
+  employeeId: string;
+  scheduleId: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  schedule: { id: string; code: string; name: string };
+  employee: { id: string; employeeCode: string; firstNameTh: string; lastNameTh: string };
+}
+
+/** One employee-day in the roster calendar. */
+export interface RosterDay {
+  date: string;
+  shiftId: string | null;
+  shiftName: string | null;
+  isDayOff: boolean;
+  source: 'override' | 'schedule' | 'none';
+}
+
+export interface RosterRow {
+  employeeId: string;
+  employeeCode: string;
+  name: string;
+  department: string | null;
+  days: RosterDay[];
+}
+
+export interface Roster {
+  from: string;
+  to: string;
+  employees: RosterRow[];
+}
+
 export interface ApprovalTask {
   id: string;
   stepIndex: number;

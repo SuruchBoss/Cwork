@@ -4,11 +4,13 @@ import { OrganizationModule } from '../organization/organization.module';
 import { AttendanceController, OvertimeController } from './attendance.controller';
 import { AttendanceService } from './attendance.service';
 import { OvertimeService } from './overtime.service';
+import { ShiftController } from './shift.controller';
+import { ShiftService } from './shift.service';
 
 @Module({
   imports: [OrganizationModule],
-  controllers: [AttendanceController, OvertimeController],
-  providers: [AttendanceService, OvertimeService, SequenceService],
-  exports: [AttendanceService, OvertimeService],
+  controllers: [AttendanceController, OvertimeController, ShiftController],
+  providers: [AttendanceService, OvertimeService, ShiftService, SequenceService],
+  exports: [AttendanceService, OvertimeService, ShiftService],
 })
 export class AttendanceModule {}

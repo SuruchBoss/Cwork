@@ -71,6 +71,12 @@ export const NAV: NavSection[] = [
         icon: '◔',
         permissions: [P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
+      {
+        to: '/roster',
+        label: 'กะและตารางเวร',
+        icon: '◷',
+        permissions: [P.SHIFT_MANAGE, P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
+      },
     ],
   },
   {

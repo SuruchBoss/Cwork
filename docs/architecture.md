@@ -75,7 +75,7 @@ their own subject, not because a rule said so.
 
 The `domain/` directory is the one that earns its boundary. Leave arithmetic,
 attendance derivation, Thai tax, KPI scoring and assessment grading are all pure
-functions of their inputs. That is why there are 264 domain tests that run in
+functions of their inputs. That is why there are 278 domain tests that run in
 under ten seconds with no database: the rules that are expensive to get wrong are the
 ones that are cheapest to test.
 
