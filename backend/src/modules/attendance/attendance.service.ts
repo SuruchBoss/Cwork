@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AttendanceStatus,
+  DeviceBindingStatus,
   LeaveRequestStatus,
   Prisma,
   PunchMethod,
@@ -90,6 +91,14 @@ export class AttendanceService {
     }
     if (dto.isMockLocation) anomalyFlags.add(AnomalyFlag.MOCK_LOCATION);
     if (dto.isRootedDevice) anomalyFlags.add(AnomalyFlag.ROOTED_DEVICE);
+    if (
+      dto.deviceId &&
+      (await this.evaluateDevice(user.organizationId, employeeId, dto.deviceId, dto.deviceModel))
+    ) {
+      // Recorded and flagged, never refused: an employee must always be able to
+      // prove they turned up, even from a device HR has not yet approved.
+      anomalyFlags.add(AnomalyFlag.NEW_DEVICE);
+    }
 
     await this.prisma.attendancePunch.create({
       data: {
@@ -538,7 +547,92 @@ export class AttendanceService {
     return { absent, incomplete };
   }
 
+  // -------------------------------------------------------------------- devices
+
+  /** The devices bound to an employee, newest first — for HR to review (CW-024). */
+  async listDevices(user: AuthenticatedUser, employeeId: string) {
+    await this.assertEmployeeVisible(user, employeeId);
+    return this.prisma.employeeDevice.findMany({
+      where: { employeeId, organizationId: user.organizationId },
+      orderBy: { boundAt: 'desc' },
+      select: {
+        id: true,
+        deviceId: true,
+        deviceModel: true,
+        status: true,
+        boundAt: true,
+        boundByUserId: true,
+        revokedAt: true,
+      },
+    });
+  }
+
+  /**
+   * Re-binds an employee to a new device (CW-024).
+   *
+   * This is the only way the active binding changes after the first device
+   * self-binds: it requires HR (the route is `attendance:manage`), and the audit
+   * decorator on that route records who did it. Self-service re-binding would
+   * defeat the control, so there is no employee-facing path to here.
+   */
+  async rebindDevice(
+    user: AuthenticatedUser,
+    input: { employeeId: string; deviceId: string; deviceModel?: string },
+  ) {
+    await this.assertEmployeeVisible(user, input.employeeId);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.employeeDevice.updateMany({
+        where: { employeeId: input.employeeId, status: DeviceBindingStatus.ACTIVE },
+        data: { status: DeviceBindingStatus.REVOKED, revokedAt: new Date() },
+      });
+      return tx.employeeDevice.create({
+        data: {
+          organizationId: user.organizationId,
+          employeeId: input.employeeId,
+          deviceId: input.deviceId,
+          deviceModel: input.deviceModel ?? null,
+          status: DeviceBindingStatus.ACTIVE,
+          boundByUserId: user.userId,
+        },
+      });
+    });
+  }
+
   // ------------------------------------------------------------------ internals
+
+  /**
+   * Whether a punch is from a device other than the one the employee is bound to.
+   *
+   * The first device seen binds automatically — that is the initial binding, not
+   * a re-bind, so it needs no approval. Afterwards a different device returns
+   * true, and the caller flags the punch NEW_DEVICE; the binding is not changed,
+   * because moving it is HR's decision (`rebindDevice`).
+   */
+  private async evaluateDevice(
+    organizationId: string,
+    employeeId: string,
+    deviceId: string,
+    deviceModel?: string,
+  ): Promise<boolean> {
+    const active = await this.prisma.employeeDevice.findFirst({
+      where: { employeeId, status: DeviceBindingStatus.ACTIVE },
+      select: { deviceId: true },
+    });
+    if (!active) {
+      await this.prisma.employeeDevice.create({
+        data: {
+          organizationId,
+          employeeId,
+          deviceId,
+          deviceModel: deviceModel ?? null,
+          status: DeviceBindingStatus.ACTIVE,
+        },
+      });
+      return false;
+    }
+    return active.deviceId !== deviceId;
+  }
 
   /** Callers may pass any employee id, so visibility is checked here, once. */
   private async assertEmployeeVisible(user: AuthenticatedUser, employeeId: string): Promise<void> {

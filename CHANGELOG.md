@@ -21,6 +21,16 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Attendance is bound to a device** (CW-024). The app records a device id on
+  every punch, but nothing authorised it — any device holding a valid token
+  could clock in for an absent colleague. The first device an employee punches
+  from now binds to them automatically; a punch from any other device is
+  accepted and flagged `NEW_DEVICE`, never refused, because an employee must
+  always be able to prove they turned up. Moving the binding to a new device is
+  a re-bind, which only HR can do (`attendance:manage`) and which is audited —
+  there is no self-service path, so a lost or replaced phone goes through HR.
+  A punch never changes the binding on its own.
+
 - **Issued documents render as PDFs** (CW-008). A `DocumentRequest` used to
   resolve to *merge data* — the fields, not a document — and HR produced the
   certificate by hand, so the approval trail ended in a manual step nobody could

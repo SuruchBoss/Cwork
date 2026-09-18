@@ -24,6 +24,7 @@ import {
   CreateOvertimeDto,
   DecideOvertimeDto,
   PunchDto,
+  RebindDeviceDto,
 } from './dto/attendance.dto';
 import { OvertimeService } from './overtime.service';
 
@@ -144,6 +145,30 @@ export class AttendanceController {
     @Body() body: { decision: 'APPROVE' | 'REJECT'; note?: string },
   ) {
     return this.attendance.decideCorrection(user, id, body.decision, body.note);
+  }
+
+  // ------------------------------------------------------------------- devices
+
+  @Get('devices/:employeeId')
+  @RequireAnyPermission(
+    Permission.ATTENDANCE_READ,
+    Permission.ATTENDANCE_READ_TEAM,
+    Permission.ATTENDANCE_MANAGE,
+  )
+  @ApiOperation({ summary: 'Devices an employee has been bound to' })
+  devices(@CurrentUser() user: AuthenticatedUser, @Param('employeeId', ParseUUIDPipe) id: string) {
+    return this.attendance.listDevices(user, id);
+  }
+
+  @Post('devices/rebind')
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @Audited({ action: AuditAction.UPDATE, entityType: 'EmployeeDevice', summary: 'Device re-bound' })
+  @ApiOperation({
+    summary: 'Re-bind an employee to a new device',
+    description: 'HR only. The first device self-binds; changing it is an audited HR decision.',
+  })
+  rebindDevice(@CurrentUser() user: AuthenticatedUser, @Body() dto: RebindDeviceDto) {
+    return this.attendance.rebindDevice(user, dto);
   }
 }
 

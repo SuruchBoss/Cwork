@@ -116,6 +116,7 @@ model Employee {
   overtimeRequests     OvertimeRequest[]
   scheduleAssignments  ScheduleAssignment[]
   shiftAssignments     ShiftAssignment[]
+  employeeDevices      EmployeeDevice[]
 
   compensations     EmployeeCompensation[]
   recurringItems    EmployeeRecurringItem[]

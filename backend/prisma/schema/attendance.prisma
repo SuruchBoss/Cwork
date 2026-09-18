@@ -275,3 +275,36 @@ model OvertimeRequest {
   @@index([organizationId, status])
   @@map("overtime_requests")
 }
+
+enum DeviceBindingStatus {
+  ACTIVE
+  REVOKED
+}
+
+/// The device an employee is bound to for attendance (CW-024).
+///
+/// The first device an employee punches from binds automatically. A punch from
+/// any other device is recorded and flagged NEW_DEVICE — never refused, because
+/// an employee must always be able to prove they turned up. Changing the bound
+/// device is a re-bind, which only HR can do, and every re-bind is audited.
+model EmployeeDevice {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  deviceId       String
+  deviceModel    String?
+  status         DeviceBindingStatus @default(ACTIVE)
+  /// Null when the employee bound it themselves on first use; set to the HR user
+  /// who approved a re-bind. Self-service re-binding would defeat the control.
+  boundByUserId  String?  @db.Uuid
+  boundAt        DateTime @default(now())
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([employeeId, status])
+  @@index([organizationId])
+  @@map("employee_devices")
+}

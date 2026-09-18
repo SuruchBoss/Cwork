@@ -280,3 +280,21 @@ export class CreateShiftDto {
   @IsBoolean()
   isFlexible?: boolean;
 }
+
+export class RebindDeviceDto {
+  @ApiProperty({ description: 'พนักงานที่จะเปลี่ยนอุปกรณ์ผูกบัญชี' })
+  @IsUUID()
+  employeeId!: string;
+
+  @ApiProperty({ description: 'รหัสอุปกรณ์ใหม่ที่อนุมัติให้ผูก' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  deviceId!: string;
+
+  @ApiPropertyOptional({ description: 'รุ่นอุปกรณ์' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  deviceModel?: string;
+}

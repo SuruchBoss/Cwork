@@ -38,6 +38,7 @@ model Organization {
   workSchedules         WorkSchedule[]
   attendanceRecords     AttendanceRecord[]
   attendancePunches     AttendancePunch[]
+  employeeDevices       EmployeeDevice[]
   overtimeRequests      OvertimeRequest[]
   payComponents         PayComponent[]
   payrollPeriods        PayrollPeriod[]
