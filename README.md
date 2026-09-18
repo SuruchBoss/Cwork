@@ -389,7 +389,7 @@ another jurisdiction means a new rule set and a translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 285 backend unit
+Working and verified end to end — sign-in through payroll. 288 backend unit
 tests, 29 web, 35 mobile, plus a 174-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
@@ -449,7 +449,7 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 285 backend unit tests, 29 web,
+- Every suite passes, in CI, on every push — 288 backend unit tests, 29 web,
   35 mobile, 174 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
