@@ -78,6 +78,9 @@ export const qk = {
   documentRequests: (status?: string) => ['documents', status] as const,
   expenseClaims: (filters?: unknown) => ['expenses', filters] as const,
 
+  benefitPlans: ['benefit-plans'] as const,
+  benefitEnrollments: (employeeId: string) => ['benefit-enrollments', employeeId] as const,
+
   knowledgeDocuments: (status?: string) => ['knowledge', status] as const,
   knowledgeDocument: (id: string) => ['knowledge', id] as const,
   conversations: ['assistant', 'conversations'] as const,

@@ -84,6 +84,7 @@ export const NAV: NavSection[] = [
     items: [
       { to: '/payroll', label: 'เงินเดือน', icon: '฿', permissions: [P.PAYROLL_READ] },
       { to: '/expenses', label: 'เบิกค่าใช้จ่าย', icon: '▤', permissions: [P.EXPENSE_READ] },
+      { to: '/benefits', label: 'สวัสดิการ', icon: '❑', permissions: [P.BENEFIT_MANAGE] },
     ],
   },
   {

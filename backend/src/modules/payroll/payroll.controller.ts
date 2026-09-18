@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -27,6 +30,7 @@ import {
   DecideExpenseClaimDto,
   EnrollBenefitDto,
   SetCompensationDto,
+  UpdateBenefitPlanDto,
   UpsertTaxProfileDto,
 } from './dto/payroll.dto';
 import { ExpensesService } from './expenses.service';
@@ -251,6 +255,27 @@ export class BenefitsController {
   @ApiOperation({ summary: 'Create a benefit plan' })
   createPlan(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateBenefitPlanDto) {
     return this.benefits.createPlan(user.organizationId, dto);
+  }
+
+  @Patch('plans/:id')
+  @RequirePermissions(Permission.BENEFIT_MANAGE)
+  @Audited({ action: AuditAction.UPDATE, entityType: 'BenefitPlan' })
+  @ApiOperation({ summary: 'Update a benefit plan' })
+  updatePlan(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBenefitPlanDto,
+  ) {
+    return this.benefits.updatePlan(user.organizationId, id, dto);
+  }
+
+  @Delete('plans/:id')
+  @RequirePermissions(Permission.BENEFIT_MANAGE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Audited({ action: AuditAction.DELETE, entityType: 'BenefitPlan' })
+  @ApiOperation({ summary: 'Deactivate a benefit plan' })
+  deactivatePlan(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.benefits.deactivatePlan(user.organizationId, id);
   }
 
   @Get('me')

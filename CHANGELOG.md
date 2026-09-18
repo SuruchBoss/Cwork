@@ -21,6 +21,17 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Benefits administration in the console** (CW-009). The benefits API,
+  `BenefitPlan` / `BenefitEnrollment` models and permissions existed, but the
+  console had no benefits screen, so enrolment was only possible by calling the
+  API directly — yet enrolments feed payroll. This adds a benefits area: define
+  and edit plans with their employee/employer cost split, enrol and un-enrol
+  employees with effective dates, and a per-plan view of how many active
+  enrolments it carries and what it therefore adds to the next run. An enrolment
+  a `benefit:manage` holder makes is picked up by the next payroll calculation —
+  proven end to end — a duplicate enrolment is refused, and a `benefit:read`
+  viewer sees the plans but no mutating control.
+
 - **Shift and roster management in the console** (CW-010). The `Shift`,
   `WorkSchedule`, `ScheduleAssignment` and `ShiftAssignment` models existed and
   attendance already measured late and early-leave minutes against them — but

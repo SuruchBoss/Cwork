@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import {
   BenefitCategory,
   ExpenseCategory,
@@ -351,6 +351,15 @@ export class EnrollBenefitDto {
   @IsArray()
   @IsUUID('4', { each: true })
   dependentIds?: string[];
+}
+
+export class UpdateBenefitPlanDto extends PartialType(
+  OmitType(CreateBenefitPlanDto, ['code'] as const),
+) {
+  @ApiPropertyOptional({ description: 'ปิดใช้งานแผน (แผนที่มีคนใช้อยู่จะไม่ถูกลบจริง)' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class ExpenseClaimItemDto {

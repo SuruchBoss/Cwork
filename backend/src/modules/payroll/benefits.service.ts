@@ -3,7 +3,11 @@ import { BenefitEnrollmentStatus, EmploymentType, Prisma } from '@prisma/client'
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { monthsOfService, toDateOnly } from '../../core/utils/date.util';
-import type { CreateBenefitPlanDto, EnrollBenefitDto } from './dto/payroll.dto';
+import type {
+  CreateBenefitPlanDto,
+  EnrollBenefitDto,
+  UpdateBenefitPlanDto,
+} from './dto/payroll.dto';
 
 interface EligibilityRule {
   minServiceMonths?: number;
@@ -16,12 +20,26 @@ interface EligibilityRule {
 export class BenefitsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  listPlans(organizationId: string, includeInactive = false) {
-    return this.prisma.benefitPlan.findMany({
+  /**
+   * Plans with both their lifetime enrollment total and the count of *active*
+   * enrollments — the latter is what the next payroll run actually costs
+   * against, so the console can show what each plan adds to the run.
+   */
+  async listPlans(organizationId: string, includeInactive = false) {
+    const plans = await this.prisma.benefitPlan.findMany({
       where: { organizationId, ...(includeInactive ? {} : { isActive: true }) },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { enrollments: true } } },
     });
+
+    const active = await this.prisma.benefitEnrollment.groupBy({
+      by: ['planId'],
+      where: { plan: { organizationId }, status: BenefitEnrollmentStatus.ACTIVE },
+      _count: true,
+    });
+    const activeByPlan = new Map(active.map((row) => [row.planId, row._count]));
+
+    return plans.map((plan) => ({ ...plan, activeEnrollments: activeByPlan.get(plan.id) ?? 0 }));
   }
 
   createPlan(organizationId: string, dto: CreateBenefitPlanDto) {
@@ -37,6 +55,42 @@ export class BenefitsService {
         eligibilityRule: (dto.eligibilityRule ?? {}) as Prisma.InputJsonValue,
       },
     });
+  }
+
+  async updatePlan(organizationId: string, id: string, dto: UpdateBenefitPlanDto) {
+    const existing = await this.prisma.benefitPlan.findFirst({ where: { id, organizationId } });
+    if (!existing) throw new NotFoundError('BenefitPlan', id);
+
+    return this.prisma.benefitPlan.update({
+      where: { id },
+      data: {
+        ...dto,
+        coverageAmount:
+          dto.coverageAmount !== undefined ? new Prisma.Decimal(dto.coverageAmount) : undefined,
+        employeeCostPerPeriod:
+          dto.employeeCostPerPeriod !== undefined
+            ? new Prisma.Decimal(dto.employeeCostPerPeriod)
+            : undefined,
+        employerCostPerPeriod:
+          dto.employerCostPerPeriod !== undefined
+            ? new Prisma.Decimal(dto.employerCostPerPeriod)
+            : undefined,
+        annualLimit:
+          dto.annualLimit !== undefined ? new Prisma.Decimal(dto.annualLimit) : undefined,
+        eligibilityRule: dto.eligibilityRule
+          ? (dto.eligibilityRule as Prisma.InputJsonValue)
+          : undefined,
+      },
+    });
+  }
+
+  /** Deactivates rather than deletes: a plan may have live and historical enrollments. */
+  async deactivatePlan(organizationId: string, id: string): Promise<void> {
+    const result = await this.prisma.benefitPlan.updateMany({
+      where: { id, organizationId },
+      data: { isActive: false },
+    });
+    if (result.count === 0) throw new NotFoundError('BenefitPlan', id);
   }
 
   /** Plans this employee is eligible for, with their enrollment state. */

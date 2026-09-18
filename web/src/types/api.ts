@@ -295,6 +295,35 @@ export interface Roster {
   employees: RosterRow[];
 }
 
+export interface BenefitPlan {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  provider: string | null;
+  description: string | null;
+  coverageAmount: string | null;
+  employeeCostPerPeriod: string;
+  employerCostPerPeriod: string;
+  annualLimit: string | null;
+  allowsDependents: boolean;
+  isActive: boolean;
+  /** Lifetime enrolments (active plus ended). */
+  _count: { enrollments: number };
+  /** Enrolments the next payroll run will cost against. */
+  activeEnrollments: number;
+}
+
+export interface BenefitEnrollment {
+  id: string;
+  employeeId: string;
+  planId: string;
+  status: 'ACTIVE' | 'ENDED' | 'SUSPENDED';
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  plan: BenefitPlan;
+}
+
 export interface ApprovalTask {
   id: string;
   stepIndex: number;

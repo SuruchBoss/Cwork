@@ -46,6 +46,7 @@ export const P = {
   PAYROLL_APPROVE: 'payroll:approve',
   COMPENSATION_READ: 'compensation:read',
   COMPENSATION_MANAGE: 'compensation:manage',
+  BENEFIT_READ: 'benefit:read',
   BENEFIT_MANAGE: 'benefit:manage',
   EXPENSE_READ: 'expense:read',
   EXPENSE_MANAGE: 'expense:manage',
