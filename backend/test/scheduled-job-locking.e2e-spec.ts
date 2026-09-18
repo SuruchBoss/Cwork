@@ -280,6 +280,7 @@ describe('Scheduled job locking (e2e)', () => {
       await task.closeOutAttendance();
       await task.finaliseSeparations();
       await task.purgeCandidates();
+      await task.purgeEmployees();
       await task.pruneExpiredTokens();
       await task.rolloverLeaveYear();
       await task.purgeDeliveredOutbox();

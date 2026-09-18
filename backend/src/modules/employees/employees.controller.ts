@@ -29,12 +29,16 @@ import {
 } from './dto/employee.dto';
 import { EmployeesService } from './employees.service';
 import { OffboardingService } from './offboarding.service';
+import { EmployeeRetentionService } from './retention.service';
 
 @ApiTags('Employees')
 @ApiBearerAuth()
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employees: EmployeesService) {}
+  constructor(
+    private readonly employees: EmployeesService,
+    private readonly retention: EmployeeRetentionService,
+  ) {}
 
   @Get()
   @RequireAnyPermission(
@@ -45,6 +49,30 @@ export class EmployeesController {
   @ApiOperation({ summary: 'List employees visible to the caller' })
   list(@CurrentUser() user: AuthenticatedUser, @Query() query: EmployeeQueryDto) {
     return this.employees.list(user, query);
+  }
+
+  // Retention routes are declared before ':id' so the static segment wins.
+
+  @Get('retention/preview')
+  @RequirePermissions(Permission.EMPLOYEE_DELETE)
+  @ApiOperation({
+    summary: 'Dry run: leavers whose retention has lapsed and would be purged',
+    description: 'Read-only. Lists what a purge would redact, changing nothing.',
+  })
+  retentionPreview(@CurrentUser() user: AuthenticatedUser) {
+    return this.retention.preview(user.organizationId);
+  }
+
+  @Post('retention/purge')
+  @RequirePermissions(Permission.EMPLOYEE_DELETE)
+  @Audited({
+    action: AuditAction.DELETE,
+    entityType: 'Employee',
+    summary: 'PDPA retention purge run',
+  })
+  @ApiOperation({ summary: 'Redact leavers past their retention window (audited)' })
+  retentionPurge(@CurrentUser() user: AuthenticatedUser) {
+    return this.retention.purge(user.organizationId, user.userId);
   }
 
   @Get('me')

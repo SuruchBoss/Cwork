@@ -6,6 +6,7 @@ import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { AttendanceService } from '../attendance/attendance.service';
 import { OffboardingService } from '../employees/offboarding.service';
+import { EmployeeRetentionService } from '../employees/retention.service';
 import { FilesService } from '../files/files.service';
 import { MalwareScannerService } from '../files/malware-scanner.service';
 import { LeaveBalanceService } from '../leave/leave-balance.service';
@@ -35,6 +36,7 @@ export class ScheduledTasksService {
     private readonly prisma: PrismaService,
     private readonly attendance: AttendanceService,
     private readonly offboarding: OffboardingService,
+    private readonly retention: EmployeeRetentionService,
     private readonly leaveBalances: LeaveBalanceService,
     private readonly applications: ApplicationsService,
     private readonly files: FilesService,
@@ -153,6 +155,26 @@ export class ScheduledTasksService {
         } catch (error) {
           this.logger.error(
             `[${org.code}] candidate purge failed`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        }
+      }
+    });
+  }
+
+  /** PDPA retention: redacts leavers whose retention window has lapsed. */
+  @Cron(CronExpression.EVERY_DAY_AT_3AM, { name: 'purge-expired-employees' })
+  async purgeEmployees(): Promise<void> {
+    await this.locks.runExclusively('purge-expired-employees', async () => {
+      const organizations = await this.activeOrganizations();
+
+      for (const org of organizations) {
+        try {
+          const { purged } = await this.retention.purge(org.id);
+          if (purged > 0) this.logger.log(`[${org.code}] redacted ${purged} expired employee(s)`);
+        } catch (error) {
+          this.logger.error(
+            `[${org.code}] employee retention purge failed`,
             error instanceof Error ? error.stack : String(error),
           );
         }

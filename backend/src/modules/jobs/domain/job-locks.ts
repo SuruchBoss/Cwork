@@ -20,6 +20,7 @@ export const JOB_LOCKS = {
   'prune-expired-tokens': 6,
   'leave-year-rollover': 7,
   'purge-delivered-outbox': 8,
+  'purge-expired-employees': 9,
 } as const;
 
 export type JobName = keyof typeof JOB_LOCKS;

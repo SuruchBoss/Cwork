@@ -21,6 +21,17 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Employee data retention and purge** (CW-015). Candidate records already
+  expire under PDPA, but employee records had no equivalent, and a leaver who
+  asked to be forgotten had no path. Once a leaver is far enough past their last
+  working day (five years by default), their personal identifiers — name,
+  national id, contact details, bank accounts — are redacted while the employee
+  row and the payroll history that references it stay intact, the record the law
+  says to keep minus the personal data it no longer needs. A dry run lists the
+  leavers a purge would redact and changes nothing, so HR can see the effect
+  first; the purge audits every record it touches and runs nightly as well as on
+  demand. A leaver still inside the retention window is left untouched.
+
 - **Attendance is bound to a device** (CW-024). The app records a device id on
   every punch, but nothing authorised it — any device holding a valid token
   could clock in for an absent colleague. The first device an employee punches
