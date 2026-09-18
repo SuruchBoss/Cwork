@@ -19,6 +19,19 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
+### Security
+
+- **The API booted on the placeholder signing secret outside production.**
+  `backend/.env.example` shipped a working `JWT_ACCESS_SECRET=change-me-…` — 32
+  characters, so it cleared the length check — while the guard that recognises
+  the placeholder ran only under `NODE_ENV=production`, which that same file did
+  not set. A token signed with the published string was accepted on a
+  development boot, which binds `0.0.0.0` like any other, so a forged admin
+  token read the employee register over the network. The example now ships the
+  JWT secrets blank (the API refuses to start on a placeholder and names the
+  fields), and the placeholder and equal-secret checks run at every tier, which
+  is what `security.md` already described.
+
 ### Fixed
 
 - The five-minute demo in the README did not work on a clean clone. The
@@ -59,6 +72,55 @@ entry, tags it and publishes the notes.
   (ติดธง for "flagged"), transliterations (เอนจิน, สตาร์ท, ไมเกรชัน, เซสชัน),
   literal renderings (หน่วยความจำถาวร, ฝั่งเครื่อง, โดยค่าตั้งต้น), English
   passive voice, and one invented benchmark. Rewritten throughout.
+- **A sign-in was refused when it landed in the same second as a forced
+  sign-out.** The 0.2.0 fix covered only the account-creation write site; the
+  comparison itself still read `iat × 1000 < sessionsValidFrom`, so a password
+  change, a forced logout or a disabled account left every request refused with
+  "session has been invalidated" for up to a second, cleared by signing in
+  again. The comparison now happens at the whole-second resolution `iat` can
+  express, in one place shared by the JWT strategy and the MFA verify. It had
+  been surfacing in CI as an intermittent end-to-end failure.
+- **The overview page could not be used from a phone, in two ways.** The
+  language switch was hidden along with the section links below 880px, so a
+  visitor arriving on a phone — the audience the page is bilingual for — had no
+  way to reach the other language; and the console screenshots, given the full
+  column width, put the interface's own 14px labels under 4px on a 390px
+  screen. The switch now stays, and each screenshot links to its full-size
+  asset for the phone's own zoom.
+- **The savings figure on the landing calculator wrapped mid-number** for any
+  company over about eighty people — the one figure the section exists to show,
+  broken between two digits. It no longer wraps and shrinks to fit instead; the
+  English page had also asked `Intl` for THB without naming the symbol and
+  rendered "THB" where the Thai page rendered "฿".
+- **The recorded walkthrough was in the wrong typeface, and each caption named
+  the previous screen.** The console asks for IBM Plex Sans Thai; inside the
+  recorder that request failed silently and the video fell back to Loma, two
+  scrolls above screenshots in the right face. And because the console is a
+  single-page app, the caption bar outlived each navigation, so for the settle
+  after every route change it described the screen just left. The recorder now
+  serves the font itself and waits for the destination before it captions.
+- **A screenshot showed a state a default install cannot be in.**
+  `15-assistant.png` was captured with the assistant switched on, directly under
+  a line saying it is off by default; it is replaced by the knowledge base,
+  which answers with no provider configured. A byte-identical duplicate
+  screenshot went too, and `landing/` joined the repository-layout table.
+- **`npm test` failed on a clean clone** because naming the `APP_CONFIG`
+  injection token pulled in the module that defines it, whose `@Module`
+  decorator validated `process.env` at import time — so a unit test that touches
+  neither a database nor a config could not load. The token now lives in a file
+  of its own. This is a second clean-clone failure, distinct from the compose
+  one above.
+- **The README told a reader running without Docker that pgvector was
+  optional.** The first migration opens `CREATE EXTENSION "vector"`, so a plain
+  `postgres:16` stops at `prisma migrate deploy`. CI and compose always ran
+  `pgvector/pgvector:pg16`; only the non-Docker note said otherwise.
+- **Ten documented test counts were wrong**, across six files in two languages:
+  two different claims — the domain layer, and the whole suite — had drifted
+  into one number. Corrected to the measured 246 domain and 288 backend unit.
+- **The menu and theme buttons had no name a screen reader could read** — each
+  was an icon-only glyph announced as "button", and on a phone the menu button
+  is the only way to navigate. Both now carry an `aria-label`, the menu also an
+  `aria-expanded` bound to its state, and the decorative glyph is `aria-hidden`.
 
 ### Added
 
@@ -71,6 +133,27 @@ entry, tags it and publishes the notes.
   translation fails the build. The Pages workflow regenerates it and fails on a
   diff.
 - The landing page is published to GitHub Pages and linked from both READMEs.
+- **`npm run verify:docs`** — measures the backend suites and checks every
+  documented test count against them in CI; a number with two homes, or a claim
+  reworded past the pattern that watches it, fails the build.
+- **`npm run verify:sql`** — the greppable tenant scoping ADR-0003 asks for:
+  every raw SQL statement in `src/` is listed with why it is safe, and an
+  unclassified or stale entry fails the build.
+- **A Thai-captioned walkthrough** beside the English one, recorded from the
+  same script (`docs/demo/record.mjs`, now taking a language). The Thai overview
+  page shows the Thai take; the English page and the READMEs keep the English
+  one.
+- **A social-preview card** (`docs/social-preview/`) — the 1280×640 image GitHub
+  serves when the repository link is unfurled, generated from an HTML card so it
+  can be regenerated when the screenshot or palette changes.
+
+### Changed
+
+- **Empty and error states now speak the monochrome glyph language the rest of
+  the interface uses**, instead of colour emoji (📭 ✅ 🧾 ⚠️ …) that rendered
+  differently on every platform and read as placeholders. Each empty state now
+  shows the glyph of its own section. 24 icons across 20 files; no behaviour
+  change, as the icons were already `aria-hidden`.
 
 ## [0.2.0] — 2026-09-15
 
