@@ -19,6 +19,16 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.3.0] — 2026-09-18
+
+Hardening and polish for opening the repository to visitors. A signing secret
+that could be forged outside production is closed; the overview page works on a
+phone and reads to a screen reader; the walkthrough is recorded in Thai as well
+as English; and two more checks fail the build when the documentation drifts
+from the code.
+
 ### Security
 
 - **The API booted on the placeholder signing secret outside production.**
@@ -336,6 +346,7 @@ this yet:
 - This code has never had a penetration test, and no independent human has read
   every line — see [How this was built](./README.md#how-this-was-built).
 
-[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.1.0

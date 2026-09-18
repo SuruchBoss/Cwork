@@ -1,6 +1,6 @@
 {
   "name": "@cwork/web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Cwork — administration console (React + Vite)",
   "license": "Apache-2.0",
   "private": true,
