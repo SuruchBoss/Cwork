@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Field, Input } from '@/components/ui';
 import { ApiError } from '@/lib/api-error';
 import { env } from '@/lib/env';
+import { useT } from '@/lib/i18n/useT';
 import { completeSetup, fetchSetupStatus, type SetupResult } from './setup.api';
 import { setupSchema, toSetupRequest, type SetupFormValues } from './schema';
 
@@ -22,9 +23,15 @@ import { setupSchema, toSetupRequest, type SetupFormValues } from './schema';
  */
 export default function SetupPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [state, setState] = useState<'checking' | 'ready' | 'done'>('checking');
   const [result, setResult] = useState<SetupResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Field messages are English keys (from the schema and the required rules);
+  // translate whichever one is showing.
+  const fieldError = (message?: string): string | undefined =>
+    message ? t(message) : undefined;
 
   const {
     register,
@@ -67,7 +74,7 @@ export default function SetupPage() {
 
     const parsed = setupSchema.safeParse(values);
     if (!parsed.success) {
-      setServerError(parsed.error.issues[0]?.message ?? 'ข้อมูลไม่ถูกต้อง');
+      setServerError(t(parsed.error.issues[0]?.message ?? 'The information is not valid'));
       return;
     }
 
@@ -79,17 +86,17 @@ export default function SetupPage() {
       // spent token from a weak password from an install someone else just
       // finished, and the installer needs to know which.
       setServerError(
-        error instanceof ApiError ? error.message : 'ตั้งค่าไม่สำเร็จ กรุณาลองใหม่',
+        error instanceof ApiError ? error.message : t('Setup failed, please try again'),
       );
     }
   });
 
   if (state === 'checking') {
     return (
-      <Shell title="กำลังตรวจสอบระบบ" subtitle="รอสักครู่">
+      <Shell title={t('Checking the system')} subtitle={t('One moment')}>
         <div className="row" style={{ gap: 10 }}>
           <span className="spinner" aria-hidden />
-          <span className="muted">กำลังเชื่อมต่อเซิร์ฟเวอร์…</span>
+          <span className="muted">{t('Connecting to the server…')}</span>
         </div>
       </Shell>
     );
@@ -97,24 +104,27 @@ export default function SetupPage() {
 
   if (state === 'done' && result) {
     return (
-      <Shell title="ตั้งค่าเรียบร้อย" subtitle={`${result.organization.name} (${result.organization.code})`}>
+      <Shell title={t('Setup complete')} subtitle={`${result.organization.name} (${result.organization.code})`}>
         <div className="stack">
           <p className="muted" style={{ margin: 0 }}>
-            สร้างองค์กร บทบาทระบบ {result.rolesCreated} บทบาท และผู้ดูแลคนแรกเรียบร้อยแล้ว
+            {t('Created the organisation, {count} system roles and the first administrator.', {
+              count: result.rolesCreated,
+            })}
           </p>
           <div className="alert alert--info" role="status">
-            <strong>ขั้นต่อไป</strong>
+            <strong>{t('Next step')}</strong>
             <br />
-            เข้าสู่ระบบด้วย <code className="mono">{result.administrator.email}</code> —
-            บัญชีนี้มีสิทธิ์ทั้งหมด ระบบจึงจะให้ตั้งค่ายืนยันตัวตนสองขั้นตอนก่อนเริ่มใช้งาน
-            เตรียมแอป Authenticator ไว้ให้พร้อม
+            {t('Sign in with')} <code className="mono">{result.administrator.email}</code> —{' '}
+            {t(
+              'this account holds every permission, so the system will ask you to set up two-step verification before you start. Have your authenticator app ready.',
+            )}
           </div>
           <Button
             variant="primary"
             style={{ width: '100%' }}
             onClick={() => navigate('/login', { replace: true })}
           >
-            ไปหน้าเข้าสู่ระบบ
+            {t('Go to sign-in')}
           </Button>
         </div>
       </Shell>
@@ -122,35 +132,35 @@ export default function SetupPage() {
   }
 
   return (
-    <Shell title={`ตั้งค่า ${env.appName} ครั้งแรก`} subtitle="ทำเพียงครั้งเดียวต่อการติดตั้งหนึ่งชุด">
+    <Shell title={t('First-time setup of {app}', { app: env.appName })} subtitle={t('Done once per installation')}>
       <form className="stack" onSubmit={onSubmit} noValidate>
         <Field
-          label="โทเคนตั้งค่า"
-          hint="ได้จากคำสั่ง npm run db:init -- --web บนเครื่องเซิร์ฟเวอร์"
-          error={errors.token?.message}
+          label={t('Setup token')}
+          hint={t('From the command npm run db:init -- --web on the server')}
+          error={fieldError(errors.token?.message)}
         >
           <Input
             autoFocus
             autoComplete="off"
             spellCheck={false}
-            placeholder="วางโทเคนที่นี่"
+            placeholder={t('Paste the token here')}
             aria-invalid={Boolean(errors.token)}
-            {...register('token', { required: 'กรุณาวางโทเคน' })}
+            {...register('token', { required: 'Paste the token' })}
           />
         </Field>
 
-        <Field label="ชื่อองค์กร" error={errors.organizationName?.message}>
+        <Field label={t('Organisation name')} error={fieldError(errors.organizationName?.message)}>
           <Input
-            placeholder="บริษัท ตัวอย่าง จำกัด"
+            placeholder={t('Example Co., Ltd.')}
             aria-invalid={Boolean(errors.organizationName)}
-            {...register('organizationName', { required: 'กรุณากรอกชื่อองค์กร' })}
+            {...register('organizationName', { required: 'Please enter an organisation name' })}
           />
         </Field>
 
         <Field
-          label="รหัสย่อ (ไม่บังคับ)"
-          hint="ใช้ในบันทึกระบบ เว้นว่างไว้ให้ระบบตั้งให้จากชื่อองค์กร"
-          error={errors.organizationCode?.message}
+          label={t('Short code (optional)')}
+          hint={t('Used in the audit log; leave blank to derive one from the name')}
+          error={fieldError(errors.organizationCode?.message)}
         >
           <Input
             placeholder="ACME"
@@ -161,41 +171,41 @@ export default function SetupPage() {
           />
         </Field>
 
-        <Field label="เขตเวลา" error={errors.timezone?.message}>
+        <Field label={t('Time zone')} error={fieldError(errors.timezone?.message)}>
           <Input
             placeholder="Asia/Bangkok"
             autoComplete="off"
             spellCheck={false}
             aria-invalid={Boolean(errors.timezone)}
-            {...register('timezone', { required: 'กรุณาระบุเขตเวลา' })}
+            {...register('timezone', { required: 'Please provide a time zone' })}
           />
         </Field>
 
-        <Field label="อีเมลผู้ดูแลคนแรก" error={errors.adminEmail?.message}>
+        <Field label={t('First administrator email')} error={fieldError(errors.adminEmail?.message)}>
           <Input
             type="email"
             autoComplete="username"
             placeholder="you@company.com"
             aria-invalid={Boolean(errors.adminEmail)}
-            {...register('adminEmail', { required: 'กรุณากรอกอีเมล' })}
+            {...register('adminEmail', { required: 'Please enter your email' })}
           />
         </Field>
 
-        <Field label="รหัสผ่าน" hint="อย่างน้อย 12 ตัวอักษร" error={errors.adminPassword?.message}>
+        <Field label={t('Password')} hint={t('At least 12 characters')} error={fieldError(errors.adminPassword?.message)}>
           <Input
             type="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.adminPassword)}
-            {...register('adminPassword', { required: 'กรุณากรอกรหัสผ่าน' })}
+            {...register('adminPassword', { required: 'Please enter a password' })}
           />
         </Field>
 
-        <Field label="ยืนยันรหัสผ่าน" error={errors.confirmPassword?.message}>
+        <Field label={t('Confirm password')} error={fieldError(errors.confirmPassword?.message)}>
           <Input
             type="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.confirmPassword)}
-            {...register('confirmPassword', { required: 'กรุณากรอกรหัสผ่านอีกครั้ง' })}
+            {...register('confirmPassword', { required: 'Please enter the password again' })}
           />
         </Field>
 
@@ -206,7 +216,7 @@ export default function SetupPage() {
         )}
 
         <Button type="submit" variant="primary" loading={isSubmitting} style={{ width: '100%' }}>
-          ตั้งค่าและสร้างผู้ดูแล
+          {t('Set up and create administrator')}
         </Button>
       </form>
     </Shell>

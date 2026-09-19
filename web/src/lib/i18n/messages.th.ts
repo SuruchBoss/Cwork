@@ -500,4 +500,80 @@ export const thMessages: Record<string, string> = {
   'Pick a date range or department, then assign schedules to see the roster':
     'เลือกช่วงวันหรือแผนก แล้วมอบหมายตารางให้พนักงานเพื่อดูตารางเวร',
   Off: 'หยุด',
+
+  // Sign-in & two-step verification
+  'Human resources management system': 'ระบบบริหารทรัพยากรบุคคล',
+  Email: 'อีเมล',
+  Password: 'รหัสผ่าน',
+  'Sign in': 'เข้าสู่ระบบ',
+  'Please enter your email': 'กรุณากรอกอีเมล',
+  'Please enter your password': 'กรุณากรอกรหัสผ่าน',
+  'Invalid email': 'อีเมลไม่ถูกต้อง',
+  'The information is not valid': 'ข้อมูลไม่ถูกต้อง',
+  'Could not sign in, please try again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่',
+  'Could not sign in, please sign in again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาเข้าสู่ระบบใหม่',
+  'Two-step verification': 'ยืนยันตัวตนสองขั้นตอน',
+  'Enter the 6-digit code from your authenticator app':
+    'กรอกรหัส 6 หลักจากแอป Authenticator',
+  Verify: 'ยืนยัน',
+  'The code is incorrect, please try again': 'รหัสไม่ถูกต้อง กรุณาลองใหม่',
+  'You can use a recovery code instead if you do not have your phone.':
+    'ใช้รหัสสำรอง (recovery code) แทนได้ หากไม่มีโทรศัพท์',
+  'Keep your recovery codes safe': 'เก็บรหัสสำรองไว้ให้ดี',
+  'These codes are shown only once; use one at a time when you do not have your phone.':
+    'รหัสเหล่านี้แสดงเพียงครั้งเดียว ใช้ได้ครั้งละหนึ่งรหัสเมื่อไม่มีโทรศัพท์',
+  'Saved, sign in': 'บันทึกแล้ว เข้าสู่ระบบ',
+  'Test accounts (seed):': 'บัญชีทดสอบ (seed):',
+  'Password:': 'รหัสผ่าน:',
+  'Admin accounts need a 2FA code — see the key in the output of':
+    'บัญชีผู้ดูแลต้องใช้รหัส 2FA — ดูคีย์ที่ผลลัพธ์ของ',
+  'Verification code': 'รหัสยืนยัน',
+  'Could not start 2FA setup': 'ไม่สามารถเริ่มตั้งค่า 2FA ได้',
+  'Set up two-step verification': 'ตั้งค่ายืนยันตัวตนสองขั้นตอน',
+  'This account is highly privileged, so it must use 2FA before first use.':
+    'บัญชีนี้มีสิทธิ์สูง จึงต้องใช้ 2FA ก่อนเข้าใช้งาน',
+  'QR code for your authenticator app': 'QR code สำหรับแอป Authenticator',
+  'Preparing QR…': 'กำลังเตรียม QR…',
+  'Or enter this key in the app manually': 'หรือกรอกคีย์นี้ในแอปด้วยตนเอง',
+  Enable: 'เปิดใช้งาน',
+
+  // First-run setup wizard
+  'Paste the token from db:init': 'กรุณาวางโทเคนที่ได้จาก db:init',
+  'The organisation name is too short': 'ชื่อองค์กรสั้นเกินไป',
+  'Use A–Z, 0–9, - or _, 2–12 characters': 'ใช้ A–Z, 0–9, - หรือ _ ความยาว 2–12 ตัว',
+  'Please provide a time zone': 'กรุณาระบุเขตเวลา',
+  'The password must be at least 12 characters': 'รหัสผ่านต้องยาวอย่างน้อย 12 ตัวอักษร',
+  'The passwords do not match': 'รหัสผ่านไม่ตรงกัน',
+  'Setup failed, please try again': 'ตั้งค่าไม่สำเร็จ กรุณาลองใหม่',
+  'Checking the system': 'กำลังตรวจสอบระบบ',
+  'One moment': 'รอสักครู่',
+  'Connecting to the server…': 'กำลังเชื่อมต่อเซิร์ฟเวอร์…',
+  'Setup complete': 'ตั้งค่าเรียบร้อย',
+  'Created the organisation, {count} system roles and the first administrator.':
+    'สร้างองค์กร บทบาทระบบ {count} บทบาท และผู้ดูแลคนแรกเรียบร้อยแล้ว',
+  'Next step': 'ขั้นต่อไป',
+  'Sign in with': 'เข้าสู่ระบบด้วย',
+  'this account holds every permission, so the system will ask you to set up two-step verification before you start. Have your authenticator app ready.':
+    'บัญชีนี้มีสิทธิ์ทั้งหมด ระบบจึงจะให้ตั้งค่ายืนยันตัวตนสองขั้นตอนก่อนเริ่มใช้งาน เตรียมแอป Authenticator ไว้ให้พร้อม',
+  'Go to sign-in': 'ไปหน้าเข้าสู่ระบบ',
+  'First-time setup of {app}': 'ตั้งค่า {app} ครั้งแรก',
+  'Done once per installation': 'ทำเพียงครั้งเดียวต่อการติดตั้งหนึ่งชุด',
+  'Setup token': 'โทเคนตั้งค่า',
+  'From the command npm run db:init -- --web on the server':
+    'ได้จากคำสั่ง npm run db:init -- --web บนเครื่องเซิร์ฟเวอร์',
+  'Paste the token here': 'วางโทเคนที่นี่',
+  'Paste the token': 'กรุณาวางโทเคน',
+  'Organisation name': 'ชื่อองค์กร',
+  'Example Co., Ltd.': 'บริษัท ตัวอย่าง จำกัด',
+  'Please enter an organisation name': 'กรุณากรอกชื่อองค์กร',
+  'Short code (optional)': 'รหัสย่อ (ไม่บังคับ)',
+  'Used in the audit log; leave blank to derive one from the name':
+    'ใช้ในบันทึกระบบ เว้นว่างไว้ให้ระบบตั้งให้จากชื่อองค์กร',
+  'Time zone': 'เขตเวลา',
+  'First administrator email': 'อีเมลผู้ดูแลคนแรก',
+  'At least 12 characters': 'อย่างน้อย 12 ตัวอักษร',
+  'Please enter a password': 'กรุณากรอกรหัสผ่าน',
+  'Confirm password': 'ยืนยันรหัสผ่าน',
+  'Please enter the password again': 'กรุณากรอกรหัสผ่านอีกครั้ง',
+  'Set up and create administrator': 'ตั้งค่าและสร้างผู้ดูแล',
 };

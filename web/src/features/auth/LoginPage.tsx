@@ -7,12 +7,15 @@ import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { fetchSetupStatus } from '@/features/setup/setup.api';
 import { env } from '@/lib/env';
+import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
 import type { MfaChallenge, MfaEnrolment } from '@/types/api';
 
+// Messages are English keys (CW-016); the form translates them through `t()`
+// when it shows them.
 const schema = z.object({
-  email: z.email('อีเมลไม่ถูกต้อง'),
-  password: z.string().min(1, 'กรุณากรอกรหัสผ่าน'),
+  email: z.email('Invalid email'),
+  password: z.string().min(1, 'Please enter your password'),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -38,6 +41,7 @@ export default function LoginPage() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const navigate = useNavigate();
   const location = useLocation();
+  const t = useT();
 
   const [step, setStep] = useState<Step>({ name: 'credentials' });
   const [serverError, setServerError] = useState<string | null>(null);
@@ -86,7 +90,7 @@ export default function LoginPage() {
 
     const parsed = schema.safeParse(values);
     if (!parsed.success) {
-      setServerError(parsed.error.issues[0]?.message ?? 'ข้อมูลไม่ถูกต้อง');
+      setServerError(t(parsed.error.issues[0]?.message ?? 'The information is not valid'));
       return;
     }
 
@@ -104,15 +108,18 @@ export default function LoginPage() {
     } catch (error) {
       // Show the server's message: it distinguishes a locked account from bad
       // credentials, which matters for someone who is genuinely locked out.
-      setServerError(describe(error, 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่'));
+      setServerError(describe(error, t('Could not sign in, please try again')));
     }
   });
 
   if (step.name === 'code') {
     return (
-      <AuthShell title="ยืนยันตัวตนสองขั้นตอน" subtitle="กรอกรหัส 6 หลักจากแอป Authenticator">
+      <AuthShell
+        title={t('Two-step verification')}
+        subtitle={t('Enter the 6-digit code from your authenticator app')}
+      >
         <CodeForm
-          submitLabel="ยืนยัน"
+          submitLabel={t('Verify')}
           error={serverError}
           onSubmit={async (code) => {
             setServerError(null);
@@ -120,7 +127,7 @@ export default function LoginPage() {
               await verifyMfa(step.challenge.challengeToken, code);
               goHome();
             } catch (error) {
-              setServerError(describe(error, 'รหัสไม่ถูกต้อง กรุณาลองใหม่'));
+              setServerError(describe(error, t('The code is incorrect, please try again')));
             }
           }}
           onBack={() => {
@@ -129,7 +136,7 @@ export default function LoginPage() {
           }}
         />
         <p className="subtle" style={{ marginTop: 12 }}>
-          ใช้รหัสสำรอง (recovery code) แทนได้ หากไม่มีโทรศัพท์
+          {t('You can use a recovery code instead if you do not have your phone.')}
         </p>
       </AuthShell>
     );
@@ -153,8 +160,8 @@ export default function LoginPage() {
   if (step.name === 'recovery') {
     return (
       <AuthShell
-        title="เก็บรหัสสำรองไว้ให้ดี"
-        subtitle="รหัสเหล่านี้แสดงเพียงครั้งเดียว ใช้ได้ครั้งละหนึ่งรหัสเมื่อไม่มีโทรศัพท์"
+        title={t('Keep your recovery codes safe')}
+        subtitle={t('These codes are shown only once; use one at a time when you do not have your phone.')}
       >
         <ul className="stack mono" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {step.codes.map((code) => (
@@ -175,11 +182,11 @@ export default function LoginPage() {
               await completeMfaEnrolment(step.challenge.challengeToken);
               goHome();
             } catch (error) {
-              setServerError(describe(error, 'ไม่สามารถเข้าสู่ระบบได้ กรุณาเข้าสู่ระบบใหม่'));
+              setServerError(describe(error, t('Could not sign in, please sign in again')));
             }
           }}
         >
-          บันทึกแล้ว เข้าสู่ระบบ
+          {t('Saved, sign in')}
         </Button>
       </AuthShell>
     );
@@ -194,28 +201,31 @@ export default function LoginPage() {
           </span>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{env.appName}</div>
-            <div className="subtle">ระบบบริหารทรัพยากรบุคคล</div>
+            <div className="subtle">{t('Human resources management system')}</div>
           </div>
         </div>
 
         <div className="stack">
-          <Field label="อีเมล" error={errors.email?.message}>
+          <Field label={t('Email')} error={errors.email?.message ? t(errors.email.message) : undefined}>
             <Input
               type="email"
               autoComplete="username"
               autoFocus
               placeholder="you@company.com"
               aria-invalid={Boolean(errors.email)}
-              {...register('email', { required: 'กรุณากรอกอีเมล' })}
+              {...register('email', { required: 'Please enter your email' })}
             />
           </Field>
 
-          <Field label="รหัสผ่าน" error={errors.password?.message}>
+          <Field
+            label={t('Password')}
+            error={errors.password?.message ? t(errors.password.message) : undefined}
+          >
             <Input
               type="password"
               autoComplete="current-password"
               aria-invalid={Boolean(errors.password)}
-              {...register('password', { required: 'กรุณากรอกรหัสผ่าน' })}
+              {...register('password', { required: 'Please enter your password' })}
             />
           </Field>
 
@@ -226,19 +236,20 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" variant="primary" loading={isSubmitting} style={{ width: '100%' }}>
-            เข้าสู่ระบบ
+            {t('Sign in')}
           </Button>
         </div>
 
         {env.isDev && (
           <div className="auth__hint">
-            <strong>บัญชีทดสอบ (seed):</strong>
+            <strong>{t('Test accounts (seed):')}</strong>
             <br />
             hr.manager@cwork.example · eng.manager@cwork.example · dev2@cwork.example
             <br />
-            รหัสผ่าน: <code className="mono">Cwork2026!</code>
+            {t('Password:')} <code className="mono">Cwork2026!</code>
             <br />
-            บัญชีผู้ดูแลต้องใช้รหัส 2FA — ดูคีย์ที่ผลลัพธ์ของ <code className="mono">db:seed</code>
+            {t('Admin accounts need a 2FA code — see the key in the output of')}{' '}
+            <code className="mono">db:seed</code>
           </div>
         )}
       </form>
@@ -289,6 +300,7 @@ function CodeForm({
   onSubmit: (code: string) => Promise<void>;
   onBack: () => void;
 }) {
+  const t = useT();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -306,7 +318,7 @@ function CodeForm({
         }
       }}
     >
-      <Field label="รหัสยืนยัน">
+      <Field label={t('Verification code')}>
         <Input
           // Not type="number": leading zeros matter and spinners do not help.
           inputMode="numeric"
@@ -328,7 +340,7 @@ function CodeForm({
         {submitLabel}
       </Button>
       <Button type="button" variant="ghost" onClick={onBack} style={{ width: '100%' }}>
-        ย้อนกลับ
+        {t('Back')}
       </Button>
     </form>
   );
@@ -348,6 +360,7 @@ function EnrolStep({
   onEnrolled: (codes: string[]) => void;
   onBack: () => void;
 }) {
+  const t = useT();
   const [enrolment, setEnrolment] = useState<MfaEnrolment | null>(null);
   const [qr, setQr] = useState<string | null>(null);
 
@@ -372,7 +385,7 @@ function EnrolStep({
       } catch (caught) {
         if (!cancelled) {
           setError(
-            caught instanceof ApiError ? caught.message : 'ไม่สามารถเริ่มตั้งค่า 2FA ได้',
+            caught instanceof ApiError ? caught.message : t('Could not start 2FA setup'),
           );
         }
       }
@@ -381,30 +394,30 @@ function EnrolStep({
     return () => {
       cancelled = true;
     };
-  }, [challenge.challengeToken, setError]);
+  }, [challenge.challengeToken, setError, t]);
 
   return (
     <AuthShell
-      title="ตั้งค่ายืนยันตัวตนสองขั้นตอน"
-      subtitle="บัญชีนี้มีสิทธิ์สูง จึงต้องใช้ 2FA ก่อนเข้าใช้งาน"
+      title={t('Set up two-step verification')}
+      subtitle={t('This account is highly privileged, so it must use 2FA before first use.')}
     >
       <div className="stack">
         {qr ? (
           <img
             src={qr}
-            alt="QR code สำหรับแอป Authenticator"
+            alt={t('QR code for your authenticator app')}
             style={{ alignSelf: 'center', borderRadius: 8 }}
             width={192}
             height={192}
           />
         ) : (
           <div className="subtle" style={{ textAlign: 'center' }}>
-            กำลังเตรียม QR…
+            {t('Preparing QR…')}
           </div>
         )}
 
         {enrolment && (
-          <Field label="หรือกรอกคีย์นี้ในแอปด้วยตนเอง">
+          <Field label={t('Or enter this key in the app manually')}>
             <code className="mono" style={{ wordBreak: 'break-all' }}>
               {enrolment.secret}
             </code>
@@ -412,7 +425,7 @@ function EnrolStep({
         )}
 
         <CodeForm
-          submitLabel="เปิดใช้งาน"
+          submitLabel={t('Enable')}
           error={error}
           onSubmit={async (code) => {
             setError(null);
@@ -424,7 +437,7 @@ function EnrolStep({
               )
               .catch((caught: unknown) => {
                 setError(
-                  caught instanceof ApiError ? caught.message : 'รหัสไม่ถูกต้อง กรุณาลองใหม่',
+                  caught instanceof ApiError ? caught.message : t('The code is incorrect, please try again'),
                 );
                 return null;
               });

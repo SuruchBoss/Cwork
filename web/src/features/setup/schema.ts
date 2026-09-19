@@ -8,26 +8,32 @@ import type { SetupRequest } from './setup.api';
  */
 export const ORGANIZATION_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{1,11}$/;
 
+/**
+ * Validation messages are English message keys (CW-016), not display text: the
+ * form translates each one through `t()` at the point it shows it, so the same
+ * schema serves both languages and the catalogue stays the single source of the
+ * Thai wording.
+ */
 export const setupSchema = z
   .object({
-    token: z.string().trim().min(10, 'กรุณาวางโทเคนที่ได้จาก db:init'),
-    organizationName: z.string().trim().min(2, 'ชื่อองค์กรสั้นเกินไป'),
+    token: z.string().trim().min(10, 'Paste the token from db:init'),
+    organizationName: z.string().trim().min(2, 'The organisation name is too short'),
     organizationCode: z
       .string()
       .trim()
-      .regex(ORGANIZATION_CODE_PATTERN, 'ใช้ A–Z, 0–9, - หรือ _ ความยาว 2–12 ตัว')
+      .regex(ORGANIZATION_CODE_PATTERN, 'Use A–Z, 0–9, - or _, 2–12 characters')
       .or(z.literal(''))
       .optional(),
-    timezone: z.string().trim().min(1, 'กรุณาระบุเขตเวลา'),
+    timezone: z.string().trim().min(1, 'Please provide a time zone'),
     // Trimmed before the format check: a pasted address often brings a space
-    // with it, and "อีเมลไม่ถูกต้อง" would be a baffling thing to say about it.
-    adminEmail: z.string().trim().pipe(z.email('อีเมลไม่ถูกต้อง')),
-    adminPassword: z.string().min(12, 'รหัสผ่านต้องยาวอย่างน้อย 12 ตัวอักษร'),
+    // with it, and "invalid email" would be a baffling thing to say about it.
+    adminEmail: z.string().trim().pipe(z.email('Invalid email')),
+    adminPassword: z.string().min(12, 'The password must be at least 12 characters'),
     confirmPassword: z.string(),
   })
   .refine((values) => values.adminPassword === values.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'รหัสผ่านไม่ตรงกัน',
+    message: 'The passwords do not match',
   });
 
 export type SetupFormValues = z.infer<typeof setupSchema>;
