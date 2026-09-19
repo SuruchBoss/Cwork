@@ -681,19 +681,34 @@ Stated plainly, with the remedies in
 [security.md](./security.md#what-this-does-not-do) and tickets in
 [backlog.md](./backlog.md):
 
+**Payroll stops at the payslip.** This is the largest gap and the one to read
+first: Cwork computes Thai withholding and social security correctly, and then
+has no way to *file* or *pay*. There is no ภ.ง.ด.1 or ภ.ง.ด.1ก export (CW-004),
+no 50 ทวิ certificate, no ประกันสังคม filing, and no bank payment file (CW-019).
+An employer still re-keys into whatever they file and pay with — which is
+exactly the error-prone step this system exists to remove. Everything
+*upstream* of that — compensation, overtime, benefits, expenses, proration,
+payslips — is built and tested.
+
+**The Thai tax and social-security rules are unreviewed** by anyone qualified.
+They were written from published sources and unit-tested for internal
+consistency, which proves the code matches its author's belief, not that the
+belief is correct. See [issue #36](https://github.com/SuruchBoss/Cwork/issues/36).
+
+The rest, in no particular order:
+
+- The employee app cannot submit an expense claim, an overtime request, or a
+  document request; it can clock in and out, book leave, approve, and read a
+  payslip (CW-012, CW-013, CW-014).
+- The app does not register a push token, so push delivery has no devices to
+  reach (CW-037), and it can present a second factor but not enrol one (CW-021).
+- **The offline punch queue is editable by the device owner** — it is in
+  `SharedPreferences`, not the keystore — and the `isRootedDevice` the API
+  accepts is never sent by the app (CW-025).
+- The assistant runs against Anthropic or not at all. An operator who needs the
+  model that sees payroll data to be one they run cannot have that yet (CW-043).
+- Knowledge search is lexical. pgvector is installed and the semantic branch is
+  written, but the embedding call is not (CW-018).
 - Malware scanning is off by default; it needs a clamd to talk to.
 - Rate limiting is in-process unless `THROTTLE_STORAGE=postgres` is set.
-- The employee app does not register a push token yet, so push has no devices to reach.
-- No ภ.ง.ด.1 withholding-tax filing export.
-- Issued documents are not rendered; the API supplies merge data only.
-- Benefits and shift administration exist in the API but not in the console.
-- The mobile app can present a second factor but cannot enrol one.
-- **The Thai tax and social-security rules are unreviewed** by anyone qualified
-  (CW-030).
-- **No device binding.** `deviceId` is recorded on every punch and authorises
-  nothing (CW-024).
-- **The offline punch queue is editable by the device owner** — it is in
-  `SharedPreferences`, not the keystore (CW-025).
-- `AttendancePunch.selfieFileId` is never written, and the `isRootedDevice` the
-  API accepts is never sent by the app (CW-025, CW-033).
 - No penetration test. This code has not been audited.
