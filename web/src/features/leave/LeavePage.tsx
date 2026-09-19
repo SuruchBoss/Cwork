@@ -16,10 +16,12 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber, todayIso } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { leaveStatusLabels, statusTone } from '@/lib/labels';
 import type { LeaveRequest, LeaveType, Page } from '@/types/api';
 
 export default function LeavePage() {
+  const t = useT();
   const [status, setStatus] = useState('PENDING');
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [page, setPage] = useState(1);
@@ -51,21 +53,21 @@ export default function LeavePage() {
 
   return (
     <div className="page">
-      <PageHeader title="การลา" description="คำขอลาทั้งหมดที่คุณมีสิทธิ์เข้าถึง" />
+      <PageHeader title={t('Leave')} description={t('All leave requests you can access')} />
 
       <div className="grid grid--4">
-        <Stat label="รายการตามตัวกรอง" value={counts} />
+        <Stat label={t('Matching the filter')} value={counts} />
         <Stat
-          label="ลาวันนี้"
+          label={t('On leave today')}
           value={onLeaveToday.data?.length ?? '—'}
-          hint="รวมที่รออนุมัติ"
+          hint={t('Including pending')}
         />
-        <Stat label="ประเภทการลาที่เปิดใช้" value={leaveTypes.data?.length ?? '—'} />
+        <Stat label={t('Active leave types')} value={leaveTypes.data?.length ?? '—'} />
       </div>
 
       <Card>
         <div className="toolbar">
-          <Field label="สถานะ">
+          <Field label={t('Status')}>
             <Select
               value={status}
               onChange={(e) => {
@@ -73,13 +75,13 @@ export default function LeavePage() {
                 setPage(1);
               }}
             >
-              <option value="PENDING">รออนุมัติ</option>
-              <option value="APPROVED">อนุมัติแล้ว</option>
-              <option value="REJECTED">ไม่อนุมัติ</option>
-              <option value="">ทั้งหมด</option>
+              <option value="PENDING">{t('Pending')}</option>
+              <option value="APPROVED">{t('Approved')}</option>
+              <option value="REJECTED">{t('Rejected')}</option>
+              <option value="">{t('All')}</option>
             </Select>
           </Field>
-          <Field label="ประเภทการลา">
+          <Field label={t('Leave type')}>
             <Select
               value={leaveTypeId}
               onChange={(e) => {
@@ -87,7 +89,7 @@ export default function LeavePage() {
                 setPage(1);
               }}
             >
-              <option value="">ทุกประเภท</option>
+              <option value="">{t('All types')}</option>
               {leaveTypes.data?.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
@@ -109,12 +111,12 @@ export default function LeavePage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>เลขที่</th>
-                    <th>พนักงาน</th>
-                    <th>ประเภท</th>
-                    <th>ช่วงวันที่</th>
-                    <th className="num">จำนวนวัน</th>
-                    <th>สถานะ</th>
+                    <th>{t('No.')}</th>
+                    <th>{t('Employee')}</th>
+                    <th>{t('Type')}</th>
+                    <th>{t('Date range')}</th>
+                    <th className="num">{t('Days')}</th>
+                    <th>{t('Status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -124,7 +126,7 @@ export default function LeavePage() {
                         {request.requestNo}
                         {request.createdViaAssistant && (
                           <div>
-                            <Badge tone="brand">ยื่นผ่านผู้ช่วย AI</Badge>
+                            <Badge tone="brand">{t('Filed via AI assistant')}</Badge>
                           </div>
                         )}
                       </td>
@@ -142,7 +144,9 @@ export default function LeavePage() {
                             aria-hidden
                           />
                           {request.leaveType.name}
-                          {!request.leaveType.isPaid && <Badge tone="neutral">ไม่รับค่าจ้าง</Badge>}
+                          {!request.leaveType.isPaid && (
+                            <Badge tone="neutral">{t('Unpaid')}</Badge>
+                          )}
                         </span>
                       </td>
                       <td>
@@ -164,25 +168,28 @@ export default function LeavePage() {
             {requests.data.meta.totalPages > 1 && (
               <div className="row row--between" style={{ padding: 12 }}>
                 <span className="subtle">
-                  หน้า {requests.data.meta.page} จาก {requests.data.meta.totalPages}
+                  {t('Page {page} of {total}', {
+                    page: requests.data.meta.page,
+                    total: requests.data.meta.totalPages,
+                  })}
                 </span>
                 <div className="row" style={{ gap: 6 }}>
                   <Button size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                    ก่อนหน้า
+                    {t('Previous')}
                   </Button>
                   <Button
                     size="sm"
                     disabled={!requests.data.meta.hasNext}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    ถัดไป
+                    {t('Next')}
                   </Button>
                 </div>
               </div>
             )}
           </>
         ) : (
-          <EmptyState icon="⏸" title="ไม่มีคำขอลาตามเงื่อนไข" />
+          <EmptyState icon="⏸" title={t('No leave requests match')} />
         )}
       </Card>
     </div>

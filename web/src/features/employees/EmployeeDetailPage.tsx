@@ -12,6 +12,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatDateTime, formatNumber, yearsOfService } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { employeeStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -20,6 +21,7 @@ import type { EmployeeDetail, LeaveBalance } from '@/types/api';
 export default function EmployeeDetailPage() {
   const { id = '' } = useParams();
   const canAny = useAuthStore((s) => s.canAny);
+  const t = useT();
 
   const employee = useQuery({
     queryKey: qk.employee(id),
@@ -67,16 +69,16 @@ export default function EmployeeDetailPage() {
     <div className="page">
       <PageHeader
         title={name}
-        description={`${person.position?.title ?? 'ไม่ระบุตำแหน่ง'} · ${person.department?.name ?? 'ไม่ระบุแผนก'}`}
+        description={`${person.position?.title ?? t('No position')} · ${person.department?.name ?? t('No department')}`}
         actions={
           <Link to="/employees" className="btn btn--secondary btn--sm">
-            ← กลับไปทะเบียน
+            ← {t('Back to directory')}
           </Link>
         }
       />
 
       <div className="grid grid--2">
-        <Card title="ข้อมูลพนักงาน">
+        <Card title={t('Employee information')}>
           <div className="row" style={{ gap: 14, marginBottom: 16 }}>
             <Avatar name={name} size="lg" />
             <div>
@@ -91,30 +93,30 @@ export default function EmployeeDetailPage() {
           </div>
 
           <dl className="stack stack--sm" style={{ margin: 0 }}>
-            <DetailRow label="อีเมลที่ทำงาน" value={person.workEmail} />
-            <DetailRow label="โทรศัพท์" value={person.phone} />
-            <DetailRow label="สถานที่ทำงาน" value={person.workLocation?.name} />
+            <DetailRow label={t('Work email')} value={person.workEmail} />
+            <DetailRow label={t('Phone')} value={person.phone} />
+            <DetailRow label={t('Work location')} value={person.workLocation?.name} />
             <DetailRow
-              label="หัวหน้างาน"
+              label={t('Manager')}
               value={
                 person.manager
                   ? `${person.manager.firstNameTh} ${person.manager.lastNameTh}`
                   : null
               }
             />
-            <DetailRow label="ประเภทการจ้าง" value={person.employmentType} />
+            <DetailRow label={t('Employment type')} value={person.employmentType} />
             <DetailRow
-              label="วันเริ่มงาน"
+              label={t('Start date')}
               value={`${formatDate(person.hireDate)} (${yearsOfService(person.hireDate)})`}
             />
             {person.probationEndDate && (
-              <DetailRow label="ครบทดลองงาน" value={formatDate(person.probationEndDate)} />
+              <DetailRow label={t('Probation ends')} value={formatDate(person.probationEndDate)} />
             )}
             {person.lastWorkingDate && (
-              <DetailRow label="วันทำงานสุดท้าย" value={formatDate(person.lastWorkingDate)} />
+              <DetailRow label={t('Last working day')} value={formatDate(person.lastWorkingDate)} />
             )}
             <DetailRow
-              label="เลขบัตรประชาชน"
+              label={t('National ID')}
               // The API distinguishes the two cases by which key it sends:
               // `nationalId` when the viewer may decrypt it, `nationalIdMasked`
               // when they may not. Either can still be null simply because
@@ -123,13 +125,16 @@ export default function EmployeeDetailPage() {
               value={
                 'nationalId' in person
                   ? (person.nationalId ?? '—')
-                  : (person.nationalIdMasked ?? 'ไม่มีสิทธิ์ดู')
+                  : (person.nationalIdMasked ?? t('Not permitted to view'))
               }
             />
             {person.user && (
               <DetailRow
-                label="บัญชีผู้ใช้"
-                value={`${person.user.email} · เข้าใช้ล่าสุด ${formatDateTime(person.user.lastLoginAt)}`}
+                label={t('User account')}
+                value={t('{email} · last login {time}', {
+                  email: person.user.email,
+                  time: formatDateTime(person.user.lastLoginAt),
+                })}
               />
             )}
           </dl>
@@ -137,16 +142,16 @@ export default function EmployeeDetailPage() {
 
         <div className="stack">
           {balances.data && (
-            <Card title="วันลาคงเหลือ" flush>
+            <Card title={t('Leave balances')} flush>
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>ประเภท</th>
-                      <th className="num">ได้รับ</th>
-                      <th className="num">ใช้ไป</th>
-                      <th className="num">รออนุมัติ</th>
-                      <th className="num">คงเหลือ</th>
+                      <th>{t('Type')}</th>
+                      <th className="num">{t('Granted')}</th>
+                      <th className="num">{t('Used')}</th>
+                      <th className="num">{t('Pending')}</th>
+                      <th className="num">{t('Available')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -179,7 +184,10 @@ export default function EmployeeDetailPage() {
           )}
 
           {person.directReports.length > 0 && (
-            <Card title={`ผู้ใต้บังคับบัญชา (${person.directReports.length})`} flush>
+            <Card
+              title={t('Direct reports ({count})', { count: person.directReports.length })}
+              flush
+            >
               <div className="table-wrap">
                 <table className="table">
                   <tbody>
@@ -202,15 +210,15 @@ export default function EmployeeDetailPage() {
       </div>
 
       {events.data && (
-        <Card title="ประวัติการทำงาน" flush>
+        <Card title={t('Employment history')} flush>
           {events.data.length > 0 ? (
             <div className="table-wrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>วันที่มีผล</th>
-                    <th>เหตุการณ์</th>
-                    <th>หมายเหตุ</th>
+                    <th>{t('Effective date')}</th>
+                    <th>{t('Event')}</th>
+                    <th>{t('Note')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,7 +235,7 @@ export default function EmployeeDetailPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="☰" title="ยังไม่มีประวัติ" />
+            <EmptyState icon="☰" title={t('No history yet')} />
           )}
         </Card>
       )}
