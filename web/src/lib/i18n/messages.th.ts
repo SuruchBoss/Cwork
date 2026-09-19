@@ -282,4 +282,42 @@ export const thMessages: Record<string, string> = {
   'Set goals for your reports first': 'ตั้งเป้าหมายให้ผู้ใต้บังคับบัญชาก่อน',
   'No review cycles yet': 'ยังไม่มีรอบการประเมิน',
   'Create a review cycle to start setting KPIs': 'สร้างรอบการประเมินเพื่อเริ่มตั้ง KPI',
+
+  // HR knowledge base
+  'The policies the AI assistant answers from — it will not answer on anything not here':
+    'ระเบียบที่ผู้ช่วย AI ใช้ตอบคำถาม — ผู้ช่วยจะไม่ตอบนโยบายที่ไม่มีในนี้',
+  'Add document': 'เพิ่มเอกสาร',
+  'The assistant answers only from the documents published here, and says it is not in company policy when it has nothing rather than guessing — complete documents are what make the answers trustworthy':
+    'ผู้ช่วยถูกกำหนดให้ตอบเฉพาะจากเอกสารที่เผยแพร่ในหน้านี้ และจะบอกว่า “ไม่พบในระเบียบบริษัท” เมื่อไม่มีข้อมูล แทนการเดา — เอกสารที่ครบถ้วนคือสิ่งที่ทำให้คำตอบเชื่อถือได้',
+  'Add a policy document': 'เพิ่มเอกสารนโยบาย',
+  'Document title': 'ชื่อเอกสาร',
+  'e.g. Annual leave policy': 'เช่น ระเบียบการลาพักร้อน',
+  Category: 'หมวดหมู่',
+  'e.g. Leave': 'เช่น การลา',
+  Content: 'เนื้อหา',
+  'Markdown supported — split into chunks by paragraph for search':
+    'รองรับ Markdown — ระบบจะแบ่งเป็นท่อน ๆ ตามย่อหน้าเพื่อใช้ค้นหา',
+  '# Annual leave policy\n\nEmployees are entitled…': '# ระเบียบการลาพักร้อน\n\nพนักงานมีสิทธิ…',
+  'Save and publish': 'บันทึกและเผยแพร่',
+  Cancel: 'ยกเลิก',
+  'Could not save': 'บันทึกไม่สำเร็จ',
+  Version: 'เวอร์ชัน',
+  Chunks: 'ท่อนข้อมูล',
+  'Last edited': 'แก้ไขล่าสุด',
+  Archive: 'เก็บเข้าคลัง',
+  'No policy documents yet': 'ยังไม่มีเอกสารนโยบาย',
+  'Add company policies so the assistant can answer employee questions':
+    'เพิ่มระเบียบบริษัทเพื่อให้ผู้ช่วยตอบคำถามพนักงานได้',
+
+  // Approvals
+  'Everything waiting on your decision': 'คำขอทั้งหมดที่รอการตัดสินใจจากคุณ',
+  Submitter: 'ผู้ยื่น',
+  Actions: 'ดำเนินการ',
+  'Due {date}': 'ครบกำหนด {date}',
+  'Reason for rejection': 'เหตุผลที่ไม่อนุมัติ',
+  'Explain to the submitter': 'อธิบายให้ผู้ยื่นทราบ',
+  'Confirm rejection': 'ยืนยันไม่อนุมัติ',
+  'Could not complete the action': 'ดำเนินการไม่สำเร็จ',
+  THB: 'บาท',
+  'Last day {date}': 'วันสุดท้าย {date}',
 };

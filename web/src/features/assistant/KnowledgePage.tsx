@@ -15,11 +15,13 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { statusTone } from '@/lib/labels';
 import type { KnowledgeDocumentSummary } from '@/types/api';
 
 export default function KnowledgePage() {
   const queryClient = useQueryClient();
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: '', category: '', content: '' });
 
@@ -45,48 +47,51 @@ export default function KnowledgePage() {
   return (
     <div className="page">
       <PageHeader
-        title="ฐานความรู้ HR"
-        description="ระเบียบที่ผู้ช่วย AI ใช้ตอบคำถาม — ผู้ช่วยจะไม่ตอบนโยบายที่ไม่มีในนี้"
+        title={t('HR knowledge base')}
+        description={t(
+          'The policies the AI assistant answers from — it will not answer on anything not here',
+        )}
         actions={
           <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-            + เพิ่มเอกสาร
+            + {t('Add document')}
           </Button>
         }
       />
 
       <div className="alert alert--info">
-        ผู้ช่วยถูกกำหนดให้ตอบเฉพาะจากเอกสารที่เผยแพร่ในหน้านี้ และจะบอกว่า “ไม่พบในระเบียบบริษัท”
-        เมื่อไม่มีข้อมูล แทนการเดา — เอกสารที่ครบถ้วนคือสิ่งที่ทำให้คำตอบเชื่อถือได้
+        {t(
+          'The assistant answers only from the documents published here, and says it is not in company policy when it has nothing rather than guessing — complete documents are what make the answers trustworthy',
+        )}
       </div>
 
       {creating && (
-        <Card title="เพิ่มเอกสารนโยบาย">
+        <Card title={t('Add a policy document')}>
           <div className="stack">
             <div className="toolbar">
-              <Field label="ชื่อเอกสาร">
+              <Field label={t('Document title')}>
                 <Input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="เช่น ระเบียบการลาพักร้อน"
+                  placeholder={t('e.g. Annual leave policy')}
                 />
               </Field>
-              <Field label="หมวดหมู่">
+              <Field label={t('Category')}>
                 <Input
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  placeholder="เช่น การลา"
+                  placeholder={t('e.g. Leave')}
                 />
               </Field>
             </div>
             <Field
-              label="เนื้อหา"
-              hint="รองรับ Markdown — ระบบจะแบ่งเป็นท่อน ๆ ตามย่อหน้าเพื่อใช้ค้นหา"
+              label={t('Content')}
+              hint={t('Markdown supported — split into chunks by paragraph for search')}
             >
               <Textarea
                 rows={12}
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
-                placeholder="# ระเบียบการลาพักร้อน&#10;&#10;พนักงานมีสิทธิ…"
+                placeholder={t('# Annual leave policy\n\nEmployees are entitled…')}
               />
             </Field>
             <div className="row">
@@ -96,15 +101,15 @@ export default function KnowledgePage() {
                 disabled={!form.title.trim() || !form.content.trim()}
                 onClick={() => create.mutate()}
               >
-                บันทึกและเผยแพร่
+                {t('Save and publish')}
               </Button>
               <Button variant="ghost" onClick={() => setCreating(false)}>
-                ยกเลิก
+                {t('Cancel')}
               </Button>
             </div>
             {create.isError && (
               <div className="alert alert--danger">
-                {create.error instanceof Error ? create.error.message : 'บันทึกไม่สำเร็จ'}
+                {create.error instanceof Error ? create.error.message : t('Could not save')}
               </div>
             )}
           </div>
@@ -121,12 +126,12 @@ export default function KnowledgePage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>ชื่อเอกสาร</th>
-                  <th>หมวดหมู่</th>
-                  <th className="num">เวอร์ชัน</th>
-                  <th className="num">ท่อนข้อมูล</th>
-                  <th>สถานะ</th>
-                  <th>แก้ไขล่าสุด</th>
+                  <th>{t('Document title')}</th>
+                  <th>{t('Category')}</th>
+                  <th className="num">{t('Version')}</th>
+                  <th className="num">{t('Chunks')}</th>
+                  <th>{t('Status')}</th>
+                  <th>{t('Last edited')}</th>
                   <th />
                 </tr>
               </thead>
@@ -148,7 +153,7 @@ export default function KnowledgePage() {
                         loading={archive.isPending && archive.variables === doc.id}
                         onClick={() => archive.mutate(doc.id)}
                       >
-                        เก็บเข้าคลัง
+                        {t('Archive')}
                       </Button>
                     </td>
                   </tr>
@@ -159,8 +164,8 @@ export default function KnowledgePage() {
         ) : (
           <EmptyState
             icon="◫"
-            title="ยังไม่มีเอกสารนโยบาย"
-            description="เพิ่มระเบียบบริษัทเพื่อให้ผู้ช่วยตอบคำถามพนักงานได้"
+            title={t('No policy documents yet')}
+            description={t('Add company policies so the assistant can answer employee questions')}
           />
         )}
       </Card>

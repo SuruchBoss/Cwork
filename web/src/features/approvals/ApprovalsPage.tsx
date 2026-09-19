@@ -14,12 +14,16 @@ import {
   Textarea,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatRelative } from '@/lib/format';
+import { formatDate, formatNumber, formatRelative } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { approvalEntityLabels } from '@/lib/labels';
 import type { ApprovalTask } from '@/types/api';
 
+type Translate = (key: string, params?: Record<string, string | number>) => string;
+
 export default function ApprovalsPage() {
   const queryClient = useQueryClient();
+  const t = useT();
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [comment, setComment] = useState('');
 
@@ -49,8 +53,8 @@ export default function ApprovalsPage() {
   return (
     <div className="page">
       <PageHeader
-        title="รายการรออนุมัติ"
-        description="คำขอทั้งหมดที่รอการตัดสินใจจากคุณ"
+        title={t('Pending approvals')}
+        description={t('Everything waiting on your decision')}
       />
 
       <Card flush>
@@ -63,11 +67,11 @@ export default function ApprovalsPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>ผู้ยื่น</th>
-                  <th>ประเภท</th>
-                  <th>รายละเอียด</th>
-                  <th>ยื่นเมื่อ</th>
-                  <th style={{ width: 200 }}>ดำเนินการ</th>
+                  <th>{t('Submitter')}</th>
+                  <th>{t('Type')}</th>
+                  <th>{t('Details')}</th>
+                  <th>{t('Submitted')}</th>
+                  <th style={{ width: 200 }}>{t('Actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,21 +97,23 @@ export default function ApprovalsPage() {
                           {approvalEntityLabels[task.instance.entityType] ?? task.instance.entityType}
                         </Badge>
                       </td>
-                      <td className="subtle">{describeSnapshot(task.instance.snapshot)}</td>
+                      <td className="subtle">{describeSnapshot(task.instance.snapshot, t)}</td>
                       <td className="subtle">
                         {formatRelative(task.instance.submittedAt)}
                         {task.dueAt && (
-                          <div className="subtle">ครบกำหนด {formatDate(task.dueAt)}</div>
+                          <div className="subtle">
+                            {t('Due {date}', { date: formatDate(task.dueAt) })}
+                          </div>
                         )}
                       </td>
                       <td>
                         {isRejecting ? (
                           <div className="stack stack--sm">
-                            <Field label="เหตุผลที่ไม่อนุมัติ">
+                            <Field label={t('Reason for rejection')}>
                               <Textarea
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder="อธิบายให้ผู้ยื่นทราบ"
+                                placeholder={t('Explain to the submitter')}
                                 rows={2}
                                 // The reject form is revealed on click; move focus to it so a
                                 // keyboard user lands on the reason field instead of having to
@@ -129,10 +135,10 @@ export default function ApprovalsPage() {
                                   })
                                 }
                               >
-                                ยืนยันไม่อนุมัติ
+                                {t('Confirm rejection')}
                               </Button>
                               <Button size="sm" variant="ghost" onClick={() => setRejecting(null)}>
-                                ยกเลิก
+                                {t('Cancel')}
                               </Button>
                             </div>
                           </div>
@@ -144,7 +150,7 @@ export default function ApprovalsPage() {
                               loading={pending}
                               onClick={() => decide.mutate({ taskId: task.id, decision: 'APPROVE' })}
                             >
-                              อนุมัติ
+                              {t('Approve')}
                             </Button>
                             <Button
                               size="sm"
@@ -154,7 +160,7 @@ export default function ApprovalsPage() {
                                 setComment('');
                               }}
                             >
-                              ไม่อนุมัติ
+                              {t('Reject')}
                             </Button>
                           </div>
                         )}
@@ -166,13 +172,17 @@ export default function ApprovalsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="✓" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
+          <EmptyState
+            icon="✓"
+            title={t('No approvals waiting')}
+            description={t('You are all caught up')}
+          />
         )}
       </Card>
 
       {decide.isError && (
         <div className="alert alert--danger" role="alert">
-          {decide.error instanceof Error ? decide.error.message : 'ดำเนินการไม่สำเร็จ'}
+          {decide.error instanceof Error ? decide.error.message : t('Could not complete the action')}
         </div>
       )}
     </div>
@@ -184,19 +194,19 @@ export default function ApprovalsPage() {
  * entity type, surface the handful of fields that are meaningful across all of
  * them — the detail lives one click away on the entity itself.
  */
-function describeSnapshot(snapshot: Record<string, unknown>): string {
+function describeSnapshot(snapshot: Record<string, unknown>, t: Translate): string {
   const parts: string[] = [];
 
   if (typeof snapshot.leaveTypeCode === 'string') parts.push(String(snapshot.leaveTypeCode));
-  if (typeof snapshot.totalDays === 'number') parts.push(`${snapshot.totalDays} วัน`);
-  if (typeof snapshot.hours === 'number') parts.push(`${snapshot.hours} ชม.`);
+  if (typeof snapshot.totalDays === 'number') parts.push(`${snapshot.totalDays} ${t('days')}`);
+  if (typeof snapshot.hours === 'number') parts.push(`${snapshot.hours} ${t('hr')}`);
   if (typeof snapshot.totalAmount === 'number') {
-    parts.push(`${snapshot.totalAmount.toLocaleString('th-TH')} บาท`);
+    parts.push(`${formatNumber(snapshot.totalAmount)} ${t('THB')}`);
   }
   if (typeof snapshot.startDate === 'string') parts.push(formatDate(snapshot.startDate));
   if (typeof snapshot.workDate === 'string') parts.push(formatDate(snapshot.workDate));
   if (typeof snapshot.lastWorkingDate === 'string') {
-    parts.push(`วันสุดท้าย ${formatDate(snapshot.lastWorkingDate)}`);
+    parts.push(t('Last day {date}', { date: formatDate(snapshot.lastWorkingDate) }));
   }
   if (typeof snapshot.type === 'string' && !snapshot.leaveTypeCode) parts.push(String(snapshot.type));
 
