@@ -14,7 +14,8 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatNumber } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import type { AuditLogEntry, Page } from '@/types/api';
 
 const ACTION_TONES: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'brand'> = {
@@ -33,6 +34,7 @@ const ACTION_TONES: Record<string, 'neutral' | 'success' | 'warning' | 'danger' 
 };
 
 export default function AuditPage() {
+  const t = useT();
   const [action, setAction] = useState('');
   const [entityType, setEntityType] = useState('');
   const [page, setPage] = useState(1);
@@ -54,13 +56,13 @@ export default function AuditPage() {
   return (
     <div className="page">
       <PageHeader
-        title="บันทึกการใช้งาน"
-        description="บันทึกแบบเพิ่มได้อย่างเดียว — ฐานข้อมูลปฏิเสธการแก้ไขและลบ"
+        title={t('Activity log')}
+        description={t('Append-only — the database refuses edits and deletes')}
       />
 
       <Card>
         <div className="toolbar">
-          <Field label="ประเภทการกระทำ">
+          <Field label={t('Action type')}>
             <Select
               value={action}
               onChange={(e) => {
@@ -68,7 +70,7 @@ export default function AuditPage() {
                 setPage(1);
               }}
             >
-              <option value="">ทั้งหมด</option>
+              <option value="">{t('All')}</option>
               {Object.keys(ACTION_TONES).map((key) => (
                 <option key={key} value={key}>
                   {key}
@@ -76,14 +78,14 @@ export default function AuditPage() {
               ))}
             </Select>
           </Field>
-          <Field label="ชนิดข้อมูล">
+          <Field label={t('Entity type')}>
             <Input
               value={entityType}
               onChange={(e) => {
                 setEntityType(e.target.value);
                 setPage(1);
               }}
-              placeholder="เช่น Employee, PayrollRun"
+              placeholder={t('e.g. Employee, PayrollRun')}
             />
           </Field>
         </div>
@@ -100,11 +102,11 @@ export default function AuditPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>เวลา</th>
-                    <th>ผู้ใช้</th>
-                    <th>การกระทำ</th>
-                    <th>ข้อมูล</th>
-                    <th>รายละเอียด</th>
+                    <th>{t('Time')}</th>
+                    <th>{t('User')}</th>
+                    <th>{t('Action')}</th>
+                    <th>{t('Entity')}</th>
+                    <th>{t('Details')}</th>
                     <th>IP</th>
                   </tr>
                 </thead>
@@ -114,7 +116,7 @@ export default function AuditPage() {
                       <td className="subtle" style={{ whiteSpace: 'nowrap' }}>
                         {formatDateTime(entry.createdAt)}
                       </td>
-                      <td>{entry.actor?.email ?? 'ระบบ'}</td>
+                      <td>{entry.actor?.email ?? t('System')}</td>
                       <td>
                         <Badge tone={ACTION_TONES[entry.action] ?? 'neutral'}>{entry.action}</Badge>
                       </td>
@@ -129,25 +131,28 @@ export default function AuditPage() {
 
             <div className="row row--between" style={{ padding: 12 }}>
               <span className="subtle">
-                {logs.data.meta.total.toLocaleString('th-TH')} รายการ · หน้า {logs.data.meta.page} /{' '}
-                {logs.data.meta.totalPages}
+                {t('{total} entries', { total: formatNumber(logs.data.meta.total) })} ·{' '}
+                {t('Page {page} of {total}', {
+                  page: logs.data.meta.page,
+                  total: logs.data.meta.totalPages,
+                })}
               </span>
               <div className="row" style={{ gap: 6 }}>
                 <Button size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  ก่อนหน้า
+                  {t('Previous')}
                 </Button>
                 <Button
                   size="sm"
                   disabled={!logs.data.meta.hasNext}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  ถัดไป
+                  {t('Next')}
                 </Button>
               </div>
             </div>
           </>
         ) : (
-          <EmptyState icon="⎙" title="ไม่มีบันทึกตามเงื่อนไข" />
+          <EmptyState icon="⎙" title={t('No log entries match')} />
         )}
       </Card>
     </div>

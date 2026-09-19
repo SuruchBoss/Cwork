@@ -11,6 +11,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 
 interface DepartmentNode {
   id: string;
@@ -40,6 +41,7 @@ interface Holiday {
 }
 
 export default function OrganizationPage() {
+  const t = useT();
   const organization = useQuery({
     queryKey: ['organization'],
     queryFn: () => api.get<Organization>('/organization'),
@@ -58,19 +60,26 @@ export default function OrganizationPage() {
 
   return (
     <div className="page">
-      <PageHeader title="โครงสร้างองค์กร" description="ข้อมูลบริษัท แผนก และวันหยุดประจำปี" />
+      <PageHeader
+        title={t('Organisation structure')}
+        description={t('Company details, departments and public holidays')}
+      />
 
       {organization.data && (
         <div className="grid grid--4">
-          <Stat label="บริษัท" value={organization.data.name} hint={organization.data.legalName ?? ''} />
-          <Stat label="เลขประจำตัวผู้เสียภาษี" value={organization.data.taxId ?? '—'} />
-          <Stat label="เขตเวลา" value={organization.data.timezone} />
-          <Stat label="สกุลเงิน" value={organization.data.currency} />
+          <Stat
+            label={t('Company')}
+            value={organization.data.name}
+            hint={organization.data.legalName ?? ''}
+          />
+          <Stat label={t('Tax ID')} value={organization.data.taxId ?? '—'} />
+          <Stat label={t('Timezone')} value={organization.data.timezone} />
+          <Stat label={t('Currency')} value={organization.data.currency} />
         </div>
       )}
 
       <div className="grid grid--2">
-        <Card title="ผังแผนก">
+        <Card title={t('Department tree')}>
           {tree.isLoading ? (
             <TableSkeleton rows={5} columns={2} />
           ) : tree.isError ? (
@@ -82,11 +91,11 @@ export default function OrganizationPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState icon="⌗" title="ยังไม่มีแผนก" />
+            <EmptyState icon="⌗" title={t('No departments yet')} />
           )}
         </Card>
 
-        <Card title={`วันหยุดนักขัตฤกษ์ ${year}`} flush>
+        <Card title={t('Public holidays {year}', { year })} flush>
           {holidays.data && holidays.data.length > 0 ? (
             <div className="table-wrap">
               <table className="table">
@@ -104,7 +113,7 @@ export default function OrganizationPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="⌗" title="ยังไม่ได้ตั้งวันหยุด" />
+            <EmptyState icon="⌗" title={t('No holidays set yet')} />
           )}
         </Card>
       </div>
@@ -113,6 +122,7 @@ export default function OrganizationPage() {
 }
 
 function DepartmentBranch({ node, depth }: { node: DepartmentNode; depth: number }) {
+  const t = useT();
   return (
     <li>
       <div
@@ -128,7 +138,9 @@ function DepartmentBranch({ node, depth }: { node: DepartmentNode; depth: number
           <span style={{ fontWeight: depth === 0 ? 600 : 400 }}>{node.name}</span>
           <code className="mono subtle">{node.code}</code>
         </span>
-        <Badge tone="neutral">{node.employeeCount} คน</Badge>
+        <Badge tone="neutral">
+          {node.employeeCount} {t('people')}
+        </Badge>
       </div>
       {node.children.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>

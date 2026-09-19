@@ -196,4 +196,31 @@ export const thMessages: Record<string, string> = {
   Review: 'ตรวจสอบ',
   Locked: 'ปิดรอบแล้ว',
   'No attendance records in this range': 'ไม่มีข้อมูลการลงเวลาในช่วงนี้',
+
+  // Organisation structure
+  'Company details, departments and public holidays': 'ข้อมูลบริษัท แผนก และวันหยุดประจำปี',
+  Company: 'บริษัท',
+  'Tax ID': 'เลขประจำตัวผู้เสียภาษี',
+  Timezone: 'เขตเวลา',
+  Currency: 'สกุลเงิน',
+  'Department tree': 'ผังแผนก',
+  'No departments yet': 'ยังไม่มีแผนก',
+  'Public holidays {year}': 'วันหยุดนักขัตฤกษ์ {year}',
+  'No holidays set yet': 'ยังไม่ได้ตั้งวันหยุด',
+  people: 'คน',
+
+  // Activity log
+  'Append-only — the database refuses edits and deletes':
+    'บันทึกแบบเพิ่มได้อย่างเดียว — ฐานข้อมูลปฏิเสธการแก้ไขและลบ',
+  'Action type': 'ประเภทการกระทำ',
+  'Entity type': 'ชนิดข้อมูล',
+  'e.g. Employee, PayrollRun': 'เช่น Employee, PayrollRun',
+  Time: 'เวลา',
+  User: 'ผู้ใช้',
+  Action: 'การกระทำ',
+  Entity: 'ข้อมูล',
+  Details: 'รายละเอียด',
+  System: 'ระบบ',
+  '{total} entries': '{total} รายการ',
+  'No log entries match': 'ไม่มีบันทึกตามเงื่อนไข',
 };
