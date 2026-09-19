@@ -4,6 +4,7 @@ import { qk } from '@/app/query-client';
 import { Badge, Card, EmptyState, PageHeader, Person, Stat } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney, formatRelative } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { approvalEntityLabels, leaveStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -12,6 +13,7 @@ import type { ApprovalTask, LeaveRequest, Page, PayrollRun } from '@/types/api';
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const canAny = useAuthStore((s) => s.canAny);
+  const t = useT();
 
   const canSeePeople = canAny(P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM);
   const canSeeLeave = canAny(P.LEAVE_READ, P.LEAVE_READ_TEAM);
@@ -47,52 +49,52 @@ export default function DashboardPage() {
   return (
     <div className="page">
       <PageHeader
-        title={`สวัสดี ${user?.displayName ?? ''}`}
-        description="ภาพรวมงาน HR ที่ต้องดำเนินการวันนี้"
+        title={t('Hi {name}', { name: user?.displayName ?? '' })}
+        description={t('Your HR tasks for today')}
       />
 
       <div className="grid grid--4">
         <Stat
-          label="รออนุมัติของคุณ"
+          label={t('Your approvals')}
           value={approvals.data?.length ?? '—'}
-          hint={approvals.data?.length ? 'กดเพื่อดำเนินการ' : 'ไม่มีรายการค้าง'}
+          hint={approvals.data?.length ? t('Tap to act') : t('Nothing pending')}
         />
         {canSeePeople && (
           <Stat
-            label="พนักงานที่ทำงานอยู่"
+            label={t('Active employees')}
             value={headcount.data?.meta.total ?? '—'}
-            hint="รวมพนักงานทดลองงาน"
+            hint={t('Including those on probation')}
           />
         )}
         {canSeeLeave && (
           <Stat
-            label="คำขอลารออนุมัติ"
+            label={t('Leave requests pending')}
             value={pendingLeave.data?.meta.total ?? '—'}
-            hint="ทั้งองค์กรที่คุณมองเห็น"
+            hint={t('Across the organisation you can see')}
           />
         )}
         {canSeePayroll && (
           <Stat
-            label="รอบเงินเดือนล่าสุด"
+            label={t('Latest payroll run')}
             value={run ? run.period?.code ?? run.runNo : '—'}
-            hint={run ? formatMoney(run.totalNet, run.currency) : 'ยังไม่มีรอบ'}
+            hint={run ? formatMoney(run.totalNet, run.currency) : t('No runs yet')}
           />
         )}
       </div>
 
       <div className="grid grid--2">
         <Card
-          title="รายการรออนุมัติ"
+          title={t('Pending approvals')}
           actions={
             <Link to="/approvals" className="btn btn--ghost btn--sm">
-              ดูทั้งหมด
+              {t('View all')}
             </Link>
           }
           flush
         >
           {approvals.isLoading ? (
             <div style={{ padding: 16 }} className="muted">
-              กำลังโหลด…
+              {t('Loading')}…
             </div>
           ) : approvals.data && approvals.data.length > 0 ? (
             <div className="table-wrap">
@@ -126,16 +128,20 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="✓" title="ไม่มีรายการรออนุมัติ" description="คุณเคลียร์งานหมดแล้ว" />
+            <EmptyState
+              icon="✓"
+              title={t('No approvals waiting')}
+              description={t('You are all caught up')}
+            />
           )}
         </Card>
 
         {canSeeLeave && (
           <Card
-            title="คำขอลาล่าสุด"
+            title={t('Recent leave requests')}
             actions={
               <Link to="/leave" className="btn btn--ghost btn--sm">
-                ดูทั้งหมด
+                {t('View all')}
               </Link>
             }
             flush
@@ -163,7 +169,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="subtle">
-                          {formatDate(request.startDate)} · {Number(request.totalDays)} วัน
+                          {formatDate(request.startDate)} · {Number(request.totalDays)} {t('days')}
                         </td>
                         <td>
                           <Badge tone={statusTone(request.status)}>
@@ -176,7 +182,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <EmptyState icon="⏸" title="ไม่มีคำขอลารออนุมัติ" />
+              <EmptyState icon="⏸" title={t('No leave requests pending')} />
             )}
           </Card>
         )}

@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui';
+import { useT } from '@/lib/i18n/useT';
 
 export default function NotFoundPage() {
+  const t = useT();
   return (
     <div className="page">
       <EmptyState
         icon="◌"
-        title="ไม่พบหน้าที่คุณต้องการ"
-        description="ลิงก์อาจเปลี่ยนไปแล้ว หรือคุณไม่มีสิทธิ์เข้าถึงส่วนนี้"
+        title={t('Page not found')}
+        description={t('The link may have changed, or you may not have access to this section')}
         action={
           <Link to="/" className="btn btn--primary btn--sm">
-            กลับหน้าแรก
+            {t('Back to home')}
           </Link>
         }
       />

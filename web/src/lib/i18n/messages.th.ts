@@ -53,5 +53,35 @@ export const thMessages: Record<string, string> = {
   hr: 'ชม.',
   min: 'นาที',
   yr: 'ปี',
+  days: 'วัน',
   'less than 1 year': 'น้อยกว่า 1 ปี',
+
+  // Route guards & not-found
+  'Checking permissions': 'กำลังตรวจสอบสิทธิ์',
+  'You do not have access to this page': 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้',
+  'If you think this is a mistake, contact your administrator':
+    'หากคิดว่าเป็นความผิดพลาด กรุณาติดต่อผู้ดูแลระบบ',
+  'Page not found': 'ไม่พบหน้าที่คุณต้องการ',
+  'The link may have changed, or you may not have access to this section':
+    'ลิงก์อาจเปลี่ยนไปแล้ว หรือคุณไม่มีสิทธิ์เข้าถึงส่วนนี้',
+  'Back to home': 'กลับหน้าแรก',
+
+  // Dashboard
+  'Hi {name}': 'สวัสดี {name}',
+  'Your HR tasks for today': 'ภาพรวมงาน HR ที่ต้องดำเนินการวันนี้',
+  'Your approvals': 'รออนุมัติของคุณ',
+  'Tap to act': 'กดเพื่อดำเนินการ',
+  'Nothing pending': 'ไม่มีรายการค้าง',
+  'Active employees': 'พนักงานที่ทำงานอยู่',
+  'Including those on probation': 'รวมพนักงานทดลองงาน',
+  'Leave requests pending': 'คำขอลารออนุมัติ',
+  'Across the organisation you can see': 'ทั้งองค์กรที่คุณมองเห็น',
+  'Latest payroll run': 'รอบเงินเดือนล่าสุด',
+  'No runs yet': 'ยังไม่มีรอบ',
+  'Pending approvals': 'รายการรออนุมัติ',
+  'View all': 'ดูทั้งหมด',
+  'No approvals waiting': 'ไม่มีรายการรออนุมัติ',
+  'You are all caught up': 'คุณเคลียร์งานหมดแล้ว',
+  'Recent leave requests': 'คำขอลาล่าสุด',
+  'No leave requests pending': 'ไม่มีคำขอลารออนุมัติ',
 };

@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { EmptyState } from '@/components/ui';
+import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
 
 /**
@@ -10,13 +11,14 @@ import { useAuthStore } from '@/stores/auth.store';
 export function RequireAuth() {
   const { accessToken, user, isBootstrapping } = useAuthStore();
   const location = useLocation();
+  const t = useT();
 
   if (isBootstrapping) {
     return (
       <div className="auth">
         <div className="row" style={{ gap: 10 }}>
           <span className="spinner" aria-hidden />
-          <span className="muted">กำลังตรวจสอบสิทธิ์…</span>
+          <span className="muted">{t('Checking permissions')}…</span>
         </div>
       </div>
     );
@@ -31,14 +33,15 @@ export function RequireAuth() {
 
 export function RequirePermission({ any }: { any: string[] }) {
   const canAny = useAuthStore((s) => s.canAny);
+  const t = useT();
 
   if (!canAny(...any)) {
     return (
       <div className="page">
         <EmptyState
           icon="⊘"
-          title="คุณไม่มีสิทธิ์เข้าถึงหน้านี้"
-          description="หากคิดว่าเป็นความผิดพลาด กรุณาติดต่อผู้ดูแลระบบ"
+          title={t('You do not have access to this page')}
+          description={t('If you think this is a mistake, contact your administrator')}
         />
       </div>
     );
