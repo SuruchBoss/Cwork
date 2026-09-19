@@ -5,15 +5,18 @@ import { Badge, Button, Card, EmptyState, PageHeader, Textarea } from '@/compone
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatRelative } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { usePlatformConfig } from '@/lib/platform';
 import type { AssistantConversation, AssistantMessage, ChatResult } from '@/types/api';
 
+// Keys; rendered and submitted through t() so the chip text and the message
+// sent both follow the current language.
 const SUGGESTIONS = [
-  'ฉันเหลือวันลาพักร้อนกี่วัน',
-  'ขอลาป่วยต้องแนบใบรับรองแพทย์เมื่อไหร่',
-  'อัตราค่าโอทีวันหยุดคิดยังไง',
-  'ขอหนังสือรับรองการทำงานเพื่อยื่นวีซ่า',
-  'เดือนนี้ฉันมาสายกี่ครั้ง',
+  'How many annual leave days do I have left?',
+  'When do I need a medical certificate for sick leave?',
+  'How is holiday overtime pay calculated?',
+  'Request an employment certificate for a visa',
+  'How many times was I late this month?',
 ];
 
 interface Turn {
@@ -26,6 +29,7 @@ interface Turn {
 
 export default function AssistantPage() {
   const queryClient = useQueryClient();
+  const t = useT();
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState('');
@@ -70,8 +74,8 @@ export default function AssistantPage() {
           role: 'assistant',
           content:
             error instanceof ApiError
-              ? `ขออภัย เกิดข้อผิดพลาด: ${error.message}`
-              : 'ขออภัย ไม่สามารถติดต่อผู้ช่วยได้ในขณะนี้',
+              ? t('Sorry, an error occurred: {message}', { message: error.message })
+              : t('Sorry, the assistant is unavailable right now'),
         },
       ]);
     },
@@ -107,12 +111,14 @@ export default function AssistantPage() {
   if (!assistantEnabled) {
     return (
       <div className="page">
-        <PageHeader title="ผู้ช่วย HR" />
+        <PageHeader title={t('HR assistant')} />
         <Card>
           <EmptyState
             icon="✦"
-            title="ผู้ช่วย HR ยังไม่เปิดใช้งาน"
-            description="ตั้งค่า ASSISTANT_ENABLED และคีย์ของผู้ให้บริการโมเดลในไฟล์ .env ของ backend เพื่อเปิดใช้ ระบบ HRIS ส่วนอื่นทำงานได้ตามปกติโดยไม่ต้องใช้ AI"
+            title={t('The HR assistant is not enabled')}
+            description={t(
+              'Set ASSISTANT_ENABLED and a model provider key in the backend .env to enable it. The rest of the HRIS works normally without AI.',
+            )}
           />
         </Card>
       </div>
@@ -122,8 +128,8 @@ export default function AssistantPage() {
   return (
     <div className="page">
       <PageHeader
-        title="ผู้ช่วย HR"
-        description="ถามเรื่องนโยบาย ตรวจสอบวันลา ยื่นใบลา หรือขอเอกสาร"
+        title={t('HR assistant')}
+        description={t('Ask about policy, check leave, file leave, or request documents')}
         actions={
           <Button
             onClick={() => {
@@ -131,7 +137,7 @@ export default function AssistantPage() {
               setTurns([]);
             }}
           >
-            + เริ่มบทสนทนาใหม่
+            + {t('Start a new conversation')}
           </Button>
         }
       />
@@ -142,8 +148,8 @@ export default function AssistantPage() {
             {turns.length === 0 && (
               <EmptyState
                 icon="✦"
-                title="ถามอะไรก็ได้เกี่ยวกับงาน HR"
-                description="ผู้ช่วยตอบจากระเบียบของบริษัทที่บันทึกไว้ในระบบ และเห็นเฉพาะข้อมูลของคุณเท่านั้น"
+                title={t('Ask anything about HR')}
+                description={t('The assistant answers from your company policies and sees only your own data')}
               />
             )}
 
@@ -155,7 +161,7 @@ export default function AssistantPage() {
                 {turn.content}
                 {turn.citations && turn.citations.length > 0 && (
                   <div className="chat__citations">
-                    <span>อ้างอิง:</span>
+                    <span>{t('Sources:')}</span>
                     {turn.citations.map((citation) => (
                       <Badge key={`${citation.documentId}-${citation.chunkIndex}`} tone="neutral">
                         {citation.title}
@@ -165,7 +171,7 @@ export default function AssistantPage() {
                 )}
                 {turn.toolsUsed && turn.toolsUsed.length > 0 && (
                   <div className="chat__citations">
-                    <span>เรียกใช้:</span>
+                    <span>{t('Used:')}</span>
                     {[...new Set(turn.toolsUsed)].map((tool) => (
                       <code key={tool} className="mono">
                         {tool}
@@ -180,7 +186,7 @@ export default function AssistantPage() {
               <div className="chat__bubble chat__bubble--assistant">
                 <span className="row" style={{ gap: 8 }}>
                   <span className="spinner" aria-hidden />
-                  <span className="muted">กำลังคิด…</span>
+                  <span className="muted">{t('Thinking')}…</span>
                 </span>
               </div>
             )}
@@ -193,9 +199,9 @@ export default function AssistantPage() {
                   key={suggestion}
                   type="button"
                   className="chat__suggestion"
-                  onClick={() => submit(suggestion)}
+                  onClick={() => submit(t(suggestion))}
                 >
-                  {suggestion}
+                  {t(suggestion)}
                 </button>
               ))}
             </div>
@@ -218,16 +224,16 @@ export default function AssistantPage() {
                   submit(draft);
                 }
               }}
-              placeholder="พิมพ์คำถาม…  (Enter เพื่อส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"
+              placeholder={t('Type a question…  (Enter to send, Shift+Enter for a new line)')}
               rows={1}
             />
             <Button type="submit" variant="primary" loading={send.isPending} disabled={!draft.trim()}>
-              ส่ง
+              {t('Send')}
             </Button>
           </form>
         </div>
 
-        <Card title="บทสนทนาก่อนหน้า" flush>
+        <Card title={t('Previous conversations')} flush>
           {conversations.data && conversations.data.length > 0 ? (
             <div className="stack stack--sm" style={{ padding: 8 }}>
               {conversations.data.map((conversation) => (
@@ -240,7 +246,7 @@ export default function AssistantPage() {
                 >
                   <span style={{ minWidth: 0 }}>
                     <span className="truncate" style={{ display: 'block', fontSize: 13 }}>
-                      {conversation.title ?? 'บทสนทนาใหม่'}
+                      {conversation.title ?? t('New conversation')}
                     </span>
                     <span className="subtle">{formatRelative(conversation.lastMessageAt)}</span>
                   </span>
@@ -249,7 +255,7 @@ export default function AssistantPage() {
             </div>
           ) : (
             <div className="subtle" style={{ padding: 16 }}>
-              ยังไม่มีบทสนทนา
+              {t('No conversations yet')}
             </div>
           )}
         </Card>

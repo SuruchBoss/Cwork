@@ -320,4 +320,32 @@ export const thMessages: Record<string, string> = {
   'Could not complete the action': 'ดำเนินการไม่สำเร็จ',
   THB: 'บาท',
   'Last day {date}': 'วันสุดท้าย {date}',
+
+  // HR assistant
+  'How many annual leave days do I have left?': 'ฉันเหลือวันลาพักร้อนกี่วัน',
+  'When do I need a medical certificate for sick leave?':
+    'ขอลาป่วยต้องแนบใบรับรองแพทย์เมื่อไหร่',
+  'How is holiday overtime pay calculated?': 'อัตราค่าโอทีวันหยุดคิดยังไง',
+  'Request an employment certificate for a visa': 'ขอหนังสือรับรองการทำงานเพื่อยื่นวีซ่า',
+  'How many times was I late this month?': 'เดือนนี้ฉันมาสายกี่ครั้ง',
+  'Sorry, an error occurred: {message}': 'ขออภัย เกิดข้อผิดพลาด: {message}',
+  'Sorry, the assistant is unavailable right now': 'ขออภัย ไม่สามารถติดต่อผู้ช่วยได้ในขณะนี้',
+  'The HR assistant is not enabled': 'ผู้ช่วย HR ยังไม่เปิดใช้งาน',
+  'Set ASSISTANT_ENABLED and a model provider key in the backend .env to enable it. The rest of the HRIS works normally without AI.':
+    'ตั้งค่า ASSISTANT_ENABLED และคีย์ของผู้ให้บริการโมเดลในไฟล์ .env ของ backend เพื่อเปิดใช้ ระบบ HRIS ส่วนอื่นทำงานได้ตามปกติโดยไม่ต้องใช้ AI',
+  'Ask about policy, check leave, file leave, or request documents':
+    'ถามเรื่องนโยบาย ตรวจสอบวันลา ยื่นใบลา หรือขอเอกสาร',
+  'Start a new conversation': 'เริ่มบทสนทนาใหม่',
+  'New conversation': 'บทสนทนาใหม่',
+  'Ask anything about HR': 'ถามอะไรก็ได้เกี่ยวกับงาน HR',
+  'The assistant answers from your company policies and sees only your own data':
+    'ผู้ช่วยตอบจากระเบียบของบริษัทที่บันทึกไว้ในระบบ และเห็นเฉพาะข้อมูลของคุณเท่านั้น',
+  'Sources:': 'อ้างอิง:',
+  'Used:': 'เรียกใช้:',
+  Thinking: 'กำลังคิด',
+  'Type a question…  (Enter to send, Shift+Enter for a new line)':
+    'พิมพ์คำถาม…  (Enter เพื่อส่ง, Shift+Enter ขึ้นบรรทัดใหม่)',
+  Send: 'ส่ง',
+  'Previous conversations': 'บทสนทนาก่อนหน้า',
+  'No conversations yet': 'ยังไม่มีบทสนทนา',
 };
