@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -37,6 +38,7 @@ interface ExpenseClaim {
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const t = useT();
   const [status, setStatus] = useState('PENDING');
 
   const claims = useQuery({
@@ -59,17 +61,20 @@ export default function ExpensesPage() {
 
   return (
     <div className="page">
-      <PageHeader title="เบิกค่าใช้จ่าย" description="คำขอเบิกของพนักงานและสถานะการจ่าย" />
+      <PageHeader
+        title={t('Expenses')}
+        description={t('Employee expense claims and their payment status')}
+      />
 
       <Card>
         <div className="toolbar">
-          <Field label="สถานะ">
+          <Field label={t('Status')}>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="PENDING">รออนุมัติ</option>
-              <option value="APPROVED">อนุมัติแล้ว (รอจ่าย)</option>
-              <option value="PAID">จ่ายแล้ว</option>
-              <option value="REJECTED">ไม่อนุมัติ</option>
-              <option value="">ทั้งหมด</option>
+              <option value="PENDING">{t('Pending')}</option>
+              <option value="APPROVED">{t('Approved (awaiting payment)')}</option>
+              <option value="PAID">{t('Paid')}</option>
+              <option value="REJECTED">{t('Rejected')}</option>
+              <option value="">{t('All')}</option>
             </Select>
           </Field>
         </div>
@@ -85,12 +90,12 @@ export default function ExpensesPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>เลขที่</th>
-                  <th>พนักงาน</th>
-                  <th>รายการ</th>
-                  <th className="num">จำนวนเงิน</th>
-                  <th>ยื่นเมื่อ</th>
-                  <th>สถานะ</th>
+                  <th>{t('No.')}</th>
+                  <th>{t('Employee')}</th>
+                  <th>{t('Item')}</th>
+                  <th className="num">{t('Amount')}</th>
+                  <th>{t('Submitted')}</th>
+                  <th>{t('Status')}</th>
                   {can(P.EXPENSE_MANAGE) && <th />}
                 </tr>
               </thead>
@@ -107,7 +112,7 @@ export default function ExpensesPage() {
                     <td>
                       {claim.title}
                       <div className="subtle">
-                        {claim._count.items} รายการ · {claim.category}
+                        {claim._count.items} {t('items')} · {claim.category}
                       </div>
                     </td>
                     <td className="num">
@@ -115,7 +120,9 @@ export default function ExpensesPage() {
                       {claim.approvedAmount &&
                         claim.approvedAmount !== claim.totalAmount && (
                           <div className="subtle">
-                            ขอเบิก {formatMoney(claim.totalAmount, claim.currency)}
+                            {t('Claimed {amount}', {
+                              amount: formatMoney(claim.totalAmount, claim.currency),
+                            })}
                           </div>
                         )}
                     </td>
@@ -133,7 +140,7 @@ export default function ExpensesPage() {
                               loading={decide.isPending && decide.variables?.id === claim.id}
                               onClick={() => decide.mutate({ id: claim.id, decision: 'APPROVE' })}
                             >
-                              อนุมัติ
+                              {t('Approve')}
                             </Button>
                             <Button
                               size="sm"
@@ -142,11 +149,11 @@ export default function ExpensesPage() {
                                 decide.mutate({
                                   id: claim.id,
                                   decision: 'REJECT',
-                                  note: 'ไม่อนุมัติจากหน้าจัดการ',
+                                  note: t('Rejected from the management screen'),
                                 })
                               }
                             >
-                              ไม่อนุมัติ
+                              {t('Reject')}
                             </Button>
                           </div>
                         )}
@@ -158,7 +165,7 @@ export default function ExpensesPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="▤" title="ไม่มีคำขอเบิกตามเงื่อนไข" />
+          <EmptyState icon="▤" title={t('No expense claims match')} />
         )}
       </Card>
     </div>

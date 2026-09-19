@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -45,6 +46,7 @@ interface TeamProgressRow {
 
 export default function PerformancePage() {
   const canAny = useAuthStore((s) => s.canAny);
+  const t = useT();
   const [cycleId, setCycleId] = useState('');
 
   const cycles = useQuery({
@@ -66,7 +68,7 @@ export default function PerformancePage() {
 
   return (
     <div className="page">
-      <PageHeader title="ประเมินผล / KPI" description="รอบการประเมินและความคืบหน้าของทีม" />
+      <PageHeader title={t('Performance / KPI')} description={t('Review cycles and team progress')} />
 
       {cycles.isLoading ? (
         <Card flush>
@@ -80,7 +82,7 @@ export default function PerformancePage() {
         <>
           <Card>
             <div className="toolbar">
-              <Field label="รอบการประเมิน">
+              <Field label={t('Review cycle')}>
                 <Select value={cycleId} onChange={(e) => setCycleId(e.target.value)}>
                   {cycles.data.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -95,22 +97,25 @@ export default function PerformancePage() {
           {cycle && (
             <div className="grid grid--4">
               <Stat
-                label="ช่วงการประเมิน"
+                label={t('Review period')}
                 value={formatDate(cycle.periodStart, 'MMM yyyy')}
-                hint={`ถึง ${formatDate(cycle.periodEnd)}`}
+                hint={t('to {date}', { date: formatDate(cycle.periodEnd) })}
               />
-              <Stat label="สถานะรอบ" value={<Badge tone={statusTone(cycle.status)}>{cycle.status}</Badge>} />
-              <Stat label="เป้าหมาย KPI" value={cycle._count.goals} />
               <Stat
-                label="น้ำหนักคะแนน"
+                label={t('Cycle status')}
+                value={<Badge tone={statusTone(cycle.status)}>{cycle.status}</Badge>}
+              />
+              <Stat label={t('KPI goals')} value={cycle._count.goals} />
+              <Stat
+                label={t('Score weighting')}
                 value={`${cycle.kpiWeight}/${cycle.competencyWeight}`}
-                hint="KPI / สมรรถนะ"
+                hint={t('KPI / competency')}
               />
             </div>
           )}
 
           {canAny(P.KPI_MANAGE_TEAM) && (
-            <Card title="ความคืบหน้าของทีม" flush>
+            <Card title={t('Team progress')} flush>
               {teamProgress.isLoading ? (
                 <TableSkeleton rows={4} columns={4} />
               ) : teamProgress.data && teamProgress.data.length > 0 ? (
@@ -118,11 +123,11 @@ export default function PerformancePage() {
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>พนักงาน</th>
-                        <th className="num">จำนวน KPI</th>
-                        <th className="num">น้ำหนักรวม</th>
-                        <th style={{ width: 220 }}>คะแนนถ่วงน้ำหนัก</th>
-                        <th>สถานะ</th>
+                        <th>{t('Employee')}</th>
+                        <th className="num">{t('KPI count')}</th>
+                        <th className="num">{t('Total weight')}</th>
+                        <th style={{ width: 220 }}>{t('Weighted score')}</th>
+                        <th>{t('Status')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -139,7 +144,7 @@ export default function PerformancePage() {
                             {formatNumber(row.totalWeight, 0)}%
                             {!row.isWeightValid && row.goalCount > 0 && (
                               <div>
-                                <Badge tone="warning">ต้องรวมเป็น 100%</Badge>
+                                <Badge tone="warning">{t('Must total 100%')}</Badge>
                               </div>
                             )}
                           </td>
@@ -154,7 +159,10 @@ export default function PerformancePage() {
                             </div>
                           </td>
                           <td className="subtle">
-                            ประเมินแล้ว {row.scoredGoals}/{row.goalCount}
+                            {t('Scored {scored}/{count}', {
+                              scored: row.scoredGoals,
+                              count: row.goalCount,
+                            })}
                           </td>
                         </tr>
                       ))}
@@ -164,8 +172,8 @@ export default function PerformancePage() {
               ) : (
                 <EmptyState
                   icon="◈"
-                  title="ยังไม่มีข้อมูล KPI ของทีม"
-                  description="ตั้งเป้าหมายให้ผู้ใต้บังคับบัญชาก่อน"
+                  title={t('No team KPI data yet')}
+                  description={t('Set goals for your reports first')}
                 />
               )}
             </Card>
@@ -175,8 +183,8 @@ export default function PerformancePage() {
         <Card>
           <EmptyState
             icon="◈"
-            title="ยังไม่มีรอบการประเมิน"
-            description="สร้างรอบการประเมินเพื่อเริ่มตั้ง KPI"
+            title={t('No review cycles yet')}
+            description={t('Create a review cycle to start setting KPIs')}
           />
         </Card>
       )}
