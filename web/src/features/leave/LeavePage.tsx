@@ -156,7 +156,7 @@ export default function LeavePage() {
                       <td className="num">{formatNumber(request.totalDays, 1)}</td>
                       <td>
                         <Badge tone={statusTone(request.status)}>
-                          {leaveStatusLabels[request.status] ?? request.status}
+                          {t(leaveStatusLabels[request.status] ?? request.status)}
                         </Badge>
                       </td>
                     </tr>

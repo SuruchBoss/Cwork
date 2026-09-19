@@ -116,8 +116,10 @@ export default function DashboardPage() {
                         </td>
                         <td>
                           <Badge tone="warning">
-                            {approvalEntityLabels[task.instance.entityType] ??
-                              task.instance.entityType}
+                            {t(
+                              approvalEntityLabels[task.instance.entityType] ??
+                                task.instance.entityType,
+                            )}
                           </Badge>
                         </td>
                         <td className="subtle">{formatRelative(task.instance.submittedAt)}</td>
@@ -173,7 +175,7 @@ export default function DashboardPage() {
                         </td>
                         <td>
                           <Badge tone={statusTone(request.status)}>
-                            {leaveStatusLabels[request.status] ?? request.status}
+                            {t(leaveStatusLabels[request.status] ?? request.status)}
                           </Badge>
                         </td>
                       </tr>

@@ -147,7 +147,7 @@ export default function EmployeeListPage() {
                       </td>
                       <td>
                         <Badge tone={statusTone(employee.status)}>
-                          {employeeStatusLabels[employee.status] ?? employee.status}
+                          {t(employeeStatusLabels[employee.status] ?? employee.status)}
                         </Badge>
                       </td>
                     </tr>

@@ -217,14 +217,14 @@ export default function AttendancePage() {
                     </td>
                     <td>
                       <Badge tone={statusTone(record.status)}>
-                        {attendanceStatusLabels[record.status] ?? record.status}
+                        {t(attendanceStatusLabels[record.status] ?? record.status)}
                       </Badge>
                     </td>
                     <td>
                       <div className="row" style={{ gap: 4 }}>
                         {record.anomalyFlags.map((flag) => (
                           <Badge key={flag} tone="warning">
-                            {anomalyFlagLabels[flag] ?? flag}
+                            {t(anomalyFlagLabels[flag] ?? flag)}
                           </Badge>
                         ))}
                         {record.lockedAt && <Badge tone="neutral">{t('Locked')}</Badge>}

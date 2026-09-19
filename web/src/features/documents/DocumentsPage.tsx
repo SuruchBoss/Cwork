@@ -93,7 +93,7 @@ export default function DocumentsPage() {
                       />
                     </td>
                     <td>
-                      {documentTypeLabels[request.type] ?? request.type}
+                      {t(documentTypeLabels[request.type] ?? request.type)}
                       {request.includeSalary && (
                         <div>
                           <Badge tone="warning">{t('Salary included')}</Badge>

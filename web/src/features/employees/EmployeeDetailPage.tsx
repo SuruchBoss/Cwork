@@ -86,7 +86,7 @@ export default function EmployeeDetailPage() {
               <div className="mono subtle">{person.employeeCode}</div>
               <div style={{ marginTop: 6 }}>
                 <Badge tone={statusTone(person.status)}>
-                  {employeeStatusLabels[person.status] ?? person.status}
+                  {t(employeeStatusLabels[person.status] ?? person.status)}
                 </Badge>
               </div>
             </div>

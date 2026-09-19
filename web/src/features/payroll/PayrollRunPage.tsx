@@ -179,7 +179,7 @@ export default function PayrollRunPage() {
 
       <div className="row">
         <Badge tone={statusTone(data.status)}>
-          {payrollStatusLabels[data.status] ?? data.status}
+          {t(payrollStatusLabels[data.status] ?? data.status)}
         </Badge>
         {data.calculatedAt && (
           <span className="subtle">

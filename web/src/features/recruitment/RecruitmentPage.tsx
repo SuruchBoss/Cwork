@@ -131,7 +131,7 @@ export default function RecruitmentPage() {
             return (
               <div key={stage} className="pipeline__column">
                 <div className="pipeline__heading">
-                  <span>{applicationStageLabels[stage]}</span>
+                  <span>{t(applicationStageLabels[stage] ?? stage)}</span>
                   <Badge tone={statusTone(stage)}>{items.length}</Badge>
                 </div>
 
@@ -163,7 +163,7 @@ export default function RecruitmentPage() {
                           loading={moveStage.isPending && moveStage.variables?.id === application.id}
                           onClick={() => moveStage.mutate({ id: application.id, stage: nextStage })}
                         >
-                          → {applicationStageLabels[nextStage]}
+                          → {t(applicationStageLabels[nextStage] ?? nextStage)}
                         </Button>
                       )}
                     </div>

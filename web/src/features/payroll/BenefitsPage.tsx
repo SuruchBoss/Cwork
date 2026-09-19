@@ -427,7 +427,7 @@ function EnrollTab() {
                       </td>
                       <td>
                         <Badge tone={enrollment.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                          {enrollment.status === 'ACTIVE' ? t('Active') : t('Ended')}
+                          {enrollment.status === 'ACTIVE' ? t('Active enrolment') : t('Ended')}
                         </Badge>
                       </td>
                       <td>

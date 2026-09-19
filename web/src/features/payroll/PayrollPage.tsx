@@ -223,7 +223,7 @@ export default function PayrollPage() {
                     <td className="num">{formatMoney(run.totalNet, run.currency)}</td>
                     <td>
                       <Badge tone={statusTone(run.status)}>
-                        {payrollStatusLabels[run.status] ?? run.status}
+                        {t(payrollStatusLabels[run.status] ?? run.status)}
                       </Badge>
                     </td>
                     <td>

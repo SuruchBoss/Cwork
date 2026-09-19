@@ -1,91 +1,98 @@
-/** Thai display labels for API enums, kept in one place for consistency. */
+/**
+ * Display labels for API enums, kept in one place for consistency.
+ *
+ * The values are English message keys (CW-016), not Thai text: each screen runs
+ * the looked-up label through `t()` when it renders it, so the same map serves
+ * both languages and the Thai wording lives in the i18n catalogue. An enum value
+ * missing from a map falls back to the raw value, which `t()` then leaves as-is.
+ */
 
 export const employeeStatusLabels: Record<string, string> = {
-  PRE_BOARDING: 'รอเริ่มงาน',
-  PROBATION: 'ทดลองงาน',
-  ACTIVE: 'ทำงานปกติ',
-  ON_LEAVE: 'ลาพัก',
-  SUSPENDED: 'พักงาน',
-  RESIGNED: 'ลาออกแล้ว',
-  TERMINATED: 'เลิกจ้าง',
-  RETIRED: 'เกษียณ',
+  PRE_BOARDING: 'Pre-boarding',
+  PROBATION: 'Probation',
+  ACTIVE: 'Active',
+  ON_LEAVE: 'Away on leave',
+  SUSPENDED: 'Suspended',
+  RESIGNED: 'Resigned',
+  TERMINATED: 'Terminated',
+  RETIRED: 'Retired',
 };
 
 export const leaveStatusLabels: Record<string, string> = {
-  DRAFT: 'ฉบับร่าง',
-  PENDING: 'รออนุมัติ',
-  APPROVED: 'อนุมัติแล้ว',
-  REJECTED: 'ไม่อนุมัติ',
-  CANCELLED: 'ยกเลิก',
-  CANCELLED_AFTER_APPROVAL: 'ยกเลิกหลังอนุมัติ',
+  DRAFT: 'Draft',
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
+  CANCELLED_AFTER_APPROVAL: 'Cancelled after approval',
 };
 
 export const attendanceStatusLabels: Record<string, string> = {
-  NOT_STARTED: 'ยังไม่ลงเวลา',
-  PRESENT: 'มาทำงาน',
-  LATE: 'มาสาย',
-  EARLY_LEAVE: 'ออกก่อนเวลา',
-  ABSENT: 'ขาดงาน',
-  ON_LEAVE: 'ลา',
-  HOLIDAY: 'วันหยุดนักขัตฤกษ์',
-  DAY_OFF: 'วันหยุดประจำสัปดาห์',
-  INCOMPLETE: 'ลงเวลาไม่ครบ',
+  NOT_STARTED: 'Not started',
+  PRESENT: 'Present',
+  LATE: 'Late',
+  EARLY_LEAVE: 'Early leave',
+  ABSENT: 'Absent',
+  ON_LEAVE: 'On leave',
+  HOLIDAY: 'Public holiday',
+  DAY_OFF: 'Weekly day off',
+  INCOMPLETE: 'Incomplete',
 };
 
 export const payrollStatusLabels: Record<string, string> = {
-  DRAFT: 'ฉบับร่าง',
-  CALCULATING: 'กำลังคำนวณ',
-  CALCULATED: 'คำนวณแล้ว',
-  PENDING_APPROVAL: 'รออนุมัติ',
-  APPROVED: 'อนุมัติแล้ว',
-  PAID: 'จ่ายแล้ว',
-  FAILED: 'ล้มเหลว',
-  CANCELLED: 'ยกเลิก',
+  DRAFT: 'Draft',
+  CALCULATING: 'Calculating',
+  CALCULATED: 'Calculated',
+  PENDING_APPROVAL: 'Pending approval',
+  APPROVED: 'Approved',
+  PAID: 'Paid',
+  FAILED: 'Failed',
+  CANCELLED: 'Cancelled',
 };
 
 export const applicationStageLabels: Record<string, string> = {
-  APPLIED: 'ใบสมัครใหม่',
-  SCREENING: 'คัดกรอง',
-  ASSESSMENT: 'ทำแบบทดสอบ',
-  INTERVIEW: 'สัมภาษณ์',
-  OFFER: 'ยื่นข้อเสนอ',
-  HIRED: 'รับเข้าทำงาน',
-  REJECTED: 'ไม่ผ่าน',
-  WITHDRAWN: 'ถอนตัว',
+  APPLIED: 'New application',
+  SCREENING: 'Screening',
+  ASSESSMENT: 'Assessment',
+  INTERVIEW: 'Interview',
+  OFFER: 'Offer',
+  HIRED: 'Hired',
+  REJECTED: 'Not selected',
+  WITHDRAWN: 'Withdrawn',
 };
 
 export const approvalEntityLabels: Record<string, string> = {
-  LEAVE_REQUEST: 'คำขอลา',
-  OVERTIME_REQUEST: 'คำขอทำโอที',
-  EXPENSE_CLAIM: 'คำขอเบิกค่าใช้จ่าย',
-  ATTENDANCE_CORRECTION: 'คำขอแก้ไขเวลา',
-  RESIGNATION: 'คำขอลาออก',
-  JOB_REQUISITION: 'คำขออัตรากำลัง',
-  JOB_OFFER: 'ข้อเสนอจ้างงาน',
-  PAYROLL_RUN: 'รอบเงินเดือน',
-  DOCUMENT_REQUEST: 'คำขอเอกสาร',
+  LEAVE_REQUEST: 'Leave request',
+  OVERTIME_REQUEST: 'Overtime request',
+  EXPENSE_CLAIM: 'Expense claim',
+  ATTENDANCE_CORRECTION: 'Attendance correction',
+  RESIGNATION: 'Resignation',
+  JOB_REQUISITION: 'Job requisition',
+  JOB_OFFER: 'Job offer',
+  PAYROLL_RUN: 'Payroll run',
+  DOCUMENT_REQUEST: 'Document request',
 };
 
 export const documentTypeLabels: Record<string, string> = {
-  EMPLOYMENT_CERTIFICATE: 'หนังสือรับรองการทำงาน',
-  SALARY_CERTIFICATE: 'หนังสือรับรองเงินเดือน',
-  PAYSLIP_COPY: 'สำเนาสลิปเงินเดือน',
-  TAX_WITHHOLDING_50BIS: 'หนังสือรับรองหักภาษี (50 ทวิ)',
-  VISA_SUPPORT_LETTER: 'จดหมายรับรองขอวีซ่า',
-  BANK_LOAN_LETTER: 'หนังสือรับรองขอสินเชื่อ',
-  SOCIAL_SECURITY_LETTER: 'หนังสือรับรองประกันสังคม',
-  OTHER: 'เอกสารอื่น ๆ',
+  EMPLOYMENT_CERTIFICATE: 'Employment certificate',
+  SALARY_CERTIFICATE: 'Salary certificate',
+  PAYSLIP_COPY: 'Payslip copy',
+  TAX_WITHHOLDING_50BIS: 'Tax withholding certificate (50 bis)',
+  VISA_SUPPORT_LETTER: 'Visa support letter',
+  BANK_LOAN_LETTER: 'Bank loan letter',
+  SOCIAL_SECURITY_LETTER: 'Social security letter',
+  OTHER: 'Other document',
 };
 
 export const anomalyFlagLabels: Record<string, string> = {
-  MOCK_LOCATION: 'ตำแหน่งปลอม',
-  ROOTED_DEVICE: 'เครื่อง root/jailbreak',
-  OUTSIDE_GEOFENCE: 'นอกพื้นที่',
-  NO_LOCATION: 'ไม่มีพิกัด',
-  LOW_GPS_ACCURACY: 'GPS ไม่แม่นยำ',
-  CLOCK_DRIFT: 'เวลาเครื่องคลาดเคลื่อน',
-  NEW_DEVICE: 'อุปกรณ์ใหม่',
-  IMPOSSIBLE_TRAVEL: 'เดินทางเร็วผิดปกติ',
+  MOCK_LOCATION: 'Mock location',
+  ROOTED_DEVICE: 'Rooted/jailbroken device',
+  OUTSIDE_GEOFENCE: 'Outside the area',
+  NO_LOCATION: 'No location',
+  LOW_GPS_ACCURACY: 'Low GPS accuracy',
+  CLOCK_DRIFT: 'Device clock drift',
+  NEW_DEVICE: 'New device',
+  IMPOSSIBLE_TRAVEL: 'Impossible travel',
 };
 
 type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'brand';

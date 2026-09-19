@@ -94,7 +94,7 @@ export default function ApprovalsPage() {
                       </td>
                       <td>
                         <Badge tone="warning">
-                          {approvalEntityLabels[task.instance.entityType] ?? task.instance.entityType}
+                          {t(approvalEntityLabels[task.instance.entityType] ?? task.instance.entityType)}
                         </Badge>
                       </td>
                       <td className="subtle">{describeSnapshot(task.instance.snapshot, t)}</td>
