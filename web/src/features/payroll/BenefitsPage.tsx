@@ -15,27 +15,28 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney, todayIso } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { BenefitEnrollment, BenefitPlan, EmployeeSummary, Page } from '@/types/api';
 
 type Tab = 'plans' | 'enroll';
 
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: 'HEALTH_INSURANCE', label: 'ประกันสุขภาพ' },
-  { value: 'LIFE_INSURANCE', label: 'ประกันชีวิต' },
-  { value: 'DENTAL', label: 'ทันตกรรม' },
-  { value: 'PROVIDENT_FUND', label: 'กองทุนสำรองเลี้ยงชีพ' },
-  { value: 'ALLOWANCE', label: 'เงินช่วยเหลือ' },
-  { value: 'EQUIPMENT', label: 'อุปกรณ์' },
-  { value: 'WELLNESS', label: 'สุขภาวะ' },
-  { value: 'TRAINING', label: 'อบรม' },
-  { value: 'TRANSPORT', label: 'เดินทาง' },
-  { value: 'MEAL', label: 'อาหาร' },
-  { value: 'OTHER', label: 'อื่น ๆ' },
+// value → English key; the key is translated at render time.
+const CATEGORIES: { value: string; key: string }[] = [
+  { value: 'HEALTH_INSURANCE', key: 'Health insurance' },
+  { value: 'LIFE_INSURANCE', key: 'Life insurance' },
+  { value: 'DENTAL', key: 'Dental' },
+  { value: 'PROVIDENT_FUND', key: 'Provident fund' },
+  { value: 'ALLOWANCE', key: 'Allowance' },
+  { value: 'EQUIPMENT', key: 'Equipment' },
+  { value: 'WELLNESS', key: 'Wellness' },
+  { value: 'TRAINING', key: 'Training' },
+  { value: 'TRANSPORT', key: 'Transport' },
+  { value: 'MEAL', key: 'Meal' },
+  { value: 'OTHER', key: 'Other' },
 ];
-const categoryLabel = (value: string) =>
-  CATEGORIES.find((c) => c.value === value)?.label ?? value;
+const categoryKey = (value: string) => CATEGORIES.find((c) => c.value === value)?.key ?? value;
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
@@ -44,21 +45,24 @@ function errorMessage(error: unknown, fallback: string): string {
 export default function BenefitsPage() {
   const [tab, setTab] = useState<Tab>('plans');
   const canManage = useAuthStore((s) => s.can)(P.BENEFIT_MANAGE);
+  const t = useT();
 
   return (
     <div className="page">
       <PageHeader
-        title="สวัสดิการ"
-        description="แผนสวัสดิการและการลงทะเบียนของพนักงาน — การลงทะเบียนจะถูกนำไปคิดในรอบเงินเดือนถัดไปโดยอัตโนมัติ"
+        title={t('Benefits')}
+        description={t(
+          'Benefit plans and employee enrolments — an enrolment is picked up automatically in the next payroll run',
+        )}
       />
 
       <div className="row" role="tablist" style={{ gap: 8 }}>
         <Button variant={tab === 'plans' ? 'primary' : 'ghost'} onClick={() => setTab('plans')}>
-          แผนสวัสดิการ
+          {t('Benefit plans')}
         </Button>
         {canManage && (
           <Button variant={tab === 'enroll' ? 'primary' : 'ghost'} onClick={() => setTab('enroll')}>
-            ลงทะเบียนพนักงาน
+            {t('Enrol employees')}
           </Button>
         )}
       </div>
@@ -80,6 +84,7 @@ const emptyPlan = {
 
 function PlansTab({ canManage }: { canManage: boolean }) {
   const queryClient = useQueryClient();
+  const t = useT();
   const [editing, setEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyPlan);
@@ -139,16 +144,16 @@ function PlansTab({ canManage }: { canManage: boolean }) {
             variant="primary"
             onClick={() => (showForm ? reset() : (setShowForm(true), setEditing(null)))}
           >
-            + เพิ่มแผนสวัสดิการ
+            + {t('Add a benefit plan')}
           </Button>
         </div>
       )}
 
       {showForm && canManage && (
-        <Card title={editing ? 'แก้ไขแผนสวัสดิการ' : 'เพิ่มแผนสวัสดิการ'}>
+        <Card title={editing ? t('Edit benefit plan') : t('Add benefit plan')}>
           <div className="stack">
             <div className="toolbar">
-              <Field label="รหัส">
+              <Field label={t('Code')}>
                 <Input
                   value={form.code}
                   disabled={Boolean(editing)}
@@ -156,26 +161,26 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                   placeholder="HEALTH_STD"
                 />
               </Field>
-              <Field label="ชื่อแผน">
+              <Field label={t('Plan name')}>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="ประกันสุขภาพกลุ่ม"
+                  placeholder={t('Group health insurance')}
                 />
               </Field>
-              <Field label="หมวด">
+              <Field label={t('Category')}>
                 <Select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>
-                      {c.label}
+                      {t(c.key)}
                     </option>
                   ))}
                 </Select>
               </Field>
-              <Field label="พนักงานจ่าย/งวด">
+              <Field label={t('Employee pays/period')}>
                 <Input
                   type="number"
                   min={0}
@@ -185,7 +190,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                   }
                 />
               </Field>
-              <Field label="นายจ้างจ่าย/งวด">
+              <Field label={t('Employer pays/period')}>
                 <Input
                   type="number"
                   min={0}
@@ -203,15 +208,15 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                 disabled={!form.name.trim() || (!editing && !form.code.trim())}
                 onClick={() => save.mutate()}
               >
-                บันทึก
+                {t('Save')}
               </Button>
               <Button variant="ghost" onClick={reset}>
-                ยกเลิก
+                {t('Cancel')}
               </Button>
             </div>
             {save.isError && (
               <div className="alert alert--danger" role="alert">
-                {errorMessage(save.error, 'บันทึกไม่สำเร็จ')}
+                {errorMessage(save.error, t('Could not save'))}
               </div>
             )}
           </div>
@@ -228,12 +233,12 @@ function PlansTab({ canManage }: { canManage: boolean }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>แผน</th>
-                  <th>หมวด</th>
-                  <th className="num">พนักงานจ่าย</th>
-                  <th className="num">นายจ้างจ่าย</th>
-                  <th className="num">ลงทะเบียน</th>
-                  <th className="num">ต้นทุนนายจ้าง/งวด</th>
+                  <th>{t('Plan')}</th>
+                  <th>{t('Category')}</th>
+                  <th className="num">{t('Employee pays')}</th>
+                  <th className="num">{t('Employer pays')}</th>
+                  <th className="num">{t('Enrolled')}</th>
+                  <th className="num">{t('Employer cost/period')}</th>
                   {canManage && <th />}
                 </tr>
               </thead>
@@ -244,7 +249,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                       <div style={{ fontWeight: 500 }}>{plan.name}</div>
                       <div className="subtle mono">{plan.code}</div>
                     </td>
-                    <td>{categoryLabel(plan.category)}</td>
+                    <td>{t(categoryKey(plan.category))}</td>
                     <td className="num">{formatMoney(plan.employeeCostPerPeriod)}</td>
                     <td className="num">{formatMoney(plan.employerCostPerPeriod)}</td>
                     <td className="num">{plan.activeEnrollments}</td>
@@ -255,7 +260,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                       <td>
                         <div className="row" style={{ gap: 4 }}>
                           <Button size="sm" variant="ghost" onClick={() => startEdit(plan)}>
-                            แก้ไข
+                            {t('Edit')}
                           </Button>
                           <Button
                             size="sm"
@@ -263,7 +268,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                             loading={deactivate.isPending && deactivate.variables === plan.id}
                             onClick={() => deactivate.mutate(plan.id)}
                           >
-                            ปิด
+                            {t('Close')}
                           </Button>
                         </div>
                       </td>
@@ -276,8 +281,8 @@ function PlansTab({ canManage }: { canManage: boolean }) {
         ) : (
           <EmptyState
             icon="❑"
-            title="ยังไม่มีแผนสวัสดิการ"
-            description="เพิ่มแผนแล้วลงทะเบียนพนักงานเพื่อให้ต้นทุนเข้าสู่รอบเงินเดือน"
+            title={t('No benefit plans yet')}
+            description={t('Add a plan, then enrol employees so the cost enters payroll')}
           />
         )}
       </Card>
@@ -289,6 +294,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
 
 function EnrollTab() {
   const queryClient = useQueryClient();
+  const t = useT();
   const [employeeId, setEmployeeId] = useState('');
   const [form, setForm] = useState({ planId: '', effectiveFrom: todayIso(), effectiveTo: '' });
 
@@ -335,12 +341,12 @@ function EnrollTab() {
 
   return (
     <div className="stack">
-      <Card title="ลงทะเบียนสวัสดิการ">
+      <Card title={t('Enrol in a benefit')}>
         <div className="stack">
           <div className="toolbar">
-            <Field label="พนักงาน">
+            <Field label={t('Employee')}>
               <Select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
-                <option value="">— เลือกพนักงาน —</option>
+                <option value="">{t('— Select an employee —')}</option>
                 {(employees.data?.data ?? []).map((employee) => (
                   <option key={employee.id} value={employee.id}>
                     {employee.firstNameTh} {employee.lastNameTh} ({employee.employeeCode})
@@ -348,12 +354,12 @@ function EnrollTab() {
                 ))}
               </Select>
             </Field>
-            <Field label="แผนสวัสดิการ">
+            <Field label={t('Benefit plan')}>
               <Select
                 value={form.planId}
                 onChange={(e) => setForm({ ...form, planId: e.target.value })}
               >
-                <option value="">— เลือกแผน —</option>
+                <option value="">{t('— Select a plan —')}</option>
                 {(plans.data ?? []).map((plan) => (
                   <option key={plan.id} value={plan.id}>
                     {plan.name}
@@ -361,14 +367,14 @@ function EnrollTab() {
                 ))}
               </Select>
             </Field>
-            <Field label="เริ่มมีผล">
+            <Field label={t('Effective from')}>
               <Input
                 type="date"
                 value={form.effectiveFrom}
                 onChange={(e) => setForm({ ...form, effectiveFrom: e.target.value })}
               />
             </Field>
-            <Field label="ถึง (เว้นว่าง = ต่อเนื่อง)">
+            <Field label={t('To (blank = ongoing)')}>
               <Input
                 type="date"
                 value={form.effectiveTo}
@@ -383,12 +389,12 @@ function EnrollTab() {
               disabled={!employeeId || !form.planId}
               onClick={() => enroll.mutate()}
             >
-              ลงทะเบียน
+              {t('Enrol')}
             </Button>
           </div>
           {enroll.isError && (
             <div className="alert alert--danger" role="alert">
-              {errorMessage(enroll.error, 'ลงทะเบียนไม่สำเร็จ')}
+              {errorMessage(enroll.error, t('Could not enrol'))}
             </div>
           )}
         </div>
@@ -405,9 +411,9 @@ function EnrollTab() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>แผน</th>
-                    <th>ช่วงเวลา</th>
-                    <th>สถานะ</th>
+                    <th>{t('Plan')}</th>
+                    <th>{t('Dates')}</th>
+                    <th>{t('Status')}</th>
                     <th />
                   </tr>
                 </thead>
@@ -417,11 +423,11 @@ function EnrollTab() {
                       <td style={{ fontWeight: 500 }}>{enrollment.plan.name}</td>
                       <td>
                         {formatDate(enrollment.effectiveFrom)} –{' '}
-                        {enrollment.effectiveTo ? formatDate(enrollment.effectiveTo) : 'ต่อเนื่อง'}
+                        {enrollment.effectiveTo ? formatDate(enrollment.effectiveTo) : t('ongoing')}
                       </td>
                       <td>
                         <Badge tone={enrollment.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                          {enrollment.status === 'ACTIVE' ? 'ใช้งาน' : 'สิ้นสุดแล้ว'}
+                          {enrollment.status === 'ACTIVE' ? t('Active') : t('Ended')}
                         </Badge>
                       </td>
                       <td>
@@ -432,7 +438,7 @@ function EnrollTab() {
                             loading={end.isPending && end.variables === enrollment.id}
                             onClick={() => end.mutate(enrollment.id)}
                           >
-                            สิ้นสุด
+                            {t('End')}
                           </Button>
                         )}
                       </td>
@@ -442,7 +448,7 @@ function EnrollTab() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="❑" title="พนักงานคนนี้ยังไม่มีสวัสดิการ" />
+            <EmptyState icon="❑" title={t('This employee has no benefits yet')} />
           )}
         </Card>
       )}
