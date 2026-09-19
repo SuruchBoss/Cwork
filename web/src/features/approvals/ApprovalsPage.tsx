@@ -109,6 +109,10 @@ export default function ApprovalsPage() {
                                 onChange={(e) => setComment(e.target.value)}
                                 placeholder="อธิบายให้ผู้ยื่นทราบ"
                                 rows={2}
+                                // The reject form is revealed on click; move focus to it so a
+                                // keyboard user lands on the reason field instead of having to
+                                // tab back to it.
+                                autoFocus
                               />
                             </Field>
                             <div className="row" style={{ gap: 6 }}>

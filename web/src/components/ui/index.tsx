@@ -1,7 +1,9 @@
 import clsx from 'clsx';
+import { Children, cloneElement, isValidElement, useId } from 'react';
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
+  ReactElement,
   ReactNode,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
@@ -86,6 +88,14 @@ export function Stat({
   );
 }
 
+/**
+ * A labelled control. The label is bound to its input rather than left floating
+ * beside it: without that binding a screen reader reads the input as unnamed and
+ * axe flags it, and clicking the label does not focus the field. The single
+ * child control is cloned to receive the generated `id` (unless it already has
+ * one) and to point `aria-describedby` at the hint or error text, so every form
+ * that goes through `Field` is accessible without touching the call sites.
+ */
 export function Field({
   label,
   hint,
@@ -97,14 +107,44 @@ export function Field({
   error?: string;
   children: ReactNode;
 }) {
+  const autoId = useId();
+  const hintId = `${autoId}-hint`;
+  const errorId = `${autoId}-error`;
+  const describedBy = error ? errorId : hint ? hintId : undefined;
+
+  let control = children;
+  let controlId: string | undefined;
+
+  const only = Children.count(children) === 1 ? children : null;
+  if (isValidElement(only)) {
+    const el = only as ReactElement<Record<string, unknown>>;
+    controlId = (el.props.id as string | undefined) ?? autoId;
+    const existingDescribedBy = el.props['aria-describedby'] as string | undefined;
+    control = cloneElement(el, {
+      id: controlId,
+      'aria-describedby': [existingDescribedBy, describedBy].filter(Boolean).join(' ') || undefined,
+      ...(error ? { 'aria-invalid': true } : {}),
+    });
+  }
+
   return (
     <div className="field">
-      {label && <label className="field__label">{label}</label>}
-      {children}
+      {label && (
+        <label className="field__label" htmlFor={controlId}>
+          {label}
+        </label>
+      )}
+      {control}
       {error ? (
-        <span className="field__error">{error}</span>
+        <span className="field__error" id={errorId}>
+          {error}
+        </span>
       ) : (
-        hint && <span className="field__hint">{hint}</span>
+        hint && (
+          <span className="field__hint" id={hintId}>
+            {hint}
+          </span>
+        )
       )}
     </div>
   );

@@ -21,6 +21,19 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **The console is checked for accessibility** (CW-017). The web console had
+  never been tested with a screen reader or axe, and the shared `Field`
+  primitive left its `<label>` unbound to the control — so every form field
+  routed through it was announced as unnamed and clicking a label did not focus
+  its input. `Field` now binds the label (and points `aria-describedby` at the
+  hint or error) once, for every form in the app; the `--text-subtle` text
+  colour, which fell below the WCAG AA 4.5:1 contrast ratio in both themes, was
+  darkened to meet it; and opening the reject-reason box on the approvals screen
+  now moves focus to it. Rendered screens are asserted to have no axe violations
+  and a reviewer can approve a request with the keyboard alone, both enforced by
+  the web test suite in CI. Contrast is validated numerically against the theme
+  tokens, since jsdom applies no stylesheets for axe to measure.
+
 - **CI upgrades a database from the previous release** (CW-032). CI only ever
   ran `prisma migrate deploy` against an empty database, so nothing proved that
   an existing installation survives an upgrade — a migration that adds a NOT
