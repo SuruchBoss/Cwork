@@ -15,11 +15,13 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { documentTypeLabels, statusTone } from '@/lib/labels';
 import type { DocumentRequest } from '@/types/api';
 
 export default function DocumentsPage() {
   const queryClient = useQueryClient();
+  const t = useT();
   const [status, setStatus] = useState('APPROVED');
 
   const requests = useQuery({
@@ -36,19 +38,19 @@ export default function DocumentsPage() {
   return (
     <div className="page">
       <PageHeader
-        title="คำขอเอกสาร"
-        description="หนังสือรับรอง สลิป และเอกสารอื่นที่พนักงานร้องขอ"
+        title={t('Document requests')}
+        description={t('Certificates, payslips and other documents employees request')}
       />
 
       <Card>
         <div className="toolbar">
-          <Field label="สถานะ">
+          <Field label={t('Status')}>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="APPROVED">อนุมัติแล้ว (รอออกเอกสาร)</option>
-              <option value="PENDING">รออนุมัติ</option>
-              <option value="ISSUED">ออกเอกสารแล้ว</option>
-              <option value="REJECTED">ไม่อนุมัติ</option>
-              <option value="">ทั้งหมด</option>
+              <option value="APPROVED">{t('Approved (awaiting issue)')}</option>
+              <option value="PENDING">{t('Pending')}</option>
+              <option value="ISSUED">{t('Issued')}</option>
+              <option value="REJECTED">{t('Rejected')}</option>
+              <option value="">{t('All')}</option>
             </Select>
           </Field>
         </div>
@@ -64,12 +66,12 @@ export default function DocumentsPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>เลขที่</th>
-                  <th>พนักงาน</th>
-                  <th>ประเภทเอกสาร</th>
-                  <th>วัตถุประสงค์</th>
-                  <th>ยื่นเมื่อ</th>
-                  <th>สถานะ</th>
+                  <th>{t('No.')}</th>
+                  <th>{t('Employee')}</th>
+                  <th>{t('Document type')}</th>
+                  <th>{t('Purpose')}</th>
+                  <th>{t('Submitted')}</th>
+                  <th>{t('Status')}</th>
                   <th />
                 </tr>
               </thead>
@@ -80,7 +82,7 @@ export default function DocumentsPage() {
                       {request.referenceNo}
                       {request.createdViaAssistant && (
                         <div>
-                          <Badge tone="brand">ยื่นผ่านผู้ช่วย AI</Badge>
+                          <Badge tone="brand">{t('Filed via AI assistant')}</Badge>
                         </div>
                       )}
                     </td>
@@ -94,7 +96,7 @@ export default function DocumentsPage() {
                       {documentTypeLabels[request.type] ?? request.type}
                       {request.includeSalary && (
                         <div>
-                          <Badge tone="warning">ระบุเงินเดือน</Badge>
+                          <Badge tone="warning">{t('Salary included')}</Badge>
                         </div>
                       )}
                     </td>
@@ -111,7 +113,7 @@ export default function DocumentsPage() {
                           loading={issue.isPending && issue.variables === request.id}
                           onClick={() => issue.mutate(request.id)}
                         >
-                          ออกเอกสาร
+                          {t('Issue')}
                         </Button>
                       )}
                     </td>
@@ -121,7 +123,7 @@ export default function DocumentsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="▣" title="ไม่มีคำขอเอกสารตามเงื่อนไข" />
+          <EmptyState icon="▣" title={t('No document requests match')} />
         )}
       </Card>
     </div>

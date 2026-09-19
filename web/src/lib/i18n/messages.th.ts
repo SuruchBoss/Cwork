@@ -223,4 +223,31 @@ export const thMessages: Record<string, string> = {
   System: 'ระบบ',
   '{total} entries': '{total} รายการ',
   'No log entries match': 'ไม่มีบันทึกตามเงื่อนไข',
+
+  // Recruitment
+  'Track candidates through the hiring pipeline': 'ติดตามผู้สมัครตลอดขั้นตอนการสรรหา',
+  'Total applications': 'ใบสมัครทั้งหมด',
+  'Open postings': 'ประกาศงานที่เปิด',
+  'In interview': 'อยู่ระหว่างสัมภาษณ์',
+  Hired: 'รับเข้าทำงานแล้ว',
+  Posting: 'ประกาศงาน',
+  'All postings': 'ทุกตำแหน่ง',
+  'No applications yet': 'ยังไม่มีใบสมัคร',
+  'Publish a posting to start receiving applications': 'เผยแพร่ประกาศงานเพื่อเริ่มรับสมัคร',
+  'Expected {amount}': 'คาดหวัง {amount}',
+  'Applied {when}': 'สมัคร {when}',
+  Empty: 'ว่าง',
+  'Did not pass consideration': 'ไม่ผ่านการพิจารณา',
+
+  // Document requests
+  'Certificates, payslips and other documents employees request':
+    'หนังสือรับรอง สลิป และเอกสารอื่นที่พนักงานร้องขอ',
+  'Approved (awaiting issue)': 'อนุมัติแล้ว (รอออกเอกสาร)',
+  Issued: 'ออกเอกสารแล้ว',
+  'Document type': 'ประเภทเอกสาร',
+  Purpose: 'วัตถุประสงค์',
+  Submitted: 'ยื่นเมื่อ',
+  'Salary included': 'ระบุเงินเดือน',
+  Issue: 'ออกเอกสาร',
+  'No document requests match': 'ไม่มีคำขอเอกสารตามเงื่อนไข',
 };

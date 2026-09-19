@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatMoney, formatRelative } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { applicationStageLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -40,6 +41,7 @@ interface Posting {
 export default function RecruitmentPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const t = useT();
   const canManage = can(P.RECRUITMENT_MANAGE);
   const [postingId, setPostingId] = useState('');
 
@@ -60,7 +62,7 @@ export default function RecruitmentPage() {
     mutationFn: (input: { id: string; stage: ApplicationStage }) =>
       api.post(`/recruitment/applications/${input.id}/stage`, {
         stage: input.stage,
-        ...(input.stage === 'REJECTED' ? { rejectReason: 'ไม่ผ่านการพิจารณา' } : {}),
+        ...(input.stage === 'REJECTED' ? { rejectReason: t('Did not pass consideration') } : {}),
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['recruitment'] }),
   });
@@ -79,20 +81,23 @@ export default function RecruitmentPage() {
 
   return (
     <div className="page">
-      <PageHeader title="ผู้สมัครงาน" description="ติดตามผู้สมัครตลอดขั้นตอนการสรรหา" />
+      <PageHeader title={t('Candidates')} description={t('Track candidates through the hiring pipeline')} />
 
       <div className="grid grid--4">
-        <Stat label="ใบสมัครทั้งหมด" value={total} />
-        <Stat label="ประกาศงานที่เปิด" value={postings.data?.filter((p) => p.status === 'PUBLISHED').length ?? '—'} />
-        <Stat label="อยู่ระหว่างสัมภาษณ์" value={byStage.get('INTERVIEW')?.length ?? 0} />
-        <Stat label="รับเข้าทำงานแล้ว" value={hired} />
+        <Stat label={t('Total applications')} value={total} />
+        <Stat
+          label={t('Open postings')}
+          value={postings.data?.filter((p) => p.status === 'PUBLISHED').length ?? '—'}
+        />
+        <Stat label={t('In interview')} value={byStage.get('INTERVIEW')?.length ?? 0} />
+        <Stat label={t('Hired')} value={hired} />
       </div>
 
       <Card>
         <div className="toolbar">
-          <Field label="ประกาศงาน">
+          <Field label={t('Posting')}>
             <Select value={postingId} onChange={(e) => setPostingId(e.target.value)}>
-              <option value="">ทุกตำแหน่ง</option>
+              <option value="">{t('All postings')}</option>
               {postings.data?.map((posting) => (
                 <option key={posting.id} value={posting.id}>
                   {posting.title} ({posting._count.applications})
@@ -115,8 +120,8 @@ export default function RecruitmentPage() {
         <Card>
           <EmptyState
             icon="⚑"
-            title="ยังไม่มีใบสมัคร"
-            description="เผยแพร่ประกาศงานเพื่อเริ่มรับสมัคร"
+            title={t('No applications yet')}
+            description={t('Publish a posting to start receiving applications')}
           />
         </Card>
       ) : (
@@ -141,11 +146,13 @@ export default function RecruitmentPage() {
                       <div className="subtle">{application.posting.title}</div>
                       {application.candidate.expectedSalary && (
                         <div className="subtle">
-                          คาดหวัง {formatMoney(application.candidate.expectedSalary)}
+                          {t('Expected {amount}', {
+                            amount: formatMoney(application.candidate.expectedSalary),
+                          })}
                         </div>
                       )}
                       <div className="subtle" style={{ marginTop: 4 }}>
-                        สมัคร {formatRelative(application.appliedAt)}
+                        {t('Applied {when}', { when: formatRelative(application.appliedAt) })}
                       </div>
 
                       {canManage && nextStage && (
@@ -165,7 +172,7 @@ export default function RecruitmentPage() {
 
                 {items.length === 0 && (
                   <div className="subtle" style={{ padding: 8, textAlign: 'center' }}>
-                    ว่าง
+                    {t('Empty')}
                   </div>
                 )}
               </div>
