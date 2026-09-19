@@ -185,11 +185,12 @@ real company by accident.
 
 ## What it does
 
-> **The interface is Thai by default and switches to English** (CW-016) — every
-> label, form, status and validation message flips between the two from the
-> header, and Thai stays the default. Every image below is a real screenshot of
-> the seeded demo company in Thai — the console in a browser, the employee app on
-> a 390×844 phone.
+> **The interface is Thai by default and switches to English** (CW-016) — in both
+> the console and the employee app, every label, form, status and validation
+> message flips between the two from one switch (a header control on the web, the
+> profile screen on mobile), and Thai stays the default. Every image below is a
+> real screenshot of the seeded demo company in Thai — the console in a browser,
+> the employee app on a 390×844 phone.
 
 ### People
 
