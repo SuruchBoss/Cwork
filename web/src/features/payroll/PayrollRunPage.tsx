@@ -14,6 +14,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -45,6 +46,7 @@ interface RunExplanation {
  * the panel is a button, and the explanation is fetched on demand.
  */
 function RunExplanationPanel({ runId }: { runId: string }) {
+  const t = useT();
   const status = useQuery({
     queryKey: ['assistant', 'status'],
     queryFn: () => api.get<{ enabled: boolean }>('/assistant/status'),
@@ -60,7 +62,7 @@ function RunExplanationPanel({ runId }: { runId: string }) {
 
   return (
     <Card
-      title="อธิบายด้วย AI"
+      title={t('Explain with AI')}
       actions={
         <Button
           variant="secondary"
@@ -68,19 +70,21 @@ function RunExplanationPanel({ runId }: { runId: string }) {
           loading={explain.isPending}
           onClick={() => explain.mutate()}
         >
-          {explain.data ? 'อธิบายอีกครั้ง' : 'อธิบายรอบนี้'}
+          {explain.data ? t('Explain again') : t('Explain this run')}
         </Button>
       }
     >
       {explain.isError ? (
         <div className="alert alert--danger" role="alert">
-          {explain.error instanceof Error ? explain.error.message : 'อธิบายไม่สำเร็จ'}
+          {explain.error instanceof Error ? explain.error.message : t('Could not explain')}
         </div>
       ) : explain.data ? (
         <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{explain.data.reply}</p>
       ) : (
         <p className="subtle" style={{ margin: 0 }}>
-          เทียบรอบนี้กับงวดก่อน แล้วสรุปว่าอะไรทำให้ยอดเปลี่ยน — ตัวเลขทั้งหมดมาจากรอบจริง ไม่ใช่การประมาณ
+          {t(
+            'Compares this run with the previous period and explains what moved the totals — every figure comes from the real run, not an estimate',
+          )}
         </p>
       )}
     </Card>
@@ -91,6 +95,7 @@ export default function PayrollRunPage() {
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const t = useT();
 
   const run = useQuery({
     queryKey: qk.payrollRun(id),
@@ -131,12 +136,15 @@ export default function PayrollRunPage() {
   return (
     <div className="page">
       <PageHeader
-        title={`รอบ ${data.runNo}`}
-        description={`งวด ${data.period.code} · จ่ายวันที่ ${formatDate(data.period.payDate)}`}
+        title={t('Run {no}', { no: data.runNo })}
+        description={t('Period {code} · pay date {date}', {
+          code: data.period.code,
+          date: formatDate(data.period.payDate),
+        })}
         actions={
           <>
             <Link to="/payroll" className="btn btn--secondary btn--sm">
-              ← กลับ
+              ← {t('Back')}
             </Link>
             {canRun && ['DRAFT', 'CALCULATED', 'FAILED'].includes(data.status) && (
               <Button
@@ -144,7 +152,7 @@ export default function PayrollRunPage() {
                 loading={act.isPending && act.variables === 'calculate'}
                 onClick={() => act.mutate('calculate')}
               >
-                คำนวณเงินเดือน
+                {t('Calculate payroll')}
               </Button>
             )}
             {canApprove && data.status === 'CALCULATED' && (
@@ -153,7 +161,7 @@ export default function PayrollRunPage() {
                 loading={act.isPending && act.variables === 'approve'}
                 onClick={() => act.mutate('approve')}
               >
-                อนุมัติรอบ
+                {t('Approve run')}
               </Button>
             )}
             {canApprove && data.status === 'APPROVED' && (
@@ -162,7 +170,7 @@ export default function PayrollRunPage() {
                 loading={act.isPending && act.variables === 'pay'}
                 onClick={() => act.mutate('pay')}
               >
-                บันทึกการจ่ายและเผยแพร่สลิป
+                {t('Record payment and publish payslips')}
               </Button>
             )}
           </>
@@ -174,22 +182,32 @@ export default function PayrollRunPage() {
           {payrollStatusLabels[data.status] ?? data.status}
         </Badge>
         {data.calculatedAt && (
-          <span className="subtle">คำนวณเมื่อ {formatDateTime(data.calculatedAt)}</span>
+          <span className="subtle">
+            {t('Calculated {date}', { date: formatDateTime(data.calculatedAt) })}
+          </span>
         )}
-        {data.paidAt && <span className="subtle">จ่ายเมื่อ {formatDateTime(data.paidAt)}</span>}
+        {data.paidAt && (
+          <span className="subtle">
+            {t('Paid {date}', { date: formatDateTime(data.paidAt) })}
+          </span>
+        )}
       </div>
 
       {act.isError && (
         <div className="alert alert--danger" role="alert">
-          {act.error instanceof Error ? act.error.message : 'ดำเนินการไม่สำเร็จ'}
+          {act.error instanceof Error ? act.error.message : t('Could not complete the action')}
         </div>
       )}
       {data.failureReason && (
-        <div className="alert alert--danger">การคำนวณล้มเหลว: {data.failureReason}</div>
+        <div className="alert alert--danger">
+          {t('Calculation failed: {reason}', { reason: data.failureReason })}
+        </div>
       )}
       {data.status === 'CALCULATED' && (
         <div className="alert alert--info">
-          ผู้ที่คำนวณรอบนี้ไม่สามารถอนุมัติรอบของตัวเองได้ — ต้องให้ผู้มีสิทธิ์อีกคนอนุมัติ
+          {t(
+            'Whoever calculated this run cannot approve their own — another authorised person must approve it',
+          )}
         </div>
       )}
 
@@ -198,28 +216,30 @@ export default function PayrollRunPage() {
       )}
 
       <div className="grid grid--4">
-        <Stat label="พนักงาน" value={data.employeeCount} />
-        <Stat label="รายได้รวม" value={formatMoney(data.totalGross, data.currency)} />
-        <Stat label="รายการหักรวม" value={formatMoney(data.totalDeduction, data.currency)} />
+        <Stat label={t('Employees')} value={data.employeeCount} />
+        <Stat label={t('Total gross')} value={formatMoney(data.totalGross, data.currency)} />
+        <Stat label={t('Total deductions')} value={formatMoney(data.totalDeduction, data.currency)} />
         <Stat
-          label="จ่ายสุทธิ"
+          label={t('Net pay')}
           value={formatMoney(data.totalNet, data.currency)}
-          hint={`ต้นทุนนายจ้าง ${formatMoney(data.totalEmployerCost, data.currency)}`}
+          hint={t('Employer cost {amount}', {
+            amount: formatMoney(data.totalEmployerCost, data.currency),
+          })}
         />
       </div>
 
-      <Card title={`สลิปเงินเดือน (${data.payslips.length})`} flush>
+      <Card title={t('Payslips ({count})', { count: data.payslips.length })} flush>
         {data.payslips.length > 0 ? (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>พนักงาน</th>
-                  <th>แผนก</th>
-                  <th className="num">รายได้รวม</th>
-                  <th className="num">รายการหัก</th>
-                  <th className="num">สุทธิ</th>
-                  <th>เผยแพร่</th>
+                  <th>{t('Employee')}</th>
+                  <th>{t('Department')}</th>
+                  <th className="num">{t('Total gross')}</th>
+                  <th className="num">{t('Deductions')}</th>
+                  <th className="num">{t('Net')}</th>
+                  <th>{t('Published')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,9 +259,9 @@ export default function PayrollRunPage() {
                     </td>
                     <td>
                       {slip.publishedAt ? (
-                        <Badge tone="success">เผยแพร่แล้ว</Badge>
+                        <Badge tone="success">{t('Published')}</Badge>
                       ) : (
-                        <Badge tone="neutral">ยังไม่เผยแพร่</Badge>
+                        <Badge tone="neutral">{t('Not published')}</Badge>
                       )}
                     </td>
                   </tr>
@@ -252,8 +272,8 @@ export default function PayrollRunPage() {
         ) : (
           <EmptyState
             icon="฿"
-            title="ยังไม่มีสลิปในรอบนี้"
-            description="กด “คำนวณเงินเดือน” เพื่อสร้างสลิปของพนักงานทุกคน"
+            title={t('No payslips in this run yet')}
+            description={t('Press “Calculate payroll” to create a payslip for every employee')}
           />
         )}
       </Card>

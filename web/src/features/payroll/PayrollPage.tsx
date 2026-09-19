@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -24,6 +25,7 @@ import type { PayrollPeriod, PayrollRun } from '@/types/api';
 export default function PayrollPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const t = useT();
   const canRun = can(P.PAYROLL_RUN);
 
   const [creating, setCreating] = useState(false);
@@ -64,12 +66,12 @@ export default function PayrollPage() {
   return (
     <div className="page">
       <PageHeader
-        title="เงินเดือน"
-        description="งวดเงินเดือน รอบการคำนวณ และสลิปเงินเดือน"
+        title={t('Payroll')}
+        description={t('Pay periods, runs and payslips')}
         actions={
           canRun && (
             <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-              + สร้างงวดใหม่
+              + {t('New pay period')}
             </Button>
           )
         }
@@ -77,24 +79,24 @@ export default function PayrollPage() {
 
       {latest && (
         <div className="grid grid--4">
-          <Stat label="รอบล่าสุด" value={latest.runNo} hint={latest.period?.code} />
-          <Stat label="พนักงาน" value={latest.employeeCount} />
-          <Stat label="รายได้รวม" value={formatMoney(latest.totalGross, latest.currency)} />
-          <Stat label="จ่ายสุทธิ" value={formatMoney(latest.totalNet, latest.currency)} />
+          <Stat label={t('Latest run')} value={latest.runNo} hint={latest.period?.code} />
+          <Stat label={t('Employees')} value={latest.employeeCount} />
+          <Stat label={t('Total gross')} value={formatMoney(latest.totalGross, latest.currency)} />
+          <Stat label={t('Net pay')} value={formatMoney(latest.totalNet, latest.currency)} />
         </div>
       )}
 
       {creating && (
-        <Card title="สร้างงวดเงินเดือน">
+        <Card title={t('Create a pay period')}>
           <div className="toolbar">
-            <Field label="ปี">
+            <Field label={t('Year')}>
               <Input
                 type="number"
                 value={form.year}
                 onChange={(e) => setForm({ ...form, year: Number(e.target.value) })}
               />
             </Field>
-            <Field label="เดือน">
+            <Field label={t('Month')}>
               <Input
                 type="number"
                 min={1}
@@ -103,21 +105,21 @@ export default function PayrollPage() {
                 onChange={(e) => setForm({ ...form, month: Number(e.target.value) })}
               />
             </Field>
-            <Field label="เริ่มงวด">
+            <Field label={t('Period start')}>
               <Input
                 type="date"
                 value={form.periodStart}
                 onChange={(e) => setForm({ ...form, periodStart: e.target.value })}
               />
             </Field>
-            <Field label="สิ้นงวด">
+            <Field label={t('Period end')}>
               <Input
                 type="date"
                 value={form.periodEnd}
                 onChange={(e) => setForm({ ...form, periodEnd: e.target.value })}
               />
             </Field>
-            <Field label="วันจ่าย">
+            <Field label={t('Pay date')}>
               <Input
                 type="date"
                 value={form.payDate}
@@ -130,18 +132,18 @@ export default function PayrollPage() {
               disabled={!form.periodStart || !form.periodEnd || !form.payDate}
               onClick={() => createPeriod.mutate()}
             >
-              สร้างงวด
+              {t('Create period')}
             </Button>
           </div>
           {createPeriod.isError && (
             <div className="alert alert--danger" style={{ marginTop: 10 }}>
-              {createPeriod.error instanceof Error ? createPeriod.error.message : 'สร้างไม่สำเร็จ'}
+              {createPeriod.error instanceof Error ? createPeriod.error.message : t('Could not create')}
             </div>
           )}
         </Card>
       )}
 
-      <Card title="งวดเงินเดือน" flush>
+      <Card title={t('Pay periods')} flush>
         {periods.isLoading ? (
           <TableSkeleton rows={4} columns={5} />
         ) : periods.isError ? (
@@ -151,11 +153,11 @@ export default function PayrollPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>งวด</th>
-                  <th>ช่วงเวลา</th>
-                  <th>วันจ่าย</th>
-                  <th>สถานะ</th>
-                  <th>รอบคำนวณ</th>
+                  <th>{t('Period')}</th>
+                  <th>{t('Dates')}</th>
+                  <th>{t('Pay date')}</th>
+                  <th>{t('Status')}</th>
+                  <th>{t('Runs')}</th>
                   <th />
                 </tr>
               </thead>
@@ -178,7 +180,7 @@ export default function PayrollPage() {
                           loading={createRun.isPending && createRun.variables === period.id}
                           onClick={() => createRun.mutate(period.id)}
                         >
-                          สร้างรอบคำนวณ
+                          {t('Create run')}
                         </Button>
                       )}
                     </td>
@@ -190,24 +192,24 @@ export default function PayrollPage() {
         ) : (
           <EmptyState
             icon="฿"
-            title="ยังไม่มีงวดเงินเดือน"
-            description="สร้างงวดแรกเพื่อเริ่มคำนวณเงินเดือน"
+            title={t('No pay periods yet')}
+            description={t('Create the first period to start running payroll')}
           />
         )}
       </Card>
 
-      <Card title="รอบการคำนวณ" flush>
+      <Card title={t('Payroll runs')} flush>
         {runs.data && runs.data.length > 0 ? (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>เลขที่รอบ</th>
-                  <th>งวด</th>
-                  <th className="num">พนักงาน</th>
-                  <th className="num">รายได้รวม</th>
-                  <th className="num">จ่ายสุทธิ</th>
-                  <th>สถานะ</th>
+                  <th>{t('Run no.')}</th>
+                  <th>{t('Period')}</th>
+                  <th className="num">{t('Employees')}</th>
+                  <th className="num">{t('Total gross')}</th>
+                  <th className="num">{t('Net pay')}</th>
+                  <th>{t('Status')}</th>
                   <th />
                 </tr>
               </thead>
@@ -226,7 +228,7 @@ export default function PayrollPage() {
                     </td>
                     <td>
                       <Link to={`/payroll/runs/${run.id}`} className="btn btn--secondary btn--sm">
-                        เปิดดู
+                        {t('Open')}
                       </Link>
                     </td>
                   </tr>
@@ -235,7 +237,7 @@ export default function PayrollPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="฿" title="ยังไม่มีรอบการคำนวณ" />
+          <EmptyState icon="฿" title={t('No payroll runs yet')} />
         )}
       </Card>
     </div>
