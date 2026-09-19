@@ -41,9 +41,14 @@ severity; this is the sequence work is actually taken in.
 |---|---|---|
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
-| **2** | The pilot can run | CW-010 · CW-024 · CW-025 · CW-038 |
-| **3** | After the pilot | CW-016 · CW-031 · CW-009 · CW-014 · CW-008 · CW-032 · CW-033 · CW-039 · CW-040 |
-| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-017 · CW-041 |
+| **2** | The pilot can run | CW-025 |
+| **3** | After the pilot | CW-031 · CW-014 · CW-043 |
+| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-041 |
+
+Thirteen tickets closed between 2026-09-16 and 2026-09-19, through 0.3.0.
+Phase 2 is down to CW-025 and phase 3 to the demo, document requests on mobile,
+and CW-043 — which exists because a decision of mine did not reach the code; see
+its ticket.
 
 The plan was drawn up before CW-002, CW-003, CW-006, CW-007 and CW-020 landed,
 and those five came out of it as they were finished. CW-005 and CW-023 have
@@ -103,92 +108,9 @@ exists to remove.
 
 ---
 
-### CW-008 · Render issued documents as PDFs
-`P1` · documents · **M**
 
-`DocumentRequest` resolves to *merge data* for a certificate template — the
-fields, not a document. HR still produces the actual certificate by hand, so the
-approval trail ends in a manual step nobody can audit.
 
-**Scope**
-- Server-side PDF rendering for each `DocumentRequestType`.
-- Thai-capable fonts embedded (the usual failure mode is tofu boxes).
-- Organisation letterhead and an authorised signature block.
-- Store the rendered file as a `FileObject`, linked to the request.
-- A verification code or QR so a bank can check a salary certificate is real.
 
-**Acceptance**
-- Each request type renders with Thai text intact.
-- The stored PDF is reachable only by the requester and `document:issue`.
-- Re-issuing supersedes rather than overwrites, and both are audited.
-
-**Files** `backend/src/modules/documents/`
-
----
-
-### CW-009 · Benefits administration in the console
-`P1` · web · **M**
-
-The API has benefits endpoints, `BenefitPlan` / `BenefitEnrollment` models and
-`benefit:read` / `benefit:manage` permissions. The console has no benefits
-screen at all, so enrolment is only possible by calling the API directly — yet
-enrolments feed payroll.
-
-**Scope** Plan list and editor; enrol and un-enrol employees; effective dates;
-cost split; a view of what each plan adds to the next run.
-
-**Acceptance**
-- A `benefit:manage` holder can complete an enrolment without leaving the
-  console, and it appears in the next payroll calculation.
-- Someone with only `benefit:read` sees no mutating control.
-
-**Files** `web/src/features/` (new `benefits/`), `web/src/app/router.tsx`
-
----
-
-### CW-010 · Shift and roster management in the console
-`P1` · web · **M**
-
-`Shift`, `WorkSchedule`, `ScheduleAssignment` and `ShiftAssignment` exist and
-attendance derivation depends on them — late and early-leave minutes are
-computed against the assigned shift. There is no screen to define a shift or
-assign one, so those numbers come from seeded data only.
-
-**Scope** Shift definitions; weekly schedule patterns; assign to employee,
-department or location; a calendar view of who is on which shift; bulk assign.
-
-**Acceptance**
-- A shift created in the console changes the late-minute calculation for the
-  assigned employee the next day.
-- Overlapping assignments for one employee-day are rejected with a clear error.
-
-**Files** `web/src/features/attendance/`, `backend/src/modules/attendance/`
-
----
-
-### CW-024 · Bind an account to a device
-`P1` · attendance · security · **M**
-
-The app already generates a stable `deviceId` and every punch records it, but
-nothing authorises it: any device holding a valid token can punch. Clocking in
-for an absent colleague needs nothing more than their password.
-
-**Scope**
-- A device registry: an employee's first device binds on sign-in; that binding
-  is what a punch is checked against.
-- Re-binding — a lost or replaced phone, which is common — requires HR approval
-  and is audited. Self-service re-binding would defeat the control entirely.
-- A punch from an unbound device is **recorded and flagged**, never refused,
-  consistent with how the geofence already behaves.
-
-**Acceptance**
-- A punch from a second device is accepted, flagged, and visible to HR.
-- Re-binding without approval is impossible, and every re-binding is audited.
-
-**Files** `backend/src/modules/attendance/`, `backend/src/modules/auth/`,
-`mobile/lib/core/storage/`
-
----
 
 ### CW-025 · Harden offline punch capture
 `P1` · attendance · security · **M**
@@ -225,129 +147,8 @@ dependency in `pubspec.yaml`, so `ROOTED_DEVICE` can never be raised.
 
 
 
-### CW-038 · Make the assistant's configuration tell the truth
-`P1` · assistant · **S**
 
-`ASSISTANT_PROVIDER` validates against `['anthropic', 'openai-compatible', 'none']`
-in `env.validation.ts:315`, but `assistant.module.ts:41` reads
 
-```ts
-return config.assistant.provider === 'anthropic' ? anthropic : disabled;
-```
-
-and no OpenAI-compatible provider exists anywhere in `src`. Setting
-`ASSISTANT_PROVIDER=openai-compatible` therefore **boots cleanly, reports the
-assistant as enabled, and silently hands back a disabled provider.** The
-boot-time check that demands an API key fires only for `anthropic`, so nothing
-catches it either.
-
-This matters more than an ordinary missing feature, because `llm-provider.ts`
-opens with:
-
-> *Cwork is provider-agnostic on purpose: an HRIS holds payroll and national ID
-> data, and an operator must be able to choose (or self-host) the model that
-> sees it.*
-
-That is a promise about data sovereignty, and it is the reason an organisation
-that cannot send payroll data to a third party would pick this project. It is
-not true today.
-
-`ASSISTANT_EMBEDDING_PROVIDER` has the same shape — it accepts `openai` while
-`embedQuery()` is deliberately unimplemented — though that one is at least
-documented in the code and tracked by CW-018.
-
-**Scope** — one of two, and choosing is the point of the ticket:
-
-- **Tell the truth (S).** Drop `openai-compatible` from the validated set, and
-  refuse to boot on an enabled assistant whose provider has no implementation,
-  the way a missing API key already does. Rewrite the `llm-provider.ts` comment
-  to describe the seam that exists rather than a capability that does not.
-- **Make it true (M).** Implement an OpenAI-compatible provider so an operator
-  can point a base URL at Ollama, vLLM or LiteLLM and keep the data in-house.
-
-**Decided: take the M.** The S was the earlier recommendation and it is
-withdrawn. Cwork is taking on AI features that put payroll and identity data in
-front of a model (CW-039, CW-040, CW-041), and an operator who cannot send that
-to a third party must be able to point it at one they run. Deleting the option
-would have made the promise honest by abandoning it; the promise is worth
-keeping.
-
-Implement the provider: a base URL, an API key that may be empty for a local
-server, and the same tool-calling contract `LlmProvider` already defines.
-Ollama, vLLM and LiteLLM all speak it. The S is still included — nothing may
-validate a value it does not honour, and an enabled assistant with an
-unimplemented provider must fail at boot.
-
-**Acceptance**
-- No `ASSISTANT_*` variable accepts a value that changes nothing.
-- An assistant enabled with a provider that has no implementation fails at boot,
-  with a message naming the variable.
-- No comment or document claims provider-agnosticism the code does not deliver.
-
-**Files** `backend/src/core/config/env.validation.ts`,
-`backend/src/modules/assistant/`, `docs/ai-assistant.md`
-
----
-
-### CW-039 · Explain attendance flags to a manager
-`P2` · assistant · attendance · **M**
-
-Attendance already raises `OUTSIDE_GEOFENCE`, `IMPOSSIBLE_TRAVEL`,
-`MOCK_LOCATION`, `CLOCK_DRIFT`, `LOW_GPS_ACCURACY` and `NO_LOCATION`. A manager
-sees a list of them and has to work out for themselves whether they are looking
-at a dishonest employee or a badly drawn geofence. Almost always it is the
-geofence, and the flag list does not say so.
-
-**Scope**
-- A read-only tool returning the caller's team's flagged punches for a period.
-  It takes **no employee id** — scope comes from the caller's permissions
-  through `employeeVisibilityFilter`, the same path the console uses.
-- A prompt that groups by location and flag type and states the likely cause,
-  with the distances and counts that support it.
-- An "explain this" affordance on the attendance screen. The flag list stays
-  exactly as it is underneath.
-
-**Acceptance**
-- A manager gets an explanation covering their reports and nobody else's,
-  verified against the three visibility levels the e2e suite already exercises.
-- Every number in the explanation is traceable to a punch record.
-- With the assistant disabled, the screen is unchanged and offers nothing.
-
-**Files** `backend/src/modules/assistant/`, `backend/src/modules/attendance/`,
-`web/src/features/attendance/`
-
----
-
-### CW-040 · Explain a payroll run before it is approved
-`P2` · assistant · payroll · **M**
-
-Separation of duties means the person approving a run did not prepare it. What
-they actually see is a total, and no practical way to interrogate it — so the
-control is real on paper and thin in practice. This is the one AI feature here
-that strengthens an existing control rather than adding a new surface.
-
-**Scope**
-- A read-only tool returning a run's totals beside the previous period's, broken
-  down by the components the payslip already stores — overtime, joiners,
-  leavers, unpaid leave, benefit changes.
-- A prompt that narrates the variance and names what drove it.
-- Shown on the approval screen, above the existing figures rather than instead
-  of them.
-
-**Numbers come from the tool. The model must not do arithmetic** — see
-[spec.md § Agreed direction](./spec.md#agreed-direction). A test should
-fail if a figure appears in the narration that is not in the tool output.
-
-**Acceptance**
-- The explanation reconciles exactly with the run's own totals.
-- The tool refuses a run outside the caller's organisation, and requires
-  `payroll:approve`.
-- With the assistant disabled, the approval screen is unchanged.
-
-**Files** `backend/src/modules/assistant/`, `backend/src/modules/payroll/`,
-`web/src/features/payroll/`
-
----
 
 ### CW-041 · Draft the manager's half of a review
 `P3` · assistant · performance · **M**
@@ -388,27 +189,48 @@ reason it is worth doing anyway, and they are not optional.
 
 ---
 
-### CW-042 · Amend ADR-0004 to say what the rule actually is
-`P2` · docs · **S** · 🌱
 
-ADR-0004 is titled *Assistant tools take no employee id*, and names
-`get_leave_balance(employeeId)` — "lets a manager ask about their team" — as the
-signature it rejected. CW-039, CW-040 and CW-041 are all manager-facing, so on a
-literal reading the ADR forbids them.
+### CW-043 · A provider an operator can run themselves
+`P1` · assistant · **M**
 
-It should not. The property that matters is that **no tool parameter extends the
-caller's reach**: a payroll run id or a review id the caller already owns does
-not, an employee id does, and manager-facing tools take no subject at all and
-derive their scope from the caller's permissions.
+CW-038 was asked to choose between telling the truth about
+`ASSISTANT_PROVIDER` and making it true. The decision recorded in this file was
+**make it true**, and what shipped was the truth-telling half: the names that
+had no implementation are gone, a deployment that reports an assistant must now
+have one, and `llm-provider.ts` says plainly that it is a seam rather than a
+capability.
 
-**Scope** Amend ADR-0004 to state the rule that way, keeping the original
-reasoning and recording why it was widened. Do not supersede it with a new ADR —
-the decision did not change, only its wording.
+That work is right and it is finished. The gap is mine: I changed the decision
+in the prose and left the acceptance criteria describing the S, so the criteria
+were met exactly as written. The remaining half needs its own ticket and its own
+criteria rather than a comment on a closed one.
 
-**Acceptance** A contributor reading ADR-0004 can tell whether a proposed
-manager-facing tool is allowed.
+It also matters more now than it did. CW-039 and CW-040 have shipped, so a team's
+attendance and a payroll run's figures now pass through a model. An organisation
+that cannot send those to a third party currently cannot use any of it — and
+`spec.md` states that self-hosting the model is a requirement, not a convenience.
 
-**Files** `docs/adr/0004-assistant-tool-scoping.md`
+`llm-provider.ts` points at CW-018 for this. That is the wrong home: CW-018 is
+embeddings for knowledge search, which is a different call to a different kind
+of model. Chat and embeddings should not share a ticket.
+
+**Scope**
+- An `OpenAiCompatibleProvider` implementing `LlmProvider`: base URL, optional
+  API key (a local server often needs none), and the tool-calling contract the
+  interface already defines.
+- `ASSISTANT_PROVIDER` accepts it only once it exists — the rule CW-038 set.
+- Documented against at least one local runtime end to end, so the claim is
+  demonstrated rather than asserted.
+
+**Acceptance**
+- With a local OpenAI-compatible server, the assistant answers a policy question
+  and completes a tool call, with no request leaving the host.
+- Every guardrail holds identically: no tool takes an employee id, write actions
+  still need `confirmed: true`, tool calls are audited.
+- Switching provider needs no code change beyond configuration.
+
+**Files** `backend/src/modules/assistant/providers/`,
+`backend/src/core/config/`, `docs/ai-assistant.md`
 
 ---
 
@@ -458,42 +280,7 @@ app with the assistant disabled.
 
 ---
 
-### CW-015 · Employee data retention and purge
-`P2` · compliance · **M**
 
-Candidate records carry a PDPA retention date and are purged. Employee records
-have no equivalent. Retention is usually mandated for employees, but "usually"
-is not a policy, and a leaver who asks for erasure currently has no path.
-
-**Scope** Configurable retention per record class; a purge job that redacts
-rather than deletes where law requires the record to survive; a report of what
-would be purged before it runs; audit every purge.
-
-**Acceptance** A dry run lists affected records and changes nothing. A purge
-leaves payroll history legally intact while removing the personal identifiers it
-does not need.
-
-**Files** `backend/src/modules/employees/`, `backend/src/modules/jobs/`
-
----
-
-### CW-016 · English locale
-`P2` · web · mobile · **L**
-
-Every UI string is hard-coded Thai. The architecture is jurisdiction-neutral —
-tax rules are data, leave types configuration — but the interface is not, so a
-non-Thai-reading evaluator cannot assess the system at all.
-
-**Scope** Extract strings behind an i18n layer in both clients; English
-alongside Thai; per-user language; locale-aware dates and currency (the Buddhist
-era calendar is the sharp edge).
-
-**Acceptance** Switching language translates the whole console with no layout
-breakage, and Thai remains the default.
-
-**Files** `web/src/`, `mobile/lib/`
-
----
 
 ### CW-037 · Register the employee app for push
 `P2` · mobile · **M**
@@ -578,62 +365,10 @@ minute of opening the link, and no single visitor can exceed the spending cap.
 
 ---
 
-### CW-032 · Test migrations from the previous release in CI
-`P2` · platform · **S**
 
-CI only ever runs `prisma migrate deploy` against an empty database, so nothing
-proves an existing installation survives an upgrade. Once other people are
-running Cwork, a bad migration destroys their data, not ours.
-
-**Scope** A job that checks out the previous tag, migrates and seeds, then
-migrates up to the current commit and asserts the seeded data is still readable.
-Depends on CW-028 for a first tag to upgrade from.
-
-**Acceptance** A migration that drops a populated column fails CI.
-
-**Files** `.github/workflows/ci.yml`
-
----
-
-### CW-033 · Remove the unused anti-fraud columns
-`P2` · attendance · **S** · 🌱
-
-`AttendancePunch.selfieFileId` is never written — there is no camera capture
-anywhere in the app — and selfie capture was considered and not adopted, partly
-because biometric data drags consent and retention obligations along with it. A
-column nothing writes misleads whoever reads the schema next.
-
-The same argument settles kiosk devices: no `type` field on the device model
-until kiosk devices are actually built.
-
-**Scope** Drop `selfieFileId` in a migration, or implement capture. Do not leave
-it as it is. `isRootedDevice` is the opposite case and is handled by CW-025.
-
-**Acceptance** Every column in `attendance.prisma` is written by some code path.
-
-**Files** `backend/prisma/schema/attendance.prisma`
-
----
 
 ## P3 — nice to have
 
-### CW-017 · Accessibility pass on the console
-`P3` · web · **M**
-
-The console has never been tested with a screen reader or for keyboard-only
-operation. HR software is used all day, every day, and is exactly where this
-matters.
-
-**Scope** Audit against WCAG 2.2 AA; fix focus management in dialogs and menus;
-label every control; check contrast in both themes; add an automated axe check
-to CI.
-
-**Acceptance** No critical or serious axe violations on the main screens;
-approving a leave request is possible with the keyboard alone.
-
-**Files** `web/src/`
-
----
 
 ### CW-018 · Semantic knowledge search
 `P3` · assistant · **M**
@@ -696,3 +431,16 @@ Kept so the reasoning survives.
 | **CW-029** · Contributions had no provenance | Apache-2.0 with no CLA and no sign-off meant no record that a contributor had the right to submit what they submitted. DCO is now enforced in CI. Worth restating rather than discovering later: with no CLA the licence cannot realistically be changed, which is an accepted consequence and not an oversight. d73a589. |
 | **CW-030** · Three claims in the documentation were not true | Multi-tenancy the product does not offer, Thai payroll rules nobody qualified has reviewed, and a privacy property that was real but unstated. Each corrected where a reader meets it rather than in a footnote. 419d1e2. |
 | **CW-036** · `git log` told the story before the README did | Almost every commit here was written by an AI agent under direction, several of them adding thousands of lines at once. Saying so costs less credibility than having it inferred, and the existing history was left exactly as it stands — rewriting it to look more human would have been the actual dishonesty. c9ba70a. |
+| **CW-008** · Issued documents ended in a manual step nobody could audit | `DocumentRequest` resolved to merge data — the fields, not a document — so HR still produced every certificate by hand and the approval trail stopped short of the thing it approved. Rendered server-side now, with Thai text intact. 2a5867d. |
+| **CW-009** · Benefits existed in the API and nowhere a person could reach | Models, endpoints and permissions were all there; the console had no screen, so enrolment meant calling the API by hand — and enrolments feed payroll. bf08a8d. |
+| **CW-010** · Attendance was computing lateness against shifts nobody could define | `Shift`, `WorkSchedule` and `ScheduleAssignment` drove the late and early-leave minutes, and the only way to create one was the seed script. Until this landed, attendance could not be used by a real organisation at all. 6fd24f4. |
+| **CW-015** · Employees had no retention or erasure path | Candidates had a PDPA retention date and were purged; employees had nothing, so a leaver asking for erasure had nowhere to go. CW-026 covered the pilot's minimum; this is the mechanism. a962449. |
+| **CW-016** · Every interface string was hard-coded Thai | Nineteen commits: an i18n foundation, then the console screen by screen, the employee app, and both landing pages. Keys are English, Thai is a translation file and stays the default, organisation-entered content is not translated, and the database keeps Gregorian years. c3b3399 … 7c28419. |
+| **CW-017** · The console had never been tested with a screen reader | HR software is used all day by people who may not use a mouse. Audited to WCAG 2.2 AA with an axe check in CI. 21a5335 — and 4e7a73f, which found the menu and theme buttons had no name a screen reader could read. |
+| **CW-024** · Any device with a valid token could punch | The app generated a stable `deviceId` and every punch recorded it, but nothing authorised it — clocking in for an absent colleague needed only their password. Binding on first sign-in, re-binding behind HR approval and audited, and a punch from an unbound device flagged rather than refused. f30f910. |
+| **CW-032** · Nothing proved an existing installation survived an upgrade | CI only ever migrated an empty database. It now checks out the previous release, migrates and seeds, then migrates up and asserts the data is still readable. 80c0216. |
+| **CW-033** · A column nothing wrote misled whoever read the schema next | `selfieFileId` was never written and selfie capture was considered and not adopted. Dropped rather than left as decoration. 6411850. |
+| **CW-038** · The assistant's configuration accepted values that changed nothing | `ASSISTANT_PROVIDER=openai-compatible` validated, booted clean, reported the assistant as enabled and handed back the disabled provider. Reproducing it turned up two more configurations doing the same thing — `none` with the assistant enabled, and Anthropic with no key outside production — neither of which the ticket named. `ASSISTANT_EMBEDDING_PROVIDER=openai` was the same lie one field down and went the same way. 1872048, 7999e40. **The other half of this ticket did not ship and that is a fault in the ticket, not the work:** the decision was changed to implement a self-hostable provider while the acceptance criteria still described removing the option, and the criteria were met exactly as written. CW-043 carries it with criteria of its own. |
+| **CW-039** · Managers saw flag lists and had to guess what they meant | `OUTSIDE_GEOFENCE`, `IMPOSSIBLE_TRAVEL` and the rest told a manager something happened, not whether they were looking at a dishonest employee or a badly drawn geofence. Explained now, scoped to the caller's reports through the same visibility filter the console uses. f77d1df. |
+| **CW-040** · Payroll approval was a control on paper | Separation of duties means the approver did not prepare the run; what they saw was a total they had no practical way to interrogate. The variance is narrated against the previous period, from the components the payslip already stores. 2445ad3. |
+| **CW-042** · ADR-0004 forbade the features that were about to be built | Its title said assistant tools take no employee id, and it named "lets a manager ask about their team" as the signature it rejected — which read as forbidding CW-039 and CW-040. Amended to the rule it was reaching for: no tool parameter may extend the caller's reach. f849688. |
