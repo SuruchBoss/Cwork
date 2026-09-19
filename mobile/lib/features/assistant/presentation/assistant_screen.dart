@@ -3,17 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/platform/platform_config.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/assistant_controller.dart';
 import '../domain/assistant_models.dart';
 
+/// English message keys; each is shown and *sent* in the current language, so an
+/// English chip asks the assistant in English (CW-016).
 const List<String> _suggestions = <String>[
-  'เหลือวันลาพักร้อนกี่วัน',
-  'ขอลาป่วยต้องใช้ใบรับรองแพทย์เมื่อไหร่',
-  'ค่าโอทีวันหยุดคิดยังไง',
-  'ขอหนังสือรับรองการทำงาน',
-  'เดือนนี้มาสายกี่ครั้ง',
+  'How many annual leave days do I have left?',
+  'When do I need a medical certificate for sick leave?',
+  'How is holiday overtime calculated?',
+  'Request an employment certificate',
+  'How many times was I late this month?',
 ];
 
 class AssistantScreen extends ConsumerStatefulWidget {
@@ -63,11 +66,11 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ผู้ช่วย HR'),
+        title: Text(ref.tr('HR assistant')),
         actions: <Widget>[
           if (chat.turns.isNotEmpty)
             IconButton(
-              tooltip: 'เริ่มบทสนทนาใหม่',
+              tooltip: ref.tr('Start a new conversation'),
               onPressed: () => ref.read(assistantControllerProvider.notifier).reset(),
               icon: const Icon(Icons.refresh),
             ),
@@ -81,11 +84,12 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
         ),
         data: (PlatformConfig config) {
           if (!config.assistantEnabled) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.power_off_outlined,
-              title: 'ผู้ช่วย HR ยังไม่เปิดใช้งาน',
-              description:
-                  'องค์กรของคุณยังไม่ได้เปิดใช้ผู้ช่วย AI — ฟังก์ชันอื่นของแอปใช้งานได้ตามปกติ',
+              title: ref.tr('The HR assistant is not enabled'),
+              description: ref.tr(
+                'Your organisation has not enabled the AI assistant — the rest of the app works as usual',
+              ),
             );
           }
 
@@ -129,9 +133,10 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                           maxLines: 4,
                           textInputAction: TextInputAction.send,
                           onSubmitted: _send,
-                          decoration: const InputDecoration(
-                            hintText: 'พิมพ์คำถามเกี่ยวกับงาน HR…',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: InputDecoration(
+                            hintText: ref.tr('Type a question about HR…'),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           ),
                         ),
                       ),
@@ -152,13 +157,13 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   }
 }
 
-class _Welcome extends StatelessWidget {
+class _Welcome extends ConsumerWidget {
   const _Welcome({required this.onPick});
 
   final void Function(String) onPick;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -167,13 +172,13 @@ class _Welcome extends StatelessWidget {
         Icon(Icons.auto_awesome, size: 44, color: theme.colorScheme.primary),
         const SizedBox(height: 12),
         Text(
-          'ถามอะไรก็ได้เกี่ยวกับงาน HR',
+          ref.tr('Ask anything about HR'),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 6),
         Text(
-          'ผู้ช่วยตอบจากระเบียบของบริษัท และเห็นเฉพาะข้อมูลของคุณเท่านั้น',
+          ref.tr('The assistant answers from company policy and sees only your own data'),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
         ),
@@ -185,8 +190,10 @@ class _Welcome extends StatelessWidget {
           children: _suggestions
               .map(
                 (String suggestion) => ActionChip(
-                  label: Text(suggestion),
-                  onPressed: () => onPick(suggestion),
+                  label: Text(ref.tr(suggestion)),
+                  // Send it in the language shown, so the assistant is asked the
+                  // question the user actually sees.
+                  onPressed: () => onPick(ref.tr(suggestion)),
                 ),
               )
               .toList(),
@@ -196,14 +203,14 @@ class _Welcome extends StatelessWidget {
   }
 }
 
-class _Bubble extends StatelessWidget {
+class _Bubble extends ConsumerWidget {
   const _Bubble({required this.turn, required this.onRate});
 
   final ChatTurn turn;
   final void Function(bool helpful) onRate;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final bool isUser = turn.isUser;
 
@@ -268,13 +275,13 @@ class _Bubble extends StatelessWidget {
                     onPressed: () => onRate(true),
                     icon: const Icon(Icons.thumb_up_outlined, size: 15),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'คำตอบนี้มีประโยชน์',
+                    tooltip: ref.tr('This answer was helpful'),
                   ),
                   IconButton(
                     onPressed: () => onRate(false),
                     icon: const Icon(Icons.thumb_down_outlined, size: 15),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'คำตอบนี้ไม่ช่วย',
+                    tooltip: ref.tr('This answer did not help'),
                   ),
                 ],
               ),

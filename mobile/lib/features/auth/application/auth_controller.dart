@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../data/auth_repository.dart';
 import '../domain/session.dart';
@@ -88,7 +89,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   void expire() {
-    state = const AuthSignedOut(message: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง');
+    state = AuthSignedOut(message: tr0('Your session has expired, please sign in again'));
   }
 }
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../data/attendance_repository.dart';
 import '../domain/attendance_models.dart';
@@ -72,7 +73,7 @@ class AttendanceController extends StateNotifier<PunchState> {
 
       state = PunchState(
         message: outcome.warning ??
-            (type == 'CLOCK_IN' ? 'บันทึกเวลาเข้างานเรียบร้อย' : 'บันทึกเวลาออกงานเรียบร้อย'),
+            (type == 'CLOCK_IN' ? tr0('Clocked in successfully') : tr0('Clocked out successfully')),
       );
     } on Object catch (error) {
       state = PunchState(message: _describe(error), isError: true);
@@ -83,17 +84,17 @@ class AttendanceController extends StateNotifier<PunchState> {
     final int sent = await _repository.flushQueue();
     if (sent > 0) {
       _ref.invalidate(todayAttendanceProvider);
-      state = PunchState(message: 'ส่งเวลาที่บันทึกไว้ $sent รายการเรียบร้อย');
+      state = PunchState(message: tr0('Sent {n} saved punches', <String, Object>{'n': sent}));
     }
   }
 
   void clearMessage() => state = const PunchState();
 
   String? _noteFor(LocationIssue? issue) => switch (issue) {
-        LocationIssue.disabled => 'ปิดบริการตำแหน่งที่ตั้งบนอุปกรณ์',
-        LocationIssue.denied => 'ไม่ได้อนุญาตให้เข้าถึงตำแหน่ง',
-        LocationIssue.deniedForever => 'ปฏิเสธสิทธิ์ตำแหน่งถาวร',
-        LocationIssue.timeout => 'หาตำแหน่งไม่สำเร็จภายในเวลาที่กำหนด',
+        LocationIssue.disabled => tr0('Location services are off on the device'),
+        LocationIssue.denied => tr0('Location permission was not granted'),
+        LocationIssue.deniedForever => tr0('Location permission is permanently denied'),
+        LocationIssue.timeout => tr0('Could not find a location in time'),
         null => null,
       };
 

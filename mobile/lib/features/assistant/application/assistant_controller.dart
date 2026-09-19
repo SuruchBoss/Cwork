@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../data/assistant_repository.dart';
 import '../domain/assistant_models.dart';
@@ -99,8 +100,8 @@ class AssistantController extends StateNotifier<ChatState> {
     final String message = error.toString();
     final int separator = message.indexOf(': ');
     return separator >= 0
-        ? 'ขออภัย ${message.substring(separator + 2)}'
-        : 'ขออภัย ไม่สามารถติดต่อผู้ช่วยได้ในขณะนี้';
+        ? tr0('Sorry, {message}', <String, Object>{'message': message.substring(separator + 2)})
+        : tr0('Sorry, the assistant is unavailable right now');
   }
 }
 

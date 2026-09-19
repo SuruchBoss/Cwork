@@ -19,6 +19,8 @@ class AppTab {
   });
 
   final String id;
+
+  /// An English message key (CW-016); the shell translates it with `ref.tr`.
   final String label;
   final IconData icon;
   final IconData selectedIcon;
@@ -40,7 +42,7 @@ List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) 
   return <AppTab>[
     const AppTab(
       id: 'home',
-      label: 'หน้าแรก',
+      label: 'Home',
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
       screen: HomeScreen(),
@@ -48,7 +50,7 @@ List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) 
     if (user.can(Perm.leaveReadSelf))
       const AppTab(
         id: 'leave',
-        label: 'การลา',
+        label: 'Leave',
         icon: Icons.beach_access_outlined,
         selectedIcon: Icons.beach_access,
         screen: LeaveScreen(),
@@ -56,7 +58,7 @@ List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) 
     if (user.isApprover)
       const AppTab(
         id: 'approvals',
-        label: 'อนุมัติ',
+        label: 'Approvals',
         icon: Icons.task_alt_outlined,
         selectedIcon: Icons.task_alt,
         screen: ApprovalsScreen(),
@@ -64,7 +66,7 @@ List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) 
     if (user.can(Perm.payslipReadSelf))
       const AppTab(
         id: 'payslips',
-        label: 'สลิป',
+        label: 'Slips',
         icon: Icons.receipt_long_outlined,
         selectedIcon: Icons.receipt_long,
         screen: PayslipScreen(),
@@ -72,14 +74,14 @@ List<AppTab> visibleTabsFor(SessionUser user, {required bool assistantEnabled}) 
     if (assistantEnabled && user.can(Perm.assistantUse))
       const AppTab(
         id: 'assistant',
-        label: 'ผู้ช่วย',
+        label: 'Assistant',
         icon: Icons.auto_awesome_outlined,
         selectedIcon: Icons.auto_awesome,
         screen: AssistantScreen(),
       ),
     const AppTab(
       id: 'profile',
-      label: 'โปรไฟล์',
+      label: 'Profile',
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
       screen: ProfileScreen(),

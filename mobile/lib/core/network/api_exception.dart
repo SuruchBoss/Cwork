@@ -1,7 +1,10 @@
+import '../i18n/i18n.dart';
+
 /// A failed API call, carrying the server's stable error `code`.
 ///
-/// The UI branches on `code`, never on the message text — messages are Thai
-/// prose meant for humans and will change; codes are the contract.
+/// The UI branches on `code`, never on the message text — the server's message
+/// is human prose that will change; codes are the contract. When the server
+/// gives no message, the fallbacks are localised (CW-016).
 class ApiException implements Exception {
   const ApiException({
     required this.statusCode,
@@ -22,7 +25,7 @@ class ApiException implements Exception {
       return ApiException(
         statusCode: statusCode,
         code: body['code']?.toString() ?? 'UNKNOWN',
-        message: body['message']?.toString() ?? 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
+        message: body['message']?.toString() ?? tr0('An unexpected error occurred'),
         details: body['details'],
         requestId: body['requestId']?.toString(),
       );
@@ -30,15 +33,15 @@ class ApiException implements Exception {
     return ApiException(
       statusCode: statusCode,
       code: 'UNKNOWN',
-      message: 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
+      message: tr0('An unexpected error occurred'),
     );
   }
 
-  static const ApiException offline = ApiException(
-    statusCode: 0,
-    code: 'OFFLINE',
-    message: 'ไม่สามารถเชื่อมต่อเครือข่ายได้',
-  );
+  static ApiException get offline => ApiException(
+        statusCode: 0,
+        code: 'OFFLINE',
+        message: tr0('Could not connect to the network'),
+      );
 
   bool get isUnauthorized => statusCode == 401;
   bool get isForbidden => statusCode == 403;

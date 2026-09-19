@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
@@ -15,7 +16,7 @@ class ApprovalTask {
     required this.entityType,
     required this.submitterName,
     required this.submittedAt,
-    required this.summary,
+    required this.snapshot,
     this.dueAt,
   });
 
@@ -23,7 +24,10 @@ class ApprovalTask {
   final String entityType;
   final String submitterName;
   final DateTime submittedAt;
-  final String summary;
+
+  /// The request's raw fields. The one-line summary is built at render time so
+  /// its units follow the chosen language (CW-016).
+  final Map<String, dynamic> snapshot;
   final DateTime? dueAt;
 
   factory ApprovalTask.fromJson(Map<String, dynamic> json) {
@@ -38,32 +42,39 @@ class ApprovalTask {
           ? submittedBy['email'] as String
           : '${employee['firstNameTh']} ${employee['lastNameTh']}',
       submittedAt: DateTime.parse(instance['submittedAt'] as String),
-      summary:
-          _summarise(instance['snapshot'] as Map<String, dynamic>? ?? const <String, dynamic>{}),
+      snapshot: instance['snapshot'] as Map<String, dynamic>? ?? const <String, dynamic>{},
       dueAt: json['dueAt'] == null ? null : DateTime.parse(json['dueAt'] as String),
     );
   }
 
-  static String _summarise(Map<String, dynamic> snapshot) {
+  /// English message key for this request type; the widget runs it through
+  /// `ref.tr`.
+  String get typeLabelKey => switch (entityType) {
+        'LEAVE_REQUEST' => 'Leave request',
+        'OVERTIME_REQUEST' => 'Overtime request',
+        'EXPENSE_CLAIM' => 'Expense claim',
+        'ATTENDANCE_CORRECTION' => 'Attendance correction',
+        'RESIGNATION' => 'Resignation',
+        'DOCUMENT_REQUEST' => 'Document request',
+        _ => entityType,
+      };
+
+  String summaryFor(WidgetRef ref) {
     final List<String> parts = <String>[];
     if (snapshot['leaveTypeCode'] != null) parts.add(snapshot['leaveTypeCode'].toString());
-    if (snapshot['totalDays'] != null) parts.add('${snapshot['totalDays']} วัน');
-    if (snapshot['hours'] != null) parts.add('${snapshot['hours']} ชม.');
-    if (snapshot['totalAmount'] != null) parts.add('${snapshot['totalAmount']} บาท');
+    if (snapshot['totalDays'] != null) {
+      parts.add(ref.tr('{n} days', <String, Object>{'n': snapshot['totalDays'] as Object}));
+    }
+    if (snapshot['hours'] != null) {
+      parts.add(ref.tr('{n} hr', <String, Object>{'n': snapshot['hours'] as Object}));
+    }
+    if (snapshot['totalAmount'] != null) {
+      parts.add(ref.tr('{n} baht', <String, Object>{'n': snapshot['totalAmount'] as Object}));
+    }
     if (snapshot['startDate'] != null) parts.add(Fmt.date(snapshot['startDate']));
     if (snapshot['workDate'] != null) parts.add(Fmt.date(snapshot['workDate']));
     return parts.isEmpty ? '—' : parts.join(' · ');
   }
-
-  String get typeLabel => switch (entityType) {
-        'LEAVE_REQUEST' => 'คำขอลา',
-        'OVERTIME_REQUEST' => 'คำขอทำโอที',
-        'EXPENSE_CLAIM' => 'คำขอเบิกค่าใช้จ่าย',
-        'ATTENDANCE_CORRECTION' => 'คำขอแก้ไขเวลา',
-        'RESIGNATION' => 'คำขอลาออก',
-        'DOCUMENT_REQUEST' => 'คำขอเอกสาร',
-        _ => entityType,
-      };
 }
 
 final FutureProvider<List<ApprovalTask>> approvalTasksProvider =
@@ -83,7 +94,7 @@ class ApprovalsScreen extends ConsumerWidget {
     final AsyncValue<List<ApprovalTask>> tasks = ref.watch(approvalTasksProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('รออนุมัติ')),
+      appBar: AppBar(title: Text(ref.tr('Pending approvals'))),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(approvalTasksProvider),
         child: tasks.when(
@@ -94,10 +105,10 @@ class ApprovalsScreen extends ConsumerWidget {
           ),
           data: (List<ApprovalTask> items) {
             if (items.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.task_alt,
-                title: 'ไม่มีรายการรออนุมัติ',
-                description: 'คุณเคลียร์งานหมดแล้ว',
+                title: ref.tr('No pending approvals'),
+                description: ref.tr('You are all caught up'),
               );
             }
 
@@ -147,7 +158,11 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(decision == 'APPROVE' ? 'อนุมัติเรียบร้อย' : 'ไม่อนุมัติเรียบร้อย'),
+            content: Text(
+              decision == 'APPROVE'
+                  ? ref.tr('Approved successfully')
+                  : ref.tr('Rejected successfully'),
+            ),
           ),
         );
       }
@@ -172,17 +187,17 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
     return showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('เหตุผลที่ไม่อนุมัติ'),
+        title: Text(ref.tr('Reason for rejection')),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLines: 3,
-          decoration: const InputDecoration(hintText: 'อธิบายให้ผู้ยื่นทราบ'),
+          decoration: InputDecoration(hintText: ref.tr('Explain it to the requester')),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('ยกเลิก'),
+            child: Text(ref.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () {
@@ -190,7 +205,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
               if (text.isEmpty) return;
               Navigator.of(dialogContext).pop(text);
             },
-            child: const Text('ยืนยัน'),
+            child: Text(ref.tr('Confirm')),
           ),
         ],
       ),
@@ -211,14 +226,14 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
             Row(
               children: <Widget>[
                 Expanded(child: Text(task.submitterName, style: theme.textTheme.titleSmall)),
-                StatusChip(label: task.typeLabel, status: 'PENDING'),
+                StatusChip(label: ref.tr(task.typeLabelKey), status: 'PENDING'),
               ],
             ),
             const SizedBox(height: 6),
-            Text(task.summary),
+            Text(task.summaryFor(ref)),
             const SizedBox(height: 4),
             Text(
-              'ยื่นเมื่อ ${Fmt.relative(task.submittedAt)}',
+              ref.tr('Submitted {when}', <String, Object>{'when': Fmt.relative(task.submittedAt)}),
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
             ),
             const SizedBox(height: 12),
@@ -227,7 +242,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _busy ? null : () => _decide('REJECT'),
-                    child: const Text('ไม่อนุมัติ'),
+                    child: Text(ref.tr('Reject')),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -240,7 +255,7 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('อนุมัติ'),
+                        : Text(ref.tr('Approve')),
                   ),
                 ),
               ],

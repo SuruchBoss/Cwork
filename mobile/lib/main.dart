@@ -3,13 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
+import 'core/i18n/i18n.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Thai month names and number formats come from here; without it every date
-  // in the app renders in English.
+  // Month names and number formats for both languages (CW-016); without this a
+  // date renders in the wrong script after a language switch.
   await initializeDateFormatting('th');
+  await initializeDateFormatting('en');
 
-  runApp(const ProviderScope(child: CworkApp()));
+  // Open in the saved language so the first frame is already correct.
+  final AppLanguage language = await loadSavedLanguage();
+
+  runApp(
+    ProviderScope(
+      overrides: <Override>[
+        languageProvider.overrideWith((Ref ref) => LanguageController(language)),
+      ],
+      child: const CworkApp(),
+    ),
+  );
 }

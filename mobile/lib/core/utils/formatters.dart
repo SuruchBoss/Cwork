@@ -4,19 +4,29 @@ import 'package:intl/intl.dart';
 ///
 /// The API returns decimals as strings to avoid float drift, so these parse
 /// rather than assume a numeric type — and never compute, only display.
+///
+/// [locale] is set by the language controller (CW-016) and defaults to Thai, so
+/// dates, currency and the relative/duration words follow the chosen language.
 class Fmt {
   const Fmt._();
 
-  static final DateFormat _date = DateFormat('d MMM yyyy', 'th');
-  static final DateFormat _dateShort = DateFormat('d MMM', 'th');
-  static final DateFormat _dateTime = DateFormat('d MMM yyyy HH:mm', 'th');
+  /// `'th'` or `'en'`. Set by `LanguageController`; defaults to Thai.
+  static String locale = 'th';
+
+  static bool get _en => locale == 'en';
+  static String get _intlLocale => _en ? 'en' : 'th';
+
   static final DateFormat _time = DateFormat('HH:mm');
   static final DateFormat _iso = DateFormat('yyyy-MM-dd');
-  static final NumberFormat _money = NumberFormat.currency(
-    locale: 'th_TH',
-    symbol: '฿',
-    decimalDigits: 2,
-  );
+
+  static DateFormat get _date => DateFormat('d MMM yyyy', _intlLocale);
+  static DateFormat get _dateShort => DateFormat('d MMM', _intlLocale);
+  static DateFormat get _dateTime => DateFormat('d MMM yyyy HH:mm', _intlLocale);
+  static NumberFormat get _money => NumberFormat.currency(
+        locale: _en ? 'en_US' : 'th_TH',
+        symbol: '฿',
+        decimalDigits: 2,
+      );
 
   static String date(Object? value) {
     final DateTime? parsed = _parse(value);
@@ -51,16 +61,19 @@ class Fmt {
     return amount.toStringAsFixed(digits);
   }
 
-  /// Minutes as "8 ชม. 5 นาที". Zero renders explicitly, not as an em dash.
+  /// Minutes as "8 ชม. 5 นาที" (Thai) or "8 hr 5 min" (English). Zero renders
+  /// explicitly, not as an em dash.
   static String minutes(int? value) {
     if (value == null) return '—';
-    if (value == 0) return '0 ชม.';
+    final String hourUnit = _en ? 'hr' : 'ชม.';
+    final String minUnit = _en ? 'min' : 'นาที';
+    if (value == 0) return '0 $hourUnit';
     final int hours = value.abs() ~/ 60;
     final int mins = value.abs() % 60;
     final String sign = value < 0 ? '-' : '';
-    if (hours == 0) return '$sign$mins นาที';
-    if (mins == 0) return '$sign$hours ชม.';
-    return '$sign$hours ชม. $mins นาที';
+    if (hours == 0) return '$sign$mins $minUnit';
+    if (mins == 0) return '$sign$hours $hourUnit';
+    return '$sign$hours $hourUnit $mins $minUnit';
   }
 
   static String relative(Object? value) {
@@ -68,6 +81,13 @@ class Fmt {
     if (parsed == null) return '—';
 
     final Duration diff = DateTime.now().difference(parsed.toLocal());
+    if (_en) {
+      if (diff.inMinutes < 1) return 'just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return _date.format(parsed);
+    }
     if (diff.inMinutes < 1) return 'เมื่อสักครู่';
     if (diff.inMinutes < 60) return '${diff.inMinutes} นาทีที่แล้ว';
     if (diff.inHours < 24) return '${diff.inHours} ชั่วโมงที่แล้ว';

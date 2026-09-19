@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/attendance_models.dart';
@@ -84,10 +85,10 @@ class AttendanceRepository {
       if (!error.isOffline) rethrow;
 
       await _queue.add(punch);
-      return const PunchOutcome(
+      return PunchOutcome(
         day: null,
         queued: true,
-        warning: 'บันทึกเวลาไว้ในเครื่องแล้ว จะส่งให้ระบบอัตโนมัติเมื่อกลับมาออนไลน์',
+        warning: tr0('Saved on your device; it will sync automatically when you are back online'),
       );
     }
   }
@@ -157,7 +158,10 @@ class AttendanceRepository {
     final Position? position = location.position;
     if (position == null) return null;
     if (position.accuracy > AppConfig.poorAccuracyMeters) {
-      return 'สัญญาณ GPS ไม่แม่นยำ (±${position.accuracy.round()} ม.) ระบบจะบันทึกไว้ให้ HR ตรวจสอบ';
+      return tr0(
+        'GPS is imprecise (±{m} m); the record is saved for HR to review',
+        <String, Object>{'m': position.accuracy.round()},
+      );
     }
     return null;
   }

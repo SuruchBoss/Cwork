@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/leave_controller.dart';
@@ -16,11 +17,11 @@ class LeaveScreen extends ConsumerWidget {
     final AsyncValue<List<LeaveBalance>> balances = ref.watch(leaveBalancesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('การลา')),
+      appBar: AppBar(title: Text(ref.tr('Leave'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showLeaveRequestSheet(context),
         icon: const Icon(Icons.add),
-        label: const Text('ขอลา'),
+        label: Text(ref.tr('Request leave')),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -35,7 +36,7 @@ class LeaveScreen extends ConsumerWidget {
               orElse: () => const SizedBox.shrink(),
             ),
             const SizedBox(height: 16),
-            Text('คำขอลาของฉัน', style: Theme.of(context).textTheme.titleSmall),
+            Text(ref.tr('My leave requests'), style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             requests.when(
               loading: () => const LoadingList(itemCount: 3),
@@ -45,10 +46,10 @@ class LeaveScreen extends ConsumerWidget {
               ),
               data: (List<LeaveRequest> items) {
                 if (items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.beach_access_outlined,
-                    title: 'ยังไม่มีคำขอลา',
-                    description: 'กดปุ่ม “ขอลา” เพื่อยื่นคำขอแรกของคุณ',
+                    title: ref.tr('No leave requests yet'),
+                    description: ref.tr('Tap “Request leave” to file your first request'),
                   );
                 }
                 return Column(
@@ -70,13 +71,13 @@ class LeaveScreen extends ConsumerWidget {
   }
 }
 
-class _BalanceStrip extends StatelessWidget {
+class _BalanceStrip extends ConsumerWidget {
   const _BalanceStrip({required this.balances});
 
   final List<LeaveBalance> balances;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final List<LeaveBalance> visible = balances.where((LeaveBalance b) => b.granted > 0).toList();
     if (visible.isEmpty) return const SizedBox.shrink();
 
@@ -125,7 +126,7 @@ class _BalanceStrip extends StatelessWidget {
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  'จาก ${Fmt.number(balance.granted)} วัน',
+                  ref.tr('from {n} days', <String, Object>{'n': Fmt.number(balance.granted)}),
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.outline,
@@ -172,7 +173,7 @@ class _LeaveRequestTile extends ConsumerWidget {
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
-                StatusChip(label: _statusLabel(request.status), status: request.status),
+                StatusChip(label: ref.tr(_statusLabel(request.status)), status: request.status),
               ],
             ),
             const SizedBox(height: 8),
@@ -182,7 +183,8 @@ class _LeaveRequestTile extends ConsumerWidget {
                   : '${Fmt.date(request.startDate)} – ${Fmt.date(request.endDate)}',
             ),
             Text(
-              '${Fmt.number(request.totalDays)} วัน · ${request.requestNo}',
+              '${ref.tr('{n} days', <String, Object>{'n': Fmt.number(request.totalDays)})}'
+              ' · ${request.requestNo}',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
             ),
             if (request.reason != null && request.reason!.isNotEmpty) ...<Widget>[
@@ -196,7 +198,7 @@ class _LeaveRequestTile extends ConsumerWidget {
                   Icon(Icons.auto_awesome, size: 14, color: theme.colorScheme.primary),
                   const SizedBox(width: 4),
                   Text(
-                    'ยื่นผ่านผู้ช่วย HR',
+                    ref.tr('Filed through the HR assistant'),
                     style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
                   ),
                 ],
@@ -209,7 +211,7 @@ class _LeaveRequestTile extends ConsumerWidget {
                 child: TextButton.icon(
                   onPressed: () => _confirmCancel(context, ref),
                   icon: const Icon(Icons.close, size: 16),
-                  label: const Text('ยกเลิกคำขอ'),
+                  label: Text(ref.tr('Cancel request')),
                 ),
               ),
             ],
@@ -223,16 +225,16 @@ class _LeaveRequestTile extends ConsumerWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('ยกเลิกคำขอลา?'),
+        title: Text(ref.tr('Cancel this leave request?')),
         content: Text('${request.leaveTypeName} ${Fmt.date(request.startDate)}'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('ไม่ใช่'),
+            child: Text(ref.tr('No')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('ยกเลิกคำขอ'),
+            child: Text(ref.tr('Cancel request')),
           ),
         ],
       ),
@@ -245,8 +247,9 @@ class _LeaveRequestTile extends ConsumerWidget {
       ref.invalidate(myLeaveRequestsProvider);
       ref.invalidate(leaveBalancesProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('ยกเลิกคำขอลาแล้ว')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ref.tr('Your leave request has been cancelled'))),
+        );
       }
     } on Object catch (error) {
       if (context.mounted) {
@@ -266,12 +269,12 @@ class _LeaveRequestTile extends ConsumerWidget {
       int.tryParse('FF${hex.replaceFirst('#', '')}', radix: 16) ?? 0xFF2563EB;
 
   static String _statusLabel(String status) => switch (status) {
-        'DRAFT' => 'ฉบับร่าง',
-        'PENDING' => 'รออนุมัติ',
-        'APPROVED' => 'อนุมัติแล้ว',
-        'REJECTED' => 'ไม่อนุมัติ',
-        'CANCELLED' => 'ยกเลิก',
-        'CANCELLED_AFTER_APPROVAL' => 'ยกเลิกหลังอนุมัติ',
+        'DRAFT' => 'Draft',
+        'PENDING' => 'Pending approval',
+        'APPROVED' => 'Approved',
+        'REJECTED' => 'Rejected',
+        'CANCELLED' => 'Cancelled',
+        'CANCELLED_AFTER_APPROVAL' => 'Cancelled after approval',
         _ => status,
       };
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/i18n/i18n.dart';
 import '../application/auth_controller.dart';
 import '../domain/session.dart';
 
@@ -132,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(AppConfig.appName, style: theme.textTheme.headlineSmall),
                     const SizedBox(height: 4),
                     Text(
-                      'เข้าสู่ระบบด้วยบัญชีพนักงานของคุณ',
+                      ref.tr('Sign in with your employee account'),
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
                     ),
                     const SizedBox(height: 28),
@@ -148,14 +149,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const <String>[AutofillHints.username],
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'อีเมล',
-                          prefixIcon: Icon(Icons.mail_outline),
+                        decoration: InputDecoration(
+                          labelText: ref.tr('Email'),
+                          prefixIcon: const Icon(Icons.mail_outline),
                         ),
                         validator: (String? value) {
                           final String email = (value ?? '').trim();
-                          if (email.isEmpty) return 'กรุณากรอกอีเมล';
-                          if (!email.contains('@')) return 'อีเมลไม่ถูกต้อง';
+                          if (email.isEmpty) return ref.tr('Please enter your email');
+                          if (!email.contains('@')) return ref.tr('Invalid email');
                           return null;
                         },
                       ),
@@ -167,16 +168,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _submit(),
                         decoration: InputDecoration(
-                          labelText: 'รหัสผ่าน',
+                          labelText: ref.tr('Password'),
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             onPressed: () => setState(() => _obscure = !_obscure),
                             icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                            tooltip: _obscure ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน',
+                            tooltip: _obscure ? ref.tr('Show password') : ref.tr('Hide password'),
                           ),
                         ),
                         validator: (String? value) =>
-                            (value ?? '').isEmpty ? 'กรุณากรอกรหัสผ่าน' : null,
+                            (value ?? '').isEmpty ? ref.tr('Please enter your password') : null,
                       ),
                     ],
                     if (_error != null) ...<Widget>[
@@ -218,7 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(_challenge == null ? 'เข้าสู่ระบบ' : 'ยืนยัน'),
+                          : Text(_challenge == null ? ref.tr('Sign in') : ref.tr('Verify')),
                     ),
                     if (_challenge != null) ...<Widget>[
                       const SizedBox(height: 8),
@@ -230,7 +231,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   _code.clear();
                                   _error = null;
                                 }),
-                        child: const Text('ย้อนกลับ'),
+                        child: Text(ref.tr('Back')),
                       ),
                     ],
                   ],
@@ -249,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 /// Entering a code is supported; *enrolling* is not — scanning a QR code with
 /// the same phone that is displaying it does not work, so an account that still
 /// has to set up a second factor is sent to the web console. See CW-021.
-class _MfaFields extends StatelessWidget {
+class _MfaFields extends ConsumerWidget {
   const _MfaFields({
     required this.challenge,
     required this.controller,
@@ -261,7 +262,7 @@ class _MfaFields extends StatelessWidget {
   final Future<void> Function() onSubmit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
 
     if (!challenge.enrolled) {
@@ -272,8 +273,10 @@ class _MfaFields extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
-          'บัญชีนี้ต้องตั้งค่ายืนยันตัวตนสองขั้นตอนก่อน '
-          'กรุณาตั้งค่าผ่านเว็บคอนโซลแล้วเข้าสู่ระบบอีกครั้ง',
+          ref.tr(
+            'This account must set up two-step verification first. '
+            'Please set it up in the web console, then sign in again.',
+          ),
           style: TextStyle(color: theme.colorScheme.onSecondaryContainer),
         ),
       );
@@ -283,7 +286,7 @@ class _MfaFields extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          'กรอกรหัส 6 หลักจากแอป Authenticator หรือรหัสสำรอง',
+          ref.tr('Enter the 6-digit code from your authenticator app or a recovery code'),
           style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
         ),
         const SizedBox(height: 14),
@@ -296,9 +299,9 @@ class _MfaFields extends StatelessWidget {
           autofillHints: const <String>[AutofillHints.oneTimeCode],
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => onSubmit(),
-          decoration: const InputDecoration(
-            labelText: 'รหัสยืนยัน',
-            prefixIcon: Icon(Icons.shield_outlined),
+          decoration: InputDecoration(
+            labelText: ref.tr('Verification code'),
+            prefixIcon: const Icon(Icons.shield_outlined),
             hintText: '123456',
           ),
         ),

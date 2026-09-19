@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/leave_controller.dart';
@@ -56,7 +57,7 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
       initialDateRange: _startDate != null && _endDate != null
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
-      helpText: 'เลือกช่วงวันที่ลา',
+      helpText: ref.tr('Select your leave dates'),
     );
 
     if (range == null) return;
@@ -115,7 +116,9 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ยื่นคำขอลาเรียบร้อย รอผู้อนุมัติพิจารณา')),
+          SnackBar(
+            content: Text(ref.tr('Your leave request has been submitted and is awaiting approval')),
+          ),
         );
       }
     } on Object catch (error) {
@@ -149,7 +152,12 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Expanded(child: Text('ยื่นคำขอลา', style: theme.textTheme.titleLarge)),
+                Expanded(
+                  child: Text(
+                    ref.tr('File a leave request'),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                ),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
@@ -162,12 +170,14 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
               error: (Object error, StackTrace _) => ErrorView(error: error),
               data: (List<LeaveType> items) => DropdownButtonFormField<String>(
                 initialValue: _leaveTypeId,
-                decoration: const InputDecoration(labelText: 'ประเภทการลา'),
+                decoration: InputDecoration(labelText: ref.tr('Leave type')),
                 items: items
                     .map(
                       (LeaveType type) => DropdownMenuItem<String>(
                         value: type.id,
-                        child: Text(type.isPaid ? type.name : '${type.name} (ไม่รับค่าจ้าง)'),
+                        child: Text(
+                          type.isPaid ? type.name : '${type.name} (${ref.tr('unpaid')})',
+                        ),
                       ),
                     )
                     .toList(),
@@ -185,13 +195,13 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
               onTap: _pickRange,
               borderRadius: BorderRadius.circular(10),
               child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'ช่วงวันที่ลา',
-                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                decoration: InputDecoration(
+                  labelText: ref.tr('Leave dates'),
+                  prefixIcon: const Icon(Icons.calendar_today_outlined),
                 ),
                 child: Text(
                   _startDate == null
-                      ? 'เลือกวันที่'
+                      ? ref.tr('Select a date')
                       : _startDate == _endDate
                           ? Fmt.date(_startDate)
                           : '${Fmt.date(_startDate)} – ${Fmt.date(_endDate)}',
@@ -200,10 +210,10 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
             ),
             const SizedBox(height: 14),
             SegmentedButton<String>(
-              segments: const <ButtonSegment<String>>[
-                ButtonSegment<String>(value: 'FULL', label: Text('เต็มวัน')),
-                ButtonSegment<String>(value: 'MORNING', label: Text('ครึ่งเช้า')),
-                ButtonSegment<String>(value: 'AFTERNOON', label: Text('ครึ่งบ่าย')),
+              segments: <ButtonSegment<String>>[
+                ButtonSegment<String>(value: 'FULL', label: Text(ref.tr('Full day'))),
+                ButtonSegment<String>(value: 'MORNING', label: Text(ref.tr('Morning'))),
+                ButtonSegment<String>(value: 'AFTERNOON', label: Text(ref.tr('Afternoon'))),
               ],
               selected: <String>{_startPortion},
               onSelectionChanged: (Set<String> selection) {
@@ -218,8 +228,8 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
             TextField(
               controller: _reason,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'เหตุผล (ไม่บังคับ)',
+              decoration: InputDecoration(
+                labelText: ref.tr('Reason (optional)'),
                 alignLabelWithHint: true,
               ),
             ),
@@ -257,7 +267,7 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('ยื่นคำขอ'),
+                  : Text(ref.tr('Submit request')),
             ),
           ],
         ),
@@ -266,38 +276,38 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
   }
 }
 
-class _PreviewCard extends StatelessWidget {
+class _PreviewCard extends ConsumerWidget {
   const _PreviewCard({required this.preview});
 
   final LeavePreview preview;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final bool insufficient = preview.balanceAfter < 0;
 
     return SectionCard(
-      title: 'สรุปก่อนยื่น',
+      title: ref.tr('Before you submit'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           LabeledValue(
-            label: 'จำนวนวันที่หัก',
-            value: '${Fmt.number(preview.totalDays)} วัน',
+            label: ref.tr('Days charged'),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.totalDays)}),
             emphasize: true,
           ),
           LabeledValue(
-            label: 'คงเหลือก่อนลา',
-            value: '${Fmt.number(preview.balanceBefore)} วัน',
+            label: ref.tr('Balance before'),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.balanceBefore)}),
           ),
           LabeledValue(
-            label: 'คงเหลือหลังลา',
-            value: '${Fmt.number(preview.balanceAfter)} วัน',
+            label: ref.tr('Balance after'),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.balanceAfter)}),
           ),
           if (preview.chargedDates.isNotEmpty) ...<Widget>[
             const Divider(height: 20),
             Text(
-              'วันที่ถูกหัก (ไม่รวมวันหยุดและวันหยุดนักขัตฤกษ์)',
+              ref.tr('Charged dates (excluding weekends and public holidays)'),
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
             ),
             const SizedBox(height: 6),
@@ -318,7 +328,7 @@ class _PreviewCard extends StatelessWidget {
           if (preview.totalDays == 0) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              'ช่วงที่เลือกไม่มีวันทำงาน จึงไม่หักวันลา',
+              ref.tr('The selected range has no working days, so no leave is charged'),
               style: TextStyle(color: theme.colorScheme.outline),
             ),
           ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_theme.dart';
 
 /// Small shared widgets. Kept deliberately plain: the value of this app is in
@@ -121,28 +123,28 @@ class EmptyState extends StatelessWidget {
 }
 
 /// Renders a failed load with the server's own message and a retry.
-class ErrorView extends StatelessWidget {
+class ErrorView extends ConsumerWidget {
   const ErrorView({required this.error, this.onRetry, super.key});
 
   final Object error;
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final String raw = error.toString();
     final int separator = raw.indexOf(': ');
     final String message = separator >= 0 ? raw.substring(separator + 2) : raw;
 
     return EmptyState(
       icon: Icons.error_outline,
-      title: 'โหลดข้อมูลไม่สำเร็จ',
+      title: ref.tr('Could not load'),
       description: message,
       action: onRetry == null
           ? null
           : OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('ลองอีกครั้ง'),
+              label: Text(ref.tr('Try again')),
             ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/app_config.dart';
+import 'core/i18n/i18n.dart';
 import 'core/platform/platform_config.dart';
 import 'core/providers.dart';
 import 'core/router/tabs.dart';
@@ -46,7 +47,7 @@ class _CworkAppState extends ConsumerState<CworkApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
-      locale: const Locale('th', 'TH'),
+      locale: localeFor(ref.watch(languageProvider)),
       supportedLocales: const <Locale>[Locale('th', 'TH'), Locale('en', 'US')],
       localizationsDelegates: const <LocalizationsDelegate<Object>>[
         GlobalMaterialLocalizations.delegate,
@@ -138,7 +139,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               (AppTab tab) => NavigationDestination(
                 icon: Icon(tab.icon),
                 selectedIcon: Icon(tab.selectedIcon),
-                label: tab.label,
+                label: ref.tr(tab.label),
               ),
             )
             .toList(),

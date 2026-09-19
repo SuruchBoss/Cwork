@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
@@ -25,7 +26,7 @@ class ProfileScreen extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('โปรไฟล์')),
+      appBar: AppBar(title: Text(ref.tr('Profile'))),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(myEmployeeProvider);
@@ -92,33 +93,33 @@ class ProfileScreen extends ConsumerWidget {
                     data['workLocation'] as Map<String, dynamic>?;
 
                 return SectionCard(
-                  title: 'ข้อมูลการทำงาน',
+                  title: ref.tr('Work information'),
                   child: Column(
                     children: <Widget>[
                       LabeledValue(
-                        label: 'รหัสพนักงาน',
+                        label: ref.tr('Employee ID'),
                         value: data['employeeCode']?.toString() ?? '—',
                       ),
                       LabeledValue(
-                        label: 'ตำแหน่ง',
+                        label: ref.tr('Position'),
                         value: position?['title']?.toString() ?? '—',
                       ),
                       LabeledValue(
-                        label: 'แผนก',
+                        label: ref.tr('Department'),
                         value: department?['name']?.toString() ?? '—',
                       ),
                       LabeledValue(
-                        label: 'หัวหน้างาน',
+                        label: ref.tr('Manager'),
                         value: manager == null
                             ? '—'
                             : '${manager['firstNameTh']} ${manager['lastNameTh']}',
                       ),
                       LabeledValue(
-                        label: 'สถานที่ทำงาน',
+                        label: ref.tr('Work location'),
                         value: location?['name']?.toString() ?? '—',
                       ),
                       LabeledValue(
-                        label: 'วันเริ่มงาน',
+                        label: ref.tr('Start date'),
                         value: Fmt.date(data['hireDate']),
                       ),
                     ],
@@ -129,18 +130,30 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             summary.maybeWhen(
               data: (AttendanceSummary data) => SectionCard(
-                title: 'สรุปเวลาทำงานเดือนนี้',
+                title: ref.tr('This month’s attendance summary'),
                 child: Column(
                   children: <Widget>[
-                    LabeledValue(label: 'มาทำงาน', value: '${data.presentDays} วัน'),
-                    LabeledValue(label: 'ลา', value: '${data.leaveDays} วัน'),
-                    LabeledValue(label: 'ขาดงาน', value: '${data.absentDays} วัน'),
                     LabeledValue(
-                      label: 'มาสาย',
-                      value: '${data.lateDays} ครั้ง (${Fmt.minutes(data.lateMinutes)})',
+                      label: ref.tr('Present'),
+                      value: ref.tr('{n} days', <String, Object>{'n': data.presentDays}),
                     ),
                     LabeledValue(
-                      label: 'โอทีที่อนุมัติ',
+                      label: ref.tr('On leave'),
+                      value: ref.tr('{n} days', <String, Object>{'n': data.leaveDays}),
+                    ),
+                    LabeledValue(
+                      label: ref.tr('Absent'),
+                      value: ref.tr('{n} days', <String, Object>{'n': data.absentDays}),
+                    ),
+                    LabeledValue(
+                      label: ref.tr('Late'),
+                      value: ref.tr('{n} times ({detail})', <String, Object>{
+                        'n': data.lateDays,
+                        'detail': Fmt.minutes(data.lateMinutes),
+                      }),
+                    ),
+                    LabeledValue(
+                      label: ref.tr('Approved overtime'),
                       value: Fmt.minutes(data.approvedOvertimeMinutes),
                     ),
                   ],
@@ -154,16 +167,38 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 children: <Widget>[
                   ListTile(
+                    leading: const Icon(Icons.translate),
+                    title: Text(ref.tr('Language')),
+                    trailing: DropdownButton<AppLanguage>(
+                      value: ref.watch(languageProvider),
+                      underline: const SizedBox.shrink(),
+                      onChanged: (AppLanguage? value) {
+                        if (value != null) ref.read(languageProvider.notifier).set(value);
+                      },
+                      items: kLanguages
+                          .map(
+                            (({AppLanguage value, String label}) language) =>
+                                DropdownMenuItem<AppLanguage>(
+                              value: language.value,
+                              child: Text(language.label),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
                     leading: const Icon(Icons.description_outlined),
-                    title: const Text('ขอเอกสาร'),
-                    subtitle: const Text('หนังสือรับรองการทำงาน ฯลฯ'),
+                    title: Text(ref.tr('Request a document')),
+                    subtitle: Text(ref.tr('Employment certificate, etc.')),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => showDocumentRequestSheet(context, ref),
                   ),
                   const Divider(height: 1),
                   ListTile(
                     leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                    title: Text('ออกจากระบบ', style: TextStyle(color: theme.colorScheme.error)),
+                    title:
+                        Text(ref.tr('Sign out'), style: TextStyle(color: theme.colorScheme.error)),
                     onTap: () => _confirmLogout(context, ref),
                   ),
                 ],
@@ -179,16 +214,16 @@ class ProfileScreen extends ConsumerWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('ออกจากระบบ?'),
-        content: const Text('คุณจะต้องเข้าสู่ระบบใหม่ในครั้งถัดไป'),
+        title: Text(ref.tr('Sign out?')),
+        content: Text(ref.tr('You will need to sign in again next time.')),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('ยกเลิก'),
+            child: Text(ref.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('ออกจากระบบ'),
+            child: Text(ref.tr('Sign out')),
           ),
         ],
       ),
@@ -200,12 +235,13 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+/// Values are English message keys (CW-016), translated at render.
 const Map<String, String> _documentTypes = <String, String>{
-  'EMPLOYMENT_CERTIFICATE': 'หนังสือรับรองการทำงาน',
-  'SALARY_CERTIFICATE': 'หนังสือรับรองเงินเดือน',
-  'TAX_WITHHOLDING_50BIS': 'หนังสือรับรองหักภาษี (50 ทวิ)',
-  'VISA_SUPPORT_LETTER': 'จดหมายรับรองขอวีซ่า',
-  'BANK_LOAN_LETTER': 'หนังสือรับรองขอสินเชื่อ',
+  'EMPLOYMENT_CERTIFICATE': 'Employment certificate',
+  'SALARY_CERTIFICATE': 'Salary certificate',
+  'TAX_WITHHOLDING_50BIS': 'Tax withholding certificate (50 bis)',
+  'VISA_SUPPORT_LETTER': 'Visa support letter',
+  'BANK_LOAN_LETTER': 'Bank loan letter',
 };
 
 Future<void> showDocumentRequestSheet(BuildContext context, WidgetRef ref) {
@@ -229,16 +265,16 @@ Future<void> showDocumentRequestSheet(BuildContext context, WidgetRef ref) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('ขอเอกสาร', style: Theme.of(context).textTheme.titleLarge),
+            Text(ref.tr('Request a document'), style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: type,
-              decoration: const InputDecoration(labelText: 'ประเภทเอกสาร'),
+              decoration: InputDecoration(labelText: ref.tr('Document type')),
               items: _documentTypes.entries
                   .map(
                     (MapEntry<String, String> entry) => DropdownMenuItem<String>(
                       value: entry.key,
-                      child: Text(entry.value),
+                      child: Text(ref.tr(entry.value)),
                     ),
                   )
                   .toList(),
@@ -249,9 +285,9 @@ Future<void> showDocumentRequestSheet(BuildContext context, WidgetRef ref) {
             const SizedBox(height: 14),
             TextField(
               controller: purpose,
-              decoration: const InputDecoration(
-                labelText: 'วัตถุประสงค์',
-                hintText: 'เช่น ยื่นขอวีซ่า',
+              decoration: InputDecoration(
+                labelText: ref.tr('Purpose'),
+                hintText: ref.tr('e.g. applying for a visa'),
               ),
             ),
             const SizedBox(height: 20),
@@ -271,8 +307,12 @@ Future<void> showDocumentRequestSheet(BuildContext context, WidgetRef ref) {
                         if (context.mounted) {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('ยื่นคำขอเอกสารเรียบร้อย HR จะแจ้งกลับเมื่อพร้อม'),
+                            SnackBar(
+                              content: Text(
+                                ref.tr(
+                                  'Your document request has been submitted. HR will get back to you when it is ready.',
+                                ),
+                              ),
                             ),
                           );
                         }
@@ -296,7 +336,7 @@ Future<void> showDocumentRequestSheet(BuildContext context, WidgetRef ref) {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('ยื่นคำขอ'),
+                  : Text(ref.tr('Submit request')),
             ),
           ],
         ),

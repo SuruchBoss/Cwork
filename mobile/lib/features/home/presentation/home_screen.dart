@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../../attendance/application/attendance_controller.dart';
@@ -27,7 +28,10 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text('สวัสดี ${user?.name ?? ''}', style: const TextStyle(fontSize: 16)),
+            Text(
+              ref.tr('Hello {name}', <String, Object>{'name': user?.name ?? ''}),
+              style: const TextStyle(fontSize: 16),
+            ),
             Text(
               Fmt.date(DateTime.now()),
               style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
@@ -85,13 +89,16 @@ class _OfflineBanner extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'มีการลงเวลา $count รายการรอส่ง จะส่งอัตโนมัติเมื่อกลับมาออนไลน์',
+              ref.tr(
+                '{count} punches waiting to sync; they will send automatically when you are back online',
+                <String, Object>{'count': count},
+              ),
               style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontSize: 13),
             ),
           ),
           TextButton(
             onPressed: () => ref.read(attendanceControllerProvider.notifier).flushQueue(),
-            child: const Text('ส่งเลย'),
+            child: Text(ref.tr('Send now')),
           ),
         ],
       ),
@@ -156,13 +163,13 @@ class ClockCard extends ConsumerWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      clockedIn ? 'กำลังทำงานอยู่' : 'ยังไม่ได้ลงเวลาเข้างาน',
+                      clockedIn ? ref.tr('Currently working') : ref.tr('Not clocked in yet'),
                       style: theme.textTheme.titleMedium,
                     ),
                   ),
                   if (record != null)
                     StatusChip(
-                      label: _statusLabel(record.status),
+                      label: ref.tr(_statusLabel(record.status)),
                       status: record.status,
                     ),
                 ],
@@ -179,19 +186,19 @@ class ClockCard extends ConsumerWidget {
                 children: <Widget>[
                   Expanded(
                     child: _TimeBlock(
-                      label: 'เข้างาน',
+                      label: ref.tr('In'),
                       value: Fmt.time(record?.firstClockInAt),
                     ),
                   ),
                   Expanded(
                     child: _TimeBlock(
-                      label: 'ออกงาน',
+                      label: ref.tr('Out'),
                       value: Fmt.time(record?.lastClockOutAt),
                     ),
                   ),
                   Expanded(
                     child: _TimeBlock(
-                      label: 'ทำงาน',
+                      label: ref.tr('Worked'),
                       value: Fmt.minutes(record?.workedMinutes),
                     ),
                   ),
@@ -213,10 +220,10 @@ class ClockCard extends ConsumerWidget {
                     : Icon(clockedIn ? Icons.logout : Icons.login),
                 label: Text(
                   locked
-                      ? 'ปิดรอบเงินเดือนแล้ว'
+                      ? ref.tr('Payroll period closed')
                       : clockedIn
-                          ? 'ลงเวลาออกงาน'
-                          : 'ลงเวลาเข้างาน',
+                          ? ref.tr('Clock out')
+                          : ref.tr('Clock in'),
                 ),
                 style: clockedIn
                     ? FilledButton.styleFrom(backgroundColor: theme.colorScheme.tertiary)
@@ -225,7 +232,7 @@ class ClockCard extends ConsumerWidget {
               if (record != null && record.lateMinutes > 0) ...<Widget>[
                 const SizedBox(height: 10),
                 Text(
-                  'มาสาย ${record.lateMinutes} นาที',
+                  ref.tr('Late by {n} minutes', <String, Object>{'n': record.lateMinutes}),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: theme.colorScheme.error, fontSize: 13),
                 ),
@@ -238,15 +245,15 @@ class ClockCard extends ConsumerWidget {
   }
 
   static String _statusLabel(String status) => switch (status) {
-        'PRESENT' => 'มาทำงาน',
-        'LATE' => 'มาสาย',
-        'EARLY_LEAVE' => 'ออกก่อนเวลา',
-        'ABSENT' => 'ขาดงาน',
-        'ON_LEAVE' => 'ลา',
-        'HOLIDAY' => 'วันหยุด',
-        'DAY_OFF' => 'วันหยุดประจำสัปดาห์',
-        'INCOMPLETE' => 'ลงเวลาไม่ครบ',
-        _ => 'ยังไม่ลงเวลา',
+        'PRESENT' => 'Present',
+        'LATE' => 'Late',
+        'EARLY_LEAVE' => 'Early leave',
+        'ABSENT' => 'Absent',
+        'ON_LEAVE' => 'On leave',
+        'HOLIDAY' => 'Holiday',
+        'DAY_OFF' => 'Weekly day off',
+        'INCOMPLETE' => 'Incomplete',
+        _ => 'Not clocked in',
       };
 }
 
@@ -272,15 +279,15 @@ class _TimeBlock extends StatelessWidget {
   }
 }
 
-class _LeaveBalanceCard extends StatelessWidget {
+class _LeaveBalanceCard extends ConsumerWidget {
   const _LeaveBalanceCard({required this.balances});
 
   final AsyncValue<List<LeaveBalance>> balances;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SectionCard(
-      title: 'วันลาคงเหลือ',
+      title: ref.tr('Leave balance'),
       child: balances.when(
         loading: () =>
             const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
@@ -290,9 +297,9 @@ class _LeaveBalanceCard extends StatelessWidget {
               items.where((LeaveBalance b) => b.granted > 0 || b.used > 0).toList();
 
           if (visible.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('ยังไม่มีสิทธิ์วันลาในปีนี้'),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(ref.tr('You have no leave entitlement this year')),
             );
           }
 
@@ -317,7 +324,10 @@ class _LeaveBalanceCard extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(
-                              'รอ ${Fmt.number(balance.pending)}',
+                              ref.tr(
+                                'Pending {n}',
+                                <String, Object>{'n': Fmt.number(balance.pending)},
+                              ),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.outline,
@@ -325,7 +335,7 @@ class _LeaveBalanceCard extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          '${Fmt.number(balance.available)} วัน',
+                          ref.tr('{n} days', <String, Object>{'n': Fmt.number(balance.available)}),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ],
@@ -340,19 +350,19 @@ class _LeaveBalanceCard extends StatelessWidget {
   }
 }
 
-class _TodayDetailCard extends StatelessWidget {
+class _TodayDetailCard extends ConsumerWidget {
   const _TodayDetailCard({required this.day});
 
   final AsyncValue<AttendanceDay> day;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return day.maybeWhen(
       data: (AttendanceDay data) {
         if (data.punches.isEmpty) return const SizedBox.shrink();
 
         return SectionCard(
-          title: 'การลงเวลาวันนี้',
+          title: ref.tr('Today’s punches'),
           child: Column(
             children: data.punches
                 .map(
@@ -364,17 +374,18 @@ class _TodayDetailCard extends StatelessWidget {
                       size: 20,
                     ),
                     title: Text(
-                      punch.type == 'CLOCK_IN' ? 'เข้างาน' : 'ออกงาน',
+                      punch.type == 'CLOCK_IN' ? ref.tr('In') : ref.tr('Out'),
                     ),
                     subtitle: Text(
                       <String>[
                         Fmt.time(punch.punchedAt),
                         if (punch.workLocationName != null) punch.workLocationName!,
-                        if (punch.distanceM != null) 'ห่าง ${punch.distanceM} ม.',
+                        if (punch.distanceM != null)
+                          ref.tr('{m} m away', <String, Object>{'m': punch.distanceM!}),
                       ].join(' · '),
                     ),
                     trailing: punch.isOutsideGeofence
-                        ? const StatusChip(label: 'นอกพื้นที่', status: 'PENDING')
+                        ? StatusChip(label: ref.tr('Outside the area'), status: 'PENDING')
                         : null,
                   ),
                 )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
@@ -28,7 +29,7 @@ class PayslipScreen extends ConsumerWidget {
     final AsyncValue<List<PayslipSummary>> payslips = ref.watch(myPayslipsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('สลิปเงินเดือน')),
+      appBar: AppBar(title: Text(ref.tr('Payslips'))),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(myPayslipsProvider),
         child: payslips.when(
@@ -39,10 +40,10 @@ class PayslipScreen extends ConsumerWidget {
           ),
           data: (List<PayslipSummary> items) {
             if (items.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.receipt_long_outlined,
-                title: 'ยังไม่มีสลิปเงินเดือน',
-                description: 'สลิปจะปรากฏที่นี่เมื่อฝ่ายบุคคลเผยแพร่รอบเงินเดือน',
+                title: ref.tr('No payslips yet'),
+                description: ref.tr('Slips will appear here once HR publishes a payroll run'),
               );
             }
 
@@ -57,14 +58,16 @@ class PayslipScreen extends ConsumerWidget {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     title: Row(
                       children: <Widget>[
-                        Text('งวด ${slip.periodCode}'),
+                        Text(ref.tr('Period {code}', <String, Object>{'code': slip.periodCode})),
                         if (slip.isUnread) ...<Widget>[
                           const SizedBox(width: 8),
-                          const StatusChip(label: 'ใหม่', status: 'PENDING'),
+                          StatusChip(label: ref.tr('New'), status: 'PENDING'),
                         ],
                       ],
                     ),
-                    subtitle: Text('จ่ายวันที่ ${Fmt.date(slip.payDate)}'),
+                    subtitle: Text(
+                      ref.tr('Paid on {date}', <String, Object>{'date': Fmt.date(slip.payDate)}),
+                    ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -74,7 +77,7 @@ class PayslipScreen extends ConsumerWidget {
                           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                         ),
                         Text(
-                          'สุทธิ',
+                          ref.tr('Net'),
                           style: TextStyle(
                             fontSize: 11,
                             color: Theme.of(context).colorScheme.outline,
@@ -108,7 +111,7 @@ class PayslipDetailScreen extends ConsumerWidget {
     final AsyncValue<PayslipDetail> detail = ref.watch(payslipDetailProvider(payslipId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('รายละเอียดสลิป')),
+      appBar: AppBar(title: Text(ref.tr('Payslip details'))),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object error, StackTrace _) => ErrorView(
@@ -122,17 +125,26 @@ class PayslipDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Text('งวด ${slip.periodCode}', style: Theme.of(context).textTheme.titleMedium),
                   Text(
-                    'จ่ายวันที่ ${Fmt.date(slip.payDate)}',
+                    ref.tr('Period {code}', <String, Object>{'code': slip.periodCode}),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Text(
+                    ref.tr('Paid on {date}', <String, Object>{'date': Fmt.date(slip.payDate)}),
                     style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
                   const Divider(height: 24),
-                  LabeledValue(label: 'รายได้รวม', value: Fmt.money(slip.grossEarnings)),
-                  LabeledValue(label: 'รายการหักรวม', value: Fmt.money(slip.totalDeductions)),
+                  LabeledValue(
+                    label: ref.tr('Gross earnings'),
+                    value: Fmt.money(slip.grossEarnings),
+                  ),
+                  LabeledValue(
+                    label: ref.tr('Total deductions'),
+                    value: Fmt.money(slip.totalDeductions),
+                  ),
                   const Divider(height: 20),
                   LabeledValue(
-                    label: 'จ่ายสุทธิ',
+                    label: ref.tr('Net pay'),
                     value: Fmt.money(slip.netPay),
                     emphasize: true,
                   ),
@@ -142,36 +154,39 @@ class PayslipDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             if (slip.earnings.isNotEmpty)
               SectionCard(
-                title: 'รายได้',
+                title: ref.tr('Earnings'),
                 child: Column(children: slip.earnings.map(_itemRow).toList()),
               ),
             if (slip.deductions.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               SectionCard(
-                title: 'รายการหัก',
+                title: ref.tr('Deductions'),
                 child: Column(children: slip.deductions.map(_itemRow).toList()),
               ),
             ],
             if (slip.employerCosts.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               SectionCard(
-                title: 'นายจ้างสมทบ (ไม่หักจากเงินเดือน)',
+                title: ref.tr('Employer contributions (not deducted from pay)'),
                 child: Column(children: slip.employerCosts.map(_itemRow).toList()),
               ),
             ],
             const SizedBox(height: 12),
             SectionCard(
-              title: 'ข้อมูลภาษีและประกันสังคม',
+              title: ref.tr('Tax and social security'),
               child: Column(
                 children: <Widget>[
                   LabeledValue(
-                    label: 'ภาษีหัก ณ ที่จ่าย',
+                    label: ref.tr('Withholding tax'),
                     value: Fmt.money(slip.withholdingTax),
                   ),
-                  LabeledValue(label: 'ประกันสังคม', value: Fmt.money(slip.ssoEmployee)),
                   LabeledValue(
-                    label: 'ชั่วโมงโอทีที่จ่าย',
-                    value: '${Fmt.number(slip.overtimeHours)} ชม.',
+                    label: ref.tr('Social security'),
+                    value: Fmt.money(slip.ssoEmployee),
+                  ),
+                  LabeledValue(
+                    label: ref.tr('Overtime hours paid'),
+                    value: ref.tr('{n} hr', <String, Object>{'n': Fmt.number(slip.overtimeHours)}),
                   ),
                 ],
               ),
