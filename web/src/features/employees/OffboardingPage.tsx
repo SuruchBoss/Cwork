@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -47,6 +48,7 @@ interface ResignationDetail extends Resignation {
 export default function OffboardingPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const t = useT();
   const [status, setStatus] = useState('PENDING');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -79,18 +81,18 @@ export default function OffboardingPage() {
   return (
     <div className="page">
       <PageHeader
-        title="การลาออก"
-        description="คำขอลาออกและรายการเคลียร์ของก่อนวันทำงานสุดท้าย"
+        title={t('Offboarding')}
+        description={t('Resignation requests and the handover checklist before the last working day')}
       />
 
       <Card>
         <div className="toolbar">
-          <Field label="สถานะ">
+          <Field label={t('Status')}>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="PENDING">รออนุมัติ</option>
-              <option value="APPROVED">อนุมัติแล้ว</option>
-              <option value="COMPLETED">พ้นสภาพแล้ว</option>
-              <option value="">ทั้งหมด</option>
+              <option value="PENDING">{t('Pending')}</option>
+              <option value="APPROVED">{t('Approved')}</option>
+              <option value="COMPLETED">{t('Left')}</option>
+              <option value="">{t('All')}</option>
             </Select>
           </Field>
         </div>
@@ -106,11 +108,11 @@ export default function OffboardingPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>พนักงาน</th>
-                  <th>ตำแหน่ง</th>
-                  <th>วันทำงานสุดท้าย</th>
-                  <th className="num">แจ้งล่วงหน้า</th>
-                  <th>สถานะ</th>
+                  <th>{t('Employee')}</th>
+                  <th>{t('Position')}</th>
+                  <th>{t('Last working day')}</th>
+                  <th className="num">{t('Notice')}</th>
+                  <th>{t('Status')}</th>
                   <th />
                 </tr>
               </thead>
@@ -135,7 +137,9 @@ export default function OffboardingPage() {
                         <div className="subtle">{resignation.reasonCategory}</div>
                       )}
                     </td>
-                    <td className="num">{resignation.noticeDays ?? '—'} วัน</td>
+                    <td className="num">
+                      {resignation.noticeDays ?? '—'} {t('days')}
+                    </td>
                     <td>
                       <Badge tone={statusTone(resignation.status)}>{resignation.status}</Badge>
                     </td>
@@ -148,7 +152,7 @@ export default function OffboardingPage() {
                             setExpandedId(expandedId === resignation.id ? null : resignation.id)
                           }
                         >
-                          {expandedId === resignation.id ? 'ซ่อน' : 'เคลียร์ของ'}
+                          {expandedId === resignation.id ? t('Hide') : t('Checklist')}
                         </Button>
                         {can(P.OFFBOARDING_MANAGE) && resignation.status === 'PENDING' && (
                           <Button
@@ -157,7 +161,7 @@ export default function OffboardingPage() {
                             loading={decide.isPending && decide.variables?.id === resignation.id}
                             onClick={() => decide.mutate({ id: resignation.id, decision: 'APPROVE' })}
                           >
-                            อนุมัติ
+                            {t('Approve')}
                           </Button>
                         )}
                       </div>
@@ -168,13 +172,15 @@ export default function OffboardingPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="↪" title="ไม่มีคำขอลาออกตามเงื่อนไข" />
+          <EmptyState icon="↪" title={t('No resignations match')} />
         )}
       </Card>
 
       {expandedId && detail.data && (
         <Card
-          title={`รายการเคลียร์ของ — ${detail.data.employee.firstNameTh} ${detail.data.employee.lastNameTh}`}
+          title={t('Handover checklist — {name}', {
+            name: `${detail.data.employee.firstNameTh} ${detail.data.employee.lastNameTh}`,
+          })}
         >
           <div className="stack">
             <div className="row" style={{ gap: 12 }}>
@@ -185,8 +191,10 @@ export default function OffboardingPage() {
                 />
               </div>
               <span className="subtle">
-                {detail.data.tasks.filter((t) => t.status === 'DONE').length} /{' '}
-                {detail.data.tasks.length} เสร็จสิ้น
+                {t('{done} / {total} done', {
+                  done: detail.data.tasks.filter((task) => task.status === 'DONE').length,
+                  total: detail.data.tasks.length,
+                })}
               </span>
             </div>
 
@@ -212,7 +220,7 @@ export default function OffboardingPage() {
                             loading={completeTask.isPending && completeTask.variables === task.id}
                             onClick={() => completeTask.mutate(task.id)}
                           >
-                            ทำเสร็จแล้ว
+                            {t('Mark done')}
                           </Button>
                         )}
                       </td>

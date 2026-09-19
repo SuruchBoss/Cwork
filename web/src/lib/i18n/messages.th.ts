@@ -84,4 +84,43 @@ export const thMessages: Record<string, string> = {
   'You are all caught up': 'คุณเคลียร์งานหมดแล้ว',
   'Recent leave requests': 'คำขอลาล่าสุด',
   'No leave requests pending': 'ไม่มีคำขอลารออนุมัติ',
+
+  // Common (reused across screens)
+  Search: 'ค้นหา',
+  Status: 'สถานะ',
+  Department: 'แผนก',
+  Position: 'ตำแหน่ง',
+  Employee: 'พนักงาน',
+  All: 'ทั้งหมด',
+  Pending: 'รออนุมัติ',
+  Approved: 'อนุมัติแล้ว',
+  Approve: 'อนุมัติ',
+  Previous: 'ก่อนหน้า',
+  Next: 'ถัดไป',
+  'Page {page} of {total}': 'หน้า {page} จาก {total}',
+
+  // Employee directory
+  '{count} people you can access': '{count} คนที่คุณมีสิทธิ์เข้าถึง',
+  'Name, employee code or email': 'ชื่อ รหัสพนักงาน หรืออีเมล',
+  Working: 'ทำงานอยู่',
+  Probation: 'ทดลองงาน',
+  Left: 'พ้นสภาพแล้ว',
+  'All departments': 'ทุกแผนก',
+  Code: 'รหัส',
+  Tenure: 'อายุงาน',
+  'Started {date}': 'เริ่ม {date}',
+  'No employees match': 'ไม่พบพนักงานตามเงื่อนไข',
+  'Try adjusting the filters': 'ลองปรับตัวกรอง',
+
+  // Offboarding
+  'Resignation requests and the handover checklist before the last working day':
+    'คำขอลาออกและรายการเคลียร์ของก่อนวันทำงานสุดท้าย',
+  'Last working day': 'วันทำงานสุดท้าย',
+  Notice: 'แจ้งล่วงหน้า',
+  Hide: 'ซ่อน',
+  Checklist: 'เคลียร์ของ',
+  'No resignations match': 'ไม่มีคำขอลาออกตามเงื่อนไข',
+  'Handover checklist — {name}': 'รายการเคลียร์ของ — {name}',
+  '{done} / {total} done': '{done} / {total} เสร็จสิ้น',
+  'Mark done': 'ทำเสร็จแล้ว',
 };
