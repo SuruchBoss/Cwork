@@ -1,13 +1,22 @@
 import { differenceInYears, format, formatDistanceToNowStrict, parseISO } from 'date-fns';
-import { th } from 'date-fns/locale';
+import { enUS, th } from 'date-fns/locale';
+import { getLanguage, translate } from '@/lib/i18n';
 
-const locales = { th };
+/** date-fns locale for the current language: Thai month names, or English. */
+function dateFnsLocale() {
+  return getLanguage() === 'en' ? enUS : th;
+}
+
+/** BCP-47 locale for Intl number/currency formatting. */
+function intlLocale(): string {
+  return getLanguage() === 'en' ? 'en-US' : 'th-TH';
+}
 
 export function formatDate(value: string | Date | null | undefined, pattern = 'd MMM yyyy'): string {
   if (!value) return '—';
   const date = typeof value === 'string' ? parseISO(value) : value;
   if (Number.isNaN(date.getTime())) return '—';
-  return format(date, pattern, { locale: locales.th });
+  return format(date, pattern, { locale: dateFnsLocale() });
 }
 
 export function formatDateTime(value: string | Date | null | undefined): string {
@@ -25,7 +34,7 @@ export function formatRelative(value: string | Date | null | undefined): string 
   if (!value) return '—';
   const date = typeof value === 'string' ? parseISO(value) : value;
   if (Number.isNaN(date.getTime())) return '—';
-  return formatDistanceToNowStrict(date, { addSuffix: true, locale: locales.th });
+  return formatDistanceToNowStrict(date, { addSuffix: true, locale: dateFnsLocale() });
 }
 
 /** API decimals arrive as strings to avoid float drift; format, don't compute. */
@@ -36,7 +45,7 @@ export function formatMoney(
   if (value === null || value === undefined) return '—';
   const amount = typeof value === 'string' ? Number(value) : value;
   if (Number.isNaN(amount)) return '—';
-  return new Intl.NumberFormat('th-TH', {
+  return new Intl.NumberFormat(intlLocale(), {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
@@ -47,7 +56,7 @@ export function formatNumber(value: string | number | null | undefined, digits =
   if (value === null || value === undefined) return '—';
   const n = typeof value === 'string' ? Number(value) : value;
   if (Number.isNaN(n)) return '—';
-  return new Intl.NumberFormat('th-TH', {
+  return new Intl.NumberFormat(intlLocale(), {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(n);
@@ -55,13 +64,16 @@ export function formatNumber(value: string | number | null | undefined, digits =
 
 export function formatMinutes(minutes: number | null | undefined): string {
   if (minutes === null || minutes === undefined) return '—';
-  if (minutes === 0) return '0 ชม.';
+  const lang = getLanguage();
+  const hr = translate('hr', lang);
+  const min = translate('min', lang);
+  if (minutes === 0) return `0 ${hr}`;
   const hours = Math.floor(Math.abs(minutes) / 60);
   const mins = Math.abs(minutes) % 60;
   const sign = minutes < 0 ? '-' : '';
-  if (hours === 0) return `${sign}${mins} นาที`;
-  if (mins === 0) return `${sign}${hours} ชม.`;
-  return `${sign}${hours} ชม. ${mins} นาที`;
+  if (hours === 0) return `${sign}${mins} ${min}`;
+  if (mins === 0) return `${sign}${hours} ${hr}`;
+  return `${sign}${hours} ${hr} ${mins} ${min}`;
 }
 
 export function fullName(person: { firstNameTh: string; lastNameTh: string } | null | undefined): string {
@@ -79,7 +91,8 @@ export function initials(name: string | null | undefined): string {
 export function yearsOfService(hireDate: string | null | undefined): string {
   if (!hireDate) return '—';
   const years = differenceInYears(new Date(), parseISO(hireDate));
-  return years < 1 ? 'น้อยกว่า 1 ปี' : `${years} ปี`;
+  const lang = getLanguage();
+  return years < 1 ? translate('less than 1 year', lang) : `${years} ${translate('yr', lang)}`;
 }
 
 /** Today in `yyyy-MM-dd`, matching the API's date-only fields. */

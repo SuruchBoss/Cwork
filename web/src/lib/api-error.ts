@@ -1,3 +1,4 @@
+import { t } from '@/lib/i18n';
 import type { ApiErrorBody } from '@/types/api';
 
 /**
@@ -29,7 +30,7 @@ export class ApiError extends Error {
     return new ApiError(
       status,
       body?.code ?? 'UNKNOWN',
-      body?.message ?? 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
+      body?.message ?? t('Something went wrong'),
       body?.details,
       body?.requestId,
     );

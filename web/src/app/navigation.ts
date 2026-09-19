@@ -30,13 +30,13 @@ export interface PlatformFeatures {
 
 export const NAV: NavSection[] = [
   {
-    heading: 'ภาพรวม',
+    heading: 'Overview',
     items: [
-      { to: '/', label: 'แดชบอร์ด', icon: '◎' },
-      { to: '/approvals', label: 'รออนุมัติ', icon: '✓', badge: 'approvals' },
+      { to: '/', label: 'Dashboard', icon: '◎' },
+      { to: '/approvals', label: 'Approvals', icon: '✓', badge: 'approvals' },
       {
         to: '/assistant',
-        label: 'ผู้ช่วย HR',
+        label: 'HR assistant',
         icon: '✦',
         permissions: [P.ASSISTANT_USE],
         feature: 'assistantEnabled',
@@ -44,67 +44,67 @@ export const NAV: NavSection[] = [
     ],
   },
   {
-    heading: 'พนักงาน',
+    heading: 'Employees',
     items: [
       {
         to: '/employees',
-        label: 'ทะเบียนพนักงาน',
+        label: 'Employee directory',
         icon: '☰',
         permissions: [P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM],
       },
-      { to: '/offboarding', label: 'การลาออก', icon: '↪', permissions: [P.OFFBOARDING_READ] },
+      { to: '/offboarding', label: 'Offboarding', icon: '↪', permissions: [P.OFFBOARDING_READ] },
       {
         to: '/performance',
-        label: 'ประเมินผล / KPI',
+        label: 'Performance / KPI',
         icon: '◈',
         permissions: [P.PERFORMANCE_READ, P.KPI_MANAGE_TEAM],
       },
     ],
   },
   {
-    heading: 'เวลาและการลา',
+    heading: 'Time & leave',
     items: [
-      { to: '/leave', label: 'การลา', icon: '⏸', permissions: [P.LEAVE_READ, P.LEAVE_READ_TEAM] },
+      { to: '/leave', label: 'Leave', icon: '⏸', permissions: [P.LEAVE_READ, P.LEAVE_READ_TEAM] },
       {
         to: '/attendance',
-        label: 'ลงเวลาทำงาน',
+        label: 'Attendance',
         icon: '◔',
         permissions: [P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
       {
         to: '/roster',
-        label: 'กะและตารางเวร',
+        label: 'Shifts & roster',
         icon: '◷',
         permissions: [P.SHIFT_MANAGE, P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
     ],
   },
   {
-    heading: 'ค่าตอบแทน',
+    heading: 'Compensation',
     items: [
-      { to: '/payroll', label: 'เงินเดือน', icon: '฿', permissions: [P.PAYROLL_READ] },
-      { to: '/expenses', label: 'เบิกค่าใช้จ่าย', icon: '▤', permissions: [P.EXPENSE_READ] },
-      { to: '/benefits', label: 'สวัสดิการ', icon: '❑', permissions: [P.BENEFIT_MANAGE] },
+      { to: '/payroll', label: 'Payroll', icon: '฿', permissions: [P.PAYROLL_READ] },
+      { to: '/expenses', label: 'Expenses', icon: '▤', permissions: [P.EXPENSE_READ] },
+      { to: '/benefits', label: 'Benefits', icon: '❑', permissions: [P.BENEFIT_MANAGE] },
     ],
   },
   {
-    heading: 'สรรหา',
+    heading: 'Recruitment',
     items: [
-      { to: '/recruitment', label: 'ผู้สมัครงาน', icon: '⚑', permissions: [P.RECRUITMENT_READ] },
+      { to: '/recruitment', label: 'Candidates', icon: '⚑', permissions: [P.RECRUITMENT_READ] },
     ],
   },
   {
-    heading: 'จัดการระบบ',
+    heading: 'Administration',
     items: [
-      { to: '/documents', label: 'คำขอเอกสาร', icon: '▣', permissions: [P.DOCUMENT_ISSUE] },
+      { to: '/documents', label: 'Document requests', icon: '▣', permissions: [P.DOCUMENT_ISSUE] },
       {
         to: '/knowledge',
-        label: 'ฐานความรู้ HR',
+        label: 'HR knowledge base',
         icon: '◫',
         permissions: [P.ASSISTANT_KNOWLEDGE_MANAGE],
       },
-      { to: '/organization', label: 'โครงสร้างองค์กร', icon: '⌗', permissions: [P.ORG_READ] },
-      { to: '/audit', label: 'บันทึกการใช้งาน', icon: '⎙', permissions: [P.AUDIT_READ] },
+      { to: '/organization', label: 'Organisation structure', icon: '⌗', permissions: [P.ORG_READ] },
+      { to: '/audit', label: 'Activity log', icon: '⎙', permissions: [P.AUDIT_READ] },
     ],
   },
 ];

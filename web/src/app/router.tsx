@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { RequirePermission, RequireAuth } from './guards';
 import { P } from '@/lib/permissions';
+import { t } from '@/lib/i18n';
 
 // Route-level code splitting: the console is large and most roles only ever
 // open a handful of these screens.
@@ -36,7 +37,7 @@ function RouteFallback() {
         <div className="card__body">
           <div className="row" style={{ gap: 10 }}>
             <span className="spinner" aria-hidden />
-            <span className="muted">กำลังโหลด…</span>
+            <span className="muted">{t('Loading')}…</span>
           </div>
         </div>
       </div>

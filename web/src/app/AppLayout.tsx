@@ -5,6 +5,7 @@ import { Avatar, Button } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { env } from '@/lib/env';
 import { usePlatformConfig } from '@/lib/platform';
+import { useT } from '@/lib/i18n/useT';
 import { qk } from '@/app/query-client';
 import { visibleSectionsFor } from '@/app/navigation';
 import { useAuthStore } from '@/stores/auth.store';
@@ -14,8 +15,10 @@ export function AppLayout() {
   const user = useAuthStore((s) => s.user);
   const canAny = useAuthStore((s) => s.canAny);
   const logout = useAuthStore((s) => s.logout);
-  const { sidebarOpen, toggleSidebar, closeSidebar, theme, setTheme } = useUiStore();
+  const { sidebarOpen, toggleSidebar, closeSidebar, theme, setTheme, language, setLanguage } =
+    useUiStore();
   const location = useLocation();
+  const t = useT();
 
   const { data: pendingApprovals } = useQuery({
     queryKey: qk.approvalTasks('PENDING'),
@@ -28,16 +31,19 @@ export function AppLayout() {
   const platform = usePlatformConfig();
   const visibleSections = visibleSectionsFor(canAny, platform);
 
-  const currentLabel =
-    visibleSections
-      .flatMap((s) => s.items)
-      .find((item) => item.to === location.pathname || (item.to !== '/' && location.pathname.startsWith(item.to)))
-      ?.label ?? env.appName;
+  const currentLabelKey = visibleSections
+    .flatMap((s) => s.items)
+    .find(
+      (item) =>
+        item.to === location.pathname ||
+        (item.to !== '/' && location.pathname.startsWith(item.to)),
+    )?.label;
+  const currentLabel = currentLabelKey ? t(currentLabelKey) : env.appName;
 
   return (
     <div className="app-shell">
       {sidebarOpen && (
-        <button className="sidebar-scrim" onClick={closeSidebar} aria-label="ปิดเมนู" />
+        <button className="sidebar-scrim" onClick={closeSidebar} aria-label={t('Close menu')} />
       )}
 
       <aside className={clsx('sidebar', sidebarOpen && 'sidebar--open')}>
@@ -48,10 +54,10 @@ export function AppLayout() {
           <span>{env.appName}</span>
         </div>
 
-        <nav className="sidebar__nav" aria-label="เมนูหลัก">
+        <nav className="sidebar__nav" aria-label={t('Main menu')}>
           {visibleSections.map((section) => (
             <div key={section.heading}>
-              <div className="sidebar__section">{section.heading}</div>
+              <div className="sidebar__section">{t(section.heading)}</div>
               {section.items.map((item) => (
                 <NavLink
                   key={item.to}
@@ -63,7 +69,7 @@ export function AppLayout() {
                   <span className="nav-link__icon" aria-hidden>
                     {item.icon}
                   </span>
-                  <span>{item.label}</span>
+                  <span>{t(item.label)}</span>
                   {item.badge && badgeCounts[item.badge] > 0 && (
                     <span className="nav-link__badge">{badgeCounts[item.badge]}</span>
                   )}
@@ -88,13 +94,22 @@ export function AppLayout() {
               variant="ghost"
               size="sm"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              title="สลับธีมสว่าง/มืด"
-              aria-label={theme === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'}
+              title={t('Toggle light/dark theme')}
+              aria-label={theme === 'dark' ? t('Switch to light theme') : t('Switch to dark theme')}
             >
               <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(language === 'th' ? 'en' : 'th')}
+              title={t('Language')}
+              aria-label={t('Language')}
+            >
+              {language === 'th' ? 'EN' : 'ไทย'}
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => void logout()} style={{ flex: 1 }}>
-              ออกจากระบบ
+              {t('Sign out')}
             </Button>
           </div>
         </div>
@@ -107,7 +122,7 @@ export function AppLayout() {
             size="sm"
             className="sidebar-toggle"
             onClick={toggleSidebar}
-            aria-label="เปิด/ปิดเมนู"
+            aria-label={t('Open or close menu')}
             aria-expanded={sidebarOpen}
           >
             <span aria-hidden="true">☰</span>

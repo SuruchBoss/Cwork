@@ -9,6 +9,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { ApiError } from '@/lib/api-error';
+import { useT } from '@/lib/i18n/useT';
 
 /** Small, unstyled-by-convention primitives. Styling lives in styles/app.css. */
 
@@ -234,9 +235,10 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
  * plus the request id, which is what support needs to find it in the logs.
  */
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useT();
   const apiError = error instanceof ApiError ? error : null;
   const message =
-    apiError?.message ?? (error instanceof Error ? error.message : 'เกิดข้อผิดพลาดที่ไม่คาดคิด');
+    apiError?.message ?? (error instanceof Error ? error.message : t('Something went wrong'));
 
   return (
     <div className="empty">
@@ -248,7 +250,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
       {apiError?.requestId && <p className="mono subtle">request: {apiError.requestId}</p>}
       {onRetry && (
         <div style={{ marginTop: 12 }}>
-          <Button onClick={onRetry}>ลองอีกครั้ง</Button>
+          <Button onClick={onRetry}>{t('Try again')}</Button>
         </div>
       )}
     </div>

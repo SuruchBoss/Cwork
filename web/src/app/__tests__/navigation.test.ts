@@ -47,7 +47,7 @@ describe('sidebar navigation', () => {
 
     // Only the dashboard and the approvals inbox are open to everyone, and they
     // are both in the first section.
-    expect(sections.map((section) => section.heading)).toEqual(['ภาพรวม']);
+    expect(sections.map((section) => section.heading)).toEqual(['Overview']);
     expect(links(sections)).toEqual(['/', '/approvals']);
   });
 
