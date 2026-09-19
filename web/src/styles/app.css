@@ -227,10 +227,14 @@ p { margin: 0 0 8px; }
   display: flex;
   align-items: center;
   gap: 10px;
+  /* English labels run longer than Thai (CW-016); let a title and its action
+     wrap onto two lines on a narrow card rather than overflow the header. */
+  flex-wrap: wrap;
 }
 .card__title {
   font-weight: 600;
   font-size: 14px;
+  min-width: 0;
 }
 .card__actions {
   margin-left: auto;

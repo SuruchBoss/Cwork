@@ -21,6 +21,18 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **The console speaks English as well as Thai** (CW-016). The web console was
+  Thai-only, which shut out a director or auditor who cannot read Thai. A
+  dependency-free i18n layer now backs every screen: the message key *is* the
+  English source string, a `useT()` hook translates it against the language held
+  in the UI store, and a header switch flips the whole console — navigation,
+  forms, table headers, the enum status and type labels, validation messages and
+  the formatters' units — between the two. Thai stays the default, so a Thai user
+  sees no change; server-entered content (people's names, plan names) is left as
+  entered, and the Gregorian calendar and Baht formatting are untouched. The
+  chosen language persists per browser and an explicit choice wins over the
+  account locale.
+
 - **The console is checked for accessibility** (CW-017). The web console had
   never been tested with a screen reader or axe, and the shared `Field`
   primitive left its `<label>` unbound to the control — so every form field

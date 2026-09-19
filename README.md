@@ -19,8 +19,9 @@ Built for Thai labour practice. Designed to be self-hosted.
 
 <sub>Real console, real second factor, real payroll run — recorded against the
 company <code>npm run db:seed</code> builds, by <a href="./docs/demo/record.mjs">a
-script in this repository</a>. The interface is Thai (<a href="./docs/backlog.md">CW-016</a>),
-so the captions are burned in. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
+script in this repository</a>. The interface defaults to Thai and switches to
+English (<a href="./docs/backlog.md">CW-016</a>); this was recorded in Thai, so
+the captions are burned in. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
 
 </div>
 
@@ -184,10 +185,11 @@ real company by accident.
 
 ## What it does
 
-> **The interface is Thai.** An English locale is on the
-> [backlog](./docs/backlog.md) as CW-016. Every image below is a real screenshot
-> of the seeded demo company — the console in a browser, the employee app on a
-> 390×844 phone.
+> **The interface is Thai by default and switches to English** (CW-016) — every
+> label, form, status and validation message flips between the two from the
+> header, and Thai stays the default. Every image below is a real screenshot of
+> the seeded demo company in Thai — the console in a browser, the employee app on
+> a 390×844 phone.
 
 ### People
 
@@ -381,11 +383,14 @@ landing/     The overview page, published to GitHub Pages
 
 ## Localisation
 
-The UI is Thai, and payroll implements Thai rules — PIT withholding, social
-security, Labour Protection Act overtime. Nothing in the *architecture* is
-Thailand-specific: the tax rule set is data (`THAI_TAX_RULES_2026`), leave types
-are configuration, and overtime multipliers are per-organisation settings. Adding
-another jurisdiction means a new rule set and a translation pass, not a rewrite.
+The UI ships in Thai and English — switched from the header, Thai by default
+(CW-016) — and payroll implements Thai rules — PIT withholding, social security,
+Labour Protection Act overtime. Nothing in the *architecture* is Thailand-specific:
+the tax rule set is data (`THAI_TAX_RULES_2026`), leave types are configuration,
+and overtime multipliers are per-organisation settings. The English locale added
+a dependency-free i18n layer keyed on the English source string, so a third
+language is a catalogue rather than a code change; adding another jurisdiction
+means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
@@ -402,8 +407,8 @@ email/push delivery are all in place. What is left is tracked in the
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
 short: no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
 employee app cannot register for push yet, retention is a policy you have to
-enforce by hand ([how](./docs/privacy.md)), the interface is Thai only, and this
-code has never had a penetration test.
+enforce by hand ([how](./docs/privacy.md)), the interface covers only Thai and
+English, and this code has never had a penetration test.
 
 **The Thai payroll and social-security rules have not been reviewed by anyone
 qualified.** They were written from published sources and unit-tested against
