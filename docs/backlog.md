@@ -42,8 +42,23 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | CW-025 |
-| **3** | After the pilot | CW-031 · CW-014 · CW-043 |
-| **4** | When someone actually needs it | CW-004 · CW-019 · CW-021 · CW-037 · CW-041 |
+| **3** | Payroll can file and pay · the app is complete | CW-044 → CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
+| **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
+
+**Phase 3 was re-aimed on 2026-09-19.** The original plan put the tax filings
+last, reasoning that with no real company there was nobody to file for. That
+reasoning expired when the goal became adoption rather than a pilot: payroll
+that computes and cannot file or pay is the gap between Cwork and the software
+people pay for, and it shuts out the largest group of potential users. CW-004
+stays open as the parent of CW-045, CW-046 and CW-047 rather than being worked
+as one ticket.
+
+The filings hang off one seam. `CW-044` builds the reconciliation, permission,
+download and audit path once; each filing is then a formatter over figures that
+have already been checked, rather than five implementations of the same
+reconciliation each able to be wrong in its own way. Only the ภ.ง.ด. chain is
+sequential — ประกันสังคม, the bank file and all three mobile tickets run
+alongside it.
 
 Thirteen tickets closed between 2026-09-16 and 2026-09-19, through 0.3.0.
 Phase 2 is down to CW-025 and phase 3 to the demo, document requests on mobile,
@@ -234,6 +249,107 @@ of model. Chat and embeddings should not share a ticket.
 
 ---
 
+### CW-044 · A payroll export that reconciles before it writes anything
+`P1` · payroll · **M** · blocks CW-045, CW-048, CW-019
+
+A payroll officer picks a period and downloads a file of what it paid. A period
+whose runs are not all `APPROVED`, or whose payslip totals do not add up to the
+run totals, is **refused with the difference named** rather than producing a
+file that is quietly wrong. Every export is audited.
+
+The file this produces is a plain CSV — deliberately the least interesting
+output. What is being built is the path through every layer, so that each
+filing becomes a formatter over checked figures instead of five separate
+implementations of the same reconciliation, each able to be wrong in its own
+way. Everything the formatters need is already on `Payslip`.
+
+**Acceptance**
+- A reconciling period downloads; a period with an unapproved run is refused,
+  naming the run.
+- A period whose payslip totals disagree with its run totals is refused, naming
+  the difference.
+- Every export appends actor, period, format and row count to the audit log.
+- Export requires its own permission.
+
+**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
+
+---
+
+### CW-045 · ภ.ง.ด.1 monthly withholding filing
+`P1` · payroll · **M** · blocked by CW-044 · parent CW-004
+
+Pick a month, download a file in the Revenue Department's text layout, ready to
+submit. Today the figures are right and get re-keyed into whatever files them.
+
+Rounding is where this goes wrong quietly, so it is tested against the
+Department's rules rather than left to the language's defaults.
+
+**Acceptance**
+- The seeded demo company's export matches hand-computed totals line by line.
+- Field widths, ordering and padding match the published specification.
+- Rounding has tests at the boundaries.
+- A period that does not reconcile produces CW-044's error, not a file.
+
+**Files** `backend/src/modules/payroll/`, `docs/payroll-thailand.md`
+
+---
+
+### CW-046 · ภ.ง.ด.1ก annual withholding summary
+`P1` · payroll · **S** · blocked by CW-045 · parent CW-004
+
+The year's monthly filings added up — same aggregation, same rounding,
+different layout.
+
+**Acceptance**
+- The annual export equals the sum of the twelve monthly exports, asserted by a
+  test rather than by inspection.
+- An employee who joined or left mid-year appears with the months they were paid.
+- A year containing a month that does not reconcile is refused, naming it.
+
+**Files** `backend/src/modules/payroll/`
+
+---
+
+### CW-047 · 50 ทวิ withholding certificates
+`P1` · payroll · documents · **M** · blocked by CW-046 · parent CW-004
+
+Every employee's annual withholding certificate as a PDF — what they need to
+file their own return, and what the employer is required to issue. The
+certificate renderer from CW-008 already handles Thai text, letterhead and a
+signature block, so this is a template over it.
+
+**Acceptance**
+- Each certificate's figures match that employee's line in the ภ.ง.ด.1ก export.
+- Thai text renders with no tofu boxes.
+- An employee fetches their own and nobody else's; issuing for others needs the
+  document-issuing permission.
+- Re-issuing supersedes rather than overwrites, and both are audited.
+
+**Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`
+
+---
+
+### CW-048 · ประกันสังคม monthly filing (สปส. 1-10)
+`P1` · payroll · **M** · blocked by CW-044
+
+Payroll computes both halves of the มาตรา 33 contribution and stores them on
+every payslip. There is no way to get them out.
+
+Runs alongside the ภ.ง.ด. chain rather than after it — it shares the export seam
+and nothing else.
+
+**Acceptance**
+- The seeded demo company's export matches hand-computed employee and employer
+  totals.
+- The contribution ceiling is applied per employee per month, tested at the
+  boundary.
+- An employee with no social security number is reported as an error naming
+  them, not silently omitted or exported blank.
+
+**Files** `backend/src/modules/payroll/`
+
+---
+
 ## P2 — worth doing
 
 ### CW-012 · Expense claims on mobile
@@ -390,7 +506,7 @@ paraphrased queries retrieve the right document, measured against a fixture set.
 ---
 
 ### CW-019 · Bank payment file export
-`P3` · payroll · **M**
+`P1` · payroll · **M** · blocked by CW-044
 
 A `PAID` run records that people were paid; the transfer itself is manual.
 Thai banks each take their own fixed-width or CSV format.
