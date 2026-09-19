@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { isoDate, todayIso } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Roster, Shift, WorkSchedule } from '@/types/api';
@@ -23,14 +24,15 @@ import type { Roster, Shift, WorkSchedule } from '@/types/api';
 type Tab = 'roster' | 'shifts' | 'schedules';
 type NamedRef = { id: string; name: string };
 
+// `key` is an English weekday abbreviation, translated at render.
 const WEEKDAYS = [
-  { n: 1, label: 'จ' },
-  { n: 2, label: 'อ' },
-  { n: 3, label: 'พ' },
-  { n: 4, label: 'พฤ' },
-  { n: 5, label: 'ศ' },
-  { n: 6, label: 'ส' },
-  { n: 7, label: 'อา' },
+  { n: 1, key: 'Mon' },
+  { n: 2, key: 'Tue' },
+  { n: 3, key: 'Wed' },
+  { n: 4, key: 'Thu' },
+  { n: 5, key: 'Fri' },
+  { n: 6, key: 'Sat' },
+  { n: 7, key: 'Sun' },
 ];
 
 /** ISO weekday (1=Mon…7=Sun) of a `YYYY-MM-DD` string, read in UTC. */
@@ -46,26 +48,29 @@ function errorMessage(error: unknown, fallback: string): string {
 export default function RosterPage() {
   const [tab, setTab] = useState<Tab>('roster');
   const canManage = useAuthStore((s) => s.can)(P.SHIFT_MANAGE);
+  const t = useT();
 
   return (
     <div className="page">
       <PageHeader
-        title="กะและตารางเวร"
-        description="กำหนดกะ ตารางเวลาทำงานรายสัปดาห์ และมอบหมายให้พนักงาน — ค่าที่ตั้งที่นี่คือสิ่งที่ระบบใช้คิดการมาสาย"
+        title={t('Shifts & roster')}
+        description={t(
+          'Define shifts, weekly schedules and assignments — what you set here is what the system uses to judge lateness',
+        )}
       />
 
       <div className="row" role="tablist" style={{ gap: 8 }}>
         <Button variant={tab === 'roster' ? 'primary' : 'ghost'} onClick={() => setTab('roster')}>
-          ตารางเวร
+          {t('Roster')}
         </Button>
         <Button variant={tab === 'shifts' ? 'primary' : 'ghost'} onClick={() => setTab('shifts')}>
-          กะ
+          {t('Shifts')}
         </Button>
         <Button
           variant={tab === 'schedules' ? 'primary' : 'ghost'}
           onClick={() => setTab('schedules')}
         >
-          ตารางเวลา
+          {t('Schedules')}
         </Button>
       </div>
 
@@ -80,6 +85,7 @@ export default function RosterPage() {
 
 function ShiftsTab({ canManage }: { canManage: boolean }) {
   const queryClient = useQueryClient();
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const empty = { code: '', name: '', startTime: '09:00', endTime: '18:00', graceInMinutes: 5 };
   const [form, setForm] = useState(empty);
@@ -117,44 +123,44 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
       {canManage && (
         <div className="row">
           <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-            + เพิ่มกะ
+            + {t('Add shift')}
           </Button>
         </div>
       )}
 
       {creating && (
-        <Card title="เพิ่มกะใหม่">
+        <Card title={t('New shift')}>
           <div className="stack">
             <div className="toolbar">
-              <Field label="รหัสกะ">
+              <Field label={t('Shift code')}>
                 <Input
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   placeholder="DAY"
                 />
               </Field>
-              <Field label="ชื่อกะ">
+              <Field label={t('Shift name')}>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="กะกลางวัน"
+                  placeholder={t('Day shift')}
                 />
               </Field>
-              <Field label="เข้างาน">
+              <Field label={t('Start time')}>
                 <Input
                   type="time"
                   value={form.startTime}
                   onChange={(e) => setForm({ ...form, startTime: e.target.value })}
                 />
               </Field>
-              <Field label="เลิกงาน">
+              <Field label={t('End time')}>
                 <Input
                   type="time"
                   value={form.endTime}
                   onChange={(e) => setForm({ ...form, endTime: e.target.value })}
                 />
               </Field>
-              <Field label="ผ่อนผันสาย (นาที)">
+              <Field label={t('Grace (minutes)')}>
                 <Input
                   type="number"
                   min={0}
@@ -172,15 +178,15 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
                 disabled={!form.code.trim() || !form.name.trim()}
                 onClick={() => create.mutate()}
               >
-                บันทึก
+                {t('Save')}
               </Button>
               <Button variant="ghost" onClick={() => setCreating(false)}>
-                ยกเลิก
+                {t('Cancel')}
               </Button>
             </div>
             {create.isError && (
               <div className="alert alert--danger" role="alert">
-                {errorMessage(create.error, 'บันทึกไม่สำเร็จ')}
+                {errorMessage(create.error, t('Could not save'))}
               </div>
             )}
           </div>
@@ -197,10 +203,10 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>รหัส</th>
-                  <th>ชื่อกะ</th>
-                  <th>เวลา</th>
-                  <th className="num">ผ่อนผันสาย</th>
+                  <th>{t('Code')}</th>
+                  <th>{t('Shift name')}</th>
+                  <th>{t('Time')}</th>
+                  <th className="num">{t('Grace')}</th>
                   {canManage && <th />}
                 </tr>
               </thead>
@@ -213,7 +219,9 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
                       {shift.startTime}–{shift.endTime}
                       {shift.crossesMidnight && <span className="subtle"> (+1)</span>}
                     </td>
-                    <td className="num">{shift.graceInMinutes} น.</td>
+                    <td className="num">
+                      {shift.graceInMinutes} {t('min')}
+                    </td>
                     {canManage && (
                       <td>
                         <Button
@@ -222,7 +230,7 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
                           loading={deactivate.isPending && deactivate.variables === shift.id}
                           onClick={() => deactivate.mutate(shift.id)}
                         >
-                          ปิดใช้งาน
+                          {t('Deactivate')}
                         </Button>
                       </td>
                     )}
@@ -234,8 +242,8 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
         ) : (
           <EmptyState
             icon="◷"
-            title="ยังไม่มีกะ"
-            description="เพิ่มกะเพื่อกำหนดเวลาเข้า-ออกงานและการคิดมาสาย"
+            title={t('No shifts yet')}
+            description={t('Add a shift to set clock times and lateness')}
           />
         )}
       </Card>
@@ -247,6 +255,7 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
 
 function SchedulesTab({ canManage }: { canManage: boolean }) {
   const queryClient = useQueryClient();
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const empty = { code: '', name: '', workingDays: [1, 2, 3, 4, 5], defaultShiftId: '' };
   const [form, setForm] = useState<{
@@ -300,35 +309,35 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
       {canManage && (
         <div className="row">
           <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-            + เพิ่มตารางเวลา
+            + {t('Add schedule')}
           </Button>
         </div>
       )}
 
       {creating && (
-        <Card title="เพิ่มตารางเวลารายสัปดาห์">
+        <Card title={t('New weekly schedule')}>
           <div className="stack">
             <div className="toolbar">
-              <Field label="รหัส">
+              <Field label={t('Code')}>
                 <Input
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   placeholder="MON_FRI"
                 />
               </Field>
-              <Field label="ชื่อตาราง">
+              <Field label={t('Schedule name')}>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="จันทร์–ศุกร์"
+                  placeholder={t('Monday–Friday')}
                 />
               </Field>
-              <Field label="กะเริ่มต้น">
+              <Field label={t('Default shift')}>
                 <Select
                   value={form.defaultShiftId}
                   onChange={(e) => setForm({ ...form, defaultShiftId: e.target.value })}
                 >
-                  <option value="">— ไม่ระบุ —</option>
+                  <option value="">{t('— None —')}</option>
                   {(shifts.data ?? []).map((shift) => (
                     <option key={shift.id} value={shift.id}>
                       {shift.name} ({shift.startTime}–{shift.endTime})
@@ -337,7 +346,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
                 </Select>
               </Field>
             </div>
-            <Field label="วันทำงาน">
+            <Field label={t('Working days')}>
               <div className="row" style={{ gap: 6 }}>
                 {WEEKDAYS.map((day) => (
                   <Button
@@ -346,7 +355,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
                     variant={form.workingDays.includes(day.n) ? 'primary' : 'ghost'}
                     onClick={() => toggleDay(day.n)}
                   >
-                    {day.label}
+                    {t(day.key)}
                   </Button>
                 ))}
               </div>
@@ -358,15 +367,15 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
                 disabled={!form.code.trim() || !form.name.trim() || form.workingDays.length === 0}
                 onClick={() => create.mutate()}
               >
-                บันทึก
+                {t('Save')}
               </Button>
               <Button variant="ghost" onClick={() => setCreating(false)}>
-                ยกเลิก
+                {t('Cancel')}
               </Button>
             </div>
             {create.isError && (
               <div className="alert alert--danger" role="alert">
-                {errorMessage(create.error, 'บันทึกไม่สำเร็จ')}
+                {errorMessage(create.error, t('Could not save'))}
               </div>
             )}
           </div>
@@ -383,10 +392,10 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>รหัส</th>
-                  <th>ชื่อตาราง</th>
-                  <th>วันทำงาน</th>
-                  <th>กะเริ่มต้น</th>
+                  <th>{t('Code')}</th>
+                  <th>{t('Schedule name')}</th>
+                  <th>{t('Working days')}</th>
+                  <th>{t('Default shift')}</th>
                   {canManage && <th />}
                 </tr>
               </thead>
@@ -397,7 +406,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
                     <td style={{ fontWeight: 500 }}>{schedule.name}</td>
                     <td>
                       {WEEKDAYS.filter((d) => schedule.workingDays.includes(d.n))
-                        .map((d) => d.label)
+                        .map((d) => t(d.key))
                         .join(' ')}
                     </td>
                     <td>{schedule.defaultShift?.name ?? '—'}</td>
@@ -409,7 +418,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
                           loading={deactivate.isPending && deactivate.variables === schedule.id}
                           onClick={() => deactivate.mutate(schedule.id)}
                         >
-                          ปิดใช้งาน
+                          {t('Deactivate')}
                         </Button>
                       </td>
                     )}
@@ -421,8 +430,8 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
         ) : (
           <EmptyState
             icon="▦"
-            title="ยังไม่มีตารางเวลา"
-            description="สร้างตารางรายสัปดาห์แล้วมอบหมายให้พนักงานในแท็บ “ตารางเวร”"
+            title={t('No schedules yet')}
+            description={t('Create a weekly schedule, then assign it to employees on the Roster tab')}
           />
         )}
       </Card>
@@ -434,6 +443,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
 
 function RosterTab({ canManage }: { canManage: boolean }) {
   const queryClient = useQueryClient();
+  const t = useT();
   const [from, setFrom] = useState(todayIso());
   const [to, setTo] = useState(isoDate(addDays(new Date(), 13)));
   const [departmentId, setDepartmentId] = useState('');
@@ -486,15 +496,15 @@ function RosterTab({ canManage }: { canManage: boolean }) {
     <div className="stack">
       <Card>
         <div className="toolbar">
-          <Field label="ตั้งแต่วันที่">
+          <Field label={t('From')}>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
-          <Field label="ถึงวันที่">
+          <Field label={t('To')}>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
-          <Field label="แผนก">
+          <Field label={t('Department')}>
             <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-              <option value="">ทุกแผนก</option>
+              <option value="">{t('All departments')}</option>
               {(departments.data ?? []).map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
@@ -505,7 +515,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
           {canManage && (
             <Field label="&nbsp;">
               <Button variant="secondary" onClick={() => setAssigning((v) => !v)}>
-                มอบหมายตารางให้แผนก
+                {t('Assign a schedule to a department')}
               </Button>
             </Field>
           )}
@@ -513,15 +523,15 @@ function RosterTab({ canManage }: { canManage: boolean }) {
       </Card>
 
       {assigning && canManage && (
-        <Card title="มอบหมายตารางเวลาให้ทั้งแผนก">
+        <Card title={t('Assign a schedule to a whole department')}>
           <div className="stack">
             <div className="toolbar">
-              <Field label="ตารางเวลา">
+              <Field label={t('Schedule')}>
                 <Select
                   value={assignForm.scheduleId}
                   onChange={(e) => setAssignForm({ ...assignForm, scheduleId: e.target.value })}
                 >
-                  <option value="">— เลือกตาราง —</option>
+                  <option value="">{t('— Select a schedule —')}</option>
                   {(schedules.data ?? []).map((schedule) => (
                     <option key={schedule.id} value={schedule.id}>
                       {schedule.name}
@@ -529,12 +539,12 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                   ))}
                 </Select>
               </Field>
-              <Field label="แผนก">
+              <Field label={t('Department')}>
                 <Select
                   value={assignForm.departmentId}
                   onChange={(e) => setAssignForm({ ...assignForm, departmentId: e.target.value })}
                 >
-                  <option value="">— เลือกแผนก —</option>
+                  <option value="">{t('— Select a department —')}</option>
                   {(departments.data ?? []).map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}
@@ -542,14 +552,14 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                   ))}
                 </Select>
               </Field>
-              <Field label="เริ่มมีผล">
+              <Field label={t('Effective from')}>
                 <Input
                   type="date"
                   value={assignForm.effectiveFrom}
                   onChange={(e) => setAssignForm({ ...assignForm, effectiveFrom: e.target.value })}
                 />
               </Field>
-              <Field label="ถึง (เว้นว่าง = ไม่มีกำหนด)">
+              <Field label={t('To (blank = indefinite)')}>
                 <Input
                   type="date"
                   value={assignForm.effectiveTo}
@@ -564,20 +574,18 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                 disabled={!assignForm.scheduleId || !assignForm.departmentId}
                 onClick={() => assign.mutate()}
               >
-                มอบหมาย
+                {t('Assign')}
               </Button>
               <Button variant="ghost" onClick={() => setAssigning(false)}>
-                ยกเลิก
+                {t('Cancel')}
               </Button>
             </div>
             {assign.isError && (
               <div className="alert alert--danger" role="alert">
-                {errorMessage(assign.error, 'มอบหมายไม่สำเร็จ')}
+                {errorMessage(assign.error, t('Could not assign'))}
               </div>
             )}
-            {assign.isSuccess && (
-              <div className="alert alert--info">มอบหมายเรียบร้อยแล้ว</div>
-            )}
+            {assign.isSuccess && <div className="alert alert--info">{t('Assigned successfully')}</div>}
           </div>
         </Card>
       )}
@@ -592,12 +600,12 @@ function RosterTab({ canManage }: { canManage: boolean }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', left: 0 }}>พนักงาน</th>
+                  <th style={{ position: 'sticky', left: 0 }}>{t('Employee')}</th>
                   {dates.map((date) => (
                     <th key={date} className="num" title={date}>
                       {Number(date.slice(8, 10))}
                       <div className="subtle" style={{ fontWeight: 400 }}>
-                        {WEEKDAYS[isoWeekday(date) - 1].label}
+                        {t(WEEKDAYS[isoWeekday(date) - 1].key)}
                       </div>
                     </th>
                   ))}
@@ -627,8 +635,8 @@ function RosterTab({ canManage }: { canManage: boolean }) {
         ) : (
           <EmptyState
             icon="◷"
-            title="ไม่มีพนักงานในช่วงนี้"
-            description="เลือกช่วงวันหรือแผนก แล้วมอบหมายตารางให้พนักงานเพื่อดูตารางเวร"
+            title={t('No employees in this range')}
+            description={t('Pick a date range or department, then assign schedules to see the roster')}
           />
         )}
       </Card>
@@ -645,7 +653,8 @@ function RosterCell({
   isDayOff: boolean;
   source: 'override' | 'schedule' | 'none';
 }) {
-  if (isDayOff) return <span className="subtle">หยุด</span>;
+  const t = useT();
+  if (isDayOff) return <span className="subtle">{t('Off')}</span>;
   if (!shiftName) return <span className="subtle">—</span>;
   // An override is a deliberate one-off, so mark it apart from the routine schedule.
   return source === 'override' ? (
