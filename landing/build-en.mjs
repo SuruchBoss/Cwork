@@ -12,10 +12,10 @@
  * Every Thai string in the source must have an entry below. One that does not
  * fails the build rather than shipping a half-translated page.
  *
- * One thing the English page says that the Thai page does not: the product's
- * own interface is Thai. A Thai reader can see that from the screenshots; an
- * English reader cannot, and finding out after installing it would be the
- * page's fault.
+ * One thing the English page has to be careful about: the screenshots are all
+ * in Thai, so an English reader cannot tell from them that the product's own
+ * interface is Thai by default and switches to English (CW-016). The screens
+ * lede says so, so they learn it here rather than after installing.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -83,8 +83,8 @@ const COPY = {
 
   // ------------------------------------------------------------ screens
   'หน้าจอที่ฝ่ายบุคคลเปิดทุกวัน': 'The screens HR opens every day',
-  'ภาษาไทยทั้งระบบ วันที่แบบไทย เงินบาท และคำที่ HR ใช้จริง':
-    'The interface is Thai throughout — Thai dates, baht, and the words Thai HR teams actually use. An English locale is planned and not built yet.',
+  'ไทยและอังกฤษ สลับได้ทั้งระบบ เงินบาท และคำที่ HR ใช้จริง':
+    'Thai and English, switchable throughout — Thai by default, with baht and the words Thai HR teams actually use.',
   'ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว': 'Every leave request in one place',
   'ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย':
     'Who asked, what kind of leave, how many days — counted against your own holiday calendar. Managers approve from here.',
