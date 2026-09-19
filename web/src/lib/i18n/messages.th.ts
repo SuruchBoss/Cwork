@@ -167,4 +167,33 @@ export const thMessages: Record<string, string> = {
   'Filed via AI assistant': 'ยื่นผ่านผู้ช่วย AI',
   Unpaid: 'ไม่รับค่าจ้าง',
   'No leave requests match': 'ไม่มีคำขอลาตามเงื่อนไข',
+
+  // Attendance
+  'Explain with AI': 'อธิบายด้วย AI',
+  'Explain again': 'อธิบายอีกครั้ง',
+  'Explain the flags': 'อธิบายธงลงเวลา',
+  'Could not explain': 'อธิบายไม่สำเร็จ',
+  'Groups the records to review by location and flag type, with distances and counts, to help tell a too-tight geofence from something worth checking — every figure comes from real data':
+    'จัดกลุ่มรายการที่ต้องตรวจสอบตามสถานที่และชนิดธง พร้อมระยะห่างและจำนวน เพื่อช่วยแยกว่าเป็นเพราะตั้งค่าพื้นที่แคบไป หรือควรตรวจสอบจริง — ตัวเลขทั้งหมดมาจากข้อมูลจริง',
+  'Daily clock-in/out records, with anything that needs review':
+    'บันทึกเวลาเข้า-ออกงานรายวัน พร้อมรายการที่ต้องตรวจสอบ',
+  'Records in range': 'รายการในช่วง',
+  Late: 'มาสาย',
+  Absent: 'ขาดงาน',
+  'To review': 'ต้องตรวจสอบ',
+  'Outside the geofence or with an anomaly': 'นอกพื้นที่ หรือมีสัญญาณผิดปกติ',
+  From: 'ตั้งแต่วันที่',
+  To: 'ถึงวันที่',
+  Present: 'มาทำงาน',
+  'On leave': 'ลา',
+  Incomplete: 'ลงเวลาไม่ครบ',
+  'Extra filter': 'ตัวกรองพิเศษ',
+  'Only records to review': 'เฉพาะรายการที่ต้องตรวจสอบ',
+  Date: 'วันที่',
+  In: 'เข้า',
+  Out: 'ออก',
+  Worked: 'ทำงาน',
+  Review: 'ตรวจสอบ',
+  Locked: 'ปิดรอบแล้ว',
+  'No attendance records in this range': 'ไม่มีข้อมูลการลงเวลาในช่วงนี้',
 };

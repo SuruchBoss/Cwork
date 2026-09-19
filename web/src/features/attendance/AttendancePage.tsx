@@ -18,6 +18,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMinutes, formatTime, isoDate, todayIso } from '@/lib/format';
+import { useT } from '@/lib/i18n/useT';
 import { anomalyFlagLabels, attendanceStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -38,6 +39,7 @@ interface FlagExplanation {
  * explains exactly the date window the table is showing.
  */
 function FlagExplanationPanel({ from, to }: { from: string; to: string }) {
+  const t = useT();
   const status = useQuery({
     queryKey: ['assistant', 'status'],
     queryFn: () => api.get<{ enabled: boolean }>('/assistant/status'),
@@ -53,7 +55,7 @@ function FlagExplanationPanel({ from, to }: { from: string; to: string }) {
 
   return (
     <Card
-      title="อธิบายด้วย AI"
+      title={t('Explain with AI')}
       actions={
         <Button
           variant="secondary"
@@ -61,20 +63,21 @@ function FlagExplanationPanel({ from, to }: { from: string; to: string }) {
           loading={explain.isPending}
           onClick={() => explain.mutate()}
         >
-          {explain.data ? 'อธิบายอีกครั้ง' : 'อธิบายธงลงเวลา'}
+          {explain.data ? t('Explain again') : t('Explain the flags')}
         </Button>
       }
     >
       {explain.isError ? (
         <div className="alert alert--danger" role="alert">
-          {explain.error instanceof Error ? explain.error.message : 'อธิบายไม่สำเร็จ'}
+          {explain.error instanceof Error ? explain.error.message : t('Could not explain')}
         </div>
       ) : explain.data ? (
         <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{explain.data.reply}</p>
       ) : (
         <p className="subtle" style={{ margin: 0 }}>
-          จัดกลุ่มรายการที่ต้องตรวจสอบตามสถานที่และชนิดธง พร้อมระยะห่างและจำนวน
-          เพื่อช่วยแยกว่าเป็นเพราะตั้งค่าพื้นที่แคบไป หรือควรตรวจสอบจริง — ตัวเลขทั้งหมดมาจากข้อมูลจริง
+          {t(
+            'Groups the records to review by location and flag type, with distances and counts, to help tell a too-tight geofence from something worth checking — every figure comes from real data',
+          )}
         </p>
       )}
     </Card>
@@ -82,6 +85,7 @@ function FlagExplanationPanel({ from, to }: { from: string; to: string }) {
 }
 
 export default function AttendancePage() {
+  const t = useT();
   const [from, setFrom] = useState(isoDate(subDays(new Date(), 6)));
   const [to, setTo] = useState(todayIso());
   const [status, setStatus] = useState('');
@@ -121,47 +125,47 @@ export default function AttendancePage() {
   return (
     <div className="page">
       <PageHeader
-        title="ลงเวลาทำงาน"
-        description="บันทึกเวลาเข้า-ออกงานรายวัน พร้อมรายการที่ต้องตรวจสอบ"
+        title={t('Attendance')}
+        description={t('Daily clock-in/out records, with anything that needs review')}
       />
 
       <div className="grid grid--4">
-        <Stat label="รายการในช่วง" value={rows.length} />
-        <Stat label="มาสาย" value={summary.late} />
-        <Stat label="ขาดงาน" value={summary.absent} />
+        <Stat label={t('Records in range')} value={rows.length} />
+        <Stat label={t('Late')} value={summary.late} />
+        <Stat label={t('Absent')} value={summary.absent} />
         <Stat
-          label="ต้องตรวจสอบ"
+          label={t('To review')}
           value={summary.flagged}
-          hint="นอกพื้นที่ หรือมีสัญญาณผิดปกติ"
+          hint={t('Outside the geofence or with an anomaly')}
         />
       </div>
 
       <Card>
         <div className="toolbar">
-          <Field label="ตั้งแต่วันที่">
+          <Field label={t('From')}>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
-          <Field label="ถึงวันที่">
+          <Field label={t('To')}>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
-          <Field label="สถานะ">
+          <Field label={t('Status')}>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">ทั้งหมด</option>
-              <option value="PRESENT">มาทำงาน</option>
-              <option value="LATE">มาสาย</option>
-              <option value="ABSENT">ขาดงาน</option>
-              <option value="ON_LEAVE">ลา</option>
-              <option value="INCOMPLETE">ลงเวลาไม่ครบ</option>
+              <option value="">{t('All')}</option>
+              <option value="PRESENT">{t('Present')}</option>
+              <option value="LATE">{t('Late')}</option>
+              <option value="ABSENT">{t('Absent')}</option>
+              <option value="ON_LEAVE">{t('On leave')}</option>
+              <option value="INCOMPLETE">{t('Incomplete')}</option>
             </Select>
           </Field>
-          <Field label="ตัวกรองพิเศษ">
+          <Field label={t('Extra filter')}>
             <label className="row" style={{ gap: 6, paddingTop: 8 }}>
               <input
                 type="checkbox"
                 checked={anomaliesOnly}
                 onChange={(e) => setAnomaliesOnly(e.target.checked)}
               />
-              <span>เฉพาะรายการที่ต้องตรวจสอบ</span>
+              <span>{t('Only records to review')}</span>
             </label>
           </Field>
         </div>
@@ -179,14 +183,14 @@ export default function AttendancePage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>วันที่</th>
-                  <th>พนักงาน</th>
-                  <th>เข้า</th>
-                  <th>ออก</th>
-                  <th className="num">ทำงาน</th>
-                  <th className="num">สาย</th>
-                  <th>สถานะ</th>
-                  <th>ตรวจสอบ</th>
+                  <th>{t('Date')}</th>
+                  <th>{t('Employee')}</th>
+                  <th>{t('In')}</th>
+                  <th>{t('Out')}</th>
+                  <th className="num">{t('Worked')}</th>
+                  <th className="num">{t('Late')}</th>
+                  <th>{t('Status')}</th>
+                  <th>{t('Review')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +208,9 @@ export default function AttendancePage() {
                     <td className="num">{formatMinutes(record.workedMinutes)}</td>
                     <td className="num">
                       {record.lateMinutes > 0 ? (
-                        <span style={{ color: 'var(--danger)' }}>{record.lateMinutes} น.</span>
+                        <span style={{ color: 'var(--danger)' }}>
+                          {record.lateMinutes} {t('min')}
+                        </span>
                       ) : (
                         '—'
                       )}
@@ -221,7 +227,7 @@ export default function AttendancePage() {
                             {anomalyFlagLabels[flag] ?? flag}
                           </Badge>
                         ))}
-                        {record.lockedAt && <Badge tone="neutral">ปิดรอบแล้ว</Badge>}
+                        {record.lockedAt && <Badge tone="neutral">{t('Locked')}</Badge>}
                       </div>
                     </td>
                   </tr>
@@ -230,7 +236,7 @@ export default function AttendancePage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="◔" title="ไม่มีข้อมูลการลงเวลาในช่วงนี้" />
+          <EmptyState icon="◔" title={t('No attendance records in this range')} />
         )}
       </Card>
     </div>
