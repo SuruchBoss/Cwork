@@ -44,7 +44,7 @@ severity; this is the sequence work is actually taken in.
 | **2** | The pilot can run | CW-025 |
 | **3** | Payroll can file and pay · the app is complete | CW-044 → CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
-| **E** | Ecosystem — runs alongside, does not displace | CW-049 · CW-052 · CW-050 |
+| **E** | Ecosystem — runs alongside, does not displace | CW-049 · CW-052 · CW-050 · CW-051 |
 
 **Phase E added 2026-09-25.** Cwork is the system of record for people and
 labour cost in an ecosystem with PaynEat POS and PaynEat ERP (the ERP's
@@ -56,11 +56,7 @@ in [spec.md § Agreed direction](./spec.md#agreed-direction).
 
 The labour-data contract the ERP will consume is drafted in
 [labour-data-contract.md](./labour-data-contract.md) and is design-only.
-**CW-051 is reserved for implementing it** and is deliberately not written yet:
-the draft names three decisions — the minimum group size below which a figure is
-suppressed, whether cost centres map to locations explicitly or by equality, and
-how the events are delivered — and a ticket written before those are settled
-would be a guess with acceptance criteria attached.
+All of its decisions were settled on 2026-09-25, so **CW-051 implements it**.
 
 **Phase 3 was re-aimed on 2026-09-19.** The original plan put the tax filings
 last, reasoning that with no real company there was nobody to file for. That
@@ -460,6 +456,49 @@ Thai README and anything the pass missed.)*
 Cwork needs another system to be useful.
 
 **Files** `README.md`, `README.th.md`
+
+---
+
+### CW-051 · Publish labour aggregates to the ecosystem
+`P3` · payroll · attendance · **L** · phase E
+
+Implements [labour-data-contract.md](./labour-data-contract.md), whose every
+decision was settled on 2026-09-25. Read it first; this ticket does not restate
+it.
+
+**Nothing is waiting on this.** The consuming ERP feature is Enterprise-edition
+work scheduled after ERP v1. It is written now because the decisions are fresh,
+not because there is a date.
+
+**Scope**
+- A `costCentre → locationCode` mapping, maintained in Cwork, many-to-one.
+- `labour.cost.period_closed`, emitted when a payroll run closes; and
+  `labour.hours.day_locked`, emitted when attendance for a day is locked.
+- Suppression at `LABOUR_MIN_GROUP` (5), merging into `UNALLOCATED`, pulling the
+  next-smallest group in when that bucket would come from fewer than two.
+- Revisions: `revision`, `previousRevision`, and **the revision inside the
+  idempotency key** — without it a restatement is discarded as a duplicate by
+  the mechanism meant to make delivery safe.
+- Emission through the existing outbox (CW-006), to a consumer holding a
+  scoped, revocable machine credential whose every call is audited.
+- A replay endpoint by period, not a cursor: these aggregates are recomputed
+  from stored payroll and attendance, so replay is idempotent and cheap.
+- Versioned `labour-data/1.0`, independently of Cwork's 0.x.
+
+**Acceptance**
+- **No employee identity and no individual pay appears in any emission** — a
+  test puts distinctive names, ids and salaries in the fixture and asserts none
+  of them reaches an event.
+- A cost centre of four people is suppressed, and the totals still reconcile:
+  published plus `UNALLOCATED` equals the period.
+- `UNALLOCATED` never represents a single group.
+- Re-closing a period emits revision 2 carrying full figures, and a consumer
+  that never saw revision 1 can still use it as an opening position.
+- An unmapped cost centre is emitted with `locationCode: null`, not dropped.
+- Replaying a period twice changes nothing on the consumer's side.
+
+**Files** `backend/src/modules/payroll/`, `backend/src/modules/attendance/`,
+`backend/src/core/outbox/`, `backend/src/modules/organization/`
 
 ---
 

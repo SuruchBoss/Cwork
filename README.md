@@ -371,6 +371,14 @@ No system reads another's database; they integrate through versioned APIs and
 events. A site has the same location code in all of them
 ([ADR-0006](./docs/adr/0006-location-code.md)).
 
+The ERP has a free edition and a paid one; the feature that will consume Cwork's
+labour aggregates is in the paid one. **Cwork is entirely Apache 2.0 and stays
+that way** — that split belongs to the ERP. Worth knowing before you contribute
+rather than after: Apache 2.0 has always allowed anyone, the maintainer
+included, to build a commercial product on this, and the
+[labour data contract](./docs/labour-data-contract.md) is a documented public
+interface any other consumer may implement against.
+
 None of this is a dependency. **Installing Cwork on its own gives you the whole
 product**, and every convention adopted for the ecosystem has to earn its place
 in a standalone install first — the reasoning is in
