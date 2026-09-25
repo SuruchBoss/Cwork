@@ -55,8 +55,12 @@ every ticket here is held to — it must make sense for a standalone install —
 in [spec.md § Agreed direction](./spec.md#agreed-direction).
 
 The labour-data contract the ERP will consume is drafted in
-[labour-data-contract.md](./labour-data-contract.md) and is design-only; it
-becomes tickets once the owner settles the three decisions it names.
+[labour-data-contract.md](./labour-data-contract.md) and is design-only.
+**CW-051 is reserved for implementing it** and is deliberately not written yet:
+the draft names three decisions — the minimum group size below which a figure is
+suppressed, whether cost centres map to locations explicitly or by equality, and
+how the events are delivered — and a ticket written before those are settled
+would be a guess with acceptance criteria attached.
 
 **Phase 3 was re-aimed on 2026-09-19.** The original plan put the tax filings
 last, reasoning that with no real company there was nobody to file for. That
