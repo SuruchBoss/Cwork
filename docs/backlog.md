@@ -614,17 +614,24 @@ and seeding. The README's screenshots help, but nobody can try an approval flow
 from a picture — and the assistant, the thing that distinguishes this from other
 open-source HR systems, is off by default.
 
-**Blocked on a decision:** who pays for the demo's LLM usage. Asking visitors for
-their own API key is not an option — it trains people to paste credentials into
-unfamiliar sites. If no budget is agreed, ship the demo with the assistant off
-and a short screen recording instead.
+**Decided 2026-09-25: no budget for the demo's LLM usage, so the assistant is
+off in the demo.** Asking visitors for their own API key was never an option —
+it trains people to paste credentials into unfamiliar sites, and would make this
+project the holder of other people's keys. The recorded walkthrough, already
+shipped in Thai and English, is what shows the assistant.
+
+**This unblocks the ticket rather than ending it.** The budget question was
+about the model, not about whether a demo exists, and a demo with the assistant
+off is still the only place someone can approve a leave request without
+installing anything. Its remaining cost is a small host, which a free tier
+covers for a seeded database that resets hourly.
 
 **Scope**
 - A hosted instance reset hourly, writable so approval flows can be tried.
 - Sign-in as employee, manager or HR in one click.
-- If the assistant is on: cheapest model, a hard spending cap at the provider,
-  and per-IP rate limiting on the assistant routes — the existing per-user caps
-  do nothing when everyone shares a demo account.
+- The assistant is off, as in any default install, and CW-027 already hides it
+  — so the demo shows what someone would actually get.
+- Link the recorded walkthrough from the demo, for the assistant.
 
 **Acceptance** Someone with no local setup can approve a leave request within a
 minute of opening the link, and no single visitor can exceed the spending cap.

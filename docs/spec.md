@@ -188,7 +188,6 @@ Recorded because they are unanswered, not because they are unimportant.
 | | |
 |---|---|
 | How long may a punch sit offline before it needs confirming? | 12 hours is a placeholder. The pilot's flag rate decides it. |
-| Who pays for the AI in a public demo? | Unresolved. If nothing is decided, the demo ships with the assistant off and a screen recording in its place (CW-031). |
 | Who reviews the Thai tax and social-security rules? | Nobody yet (CW-030). |
 | Keep or delete `AttendancePunch.selfieFileId`? | Proposed: delete it (CW-033). |
 
