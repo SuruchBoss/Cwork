@@ -36,6 +36,7 @@ that case, so nothing should depend on it.
 | Benefits, expense reimbursement | Procurement, general ledger |
 | Performance: review cycles, weighted KPIs, calibration | Compensation-planning modelling |
 | An HR assistant that answers from your own policy documents | A general-purpose chatbot |
+| Labour aggregates published to an ecosystem consumer | Anything that identifies a person or their pay to another system |
 
 ### Actors
 
@@ -157,6 +158,23 @@ Two things follow. Vendor-shaped output stays behind a switch — logs carry pla
 `labels` unless `LOG_FORMAT=gcp` says otherwise — and **anything Cwork publishes
 for another system is versioned on its own**, not on Cwork's 0.x, because a
 consumer that breaks is somebody else's outage.
+
+#### What that came to, in practice
+
+Settled with the ERP on 2026-09-25. Recorded here because an agreement nobody
+wrote down is a disagreement waiting to happen, and because a contributor should
+be able to see the whole of Cwork's outward surface in one place.
+
+| | |
+|---|---|
+| **Location code** | A work location's code is the ecosystem's location code: a fixed format, correctable until first use, superseded rather than renamed afterwards ([ADR-0006](./adr/0006-location-code.md)). "First use" has a Cwork-side meaning — a punch, a shift assignment, an export that left the system — because the ERP's does not apply here. It is a better key for Cwork's own exports regardless of who else reads it, which is the test every row in this table had to pass. |
+| **Telemetry** | Cwork conforms to the ecosystem's telemetry contract v1.1 (CW-050): string `severity`, a `labels` object, the five metrics, and nothing from its "never in logs" list — which matters more here than anywhere else in the ecosystem, since Cwork holds the salaries and the national IDs. Cwork's objection to v1 was accepted upstream: labels are plain by default and only take Google Cloud's key names under `LOG_FORMAT=gcp`. |
+| **Labour data** | Two aggregates, no employee identity and no individual pay, ever. Suppressed below five people. Revisioned, because the consumer cannot amend what it has already posted. Versioned `labour-data/1.0`, on its own and not on Cwork's 0.x ([the contract](./labour-data-contract.md), CW-051). |
+| **Not adopted** | A shared database, reading another system's tables, or any change to payroll or tax calculation for an ecosystem's convenience. |
+| **Who consumes it** | The ERP feature that folds labour into production cost belongs to its paid edition. **Cwork is entirely Apache 2.0 and stays that way** — said plainly rather than left to be discovered, because Apache 2.0 has always permitted it and a contributor should not have to work that out for themselves. |
+
+Nothing is outstanding between the two systems, and nothing in Cwork's own
+roadmap waits on either of them.
 
 **No schema for features that do not exist.** A column nothing writes is a lie
 told to whoever reads the schema next. Kiosk devices get no `type` field until
