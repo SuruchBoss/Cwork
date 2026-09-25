@@ -354,6 +354,28 @@ to read someone else's payslip. The blast radius of a fully compromised model is
 bounded by what that user could already see.
 See [ADR-0004](./docs/adr/0004-assistant-tool-scoping.md).
 
+## Ecosystem
+
+Cwork works on its own and always will. It is also the system of record for
+people, attendance, leave and payroll in a group of projects by the same
+maintainer that touch one restaurant chain from different sides:
+
+| | |
+|---|---|
+| [PaynEat POS](https://github.com/SuruchBoss/PaynEat) | Point of sale at a branch |
+| [PaynEat ERP](https://github.com/SuruchBoss/PaynEat-ERP) | Supply side: procurement, plant, distribution, stock, cost |
+| **Cwork** | People, attendance, leave, payroll, labour cost per cost centre |
+| SherWhyve | Investigates technical incidents across the systems above. Private, no public repository. |
+
+No system reads another's database; they integrate through versioned APIs and
+events. A site has the same location code in all of them
+([ADR-0006](./docs/adr/0006-location-code.md)).
+
+None of this is a dependency. **Installing Cwork on its own gives you the whole
+product**, and every convention adopted for the ecosystem has to earn its place
+in a standalone install first — the reasoning is in
+[spec.md § Agreed direction](./docs/spec.md#agreed-direction).
+
 ## Repository layout
 
 ```

@@ -142,6 +142,22 @@ operator who cannot send that to a third party must be able to point it at a
 model they run (CW-038). This reverses an earlier recommendation to simply
 delete the unimplemented provider option.
 
+**The ecosystem is everywhere and required nowhere.** Cwork is the system of
+record for people, attendance, leave and payroll in an ecosystem that also holds
+PaynEat POS and PaynEat ERP (the ERP's ADR-0011). Anything adopted for that
+reason must make sense for a Cwork installed on its own: **someone running it
+with no ERP anywhere near them must not be able to tell the difference.** A
+location code format is worth having because a mutable key is a bad key
+([ADR-0006](./adr/0006-location-code.md)); structured logs and `/metrics` are
+worth having because an HRIS nobody can debug is an HRIS nobody should run. If a
+proposal only makes sense because another system asked for it, it belongs in
+that system.
+
+Two things follow. Vendor-shaped output stays behind a switch — logs carry plain
+`labels` unless `LOG_FORMAT=gcp` says otherwise — and **anything Cwork publishes
+for another system is versioned on its own**, not on Cwork's 0.x, because a
+consumer that breaks is somebody else's outage.
+
 **No schema for features that do not exist.** A column nothing writes is a lie
 told to whoever reads the schema next. Kiosk devices get no `type` field until
 kiosk devices are built, and the unused anti-fraud columns are removed rather

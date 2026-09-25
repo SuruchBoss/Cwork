@@ -44,6 +44,19 @@ severity; this is the sequence work is actually taken in.
 | **2** | The pilot can run | CW-025 |
 | **3** | Payroll can file and pay · the app is complete | CW-044 → CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
+| **E** | Ecosystem — runs alongside, does not displace | CW-049 · CW-052 · CW-050 |
+
+**Phase E added 2026-09-25.** Cwork is the system of record for people and
+labour cost in an ecosystem with PaynEat POS and PaynEat ERP (the ERP's
+ADR-0011). It is a lane rather than a phase because nothing in the ERP's first
+release waits on Cwork, and the filings in phase 3 have people waiting on them
+every day. CW-050 in particular is sequenced **after CW-044**. The principle
+every ticket here is held to — it must make sense for a standalone install — is
+in [spec.md § Agreed direction](./spec.md#agreed-direction).
+
+The labour-data contract the ERP will consume is drafted in
+[labour-data-contract.md](./labour-data-contract.md) and is design-only; it
+becomes tickets once the owner settles the three decisions it names.
 
 **Phase 3 was re-aimed on 2026-09-19.** The original plan put the tax filings
 last, reasoning that with no real company there was nobody to file for. That
@@ -347,6 +360,102 @@ and nothing else.
   them, not silently omitted or exported blank.
 
 **Files** `backend/src/modules/payroll/`
+
+---
+
+### CW-049 · A work location's code becomes an identifier
+`P2` · organization · **M** · phase E
+
+`WorkLocation.code` is free text that anyone can edit. That is fine while
+nothing refers to a location from outside, and wrong the moment anything does —
+including Cwork's own payroll exports, which will carry a location and cannot be
+reconciled if last month's key has since been renamed.
+
+Adopt the ecosystem's rule, recorded in
+[ADR-0006](./adr/0006-location-code.md): `^[A-Z0-9][A-Z0-9-]{1,31}$`,
+correctable until the location is first used, fixed afterwards, and replaced by
+creating a new location with a *superseded by* link.
+
+"First used" in Cwork means any of: a punch recorded against it, a shift or
+schedule assigned to it, or its appearance in an export that left the system.
+
+**Scope**
+- Validate the format on create and update.
+- Enforce the mutability rule; a correction before first use is ordinary editing.
+- Supersede: new location, old one deactivated and pointing at it, **history
+  intact** — attendance is append-only and a renamed site must not rewrite where
+  somebody worked last year.
+- A migration that **reports what it would change before changing anything**,
+  and refuses rather than mangling a code it cannot mechanically fix. The demo
+  seed is in scope.
+
+**Acceptance**
+- A code that does not match the format is refused with the pattern in the message.
+- A code is editable before first use and refused after it, and the error says which
+  of the three events fixed it.
+- A superseded location keeps every punch and schedule it ever had.
+- The migration's dry run lists affected rows and changes nothing.
+
+**Files** `backend/prisma/`, `backend/src/modules/organization/`, `web/src/features/settings/`
+
+---
+
+### CW-050 · Conform to telemetry contract v1.1
+`P2` · platform · **M** · phase E · blocked by CW-044
+
+An HRIS nobody can debug is an HRIS nobody should run, and Cwork currently
+emits a numeric pino `level` and no metrics at all. Conform to
+[telemetry contract v1.1](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/TELEMETRY.md).
+
+Read v1.1, not v1: **`event` moved from a top-level field into `labels`**, and
+`httpRequest.latency` is a duration string such as `"0.231s"`, not a number.
+Reading the older version is the likeliest way to get this wrong.
+
+**Scope**
+- String `severity` (`DEBUG`…`CRITICAL`), not a numeric level.
+- A plain `labels` object carrying `app=cwork-api`, `event`, and
+  `correlation_id` from the existing `x-request-id`. Under `LOG_FORMAT=gcp`, and
+  only then, it moves to `logging.googleapis.com/labels`, and `trace` to
+  `logging.googleapis.com/trace`. Plain is the default — Cwork proposed that
+  clause and it is in the contract.
+- Events Cwork emits: `http.request.completed`, `auth.sign_in.failed`,
+  `outbox.delivery.failed`.
+- `GET /metrics`, not public: `http_requests_total`,
+  `http_request_duration_seconds`, `auth_sign_in_failures_total`,
+  `outbox_pending_events`, `outbox_oldest_pending_age_seconds`. `route` is the
+  template (`/employees/:id`), never the concrete path.
+- **Nothing from the contract's "never in logs" list.** Cwork holds salaries,
+  national IDs and bank accounts; this matters more here than anywhere else in
+  the ecosystem. A test should assert it, not a reviewer.
+
+**Acceptance**
+- A request produces one JSON line with `severity`, `event` inside `labels`, and
+  the correlation id the caller sent.
+- `LOG_FORMAT=gcp` moves the labels and trace to the Google keys and changes
+  nothing else.
+- `/metrics` serves all five, with `route` as a template.
+- A test proves no salary, national ID, bank account, token or query string
+  reaches a log line or a metric label.
+
+**Files** `backend/src/core/http/`, `backend/src/core/config/`, `backend/src/main.ts`
+
+---
+
+### CW-052 · Say where Cwork sits in the ecosystem
+`P3` · docs · **S** · 🌱 · phase E
+
+The README describes a product with no neighbours. Add an Ecosystem section
+linking PaynEat POS and PaynEat ERP and naming SherWhyve **without a link** — it
+is private. Say plainly that none of it is a dependency and that installing
+Cwork alone gives the whole product.
+
+*(Already written into `README.md` alongside ADR-0006; this ticket covers the
+Thai README and anything the pass missed.)*
+
+**Acceptance** `README.th.md` carries the same section, and no document implies
+Cwork needs another system to be useful.
+
+**Files** `README.md`, `README.th.md`
 
 ---
 
