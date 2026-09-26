@@ -517,6 +517,42 @@ not because there is a date.
 
 ---
 
+### CW-053 · Prove the security headers are actually served
+`P2` · web · security · **S** · 🌱
+
+`a6d2c43` fixed a silent one: nginx inherits `add_header` into a `location`
+only when that location declares none of its own, so `location /assets/` and
+`location = /index.html` — each adding a `Cache-Control` — were served with no
+CSP and no `X-Frame-Options`. Every SPA deep link resolves to `index.html`
+through `try_files`, so that was the app's own HTML.
+
+The fix is right. Nothing checks that it stays right. Add a `location` tomorrow
+with any header of its own, forget the `include`, and it breaks exactly the same
+way — silently, with `security.md` still claiming the console ships a strict CSP.
+
+**Scope**
+- A CI step that runs the web image **as it ships** and requests `/`,
+  `/index.html`, `/assets/<a hashed file>` and a deep link such as
+  `/employees`, asserting the security headers on every one.
+- Exercise the built image rather than a hand-assembled nginx. Where
+  `security-headers.conf` lands is part of what broke: `a6d2c43` had to put it
+  in `/etc/nginx/` rather than `conf.d/`, which nginx would load as a standalone
+  config and reject. A test against a config assembled by hand would have missed
+  that, and it is the failure that takes the whole container down.
+- Assert the `Cache-Control` on `/assets/` too — it is the header the `include`
+  sits next to, and a careless fix could drop the thing the location exists for.
+
+**Acceptance**
+- CI fails when a `location` in `web/nginx.conf` gains an `add_header` without
+  the `include`.
+- CI fails if `security-headers.conf` stops reaching `/etc/nginx/` in the image.
+- All four paths carry the CSP and `X-Frame-Options`; `/assets/` still carries
+  its `Cache-Control`.
+
+**Files** `.github/workflows/ci.yml`, `web/`
+
+---
+
 ## P2 — worth doing
 
 ### CW-012 · Expense claims on mobile
