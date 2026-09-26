@@ -165,11 +165,19 @@ export class MfaEnrolDto {
 }
 
 export class MfaActivateDto extends MfaCodeDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Challenge token, when enrolling mid-sign-in rather than from a session. ' +
+      'The response then carries the session that sign-in produced.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2048)
   challengeToken?: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(128) deviceId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(128) deviceName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(32) platform?: string;
 }
 
 export class MfaEnrolmentResponseDto {
@@ -183,6 +191,16 @@ export class MfaEnrolmentResponseDto {
 export class MfaRecoveryCodesResponseDto {
   @ApiProperty({ type: [String], description: 'Shown once and never again' })
   recoveryCodes!: string[];
+}
+
+export class MfaActivateResponseDto extends MfaRecoveryCodesResponseDto {
+  @ApiPropertyOptional({
+    type: LoginResponseDto,
+    description:
+      'Present when the activation finished a sign-in (a challenge token was sent): ' +
+      'the session, issued for the code this request verified',
+  })
+  session?: LoginResponseDto;
 }
 
 export class MfaStatusResponseDto {

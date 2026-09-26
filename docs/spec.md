@@ -240,7 +240,7 @@ Sign-in becomes two steps for such an account. A correct password returns a
 |---|---|
 | `mfaRequired: false` | Full session — tokens and user |
 | `mfaRequired: true, mfaEnrolled: true` | Present a code at `POST /auth/mfa/verify` |
-| `mfaRequired: true, mfaEnrolled: false` | Enrol first, then `POST /auth/mfa/complete-enrolment` |
+| `mfaRequired: true, mfaEnrolled: false` | Enrol at `POST /auth/mfa/enroll`, then confirm a code at `POST /auth/mfa/activate`, which returns the session |
 
 **Requirements:**
 
@@ -251,9 +251,19 @@ Sign-in becomes two steps for such an account. A correct password returns a
    inactive until a code proves it was scanned.
 3. **A code cannot be spent twice**, even inside its own validity window.
 4. Recovery codes are single-use and stored as digests; they are shown once.
-5. A wrong code counts towards the same lockout a wrong password does.
+5. A wrong code counts towards the same lockout a wrong password does, and
+   **a correct password does not reset it.** The counter clears only when a
+   full session is issued: a challenge token is not a successful sign-in, and
+   a password presented again must not buy fresh guesses at the code.
 6. Disabling requires a current code, and is refused for an account that is
    required to have one.
+7. **A session is issued only where a code has just been verified** —
+   `POST /auth/mfa/activate` for an account finishing enrolment,
+   `POST /auth/mfa/verify` for one already enrolled. No endpoint may issue a
+   session because of what an account *is* (enrolled, required, active), only
+   because of what the request *proved*. An endpoint that checked enrolment
+   state instead of a code turned a challenge token into a session for every
+   enrolled account; see GHSA-3cgw-73cr-r8c6.
 
 ### 2.2 Authorisation
 
@@ -697,7 +707,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 335 backend, 45 web, 35 mobile. A 211-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 335 backend, 46 web, 35 mobile. A 227-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

@@ -18,6 +18,7 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 import {
   createTestApp,
   currentDemoCode,
+  seedPassword,
   waitForNextStep,
   type Api,
   type TestContext,
@@ -151,7 +152,7 @@ describe('Cwork API (e2e)', () => {
       // to reach every national ID in the organisation.
       const res = await api.post('/auth/login', undefined, {
         email: PRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
 
       expect(res.status).toBe(200);
@@ -164,7 +165,7 @@ describe('Cwork API (e2e)', () => {
     it('does not challenge an account with no privileges and no enrolment', async () => {
       const res = await api.post('/auth/login', undefined, {
         email: UNPRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
 
       expect(res.body.mfaRequired).toBe(false);
@@ -177,7 +178,7 @@ describe('Cwork API (e2e)', () => {
       // a correct password alone becomes a full session again.
       const login = await api.post('/auth/login', undefined, {
         email: PRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
 
       const res = await api.get('/employees?limit=1', login.body.challengeToken);
@@ -188,7 +189,7 @@ describe('Cwork API (e2e)', () => {
     it('rejects a wrong code and issues a session for a right one', async () => {
       const login = await api.post('/auth/login', undefined, {
         email: PRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
 
       const wrong = await api.post('/auth/mfa/verify', undefined, {
@@ -216,7 +217,7 @@ describe('Cwork API (e2e)', () => {
 
       const first = await api.post('/auth/login', undefined, {
         email: PRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
       const accepted = await api.post('/auth/mfa/verify', undefined, {
         challengeToken: first.body.challengeToken,
@@ -226,7 +227,7 @@ describe('Cwork API (e2e)', () => {
 
       const second = await api.post('/auth/login', undefined, {
         email: PRIVILEGED,
-        password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+        password: seedPassword(),
       });
       const replayed = await api.post('/auth/mfa/verify', undefined, {
         challengeToken: second.body.challengeToken,
@@ -303,7 +304,7 @@ describe('Cwork API (e2e)', () => {
 
         const first = await api.post('/auth/login', undefined, {
           email: 'dev1@cwork.example',
-          password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+          password: seedPassword(),
         });
         expect(first.body.mfaRequired).toBe(true);
 
@@ -315,7 +316,7 @@ describe('Cwork API (e2e)', () => {
 
         const second = await api.post('/auth/login', undefined, {
           email: 'dev1@cwork.example',
-          password: process.env.SEED_PASSWORD ?? 'Cwork2026!',
+          password: seedPassword(),
         });
         const reused = await api.post('/auth/mfa/verify', undefined, {
           challengeToken: second.body.challengeToken,

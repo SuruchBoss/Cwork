@@ -40,7 +40,7 @@ const COPY = {
   'เมนูหลัก': 'Main menu',
 
   // --------------------------------------------------------------- hero
-  'ใช้งานได้แล้ว · v0.3.0': 'Working today · v0.3.0',
+  'ใช้งานได้แล้ว · v0.3.1': 'Working today · v0.3.1',
   'ติดตั้งบนเครื่องของคุณเอง': 'Runs on your own server',
   'ทำตามกฎหมายแรงงานไทย': 'Built for Thai labour law',
   'งาน HR ครบทั้งบริษัท': 'All of HR, company-wide',

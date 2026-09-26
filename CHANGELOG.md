@@ -167,6 +167,36 @@ entry, tags it and publishes the notes.
   intended "no tool parameter may extend the caller's reach", rather than the
   literal "no employee id" that read as forbidding every manager-facing tool.
 
+## [0.3.1] — 2026-09-26
+
+A security release. It fixes
+[GHSA-3cgw-73cr-r8c6](https://github.com/SuruchBoss/Cwork/security/advisories/GHSA-3cgw-73cr-r8c6),
+and every installation running 0.1.0 through 0.3.0 should upgrade.
+
+### Security
+
+- **A session could be issued without a verified second-factor code.** A session
+  is now issued only in answer to a code verified in the same request.
+- **Failed second-factor attempts did not reliably lead to a lockout.** The
+  failed-attempt count was cleared as soon as the password was correct, before
+  the second factor had been checked. It is now cleared only when a sign-in
+  completes.
+- **The demo seed no longer has a default password.** `db:seed` gave every demo
+  account a password printed in the README, including the accounts it marks as
+  requiring two-factor authentication. It now takes `SEED_PASSWORD`, or
+  generates a password for the run and prints it once. On an installation that
+  was seeded without `SEED_PASSWORD`, re-run the seed with it set, or change
+  those accounts' passwords.
+
+### Removed
+
+- **`POST /auth/mfa/complete-enrolment`.** An account that has to enrol while it
+  signs in now receives its session from `POST /auth/mfa/activate`, in a new
+  `session` field beside the recovery codes: the code that switches the factor
+  on is the one that finishes the sign-in. An account that is already enrolled
+  signs in through `POST /auth/mfa/verify`, as before. The web console is
+  updated; the mobile app never called the endpoint.
+
 ## [0.3.0] — 2026-09-18
 
 Hardening and polish for opening the repository to visitors. A signing secret
@@ -492,7 +522,8 @@ this yet:
 - This code has never had a penetration test, and no independent human has read
   every line — see [How this was built](./README.md#how-this-was-built).
 
-[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.3.1
 [0.3.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.1.0

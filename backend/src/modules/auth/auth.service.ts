@@ -14,6 +14,7 @@ import type {
   ChangePasswordDto,
   LoginDto,
   LoginResponseDto,
+  MfaActivateResponseDto,
   MfaChallengeResponseDto,
   MfaVerifyDto,
   SessionUserDto,
@@ -60,11 +61,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
-        lockedUntil: user.lockedUntil.toISOString(),
-      });
-    }
+    assertNotLocked(user.lockedUntil);
 
     const valid = await this.crypto.verifyPassword(user.passwordHash, dto.password);
     if (!valid) {
@@ -76,10 +73,10 @@ export class AuthService {
       throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}`);
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
-    });
+    // The failed-attempt count is deliberately left alone here: a correct
+    // password that still owes a second factor is not a completed sign-in, and
+    // clearing it now would undo the count that wrong codes add to. It is
+    // cleared in `completeLogin`, when a session is actually issued.
 
     // A correct password is not a session when the account owes a second
     // factor. Hand back a challenge instead — an account that is *required* to
@@ -103,8 +100,12 @@ export class AuthService {
   }
 
   /**
-   * Issues the session and records the sign-in. Reached either straight from
-   * `login` or, for an account with a second factor, from `verifyMfa`.
+   * Issues the session and records the sign-in. Reached straight from `login`,
+   * or — for an account with a second factor — from `verifyMfa` or
+   * `activateMfaAndSignIn`, only after a code has been verified.
+   *
+   * This is the one place a sign-in completes, so it is the one place the
+   * failed-attempt count is cleared.
    */
   private async completeLogin(
     userId: string,
@@ -113,6 +114,11 @@ export class AuthService {
     meta: RequestMeta,
     summarySuffix = '',
   ): Promise<LoginResponseDto> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
+    });
+
     const tokens = await this.issueTokens(userId, organizationId, {
       deviceId: device.deviceId,
       deviceName: device.deviceName,
@@ -160,11 +166,7 @@ export class AuthService {
     if (!user || user.organizationId !== payload.org) {
       throw new UnauthorizedException('Sign-in has expired. Start again.');
     }
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
-        lockedUntil: user.lockedUntil.toISOString(),
-      });
-    }
+    assertNotLocked(user.lockedUntil);
     if (!user.mfaEnabled) {
       // The account still has to enrol; a code cannot exist yet.
       throw new BusinessRuleError(
@@ -183,32 +185,57 @@ export class AuthService {
       throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}`);
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
-    });
-
     return this.completeLogin(user.id, user.organizationId, dto, meta, ' with a second factor');
   }
 
   /**
-   * Finishes a sign-in for an account that had to enrol first. Only reachable
-   * with a challenge token, and only once the secret is active.
+   * Finishes a sign-in for an account that had to enrol a second factor first:
+   * activates the factor and issues the session in the same request.
+   *
+   * The session answers the code that activation has just verified — that event,
+   * not the account's enrolled *state*, is what earns it. A separate "exchange
+   * the challenge for a session once enrolled" step could not tell an account
+   * that enrolled a moment ago from one that enrolled last year, and would have
+   * to accept the challenge token alone for both. An account that was already
+   * enrolled when it signed in has a code to give, and signs in through
+   * `verifyMfa` like everyone else.
    */
-  async completeEnrolmentLogin(
+  async activateMfaAndSignIn(
     challengeToken: string,
-    device: { deviceId?: string; deviceName?: string; platform?: string },
+    dto: { code: string; deviceId?: string; deviceName?: string; platform?: string },
     meta: RequestMeta,
-  ): Promise<LoginResponseDto> {
+  ): Promise<MfaActivateResponseDto> {
     const payload = await this.mfa.verifyChallengeToken(challengeToken);
-    const requirement = await this.mfa.requirementFor(payload.sub);
-    if (!requirement.enrolled) {
+    if (payload.enrolled) {
       throw new BusinessRuleError(
-        'MFA_ENROLMENT_REQUIRED',
-        'Finish setting up two-factor authentication first.',
+        'MFA_ALREADY_ENROLLED',
+        'Two-factor authentication is already on. Sign in with a code from your app.',
       );
     }
-    return this.completeLogin(payload.sub, payload.org, device, meta, ' after MFA enrolment');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, organizationId: true, status: true, lockedUntil: true },
+    });
+    if (!user || user.organizationId !== payload.org) {
+      throw new UnauthorizedException('Sign-in has expired. Start again.');
+    }
+    assertNotLocked(user.lockedUntil);
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}`);
+    }
+
+    // Throws unless the code is right, and refuses an account already enrolled.
+    const { recoveryCodes } = await this.mfa.activate(user.id, dto.code, meta);
+
+    const session = await this.completeLogin(
+      user.id,
+      user.organizationId,
+      dto,
+      meta,
+      ' after MFA enrolment',
+    );
+    return { recoveryCodes, session };
   }
 
   /**
@@ -503,5 +530,14 @@ export class AuthService {
       tokenType: 'Bearer',
       sessionId,
     };
+  }
+}
+
+/** Refuses every step of a sign-in while the account is locked out. */
+function assertNotLocked(lockedUntil: Date | null): void {
+  if (lockedUntil && lockedUntil > new Date()) {
+    throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
+      lockedUntil: lockedUntil.toISOString(),
+    });
   }
 }

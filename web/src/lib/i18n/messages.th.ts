@@ -524,9 +524,8 @@ export const thMessages: Record<string, string> = {
     'รหัสเหล่านี้แสดงเพียงครั้งเดียว ใช้ได้ครั้งละหนึ่งรหัสเมื่อไม่มีโทรศัพท์',
   'Saved, sign in': 'บันทึกแล้ว เข้าสู่ระบบ',
   'Test accounts (seed):': 'บัญชีทดสอบ (seed):',
-  'Password:': 'รหัสผ่าน:',
-  'Admin accounts need a 2FA code — see the key in the output of':
-    'บัญชีผู้ดูแลต้องใช้รหัส 2FA — ดูคีย์ที่ผลลัพธ์ของ',
+  'The password, and the 2FA key admin accounts need, are in the output of':
+    'รหัสผ่าน และคีย์ 2FA ที่บัญชีผู้ดูแลต้องใช้ อยู่ในผลลัพธ์ของ',
   'Verification code': 'รหัสยืนยัน',
   'Could not start 2FA setup': 'ไม่สามารถเริ่มตั้งค่า 2FA ได้',
   'Set up two-step verification': 'ตั้งค่ายืนยันตัวตนสองขั้นตอน',

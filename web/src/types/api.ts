@@ -73,6 +73,16 @@ export interface MfaEnrolment {
   otpauthUri: string;
 }
 
+/**
+ * What `POST /auth/mfa/activate` returns. `session` is present when the
+ * activation finished a sign-in — the code that switched the factor on is the
+ * code that signed the account in.
+ */
+export interface MfaActivation {
+  recoveryCodes: string[];
+  session?: LoginSession;
+}
+
 export interface MfaStatus {
   required: boolean;
   enrolled: boolean;

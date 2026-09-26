@@ -68,8 +68,7 @@ Bearer token anywhere else is a 401.
 |---|---|---|
 | POST | `/auth/mfa/verify` | **public** — challenge token + code (generated or recovery) → session |
 | POST | `/auth/mfa/enroll` | session **or** challenge token; returns the secret and an `otpauth://` URI |
-| POST | `/auth/mfa/activate` | a code proves the secret was scanned; returns the recovery codes, once |
-| POST | `/auth/mfa/complete-enrolment` | **public** — challenge token → session, after enrolling |
+| POST | `/auth/mfa/activate` | a code proves the secret was scanned; returns the recovery codes, once. Sent with a challenge token it also returns `session` — enrolling mid-sign-in finishes the sign-in with the same code |
 | GET | `/auth/mfa/status` | `required`, `enrolled`, `recoveryCodesRemaining` |
 | POST | `/auth/mfa/disable` | needs a current code; refused when MFA is mandatory |
 | POST | `/auth/mfa/recovery-codes` | fresh set, invalidating the old ones |
