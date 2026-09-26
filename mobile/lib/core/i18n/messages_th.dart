@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /// Thai translations for the mobile app, keyed by the English source string
 /// (see i18n.dart). English is the key language, so this is the only catalogue:
 /// a key missing here falls back to its English text. Thai is the default, so

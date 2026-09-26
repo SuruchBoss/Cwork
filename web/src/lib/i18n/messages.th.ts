@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Thai translations, keyed by the English source string (see i18n/index.ts).
  *

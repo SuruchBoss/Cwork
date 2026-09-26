@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Permission constants, mirroring the server's `src/core/security/permissions.ts`.
  * The server is the enforcement point; these only decide what the UI offers.

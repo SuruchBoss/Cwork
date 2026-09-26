@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Employee data retention and purge (CW-015).
  *

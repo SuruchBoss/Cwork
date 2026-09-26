@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';

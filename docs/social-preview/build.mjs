@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Renders card.html to social-preview.png at exactly 1280x640 — the size GitHub
  * asks for under Settings → Social preview, and the size it then serves as

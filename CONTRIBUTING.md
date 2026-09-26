@@ -40,6 +40,7 @@ database, so you cannot end up with demo accounts sitting next to real ones.
 cd backend && npm run typecheck && npm run lint && npm test && npm run db:verify
 cd ../web  && npm run typecheck && npm run lint && npm test && npm run build
 cd ../mobile && dart format --line-length 100 lib test && flutter analyze && flutter test
+cd .. && node scripts/license-headers.mjs
 ```
 
 CI runs all of it. `flutter analyze` must be **completely clean** — infos
@@ -159,7 +160,8 @@ pre-releases, which is what the rest of the documentation says about them.
 
 ## Signing off your work
 
-Every commit needs a `Signed-off-by` line. `git commit -s` adds it:
+Every commit in a pull request from a fork needs a `Signed-off-by` line.
+`git commit -s` adds it:
 
 ```
 Signed-off-by: Somchai Jaidee <somchai@example.com>
@@ -177,8 +179,8 @@ git rebase --signoff origin/main
 git push --force-with-lease
 ```
 
-CI checks every non-merge commit in a pull request and names the ones that are
-missing it.
+CI checks every non-merge commit in a pull request from a fork and names the
+ones that are missing it.
 
 **There is no CLA**, deliberately. A contributor licence agreement is a barrier
 in front of a one-line fix, and the DCO covers the question a CLA is usually
@@ -186,6 +188,74 @@ reached for: whether the contributor had the right to contribute. The accepted
 consequence is that the licence cannot realistically be changed later — doing so
 would need every contributor's agreement — and Apache-2.0 is the answer, for
 good.
+
+## Developer Certificate of Origin (DCO)
+
+Contributions are accepted under the project's license (see [LICENSE](LICENSE) and, where a
+directory has its own, that directory's license). So that the origin of every change is clear,
+**each commit in a pull request from a fork must be signed off** under the Developer Certificate
+of Origin 1.1. CI checks it (`.github/workflows/license-check.yml`).
+
+Sign off with `git commit -s`. It adds a line with the name and email of the commit's author:
+
+```
+Signed-off-by: Your Name <you@example.com>
+```
+
+By signing off you certify the following (the full text of the DCO, from
+<https://developercertificate.org/>):
+
+```
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+```
+
+A sign-off is a statement made by a person. Automated tools and AI agents do not sign off on
+anyone's behalf; the person who submits their work does.
+
+## File headers
+
+Every source file starts with its copyright and license identifier, for example:
+
+```ts
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+```
+
+`node scripts/license-headers.mjs --fix` adds it to new files; CI fails a file without it.
+Applied database migrations are exempt, because editing one changes its recorded checksum.
 
 ## Tests
 

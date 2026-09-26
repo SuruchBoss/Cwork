@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:cwork/features/attendance/data/punch_queue.dart';
 import 'package:cwork/features/attendance/domain/attendance_models.dart';
 import 'package:flutter/services.dart';

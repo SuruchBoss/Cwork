@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import '../i18n/i18n.dart';
 
 /// A failed API call, carrying the server's stable error `code`.

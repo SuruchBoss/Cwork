@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AppLayout } from './AppLayout';

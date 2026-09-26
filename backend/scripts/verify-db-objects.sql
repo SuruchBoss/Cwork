@@ -1,3 +1,6 @@
+-- Copyright 2026 Suruch Chakrapeesirisuk
+-- SPDX-License-Identifier: Apache-2.0
+
 -- Asserts that every hand-written database object still exists.
 --
 -- Run after migrations (`npm run db:verify`). This is the guard against Prisma

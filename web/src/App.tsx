@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';

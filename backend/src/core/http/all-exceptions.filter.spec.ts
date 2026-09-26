@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { BadRequestException, HttpStatus, Logger, NotFoundException } from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 

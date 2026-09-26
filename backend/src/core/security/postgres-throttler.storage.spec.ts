@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { counterKey, toStorageRecord, type RateLimitRow } from './postgres-throttler.storage';
 
 const at = (nowMs: number, offsetMs: number): Date => new Date(nowMs + offsetMs);

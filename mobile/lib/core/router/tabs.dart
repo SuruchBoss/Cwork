@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter/material.dart';
 
 import '../../features/approvals/presentation/approvals_screen.dart';

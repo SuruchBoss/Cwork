@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';

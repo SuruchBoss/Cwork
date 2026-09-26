@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * A stand-in for Firebase Cloud Messaging's HTTP v1 API.
  *

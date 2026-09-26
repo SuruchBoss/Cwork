@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel, Prisma } from '@prisma/client';
 import { OutboxService } from '../../core/outbox/outbox.service';

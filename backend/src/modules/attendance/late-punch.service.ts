@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ApprovalEntityType, ApprovalStatus, PunchType } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';

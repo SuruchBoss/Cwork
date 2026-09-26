@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { QuestionType } from '@prisma/client';
 import { computeScorecardScore, gradeAssessment, type GradableQuestion } from './assessment-grader';
 

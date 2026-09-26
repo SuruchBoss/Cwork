@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { qk } from '@/app/query-client';

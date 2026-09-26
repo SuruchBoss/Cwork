@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { addDays, differenceInCalendarDays, format, parse, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 

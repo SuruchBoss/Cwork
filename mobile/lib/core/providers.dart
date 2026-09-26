@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'network/api_client.dart';

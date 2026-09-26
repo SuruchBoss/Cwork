@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { QuestionType } from '@prisma/client';
 import { Decimal, round2 } from '../../../core/utils/money.util';
 

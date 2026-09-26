@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addDays } from 'date-fns';
 import { useState } from 'react';

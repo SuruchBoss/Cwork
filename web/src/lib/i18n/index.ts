@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { useUiStore, type Language } from '@/stores/ui.store';
 import { thMessages } from './messages.th';
 

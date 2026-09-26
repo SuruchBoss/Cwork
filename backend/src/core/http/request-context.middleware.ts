@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';

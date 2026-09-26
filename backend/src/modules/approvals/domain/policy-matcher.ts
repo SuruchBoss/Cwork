@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Evaluates an ApprovalPolicy's `conditions` JSON against the submitted entity.
  *

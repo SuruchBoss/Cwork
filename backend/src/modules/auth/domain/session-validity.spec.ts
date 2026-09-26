@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { tokenPredatesInvalidation } from './session-validity';
 
 /** A whole-second `iat`, the way a JWT records one. */

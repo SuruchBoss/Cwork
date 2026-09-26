@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Runs scripts/verify-db-objects.sql against DATABASE_URL.
  *
