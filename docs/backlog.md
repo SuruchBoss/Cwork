@@ -19,6 +19,11 @@ authoritative for **reasoning**, which is what makes the Done table worth more
 than a list of closed issues. Whoever finishes a ticket names the commit in its
 issue; the Done entry here gets written from that.
 
+**One exception:** test counts. `npm run verify:docs` fails the build when a
+count written in prose stops matching the suites, including the ones in
+`spec.md`, so whoever changes the suites updates the counts in the same commit.
+Nothing else in these two files is covered by it.
+
 Open a ticket in either place and the other gets one to match. A ticket with no
 issue is invisible to anyone browsing the repository; an issue with no entry
 here loses its reasoning the moment it is closed.
@@ -400,12 +405,14 @@ schedule assigned to it, or its appearance in an export that left the system.
 
 ---
 
-### CW-050 · Conform to telemetry contract v1.1
+### CW-050 · Conform to telemetry contract v1.2
 `P2` · platform · **M** · phase E · blocked by CW-044
 
 An HRIS nobody can debug is an HRIS nobody should run, and Cwork currently
 emits a numeric pino `level` and no metrics at all. Conform to
-[telemetry contract v1.1](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/TELEMETRY.md).
+[telemetry contract v1.2](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/TELEMETRY.md)
+— v1.1 plus `app.log` and a metrics port of its own; the ticket was written
+against v1.1 and the contract moved while it was being built.
 
 Read v1.1, not v1: **`event` moved from a top-level field into `labels`**, and
 `httpRequest.latency` is a duration string such as `"0.231s"`, not a number.
@@ -692,6 +699,32 @@ minute of opening the link, and no single visitor can exceed the spending cap.
 ---
 
 
+
+### CW-054 · Measure the counts the gate only declares
+`P2` · platform · **S** · 🌱
+
+`npm run verify:docs` exists, in its own words, because *"counts in prose are
+the one claim nothing else checks."* It measures two of the five: domain tests
+and backend unit tests are counted by running the suites. **The web, mobile and
+e2e counts are typed into the script by hand**, and the gate checks the prose
+against the typed number — never against the suites.
+
+So it drifts exactly as it was written to prevent. The declared e2e count stood
+at 211 while main ran 224; thirteen checks landed across three tickets and CI
+stayed green throughout. It surfaced only because a security fix added three
+more and someone counted by hand.
+
+**Scope** Measure e2e the way the unit suites are measured — or have the e2e job
+assert its own total against the declared figure, and the same for web and
+mobile in their jobs. Either way, no count in the gate is a number someone has
+to remember to change.
+
+**Acceptance** Adding an e2e test without touching the declared count fails CI,
+and so does the same for web and mobile.
+
+**Files** `backend/scripts/verify-doc-counts.ts`, `.github/workflows/ci.yml`
+
+---
 
 ## P3 — nice to have
 
