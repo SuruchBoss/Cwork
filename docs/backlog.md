@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **3** | Payroll can file and pay · the app is complete | CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
+| **3** | Payroll can file and pay · the app is complete | **CW-031 first** · CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -100,11 +100,12 @@ walkthrough were built alongside them with no tickets of their own, and the
 walkthrough covers the recording CW-034 asked for and did not get. Recorded
 here so the history is not misleading about where that work came from.
 
-`CW-031` — a hosted demo — is the largest single thing that would help anyone
-evaluate this project, and it sits in phase 3 only because it is blocked on an
-unanswered question about who pays for the assistant's API usage. The recorded
-walkthrough is the fallback that ticket names, so the blocker now costs less
-than it did.
+**`CW-031` moved to the front of phase 3 on 2026-09-26.** A hosted demo is the
+largest single thing that would help anyone evaluate this project. It waited only
+on who pays for the assistant, and that was settled on 2026-09-25: nobody does,
+so the assistant is off. It will be hosted on Render. The landing page's only
+button today is a download, which asks an HR manager to install software before
+seeing any of it.
 
 ---
 
@@ -474,37 +475,86 @@ only the phone, and the recovery codes are shown once with a way to save them.
 
 
 
-### CW-031 · A public demo instance
-`P2` · project · **M**
+### CW-031 · A public demo instance, on Render
+`P2` · project · **M** · first in phase 3
 
 Evaluating Cwork means cloning it, writing an `.env`, running compose, migrating
 and seeding. The README's screenshots help, but nobody can try an approval flow
-from a picture — and the assistant, the thing that distinguishes this from other
-open-source HR systems, is off by default.
+from a picture. The landing page's only button is a download, and the people it
+is written for (HR managers and owners) cannot act on that on their own.
 
 **Decided 2026-09-25: no budget for the demo's LLM usage, so the assistant is
-off in the demo.** Asking visitors for their own API key was never an option —
-it trains people to paste credentials into unfamiliar sites, and would make this
+off in the demo.** Asking visitors for their own API key was never an option.
+It trains people to paste credentials into unfamiliar sites, and would make this
 project the holder of other people's keys. The recorded walkthrough, already
 shipped in Thai and English, is what shows the assistant.
 
-**This unblocks the ticket rather than ending it.** The budget question was
-about the model, not about whether a demo exists, and a demo with the assistant
-off is still the only place someone can approve a leave request without
-installing anything. Its remaining cost is a small host, which a free tier
-covers for a seeded database that resets hourly.
+**Decided 2026-09-26: hosted on Render, and first in phase 3.** The owner
+creates the Render account and services; everything else is in the repository,
+so the demo can be rebuilt from the repository alone and nobody has to remember
+how it was set up.
 
 **Scope**
-- A hosted instance reset hourly, writable so approval flows can be tried.
-- Sign-in as employee, manager or HR in one click.
-- The assistant is off, as in any default install, and CW-027 already hides it
-  — so the demo shows what someone would actually get.
-- Link the recorded walkthrough from the demo, for the assistant.
+- A hosted instance, writable, so an approval flow can be tried end to end.
+- Sign-in as employee, manager or HR in one click. Nobody types a password or a
+  two-factor code, and no working password appears on the page, in the
+  repository or in the landing page. The demo accounts' password is generated
+  at deploy time and never shown.
+- **Demo mode cannot be turned on by one mistaken variable.** Whatever enables
+  the one-click sign-in and the reset must refuse to run on a database holding
+  an organisation the demo seed did not create. It should refuse rather than
+  wipe, and refuse rather than open. The seed's `assertDemoDatabase` is the
+  precedent.
+- The data resets to the seed at least hourly. A banner says when the next reset
+  is, and a visitor who arrives mid-reset sees a message rather than an error.
+- Nothing a visitor does can lock the next visitor out before the reset. The
+  obvious routes are changing a demo account's password or 2FA, deactivating
+  it, revoking its sessions, changing its role, and tripping the lockout.
+- Off in the demo: the assistant (CW-027 already hides it), email and push, and
+  file uploads. Uploads are unscanned without ClamAV, and a public demo would
+  serve whatever anybody uploads to the next visitor.
+- The demo links to the recorded walkthrough, for the assistant.
+- **Landing page (`landing/`, both languages):** the main button becomes
+  "ลองใช้ทันที" / "Try it now", which opens the demo for HR. Download moves to a
+  second path, "ติดตั้งเอง" / "Install it yourself", which points IT at GitHub
+  and `#install`.
+- A runbook in `docs/` covering how the demo is deployed, where its secrets
+  live, and what to do when something on Render expires.
 
-**Acceptance** Someone with no local setup can approve a leave request within a
-minute of opening the link, and no single visitor can exceed the spending cap.
+**To check against Render before building.** render.com could not be reached
+from the PO session, so these are assumptions, not facts. Each one changes the
+design if it holds:
 
-**Files** `docs/`, `README.md`, deployment configuration
+| Assumption about the free tier | If true, the ticket needs |
+|---|---|
+| Web services sleep when idle, and the first request waits about a minute | The one-minute acceptance below is measured from a sleeping instance, or the landing page wakes it. Pinging it to keep it awake is not an answer; see the hours row. |
+| Free instance hours per month are capped | Two services that sleep fit; two kept awake may not. |
+| Free Postgres expires after about a month, one per account | Replacing it is a runbook step that needs no code change. Only `DATABASE_URL` changes. |
+| Cron jobs are not free | The reset cannot be a Render cron job. It also cannot be an endpoint anyone on the internet can call. |
+| Free services cannot receive private-network traffic, and pre-deploy commands are paid | `web/nginx.conf` proxies to a fixed `api:3000`, and the runtime image ships no Prisma CLI, so it cannot migrate or seed by itself. |
+| Render Postgres offers `pgvector` | The init migration runs `CREATE EXTENSION "vector"` unconditionally. |
+| A free instance has about 512 MB of memory | The seed boots the whole application to create history (`db:demo`), and has only ever run on a developer machine. |
+
+Record what was found in the runbook. If the free tier cannot meet the
+acceptance, say which part and what it would cost, and bring it back to the PO
+rather than trimming the acceptance.
+
+**Acceptance**
+- Someone with no local setup can approve a leave request within a minute of
+  opening the link.
+- Each of the three roles signs in with one click, and no working password
+  exists anywhere a visitor can read.
+- Pointing the demo configuration at a database that holds a real organisation
+  makes it refuse to start, with a message. Nothing is wiped. A test proves it.
+- After any sequence of actions available in the console, all three one-click
+  sign-ins still work. A test covers each route listed in the scope.
+- The data returns to the seed on schedule without anyone doing anything.
+- The landing page's first button opens the demo, in both languages.
+- The demo can be rebuilt from the repository and the runbook, by someone who
+  has not seen it before.
+
+**Files** `landing/`, `docs/`, `README.md`, `web/`, `backend/`, deployment
+configuration
 
 ---
 
