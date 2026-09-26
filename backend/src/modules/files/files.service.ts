@@ -129,7 +129,9 @@ export class FilesService {
     signature: string,
   ): Promise<void> {
     const filename = input.originalName.slice(0, 200);
-    this.logger.warn(`Rejected upload "${filename}" from ${user.email}: ${signature}`);
+    // The user by id and not the file by name: a filename is often a person's
+    // name, and the audit entry below keeps it for the people entitled to see it.
+    this.logger.warn(`Rejected an upload from user ${user.userId}: ${signature}`);
 
     await this.audit.record({
       organizationId: user.organizationId,
@@ -182,7 +184,7 @@ export class FilesService {
       // the bytes do not. Keeping malware on disk to look at later is a
       // decision an HRIS has no business making on its owner's behalf.
       await this.storage.remove(file.objectKey);
-      this.logger.warn(`Quarantined ${file.id} (${file.filename}): ${outcome.signature}`);
+      this.logger.warn(`Quarantined file ${file.id}: ${outcome.signature}`);
 
       await this.audit.record({
         organizationId: file.organizationId,

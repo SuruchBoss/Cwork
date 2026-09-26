@@ -400,10 +400,54 @@ old unsubscribe links — the same bargain as rotating it signing everybody out.
 
 ## Observability
 
-- **Logs** are structured. Every request carries a correlation id, echoed in the
-  `x-request-id` header, included in every error body, and stored on the audit
-  row. A user reporting a bug can hand you a request id that ties the whole
-  thing together.
+- **Logs** are one JSON object per line on stdout, in the shape the PaynEat
+  ecosystem's [telemetry contract v1.1](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/TELEMETRY.md)
+  fixes, so the same queries work across Cwork, the ERP and the POS. Nothing
+  about it needs the ecosystem: it is simply a documented shape. Each line has a
+  string `severity` (`DEBUG` … `CRITICAL`), a `time`, a `message`, and a
+  `labels` object carrying `app` (`cwork-api`), `event` and `correlation_id`.
+  - **Correlation.** Every request carries an id — the caller's `x-request-id`
+    if it matches `^[\w-]{8,64}$`, otherwise a generated one — echoed in the
+    response header, included in every error body, stored on the audit row, and
+    the `correlation_id` of every line the request writes. A user reporting a
+    bug can hand you a request id that ties the whole thing together. A W3C
+    `traceparent` header is picked up as `trace`.
+  - **Events.** Every request, including one a guard refuses (a 401, a 429) or
+    no route matches, writes one `http.request.completed` line with the path
+    (never the query string; a token in the path is written as `:token`), the
+    status and the latency. A refused sign-in also writes
+    `auth.sign_in.failed`; a failed outbox delivery writes
+    `outbox.delivery.failed`, keyed by the event's id, at `ERROR` once it is
+    dead-lettered. Everything else is `app.log`.
+  - **Never logged:** passwords, tokens, MFA codes, names, email addresses,
+    national IDs, bank details, salaries, request bodies, query strings. People
+    are identified by internal user id. An end-to-end test puts distinctive
+    values of each through the API and fails if any reaches a log line or a
+    metric label.
+  - `LOG_LEVEL` is the least severe line written (default `INFO`; the older
+    `info`/`warn`/`debug` still work). Error stacks are written only at
+    `DEBUG`, and only as frames. `LOG_FORMAT=gcp` moves `labels` and `trace` to
+    the keys Google Cloud Logging reads specially
+    (`logging.googleapis.com/labels`, and `logging.googleapis.com/trace` as
+    `projects/$GOOGLE_CLOUD_PROJECT/traces/<id>`) and changes nothing else. Leave
+    it unset anywhere else.
+- **Metrics** are Prometheus text at `GET /metrics` on **`METRICS_PORT`
+  (9464), never the API port**. `docker-compose.yml` does not publish it: a
+  scraper reaches it on the internal network, and nothing outside should.
+  Beside Node's process metrics:
+
+  | Metric | Labels | |
+  |---|---|---|
+  | `http_requests_total` | `app`, `method`, `route`, `status` | `route` is the template, `/api/v1/employees/:id`, never a concrete path; `unmatched` for a path no route has |
+  | `http_request_duration_seconds` | `app`, `method`, `route` | histogram |
+  | `auth_sign_in_failures_total` | `app` | every refused sign-in step |
+  | `outbox_pending_events` | `app`, `destination` | undelivered, not dead-lettered |
+  | `outbox_oldest_pending_age_seconds` | `app`, `destination` | 0 when nothing waits |
+
+  The two outbox gauges are read from the database at scrape time, so every
+  replica reports the same backlog and a restart does not reset it. Their
+  `destination` is the outbox event type (`notification.raised`), which is
+  what the relay routes on.
 - **Health**: `/health/live` (process up, no DB) and `/health/ready`
   (DB + memory). Both sit outside the API prefix and are version-neutral, so
   probes point at a path that never moves.
@@ -417,9 +461,10 @@ old unsubscribe links — the same bargain as rotating it signing everybody out.
 | `PayrollRun.status = FAILED` | Payroll did not calculate; `failureReason` says why |
 | Payroll runs with `skipped` employees | Someone has no compensation record and would be paid nothing |
 | `AttendanceRecord.anomalyFlags` volume | A spike usually means a geofence is wrong, not that people are cheating |
-| `AuditAction.LOGIN_FAILED` rate | Credential stuffing |
+| `auth_sign_in_failures_total` rate, or `AuditAction.LOGIN_FAILED` | Credential stuffing |
 | Assistant `blockedReason` entries | Guardrails firing; each is worth reading |
-| Unprocessed `outbox_events` | Only if you have wired a relay |
+| `outbox_oldest_pending_age_seconds` climbing | Email or push is not getting out; `outbox.delivery.failed` lines say why |
+| `http_requests_total{status="429"}` | Rate limits biting — an attack, or a limit set too low |
 
 ## Scaling
 

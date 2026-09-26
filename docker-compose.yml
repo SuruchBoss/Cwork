@@ -91,7 +91,11 @@ services:
       ASSISTANT_PROVIDER: ${ASSISTANT_PROVIDER:-none}
       ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-sonnet-5}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-default}
+      # /metrics is served on its own port and deliberately not listed under
+      # `ports`: a Prometheus on this network scrapes api:9464, nobody else can.
+      METRICS_PORT: 9464
     ports:
       - "${API_PORT:-3000}:3000"
     volumes:

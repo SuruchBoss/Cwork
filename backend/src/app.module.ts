@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -10,12 +10,12 @@ import { AppConfigModule } from './core/config/config.module';
 import type { RootConfig } from './core/config/configuration';
 import { AllExceptionsFilter } from './core/http/all-exceptions.filter';
 import { AuditInterceptor } from './core/http/audit.interceptor';
-import { RequestContextMiddleware } from './core/http/request-context.middleware';
 import { PrismaModule } from './core/prisma/prisma.module';
 import { PrismaService } from './core/prisma/prisma.service';
 import { OutboxModule } from './core/outbox/outbox.module';
 import { PermissionsGuard } from './core/security/permissions.guard';
 import { PostgresThrottlerStorage } from './core/security/postgres-throttler.storage';
+import { TelemetryModule } from './core/telemetry/telemetry.module';
 import { SequenceService } from './core/utils/sequence.service';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
@@ -45,6 +45,7 @@ import { SetupModule } from './modules/setup/setup.module';
 @Module({
   imports: [
     AppConfigModule,
+    TelemetryModule,
     PrismaModule,
     ScheduleModule.forRoot(),
     OutboxModule,
@@ -113,8 +114,4 @@ import { SetupModule } from './modules/setup/setup.module';
   ],
   exports: [SequenceService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

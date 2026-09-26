@@ -1,16 +1,10 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
+import { RESPONSE_ERROR } from './request-context.middleware';
 
 interface ErrorBody {
   statusCode: number;
@@ -26,13 +20,14 @@ interface ErrorBody {
  * Single exit point for every error. Two rules:
  *  1. Clients get a stable `code` plus a safe message — never a stack trace or
  *     a database error string that leaks column names.
- *  2. Server-side, the full error is logged with the request id so support can
- *     correlate a user report to a log line.
+ *  2. Server-side, a 5xx's error rides on the request's own
+ *     `http.request.completed` line, under the request id, so support can
+ *     correlate a user report to one line. The filter writes no line of its
+ *     own: every response, error or not, is already accounted for once by the
+ *     request middleware, and a second line per failure would count it twice.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger('HTTP');
-
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -40,13 +35,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const body = this.toErrorBody(exception, request);
 
-    if (body.statusCode >= 500) {
-      this.logger.error(
-        `${request.method} ${request.url} -> ${body.statusCode} ${body.code}`,
-        exception instanceof Error ? exception.stack : String(exception),
-      );
-    } else {
-      this.logger.warn(`${request.method} ${request.url} -> ${body.statusCode} ${body.code}`);
+    if (body.statusCode >= 500 && response.locals) {
+      response.locals[RESPONSE_ERROR] = exception;
     }
 
     response.status(body.statusCode).json(body);

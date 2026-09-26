@@ -220,9 +220,7 @@ export class SetupService {
         },
       });
 
-      this.logger.log(
-        `First-run setup complete: ${organization.code} · administrator ${user.email}`,
-      );
+      this.logger.log(`First-run setup complete: ${organization.code} · administrator ${user.id}`);
 
       return {
         organization,

@@ -10,10 +10,18 @@ import { AppModule } from './app.module';
 import { APP_CONFIG } from './core/config/config.token';
 import type { RootConfig } from './core/config/configuration';
 import { PrismaService } from './core/prisma/prisma.service';
+import { installTelemetry } from './core/telemetry/telemetry.module';
+import { GENERIC_EVENT, TelemetryLogger } from './core/telemetry/telemetry-logger';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  // Buffered until the telemetry logger is installed, so even the framework's
+  // first lines come out as contract-shaped JSON.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get<RootConfig>(APP_CONFIG);
+
+  // First, so the request middleware sees every request before anything else
+  // can answer it.
+  await installTelemetry(app);
 
   // Trust the first proxy hop so `req.ip` (rate limiting, audit) is the real
   // client address behind a load balancer, without trusting arbitrary hops.
@@ -32,7 +40,13 @@ async function bootstrap(): Promise<void> {
     origin: config.app.corsOrigins.length > 0 ? config.app.corsOrigins : false,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'Idempotency-Key'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Request-Id',
+      'Idempotency-Key',
+      'traceparent',
+    ],
     exposedHeaders: ['X-Request-Id'],
     maxAge: 86_400,
   });
@@ -73,8 +87,11 @@ async function bootstrap(): Promise<void> {
   app.get(PrismaService).enableShutdownHooks(app);
 
   await app.listen(config.app.port, '0.0.0.0');
-  // eslint-disable-next-line no-console
-  console.log(`Cwork API listening on :${config.app.port} (${config.app.env})`);
+  app.get(TelemetryLogger).write({
+    severity: 'INFO',
+    event: GENERIC_EVENT,
+    message: `Cwork API listening on :${config.app.port} (${config.app.env})`,
+  });
 }
 
 void bootstrap();

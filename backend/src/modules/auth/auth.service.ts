@@ -1,16 +1,18 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpException, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuditAction, UserStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
-import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
+import { BusinessRuleError, DomainError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { CryptoService } from '../../core/security/crypto.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
+import { MetricsService } from '../../core/telemetry/metrics.service';
+import { TelemetryLogger } from '../../core/telemetry/telemetry-logger';
 import { AuditService } from '../audit/audit.service';
 import type {
   AuthTokensDto,
@@ -32,6 +34,12 @@ export interface RequestMeta {
   requestId?: string;
 }
 
+/** The catalogue event for a refused sign-in (telemetry contract v1.1). */
+export const SIGN_IN_FAILED_EVENT = 'auth.sign_in.failed';
+
+/** Where in a sign-in a refusal happened, for the line that records it. */
+type SignInStep = 'password' | 'second factor' | 'enrolment';
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -44,9 +52,18 @@ export class AuthService {
     private readonly userContext: UserContextService,
     private readonly audit: AuditService,
     private readonly mfa: MfaService,
+    private readonly telemetry: TelemetryLogger,
+    private readonly metrics: MetricsService,
   ) {}
 
   async login(
+    dto: LoginDto,
+    meta: RequestMeta,
+  ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
+    return this.recordingRefusal('password', meta, this.attemptLogin(dto, meta));
+  }
+
+  private async attemptLogin(
     dto: LoginDto,
     meta: RequestMeta,
   ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
@@ -153,6 +170,10 @@ export class AuthService {
    * is known.
    */
   async verifyMfa(dto: MfaVerifyDto, meta: RequestMeta): Promise<LoginResponseDto> {
+    return this.recordingRefusal('second factor', meta, this.attemptVerifyMfa(dto, meta));
+  }
+
+  private async attemptVerifyMfa(dto: MfaVerifyDto, meta: RequestMeta): Promise<LoginResponseDto> {
     const payload = await this.mfa.verifyChallengeToken(dto.challengeToken);
 
     const user = await this.prisma.user.findUnique({
@@ -204,6 +225,18 @@ export class AuthService {
    * `verifyMfa` like everyone else.
    */
   async activateMfaAndSignIn(
+    challengeToken: string,
+    dto: { code: string; deviceId?: string; deviceName?: string; platform?: string },
+    meta: RequestMeta,
+  ): Promise<MfaActivateResponseDto> {
+    return this.recordingRefusal(
+      'enrolment',
+      meta,
+      this.attemptActivation(challengeToken, dto, meta),
+    );
+  }
+
+  private async attemptActivation(
     challengeToken: string,
     dto: { code: string; deviceId?: string; deviceName?: string; platform?: string },
     meta: RequestMeta,
@@ -442,6 +475,42 @@ export class AuthService {
       locale: user.locale,
       photoUrl: employee?.photoFileId ? `/api/files/${employee.photoFileId}/content` : null,
     };
+  }
+
+  /**
+   * Awaits one step of a sign-in and, when the step refuses, says so: one
+   * `auth.sign_in.failed` line and one count on `auth_sign_in_failures_total`.
+   *
+   * Wrapped around the three entry points rather than written at each `throw`,
+   * because a refusal can come from anywhere below them — an expired
+   * challenge, a locked account, a wrong code inside `MfaService` — and one
+   * that went unrecorded would be the one an investigator needed. A server
+   * failure (5xx) is not a refusal and is not counted as one.
+   *
+   * The line names the step and the reason the caller was given, never the
+   * email, the password, the code or the account: the audit log already ties a
+   * refusal to an account, for the people entitled to see that.
+   */
+  private async recordingRefusal<T>(
+    step: SignInStep,
+    meta: RequestMeta,
+    attempt: Promise<T>,
+  ): Promise<T> {
+    try {
+      return await attempt;
+    } catch (error) {
+      if (error instanceof HttpException && error.getStatus() < 500) {
+        const reason = error instanceof DomainError ? error.code : error.message;
+        this.telemetry.write({
+          severity: 'WARNING',
+          event: SIGN_IN_FAILED_EVENT,
+          message: `Sign-in refused at the ${step} step: ${reason}`,
+          correlationId: meta.requestId,
+        });
+        this.metrics.countSignInFailure();
+      }
+      throw error;
+    }
   }
 
   private async registerFailedAttempt(

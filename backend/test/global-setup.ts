@@ -36,6 +36,10 @@ export default async function globalSetup(): Promise<void> {
   // turn "exactly one delivery" into a coin toss.
   process.env.OUTBOX_POLL_MS = '0';
 
+  // Every app the suite boots serves /metrics on a free port of its own; several
+  // run at once (the two-instance specs), and a fixed port would collide.
+  process.env.METRICS_PORT = '0';
+
   // The seed has no default password any more, so the suite picks the demo
   // accounts' password for this run; specs read it back through `seedPassword()`.
   process.env.SEED_PASSWORD = process.env.SEED_PASSWORD || `e2e-${randomUUID()}`;

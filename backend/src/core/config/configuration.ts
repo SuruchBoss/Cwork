@@ -1,6 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
+import type { LogFormat, Severity } from '../telemetry/domain/log-record';
 import { EnvironmentVariables } from './env.validation';
 
 export interface AppConfig {
@@ -108,7 +109,15 @@ export interface RootConfig {
       timeoutMs: number;
     };
   };
-  log: { level: string; pretty: boolean };
+  /** Logs and metrics, as the ecosystem's telemetry contract fixes them (CW-050). */
+  telemetry: {
+    level: Severity;
+    format: LogFormat;
+    /** Only read with `LOG_FORMAT=gcp`, to write a trace as Cloud Logging's resource name. */
+    gcpProject?: string;
+    /** `/metrics` is served here, never on the API port. */
+    metricsPort: number;
+  };
 }
 
 /** Maps flat environment variables onto the typed config tree the app injects. */
@@ -210,6 +219,11 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
         timeoutMs: env.FCM_TIMEOUT_MS,
       },
     },
-    log: { level: env.LOG_LEVEL, pretty: env.LOG_PRETTY },
+    telemetry: {
+      level: env.LOG_LEVEL as Severity,
+      format: env.LOG_FORMAT as LogFormat,
+      gcpProject: env.GOOGLE_CLOUD_PROJECT,
+      metricsPort: env.METRICS_PORT,
+    },
   };
 }

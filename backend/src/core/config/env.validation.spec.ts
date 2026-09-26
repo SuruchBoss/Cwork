@@ -186,3 +186,35 @@ describe('signing secrets', () => {
     expect(() => validateEnv({ ...BASE })).not.toThrow();
   });
 });
+
+/**
+ * Telemetry settings (CW-050). The contract names severities in upper case;
+ * installations already running say `LOG_LEVEL=info`, and an upgrade that
+ * refused to boot over that would be a breaking change for nothing.
+ */
+describe('telemetry configuration', () => {
+  it('defaults to INFO, plain labels and a metrics port of its own', () => {
+    const config = validateEnv({ ...BASE });
+
+    expect(config.LOG_LEVEL).toBe('INFO');
+    expect(config.LOG_FORMAT).toBe('default');
+    expect(config.METRICS_PORT).toBe(9464);
+  });
+
+  it('reads the level names an existing .env already uses', () => {
+    expect(validateEnv({ ...BASE, LOG_LEVEL: 'info' }).LOG_LEVEL).toBe('INFO');
+    expect(validateEnv({ ...BASE, LOG_LEVEL: 'warn' }).LOG_LEVEL).toBe('WARNING');
+    expect(validateEnv({ ...BASE, LOG_LEVEL: 'debug' }).LOG_LEVEL).toBe('DEBUG');
+  });
+
+  it('refuses a level or a format it does not know', () => {
+    expect(() => validateEnv({ ...BASE, LOG_LEVEL: 'loud' })).toThrow(/LOG_LEVEL/);
+    expect(() => validateEnv({ ...BASE, LOG_FORMAT: 'stackdriver' })).toThrow(/LOG_FORMAT/);
+  });
+
+  it('refuses to serve metrics on the API port', () => {
+    expect(() => validateEnv({ ...BASE, PORT: '3000', METRICS_PORT: '3000' })).toThrow(
+      /METRICS_PORT/,
+    );
+  });
+});

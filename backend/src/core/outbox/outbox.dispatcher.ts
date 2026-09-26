@@ -13,6 +13,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { APP_CONFIG } from '../config/config.token';
 import type { RootConfig } from '../config/configuration';
 import { PrismaService } from '../prisma/prisma.service';
+import { TelemetryLogger } from '../telemetry/telemetry-logger';
 import { PermanentDeliveryError } from './delivery-error';
 import { isExhausted, nextAttemptAt } from './domain/retry-schedule';
 import { OutboxRegistry, type OutboxEventRecord } from './outbox.registry';
@@ -31,6 +32,9 @@ const HANDLER_TIMEOUT_MS = 30_000;
 
 /** Enough of a failure to diagnose it, not enough to bloat the row. */
 const MAX_ERROR_LENGTH = 1000;
+
+/** The catalogue event for a failed delivery attempt (telemetry contract v1.1). */
+export const DELIVERY_FAILED_EVENT = 'outbox.delivery.failed';
 
 interface ClaimedRow {
   id: string;
@@ -82,6 +86,7 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
     private readonly registry: OutboxRegistry,
     private readonly schedule: SchedulerRegistry,
     @Inject(APP_CONFIG) private readonly config: RootConfig,
+    private readonly telemetry: TelemetryLogger,
   ) {}
 
   onModuleInit(): void {
@@ -191,10 +196,13 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
               data: { attempts, lastError, failedAt: new Date() },
             });
             result.deadLettered += 1;
-            this.logger.error(
+            this.deliveryFailed(
+              'ERROR',
+              row,
               outcome.permanent
-                ? `[${row.eventType} ${row.id}] refused permanently: ${lastError}`
-                : `[${row.eventType} ${row.id}] gave up after ${attempts} attempts: ${lastError}`,
+                ? 'refused permanently; dead-lettered'
+                : `gave up after ${attempts} attempts; dead-lettered`,
+              outcome.cause,
             );
             continue;
           }
@@ -204,7 +212,12 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
             data: { attempts, lastError, nextAttemptAt: nextAttemptAt(attempts, new Date()) },
           });
           result.retried += 1;
-          this.logger.warn(`[${row.eventType} ${row.id}] attempt ${attempts} failed: ${lastError}`);
+          this.deliveryFailed(
+            'WARNING',
+            row,
+            `attempt ${attempts} failed; will retry`,
+            outcome.cause,
+          );
         }
       },
       { timeout: this.config.outbox.batchSize * HANDLER_TIMEOUT_MS + 10_000, maxWait: 10_000 },
@@ -223,7 +236,7 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
    */
   private async dispatch(
     row: ClaimedRow,
-  ): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean }> {
+  ): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean; cause: unknown }> {
     const handlers = this.registry.handlersFor(row.eventType);
 
     if (handlers.length === 0) {
@@ -253,11 +266,34 @@ export class OutboxDispatcher implements OnModuleInit, OnApplicationBootstrap, O
           ok: false,
           error: error instanceof Error ? error.message : String(error),
           permanent: error instanceof PermanentDeliveryError,
+          cause: error,
         };
       }
     }
 
     return { ok: true };
+  }
+
+  /**
+   * One `outbox.delivery.failed` line: WARNING for an attempt that will be
+   * retried, ERROR once the event is dead-lettered. The event's id is the
+   * line's correlation id, so every attempt at one event can be followed
+   * together — the same rule the POS applies to its sales events. The
+   * handler's error travels as `{ type, message }`; the recipient never does.
+   */
+  private deliveryFailed(
+    severity: 'WARNING' | 'ERROR',
+    row: ClaimedRow,
+    what: string,
+    cause: unknown,
+  ): void {
+    this.telemetry.write({
+      severity,
+      event: DELIVERY_FAILED_EVENT,
+      message: `[${row.eventType} ${row.id}] ${what}`,
+      correlationId: row.id,
+      error: cause,
+    });
   }
 }
 

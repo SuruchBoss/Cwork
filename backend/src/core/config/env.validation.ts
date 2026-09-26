@@ -8,11 +8,13 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
   Max,
   Min,
   MinLength,
   validateSync,
 } from 'class-validator';
+import { LOG_FORMATS, parseSeverity, SEVERITIES } from '../telemetry/domain/log-record';
 
 const toBool = () =>
   Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() === 'true' : !!value));
@@ -357,12 +359,42 @@ export class EnvironmentVariables {
   @Min(1000)
   ASSISTANT_DAILY_TOKEN_LIMIT: number = 200000;
 
-  @IsIn(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
-  LOG_LEVEL: string = 'info';
+  /**
+   * The least severe log line written: one of the contract's severities,
+   * `DEBUG` … `CRITICAL`, in any case. The names this setting took before the
+   * contract (`info`, `warn`, `fatal`, …) are read as their equivalents, so an
+   * existing `.env` keeps working. Error stacks are written only at `DEBUG`.
+   */
+  @Transform(({ value }) => (value === undefined ? value : (parseSeverity(value) ?? value)))
+  @IsIn(SEVERITIES)
+  LOG_LEVEL: string = 'INFO';
 
-  @toBool()
-  @IsBoolean()
-  LOG_PRETTY: boolean = false;
+  /**
+   * `default` writes a plain `labels` object and `trace` key. `gcp` moves them to
+   * the keys Google Cloud Logging reads specially, and changes nothing else. An
+   * installation that is not on Google Cloud never needs to know it exists.
+   */
+  @IsIn(LOG_FORMATS)
+  LOG_FORMAT: string = 'default';
+
+  /** Turns an incoming trace id into Cloud Logging's `projects/<id>/traces/<trace>`. */
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/, {
+    message: 'GOOGLE_CLOUD_PROJECT must be a project id',
+  })
+  GOOGLE_CLOUD_PROJECT?: string;
+
+  /**
+   * Prometheus metrics are served on a port of their own, never the API's:
+   * the contract says `/metrics` is not public, and a port docker-compose does
+   * not publish is what keeps it that way. A scraper reaches it inside the
+   * network. `0` picks a free port, which is what the tests use.
+   */
+  @toInt()
+  @IsInt()
+  @Min(0)
+  @Max(65535)
+  METRICS_PORT: number = 9464;
 
   @IsString()
   DEFAULT_TIMEZONE: string = 'Asia/Bangkok';
@@ -398,6 +430,13 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   // binds 0.0.0.0 like any other, and a token signed with the placeholder from
   // .env.example is accepted the same in every mode — so this runs everywhere.
   assertSecretsAreReal(config);
+
+  if (config.METRICS_PORT !== 0 && config.METRICS_PORT === config.PORT) {
+    throw new Error(
+      'Invalid environment configuration:\n  - METRICS_PORT: must differ from PORT; ' +
+        'metrics are never served on the API port',
+    );
+  }
 
   if (config.NODE_ENV === 'production') {
     assertProductionSafety(config);

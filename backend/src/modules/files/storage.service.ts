@@ -57,7 +57,7 @@ export class StorageService {
     const target = this.resolveLocal(objectKey);
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, content, { mode: 0o600 });
-    this.logger.debug(`Stored ${objectKey} (${content.length} bytes, ${contentType})`);
+    this.logger.debug(`Stored ${objectRef(objectKey)} (${content.length} bytes, ${contentType})`);
 
     return { bucket, objectKey, sizeBytes: content.length, checksumSha256 };
   }
@@ -77,7 +77,7 @@ export class StorageService {
     try {
       await unlink(this.resolveLocal(objectKey));
     } catch (error) {
-      this.logger.warn(`Could not delete ${objectKey}: ${String(error)}`);
+      this.logger.warn(`Could not delete ${objectRef(objectKey)}: ${String(error)}`);
     }
   }
 
@@ -100,4 +100,15 @@ function sanitiseFilename(filename: string): string {
     .replace(/[^\p{L}\p{N}._-]/gu, '_')
     .replace(/_{2,}/g, '_')
     .slice(-120);
+}
+
+/**
+ * An object key as logged: `<prefix>/<year>/<uuid>`, without the uploader's
+ * filename the key ends in — a filename is often somebody's name.
+ */
+function objectRef(objectKey: string): string {
+  return objectKey.replace(
+    /^(.*\/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})-.*$/i,
+    '$1',
+  );
 }

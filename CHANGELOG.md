@@ -151,6 +151,25 @@ entry, tags it and publishes the notes.
   assistant tool to take an id, which CW-042 amended ADR-0004 to allow. With the
   assistant switched off the approval screen is unchanged.
 
+- **Structured logs and Prometheus metrics** (CW-050). The API wrote Nest's
+  plain-text console lines and served no metrics. It now writes one JSON object
+  per line in the shape of the PaynEat ecosystem's telemetry contract v1.1: a
+  string `severity`, and a `labels` object carrying `app=cwork-api`, the
+  `event` and the request's `correlation_id` (its `x-request-id`). Every request
+  writes `http.request.completed`, including one a guard refuses before any
+  controller runs — a 401 or a 429 — so a lockout storm leaves a trace; refused
+  sign-ins also write `auth.sign_in.failed`, and failed outbox deliveries
+  `outbox.delivery.failed`. `GET /metrics` serves request counts and durations
+  by route template, sign-in failures, and the outbox backlog and its age — the
+  last two read from the database, so every replica agrees and a deploy does not
+  reset them. It is served on its own `METRICS_PORT` (9464), which
+  `docker-compose.yml` does not publish. `LOG_FORMAT=gcp` moves the labels and
+  the trace to Google Cloud Logging's keys; nothing else changes and nothing
+  else needs it. No salary, national ID, bank account, name, email, token or
+  query string reaches a line or a label, and an end-to-end test puts each
+  through the API to prove it. See
+  [operations](./docs/operations.md#observability).
+
 ### Removed
 
 - **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`
@@ -160,6 +179,11 @@ entry, tags it and publishes the notes.
   misleads whoever reads the schema next, so it is dropped along with the API
   field that fed it. Every column in `attendance.prisma` is now written by some
   code path.
+
+- **`LOG_PRETTY`** (CW-050). It was validated and never read — the logger it
+  was meant for was never wired — and pretty-printed output is not the
+  contract's shape. An `.env` that still sets it is ignored. The unused
+  `nestjs-pino`, `pino-http` and `pino-pretty` dependencies went with it.
 
 ### Changed
 
@@ -176,6 +200,10 @@ entry, tags it and publishes the notes.
 - **Only pull requests from a fork need a DCO sign-off.** The check moved from
   `ci.yml` to `license-check.yml` and now also requires the sign-off to name the
   commit's author.
+- **`LOG_LEVEL` takes the contract's severities** (CW-050): `DEBUG`, `INFO`,
+  `NOTICE`, `WARNING`, `ERROR`, `CRITICAL`, in any case. The old names
+  (`info`, `warn`, `debug`, `fatal`, …) still work, so no `.env` needs to
+  change. The default is `INFO`.
 
 ## [0.3.1] — 2026-09-26
 

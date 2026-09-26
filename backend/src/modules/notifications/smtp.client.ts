@@ -111,8 +111,11 @@ class SmtpSession {
   }
 
   async deliver(message: string, from: string, to: string): Promise<void> {
-    await this.command(`MAIL FROM:<${from}>`, [250]);
-    await this.command(`RCPT TO:<${to}>`, [250, 251]);
+    // The addresses are written as placeholders wherever the command is shown —
+    // the debug log and the error a refusal becomes. A recipient's address is
+    // personal data, and the error travels into the outbox's failure line.
+    await this.command(`MAIL FROM:<${from}>`, [250], { shown: 'MAIL FROM:<sender>' });
+    await this.command(`RCPT TO:<${to}>`, [250, 251], { shown: 'RCPT TO:<recipient>' });
     await this.command('DATA', [354]);
 
     this.write(`${dotStuff(message)}\r\n.\r\n`);
@@ -218,9 +221,10 @@ class SmtpSession {
   private async command(
     line: string,
     accept: number[],
-    options: { permanentOnFailure?: boolean; redact?: boolean } = {},
+    options: { permanentOnFailure?: boolean; redact?: boolean; shown?: string } = {},
   ): Promise<SmtpReply> {
-    const shown = options.redact ? `${line.split(' ').slice(0, 2).join(' ')} …` : line;
+    const shown =
+      options.shown ?? (options.redact ? `${line.split(' ').slice(0, 2).join(' ')} …` : line);
     this.logger.debug(`> ${shown}`);
     this.write(`${line}\r\n`);
     return this.expect(await this.read(), accept, shown, options.permanentOnFailure);

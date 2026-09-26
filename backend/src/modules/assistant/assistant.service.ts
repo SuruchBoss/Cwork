@@ -253,7 +253,9 @@ export class AssistantService {
     const invented = ungroundedAmounts(reply, figures);
     if (invented.length > 0) {
       this.logger.error(
-        `Payroll explanation for run ${runId} stated figures not in the tool output: ${invented.join(', ')}`,
+        // How many, not which: the figures are pay-shaped, and a log line is
+        // no place for anything that could be somebody's salary.
+        `Payroll explanation for run ${runId} stated ${invented.length} figure(s) not in the tool output`,
       );
     }
 
@@ -311,7 +313,7 @@ export class AssistantService {
     const invented = ungroundedFlagAmounts(reply, figures);
     if (invented.length > 0) {
       this.logger.error(
-        `Attendance-flag explanation stated figures not in the tool output: ${invented.join(', ')}`,
+        `Attendance-flag explanation stated ${invented.length} figure(s) not in the tool output`,
       );
     }
 

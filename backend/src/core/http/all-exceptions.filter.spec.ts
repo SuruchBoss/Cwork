@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { BadRequestException, HttpStatus, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
 /**
@@ -11,17 +11,6 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
  */
 describe('AllExceptionsFilter', () => {
   const filter = new AllExceptionsFilter();
-
-  // Half of these cases are meant to log a stack trace; printing them would
-  // bury the actual test output.
-  beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-  });
-
-  afterAll(() => {
-    jest.restoreAllMocks();
-  });
 
   let status = 0;
   let body: Record<string, unknown> = {};

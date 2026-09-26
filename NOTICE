@@ -12,6 +12,16 @@ please keep this NOTICE file (or an equivalent readable attribution) as
 required by Section 4(d) of the License, and consider linking back to the
 original repository above.
 
+Portions of the telemetry layer are adapted from PaynEat ERP
+(https://github.com/SuruchBoss/PaynEat-ERP), by the same author, under the same
+license, which implemented the ecosystem's telemetry contract first. Each adapted
+file says so in its header. Adapted from PaynEat ERP commit 2828fa2 (CW-050):
+
+  backend/src/core/telemetry/     log record and its tests, telemetry logger and
+                                  module, metrics service, request context
+  backend/src/core/http/request-context.middleware.ts
+  backend/test/telemetry.e2e-spec.ts
+
 --------------------------------------------------------------------------------
 Third-party assets bundled with this project
 --------------------------------------------------------------------------------

@@ -12,15 +12,20 @@
  *
  * Helmet, compression and CORS are deliberately left out: they are transport
  * concerns that slow the suite down without changing a single assertion.
+ * Telemetry is not — `installTelemetry` is the same call `main.ts` makes — and
+ * its log lines are captured rather than printed, so a spec can read them.
  */
 import type { Server } from 'node:http';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import { INestApplication, Type, ValidationPipe, VersioningType } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/app.module';
 import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
 import { APP_CONFIG } from 'src/core/config/config.token';
 import type { RootConfig } from 'src/core/config/configuration';
+import { MetricsService } from 'src/core/telemetry/metrics.service';
+import { installTelemetry } from 'src/core/telemetry/telemetry.module';
+import { LOG_SINK } from 'src/core/telemetry/telemetry-logger';
 
 /**
  * The body stays `any` on purpose: these are black-box HTTP assertions against
@@ -221,8 +226,17 @@ export async function waitForNextStep(): Promise<void> {
 export interface TestContext {
   app: INestApplication;
   api: Api;
+  /** Every log line the app has written, exactly as it would reach stdout. */
+  rawLogs: string[];
+  /** The same lines, parsed. */
+  logs: () => LogLine[];
+  /** Where this instance serves `/metrics` — a free port, never the API's. */
+  metricsPort: number;
   close: () => Promise<void>;
 }
+
+/** One parsed log line. Loose on purpose: the specs assert on its shape. */
+export type LogLine = Record<string, any>;
 
 export interface CreateTestAppOptions {
   /**
@@ -232,6 +246,8 @@ export interface CreateTestAppOptions {
    * malware scanning switched on.
    */
   env?: Record<string, string>;
+  /** Test-only controllers, for responses no production route gives (a 500). */
+  controllers?: Type<unknown>[];
 }
 
 export async function createTestApp(options: CreateTestAppOptions = {}): Promise<TestContext> {
@@ -248,10 +264,19 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
     }
   };
 
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const rawLogs: string[] = [];
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule],
+    controllers: options.controllers ?? [],
+  })
+    .overrideProvider(LOG_SINK)
+    .useValue((line: string) => rawLogs.push(line))
+    .compile();
 
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication({ bufferLogs: true });
   const config = app.get<RootConfig>(APP_CONFIG);
+
+  await installTelemetry(app);
 
   app.setGlobalPrefix(config.app.apiPrefix, { exclude: ['health/live', 'health/ready'] });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
@@ -270,9 +295,22 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
   return {
     app,
     api: new Api(app, `/${config.app.apiPrefix}/v1`),
+    rawLogs,
+    logs: () => rawLogs.map((line) => JSON.parse(line) as LogLine),
+    metricsPort: app.get(MetricsService).port(),
     close: async () => {
       await app.close();
       restoreEnv();
     },
   };
+}
+
+/** The `http.request.completed` line of the request that carried `requestId`. */
+export function completedLine(ctx: TestContext, requestId: string): LogLine {
+  const line = ctx.logs().find((l) => {
+    const labels = l.labels ?? l['logging.googleapis.com/labels'];
+    return labels?.event === 'http.request.completed' && labels?.correlation_id === requestId;
+  });
+  if (!line) throw new Error(`no http.request.completed line for ${requestId}`);
+  return line;
 }
