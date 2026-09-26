@@ -69,6 +69,7 @@ export const Permission = {
   PAYROLL_READ: 'payroll:read',
   PAYROLL_RUN: 'payroll:run',
   PAYROLL_APPROVE: 'payroll:approve',
+  PAYROLL_EXPORT: 'payroll:export',
   PAYSLIP_READ_SELF: 'payslip:read:self',
   COMPENSATION_READ: 'compensation:read',
   COMPENSATION_MANAGE: 'compensation:manage',

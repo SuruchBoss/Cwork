@@ -14,7 +14,8 @@ import {
   Stat,
   TableSkeleton,
 } from '@/components/ui';
-import { api } from '@/lib/api-client';
+import { api, saveBlob } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 import { formatDate, formatMoney } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
@@ -27,6 +28,7 @@ export default function PayrollPage() {
   const can = useAuthStore((s) => s.can);
   const t = useT();
   const canRun = can(P.PAYROLL_RUN);
+  const canExport = can(P.PAYROLL_EXPORT);
 
   const [creating, setCreating] = useState(false);
   const now = new Date();
@@ -59,6 +61,15 @@ export default function PayrollPage() {
   const createRun = useMutation({
     mutationFn: (periodId: string) => api.post<PayrollRun>('/payroll/runs', { periodId }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['payroll'] }),
+  });
+
+  // The server reconciles before it sends anything; a period that does not
+  // reconcile is refused with the reason, which surfaces as the error below.
+  const exportPeriod = useMutation({
+    mutationFn: async (periodId: string) => {
+      const { blob, filename } = await api.download(`/payroll/periods/${periodId}/export`);
+      saveBlob(blob, filename);
+    },
   });
 
   const latest = runs.data?.[0];
@@ -143,6 +154,12 @@ export default function PayrollPage() {
         </Card>
       )}
 
+      {exportPeriod.isError && (
+        <div className="alert alert--danger" role="alert">
+          {exportPeriod.error instanceof ApiError ? exportPeriod.error.message : t('Could not export')}
+        </div>
+      )}
+
       <Card title={t('Pay periods')} flush>
         {periods.isLoading ? (
           <TableSkeleton rows={4} columns={5} />
@@ -174,15 +191,27 @@ export default function PayrollPage() {
                     </td>
                     <td>{period._count?.runs ?? 0}</td>
                     <td>
-                      {canRun && period.status !== 'CLOSED' && (
-                        <Button
-                          size="sm"
-                          loading={createRun.isPending && createRun.variables === period.id}
-                          onClick={() => createRun.mutate(period.id)}
-                        >
-                          {t('Create run')}
-                        </Button>
-                      )}
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        {canRun && period.status !== 'CLOSED' && (
+                          <Button
+                            size="sm"
+                            loading={createRun.isPending && createRun.variables === period.id}
+                            onClick={() => createRun.mutate(period.id)}
+                          >
+                            {t('Create run')}
+                          </Button>
+                        )}
+                        {canExport && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            loading={exportPeriod.isPending && exportPeriod.variables === period.id}
+                            onClick={() => exportPeriod.mutate(period.id)}
+                          >
+                            {t('Export CSV')}
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

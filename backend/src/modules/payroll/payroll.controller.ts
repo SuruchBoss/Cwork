@@ -11,7 +11,9 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuditAction, ExpenseClaimStatus } from '@prisma/client';
 import { Audited } from '../../core/http/audit.decorator';
@@ -71,6 +73,28 @@ export class PayrollController {
   @ApiOperation({ summary: 'Lock a period against further input changes' })
   lockPeriod(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.payroll.lockPeriod(user.organizationId, id);
+  }
+
+  @Get('periods/:id/export')
+  @RequirePermissions(Permission.PAYROLL_EXPORT)
+  @ApiOperation({ summary: 'Export a reconciled payroll period as a file' })
+  async exportPeriod(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @Query('format') format?: string,
+  ): Promise<void> {
+    // The service reconciles before it returns anything, and audits the export;
+    // a period that does not reconcile throws a 422 and no file is written.
+    const file = await this.payroll.exportPeriod(user, id, format);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(file.filename)}"`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.send(file.content);
   }
 
   // ----------------------------------------------------------------------- runs

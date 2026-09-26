@@ -61,6 +61,7 @@ const PAYROLL_PERMISSIONS: PermissionKey[] = [
   Permission.EMPLOYEE_READ,
   Permission.PAYROLL_READ,
   Permission.PAYROLL_RUN,
+  Permission.PAYROLL_EXPORT,
   Permission.COMPENSATION_READ,
   Permission.COMPENSATION_MANAGE,
   Permission.BENEFIT_READ,

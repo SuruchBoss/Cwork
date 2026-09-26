@@ -60,6 +60,35 @@ class ApiClient {
     return this.request<T>('DELETE', path, options);
   }
 
+  /**
+   * Fetches a file endpoint as a blob, carrying the bearer token (so a plain
+   * `<a href>` — which cannot — is not an option) and refreshing once on 401.
+   * A non-2xx is parsed as a JSON error and thrown, so a refused export shows
+   * the server's reason rather than downloading an error page.
+   */
+  async download(
+    path: string,
+    options: RequestOptions = {},
+  ): Promise<{ blob: Blob; filename: string }> {
+    const url = env.apiBaseUrl + path + buildQueryString(options.query);
+    let response = await this.send('GET', url, options);
+
+    if (response.status === 401 && !options.anonymous) {
+      const token = await this.refreshOnce();
+      if (!token) {
+        this.onSessionExpired();
+        throw ApiError.fromBody(401, await safeJson(response));
+      }
+      response = await this.send('GET', url, options);
+    }
+
+    if (!response.ok) {
+      throw ApiError.fromBody(response.status, await safeJson(response));
+    }
+
+    return { blob: await response.blob(), filename: filenameFromResponse(response, 'download') };
+  }
+
   private async request<T>(method: string, path: string, options: RequestOptions): Promise<T> {
     const url = env.apiBaseUrl + path + buildQueryString(options.query);
     const response = await this.send(method, url, options);
@@ -155,6 +184,32 @@ function buildQueryString(
   }
   const qs = params.toString();
   return qs ? `?${qs}` : '';
+}
+
+/** Reads the download filename from Content-Disposition (RFC 5987 or plain). */
+function filenameFromResponse(response: Response, fallback: string): string {
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const extended = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(disposition);
+  const plain = /filename="?([^";]+)"?/i.exec(disposition);
+  const raw = extended?.[1] ?? plain?.[1];
+  if (!raw) return fallback;
+  try {
+    return decodeURIComponent(raw.trim().replace(/^"|"$/g, ''));
+  } catch {
+    return raw.trim().replace(/^"|"$/g, '');
+  }
+}
+
+/** Saves a blob to the user's downloads via a transient object URL. */
+export function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 async function safeJson(response: Response): Promise<Record<string, unknown> | null> {

@@ -21,7 +21,7 @@ Services fetch data, call the domain function, and persist the result.
 
 ## Consequences
 
-**Good.** 278 domain tests run in under ten seconds with no database. Bracket
+**Good.** 289 domain tests run in under ten seconds with no database. Bracket
 arithmetic and half-day leave rules are verified by hand against worked
 examples. "Why was I charged 2.5 days?" is answered by reading one function, and
 payslips are reproducible from their stored snapshot because the calculation is

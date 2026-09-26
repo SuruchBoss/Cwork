@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AttendanceStatus,
+  AuditAction,
   ExpenseClaimStatus,
   OvertimeStatus,
   PayComponentType,
@@ -24,6 +25,13 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
 import { DEFAULT_OT_MULTIPLIERS } from '../attendance/overtime.service';
 import { buildPayslip, type OvertimeLine, type PayslipInput } from './domain/payroll-calculator';
+import {
+  EXPORT_FORMATS,
+  PayrollReconciliationError,
+  reconcilePeriod,
+  resolveExportFormat,
+} from './domain/payroll-export';
+import { AuditService } from '../audit/audit.service';
 import type { CreatePayrollPeriodDto, CreatePayrollRunDto } from './dto/payroll.dto';
 
 /** The period fields a calculation reads — not the whole row. */
@@ -52,6 +60,7 @@ export class PayrollService {
     private readonly organization: OrganizationService,
     private readonly notifications: NotificationsService,
     private readonly sequences: SequenceService,
+    private readonly audit: AuditService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -450,6 +459,107 @@ export class PayrollService {
     });
     if (!run) throw new NotFoundError('PayrollRun', runId);
     return run;
+  }
+
+  // -------------------------------------------------------------------- export
+
+  /**
+   * Reconciles a period and returns the requested file (CW-044).
+   *
+   * The reconciliation is the point: a period whose runs are not all approved,
+   * or whose payslip totals do not add up to the run totals, is refused with
+   * the reason named — it never produces a file that is quietly wrong. A
+   * successful export is written to the audit log with who took it, the period,
+   * the format and the row count.
+   */
+  async exportPeriod(user: AuthenticatedUser, periodId: string, formatId?: string) {
+    const format = resolveExportFormat(formatId);
+    if (!format) {
+      throw new BusinessRuleError(
+        'UNKNOWN_EXPORT_FORMAT',
+        `Unknown export format "${formatId}". Available: ${Object.keys(EXPORT_FORMATS).join(', ')}.`,
+      );
+    }
+
+    const period = await this.prisma.payrollPeriod.findFirst({
+      where: { id: periodId, organizationId: user.organizationId },
+      include: {
+        runs: {
+          orderBy: { runNo: 'asc' },
+          include: {
+            payslips: {
+              orderBy: { employee: { employeeCode: 'asc' } },
+              include: {
+                employee: {
+                  select: {
+                    employeeCode: true,
+                    firstNameTh: true,
+                    lastNameTh: true,
+                    department: { select: { name: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!period) throw new NotFoundError('PayrollPeriod', periodId);
+
+    let reconciled;
+    try {
+      reconciled = reconcilePeriod(
+        { code: period.code, year: period.year, month: period.month },
+        period.runs.map((run) => ({
+          runNo: run.runNo,
+          status: run.status,
+          employeeCount: run.employeeCount,
+          totalGross: run.totalGross,
+          totalDeduction: run.totalDeduction,
+          totalNet: run.totalNet,
+          payslips: run.payslips.map((slip) => ({
+            employeeCode: slip.employee.employeeCode,
+            firstNameTh: slip.employee.firstNameTh,
+            lastNameTh: slip.employee.lastNameTh,
+            departmentName: slip.employee.department?.name ?? null,
+            currency: slip.currency,
+            grossEarnings: slip.grossEarnings,
+            totalDeductions: slip.totalDeductions,
+            taxableIncome: slip.taxableIncome,
+            withholdingTax: slip.withholdingTax,
+            ssoEmployee: slip.ssoEmployee,
+            ssoEmployer: slip.ssoEmployer,
+            netPay: slip.netPay,
+          })),
+        })),
+      );
+    } catch (error) {
+      // Refusal is a client error, not a server fault: name the reason (422).
+      if (error instanceof PayrollReconciliationError) {
+        throw new BusinessRuleError(error.code, error.message);
+      }
+      throw error;
+    }
+
+    const content = format.build(reconciled);
+    const rowCount = reconciled.rows.length;
+
+    await this.audit.record({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: AuditAction.EXPORT,
+      entityType: 'PayrollPeriod',
+      entityId: period.id,
+      summary: `Exported payroll period ${period.code} as ${format.label}`,
+      changes: { format: format.id, rowCount, period: period.code },
+    });
+
+    return {
+      filename: `payroll-${period.code}.${format.extension}`,
+      contentType: format.contentType,
+      content,
+      rowCount,
+    };
   }
 
   // ------------------------------------------------------------------- payslips

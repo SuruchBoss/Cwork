@@ -636,4 +636,8 @@ export const thMessages: Record<string, string> = {
   'Device clock drift': 'เวลาเครื่องคลาดเคลื่อน',
   'New device': 'อุปกรณ์ใหม่',
   'Impossible travel': 'เดินทางเร็วผิดปกติ',
+
+  // Payroll export (CW-044)
+  'Export CSV': 'ส่งออก CSV',
+  'Could not export': 'ส่งออกไม่สำเร็จ',
 };
