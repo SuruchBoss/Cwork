@@ -3,9 +3,12 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, expect } from 'vitest';
 import * as axeMatchers from 'vitest-axe/matchers';
 
-// vitest-axe ships its matcher, but its type augmentation targets the old `Vi`
-// global namespace that Vitest 3 no longer reads, so the fluent matcher is
-// declared against the `vitest` module here.
+// vitest-axe ships its matcher, but its own type augmentation targets the old
+// `Vi` global namespace that Vitest no longer reads, so the fluent matcher is
+// declared against the `vitest` module here. Extend `Matchers` — the shared
+// base that both `Assertion` and `AsymmetricMatchersContaining` extend — and
+// mirror its type parameters exactly, as of Vitest 5, or TS2428 rejects the
+// merge.
 expect.extend(axeMatchers);
 
 afterEach(() => {
@@ -17,8 +20,8 @@ interface AxeMatchers<R = unknown> {
 }
 
 declare module 'vitest' {
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type */
-  interface Assertion<T = any> extends AxeMatchers<T> {}
-  interface AsymmetricMatchersContaining extends AxeMatchers {}
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type */
+  /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type */
+  interface Matchers<R extends void | Promise<void> = void | Promise<void>, T = unknown>
+    extends AxeMatchers<R> {}
+  /* eslint-enable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-object-type */
 }
