@@ -54,6 +54,10 @@ describe('Work location code as identifier (e2e)', () => {
       geofenceRadiusM: 150,
     });
 
+  // A punch on a fixed past day: it still counts as "the location was used"
+  // (first-use counts punches on any date) without touching this employee's
+  // clock state today, which a shared database means another spec relies on.
+  const PAST = new Date('2020-01-06T02:00:00.000Z');
   const recordPunchAt = (workLocationId: string) =>
     prisma.attendancePunch.create({
       data: {
@@ -61,8 +65,8 @@ describe('Work location code as identifier (e2e)', () => {
         employeeId,
         type: 'CLOCK_IN',
         method: 'MOBILE_GPS',
-        punchedAt: new Date(),
-        workDate: new Date(),
+        punchedAt: PAST,
+        workDate: PAST,
         workLocationId,
       },
     });

@@ -47,6 +47,21 @@ describe('Offline punch hardening (e2e)', () => {
   });
 
   afterAll(async () => {
+    // Leave the employee not clocked in. These e2e files share one database and
+    // do not run in a fixed order, so a spec that assumes a clean clock state
+    // (device binding) must not find this one's punches still open.
+    try {
+      const today = await api.get('/attendance/today', employeeToken);
+      if (today.body?.nextAction === 'CLOCK_OUT') {
+        await api.post('/attendance/punch', employeeToken, {
+          type: 'CLOCK_OUT',
+          method: 'MOBILE_GPS',
+          clientPunchId: `cw025-cleanup-${Date.now()}`,
+        });
+      }
+    } catch {
+      // Best effort: cleanup must never fail the suite.
+    }
     await ctx?.close();
   });
 
