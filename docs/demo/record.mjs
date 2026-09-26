@@ -22,14 +22,16 @@
  *   npm i playwright && npx playwright install chromium
  *   RECORD=1 OUT=video LANG_=en node docs/demo/record.mjs   # README + landing/en
  *   RECORD=1 OUT=video LANG_=th node docs/demo/record.mjs   # landing/ (Thai)
- *   ffmpeg -i video/*.webm -vf "fps=12,scale=900:-1:flags=lanczos,\
+ *   ffmpeg -i video/*.webm -vf "fps=10,scale=900:-1:flags=lanczos,\
  *     split[a][b];[a]palettegen=stats_mode=diff:max_colors=96[p];\
  *     [b][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle" \
  *     -loop 0 docs/demo/walkthrough.gif
  *
  * 96 colours, not 128: the opaque caption bar and the real webfont give the
  * palette more to do, and 128 pushed the GIF to 4.3MB for no visible gain on
- * flat interface colour. The README autoplays it on every view.
+ * flat interface colour. 10 fps, not 12: an interface mostly holds still, and
+ * the English console's longer labels took the 12 fps GIF to 4.7MB. The
+ * README autoplays it on every view.
  *
  * The MP4s, and where each of the four outputs belongs:
  *
@@ -64,13 +66,10 @@ if (!seedPassword) {
  * Not `LANG`: that is a standard POSIX variable, already set in most shells,
  * and reading it would pick up `en_US.UTF-8` and silently mean something else.
  *
- * The recording is used in three places with two audiences. README.md and the
- * English overview page are read by people who do not read Thai, and for them
- * the captions are the only way thirty seconds of a Thai interface says
- * anything. The Thai overview page is read by people who read the interface
- * fine — captioning that one in English left a Thai visitor watching a Thai
- * product narrated in a language the page is not written in, ending on a line
- * that told them, in English, that the interface is Thai.
+ * It also picks the interface language (CW-016): the English take drives the
+ * English console, so README.md and the English overview page show a reader
+ * the product in their own language rather than a Thai screen with English
+ * captions over it. The Thai take drives the Thai console for the Thai page.
  */
 const LANG = process.env.LANG_ === 'th' ? 'th' : 'en';
 const VIEWPORT = { width: 1280, height: 800 };
@@ -92,7 +91,7 @@ const BASE = 'http://localhost:5173';
  */
 const LINES = {
   en: {
-    intro: 'Cwork — open-source HR for Thai labour practice. Signing in as an administrator.',
+    intro: 'Cwork — open-source HR for Thai labour practice, in English or Thai. Signing in as an administrator.',
     mfa: 'A password alone is not a session: this account can read national IDs and run payroll, so it owes a second factor.',
     dashboard: 'Dashboard — two requests waiting, eight staff, last month\'s payroll closed at ฿640,978.',
     approvals: 'Approvals — routed by policy to the line manager, or to a role, per request type.',
@@ -104,7 +103,7 @@ const LINES = {
     recruitment: 'Hiring — applications arrive from a public careers page, with PDPA consent.',
     performance: 'Performance — KPI weights must total 100, and HR calibrates the grade.',
     audit: 'Audit trail — append-only in the database; a trigger blocks UPDATE and DELETE.',
-    close: 'The interface is Thai. An English locale is CW-016 on the backlog.',
+    close: 'Thai by default, English at one switch — and a dark theme built in.',
   },
   th: {
     intro: 'Cwork — ระบบ HR โอเพนซอร์สที่ทำตามกฎหมายแรงงานไทย กำลังเข้าสู่ระบบด้วยบัญชีผู้ดูแล',
@@ -159,8 +158,28 @@ const browser = await chromium.launch(
 const context = await browser.newContext({
   viewport: VIEWPORT,
   deviceScaleFactor: 1,
+  // The organisation's time zone, or every clock-in is shown in the machine's
+  // UTC: a 09:00 punch in Bangkok recorded as 02:00.
+  timezoneId: 'Asia/Bangkok',
+  locale: LANG === 'th' ? 'th-TH' : 'en-GB',
   ...(RECORD ? { recordVideo: { dir: OUT, size: VIEWPORT } } : {}),
 });
+// The console's own language switch, set before the app first reads it.
+await context.addInitScript((language) => {
+  localStorage.setItem(
+    'cwork.ui',
+    JSON.stringify({ state: { theme: 'light', language, languageExplicit: true }, version: 0 }),
+  );
+}, LANG);
+
+/** The console's words for a control, in the language being recorded. */
+const UI = {
+  signIn: { th: 'เข้าสู่ระบบ', en: 'Sign in' },
+  verify: { th: 'ยืนยัน', en: 'Verify' },
+  open: { th: 'เปิดดู', en: 'Open' },
+  theme: { th: 'สลับธีมสว่าง/มืด', en: 'Toggle light/dark theme' },
+};
+const ui = (key) => UI[key][LANG];
 const page = await context.newPage();
 
 /**
@@ -326,7 +345,7 @@ await step('type credentials', async () => {
   await page.getByPlaceholder('you@company.com').type('ceo@cwork.example', { delay: 45 });
   await page.locator('input[type=password]').type(seedPassword, { delay: 60 });
   await beat(600);
-  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  await page.getByRole('button', { name: ui('signIn') }).click();
 });
 
 await step('second factor', async () => {
@@ -336,32 +355,34 @@ await step('second factor', async () => {
   // A TOTP code cannot be spent twice even inside its own window, so the run
   // waits for a fresh 30-second step rather than re-using one an earlier take
   // already burned. That is the replay protection working, not a flake.
-  await page.waitForSelector('.auth__card input', { timeout: 15000 });
+  // The sign-in card has inputs of its own, so wait for the code field itself.
+  const field = page.locator('.auth__card input[autocomplete=one-time-code]');
+  await field.waitFor({ timeout: 15000 });
   await caption(line('mfa'));
   await beat(1500);
-  const field = page.locator('.auth__card input').first();
   await field.type(totp(SECRET), { delay: 110 });
   await beat(500);
   await caption('');
-  await page.getByRole('button', { name: 'ยืนยัน' }).click();
+  await page.getByRole('button', { name: ui('verify') }).click();
   await page.waitForSelector('.sidebar__nav', { timeout: 20000 });
   await caption(line('dashboard'));
   await beat(2400);
 });
 
-// [route, the console's own label for the log, caption key]
+// [route, the console's own title for it in each language, caption key]
 const tour = [
-  ['/approvals', 'รออนุมัติ', 'approvals'],
-  ['/employees', 'ทะเบียนพนักงาน', 'employees'],
-  ['/leave', 'การลา', 'leave'],
-  ['/attendance', 'ลงเวลาทำงาน', 'attendance'],
-  ['/payroll', 'เงินเดือน', 'payroll'],
-  ['/recruitment', 'ผู้สมัครงาน', 'recruitment'],
-  ['/performance', 'ประเมินผล / KPI', 'performance'],
-  ['/audit', 'บันทึกการใช้งาน', 'audit'],
+  ['/approvals', { th: 'รออนุมัติ', en: 'Approvals' }, 'approvals'],
+  ['/employees', { th: 'ทะเบียนพนักงาน', en: 'Employee directory' }, 'employees'],
+  ['/leave', { th: 'การลา', en: 'Leave' }, 'leave'],
+  ['/attendance', { th: 'ลงเวลาทำงาน', en: 'Attendance' }, 'attendance'],
+  ['/payroll', { th: 'เงินเดือน', en: 'Payroll' }, 'payroll'],
+  ['/recruitment', { th: 'ผู้สมัครงาน', en: 'Candidates' }, 'recruitment'],
+  ['/performance', { th: 'ประเมินผล / KPI', en: 'Performance / KPI' }, 'performance'],
+  ['/audit', { th: 'บันทึกการใช้งาน', en: 'Activity log' }, 'audit'],
 ];
 
-for (const [href, label, key] of tour) {
+for (const [href, labels, key] of tour) {
+  const label = labels[LANG];
   await step(label, async () => {
     await show(href, label, key);
     await beat(1900);
@@ -369,7 +390,7 @@ for (const [href, label, key] of tour) {
     // The payroll run is the one screen worth opening: the payslips behind it
     // are computed by the real Thai tax and social-security code.
     if (href === '/payroll') {
-      const open = page.locator('a.btn', { hasText: 'เปิดดู' }).first();
+      const open = page.locator('a.btn', { hasText: ui('open') }).first();
       if (await open.count()) {
         // Opening a run keeps the topbar title, so there is no arrival to wait
         // for. Clearing still means the worst case is a moment with no caption
@@ -387,7 +408,7 @@ for (const [href, label, key] of tour) {
 
 await step('dark mode', async () => {
   await caption('');
-  await page.getByTitle('สลับธีมสว่าง/มืด').click();
+  await page.getByTitle(ui('theme')).click();
   await caption(line('close'));
   await beat(2800);
 });
