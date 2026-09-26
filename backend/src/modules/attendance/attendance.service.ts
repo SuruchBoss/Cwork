@@ -30,11 +30,19 @@ import {
 } from './domain/attendance-calculator';
 import { checkGeofence, distanceMeters } from './domain/geo';
 import type { AttendanceQueryDto, CreateCorrectionDto, PunchDto } from './dto/attendance.dto';
+import { LatePunchConfirmationService } from './late-punch.service';
 
 /** Device clocks more than this far from the server's are flagged. */
 const CLOCK_DRIFT_TOLERANCE_MINUTES = 10;
 /** GPS readings worse than this are too vague to trust for a geofence. */
 const POOR_ACCURACY_METERS = 500;
+/**
+ * A queued punch older than this when it reaches the server is flagged
+ * LATE_CAPTURE and sent to a manager to confirm. A placeholder from CW-025, not
+ * a decision — the real number comes from the pilot's flag rate — so an
+ * organisation overrides it in `settings.attendance.latePunchCeilingHours`.
+ */
+const DEFAULT_LATE_PUNCH_CEILING_HOURS = 12;
 
 @Injectable()
 export class AttendanceService {
@@ -43,6 +51,7 @@ export class AttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly organization: OrganizationService,
+    private readonly latePunch: LatePunchConfirmationService,
   ) {}
 
   /**
@@ -85,9 +94,20 @@ export class AttendanceService {
       now,
     );
 
+    let lateCaptureHours: number | null = null;
     if (dto.clientTime) {
-      const drift = Math.abs(minutesBetween(new Date(dto.clientTime), now));
-      if (drift > CLOCK_DRIFT_TOLERANCE_MINUTES) anomalyFlags.add(AnomalyFlag.CLOCK_DRIFT);
+      // A queued punch that reached the server long after it was captured is
+      // LATE_CAPTURE and a manager confirms it below; a smaller gap is ordinary
+      // clock skew (CLOCK_DRIFT). The two are mutually exclusive — the queue
+      // delay already explains the difference, so raising both would be noise.
+      const capturedMinutesAgo = minutesBetween(new Date(dto.clientTime), now);
+      const ceilingMinutes = resolveLatePunchCeilingHours(organization.settings) * 60;
+      if (capturedMinutesAgo > ceilingMinutes) {
+        anomalyFlags.add(AnomalyFlag.LATE_CAPTURE);
+        lateCaptureHours = Math.round(capturedMinutesAgo / 60);
+      } else if (Math.abs(capturedMinutesAgo) > CLOCK_DRIFT_TOLERANCE_MINUTES) {
+        anomalyFlags.add(AnomalyFlag.CLOCK_DRIFT);
+      }
     }
     if (dto.isMockLocation) anomalyFlags.add(AnomalyFlag.MOCK_LOCATION);
     if (dto.isRootedDevice) anomalyFlags.add(AnomalyFlag.ROOTED_DEVICE);
@@ -100,7 +120,7 @@ export class AttendanceService {
       anomalyFlags.add(AnomalyFlag.NEW_DEVICE);
     }
 
-    await this.prisma.attendancePunch.create({
+    const punch = await this.prisma.attendancePunch.create({
       data: {
         organizationId: user.organizationId,
         employeeId,
@@ -126,6 +146,21 @@ export class AttendanceService {
     });
 
     await this.recalculateDay(user.organizationId, employeeId, workDate, timezone);
+
+    // The punch is already stored and flagged; a stale offline punch now goes to
+    // a manager to confirm. Opened after the punch commits, never in place of it.
+    if (lateCaptureHours !== null) {
+      await this.latePunch.openConfirmation({
+        organizationId: user.organizationId,
+        submittedByUserId: user.userId,
+        employeeId,
+        punchId: punch.id,
+        punchType: dto.type,
+        workDate,
+        delayHours: lateCaptureHours,
+      });
+    }
+
     return this.getDay(user, employeeId, formatDateOnly(workDate));
   }
 
@@ -795,6 +830,20 @@ export class AttendanceService {
 
     return assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
   }
+}
+
+/**
+ * The hours-old ceiling beyond which a queued punch is flagged LATE_CAPTURE.
+ * Per-org override in `settings.attendance.latePunchCeilingHours`, mirroring how
+ * overtime multipliers read from `settings.overtime`; falls back to the CW-025
+ * placeholder when unset or not a positive number.
+ */
+function resolveLatePunchCeilingHours(settings: unknown): number {
+  const configured = (settings as { attendance?: { latePunchCeilingHours?: number } } | null)
+    ?.attendance?.latePunchCeilingHours;
+  return typeof configured === 'number' && configured > 0
+    ? configured
+    : DEFAULT_LATE_PUNCH_CEILING_HOURS;
 }
 
 function toShiftDefinition(shift: Shift): ShiftDefinition {

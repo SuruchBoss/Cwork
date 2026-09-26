@@ -8,6 +8,10 @@ enum ApprovalEntityType {
   JOB_OFFER
   PAYROLL_RUN
   DOCUMENT_REQUEST
+  /// A late-captured offline punch a manager must confirm (CW-025). The entity
+  /// is the AttendancePunch itself; there is no backing row because the punch is
+  /// append-only and the ApprovalInstance is the confirmation record.
+  ATTENDANCE_LATE_PUNCH
 }
 
 enum ApproverType {

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/config/app_config.dart';
 import '../domain/attendance_models.dart';
@@ -12,50 +12,60 @@ import '../domain/attendance_models.dart';
 /// captured and a client id, so the server can dedupe replays and the employee
 /// is credited with the time they actually arrived — not the time the phone
 /// found a network.
+///
+/// The queue lives in `flutter_secure_storage` (the platform keystore), the same
+/// place tokens do — not `SharedPreferences`, which the owner of a rooted device
+/// can read and edit, making a queued arrival time forgeable (CW-025). Secure
+/// storage has no list type, so the queue is one JSON array under a single key.
 class PunchQueue {
-  PunchQueue([SharedPreferences? prefs]) : _injected = prefs;
+  PunchQueue([FlutterSecureStorage? storage])
+      : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+              iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+            );
 
   static const String _key = 'cwork.punchQueue';
-  final SharedPreferences? _injected;
-
-  Future<SharedPreferences> get _prefs async => _injected ?? await SharedPreferences.getInstance();
+  final FlutterSecureStorage _storage;
 
   Future<List<QueuedPunch>> all() async {
-    final SharedPreferences prefs = await _prefs;
-    final List<String> raw = prefs.getStringList(_key) ?? <String>[];
-    return raw
-        .map((String entry) => QueuedPunch.fromJson(jsonDecode(entry) as Map<String, dynamic>))
+    final String? raw = await _storage.read(key: _key);
+    if (raw == null || raw.isEmpty) return <QueuedPunch>[];
+    final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded
+        .map((dynamic entry) => QueuedPunch.fromJson(entry as Map<String, dynamic>))
         .toList();
   }
 
   Future<void> add(QueuedPunch punch) async {
-    final SharedPreferences prefs = await _prefs;
-    final List<String> raw = prefs.getStringList(_key) ?? <String>[];
+    final List<QueuedPunch> punches = await all();
 
     // Bound the queue: a phone that has been offline for weeks should not grow
     // an unbounded backlog. Oldest entries are dropped first.
-    if (raw.length >= AppConfig.offlineQueueLimit) {
-      raw.removeAt(0);
+    if (punches.length >= AppConfig.offlineQueueLimit) {
+      punches.removeAt(0);
     }
 
-    raw.add(jsonEncode(punch.toJson()));
-    await prefs.setStringList(_key, raw);
+    punches.add(punch);
+    await _save(punches);
   }
 
   Future<void> remove(String clientPunchId) async {
-    final SharedPreferences prefs = await _prefs;
-    final List<String> raw = prefs.getStringList(_key) ?? <String>[];
-    raw.removeWhere((String entry) {
-      final Map<String, dynamic> decoded = jsonDecode(entry) as Map<String, dynamic>;
-      return decoded['clientPunchId'] == clientPunchId;
-    });
-    await prefs.setStringList(_key, raw);
+    final List<QueuedPunch> punches = await all();
+    punches.removeWhere((QueuedPunch punch) => punch.clientPunchId == clientPunchId);
+    await _save(punches);
   }
 
   Future<void> clear() async {
-    final SharedPreferences prefs = await _prefs;
-    await prefs.remove(_key);
+    await _storage.delete(key: _key);
   }
 
   Future<int> count() async => (await all()).length;
+
+  Future<void> _save(List<QueuedPunch> punches) async {
+    await _storage.write(
+      key: _key,
+      value: jsonEncode(punches.map((QueuedPunch punch) => punch.toJson()).toList()),
+    );
+  }
 }

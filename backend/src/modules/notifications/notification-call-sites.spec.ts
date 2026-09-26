@@ -16,6 +16,9 @@ import { join } from 'node:path';
 const BEST_EFFORT_ALLOWED: Record<string, string> = {
   'modules/files/files.service.ts':
     'An upload refused by the scanner stores nothing, so there is no write to join.',
+  'modules/attendance/late-punch.service.ts':
+    'Confirming a late punch updates no row — attendance_punches is append-only and the ' +
+    'ApprovalInstance is already committed before dispatch — so the notice has no write to join (CW-025).',
 };
 
 const SRC = join(__dirname, '..', '..');

@@ -205,6 +205,13 @@ export const AnomalyFlag = {
   CLOCK_DRIFT: 'CLOCK_DRIFT',
   NEW_DEVICE: 'NEW_DEVICE',
   IMPOSSIBLE_TRAVEL: 'IMPOSSIBLE_TRAVEL',
+  /**
+   * A queued offline punch that reached the server long after it was captured
+   * (past the organisation's ceiling), so a manager confirms it before it is
+   * trusted. The punch is still recorded — an offline worker must never lose the
+   * time — the flag only asks for a look (CW-025).
+   */
+  LATE_CAPTURE: 'LATE_CAPTURE',
 } as const;
 
 export type AnomalyFlagKey = (typeof AnomalyFlag)[keyof typeof AnomalyFlag];

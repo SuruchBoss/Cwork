@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/attendance_models.dart';
+import 'device_integrity.dart';
 import 'punch_queue.dart';
 
 /// Why a punch could not use GPS, so the UI can explain it rather than fail
@@ -31,12 +32,14 @@ class PunchOutcome {
 }
 
 class AttendanceRepository {
-  AttendanceRepository({required ApiClient api, PunchQueue? queue})
+  AttendanceRepository({required ApiClient api, PunchQueue? queue, DeviceIntegrity? integrity})
       : _api = api,
-        _queue = queue ?? PunchQueue();
+        _queue = queue ?? PunchQueue(),
+        _integrity = integrity ?? const PlatformDeviceIntegrity();
 
   final ApiClient _api;
   final PunchQueue _queue;
+  final DeviceIntegrity _integrity;
 
   Future<AttendanceDay> today() async {
     final Map<String, dynamic> json = await _api.get<Map<String, dynamic>>('/attendance/today');
@@ -68,6 +71,7 @@ class AttendanceRepository {
       longitude: location.position?.longitude,
       accuracyM: location.position?.accuracy.round(),
       isMockLocation: location.isMocked,
+      isRootedDevice: await _integrity.isRooted(),
       note: note,
     );
 

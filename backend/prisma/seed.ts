@@ -759,6 +759,14 @@ async function main(): Promise<void> {
     steps: [{ orderIndex: 0, approverType: ApproverType.ROLE, roleId: roles.get(SystemRole.HR_OFFICER) }],
   });
 
+  await seedApprovalPolicy(organization.id, {
+    entityType: ApprovalEntityType.ATTENDANCE_LATE_PUNCH,
+    name: 'ลงเวลาย้อนหลัง — หัวหน้าโดยตรง',
+    conditions: {},
+    priority: 0,
+    steps: [{ orderIndex: 0, approverType: ApproverType.LINE_MANAGER, levelsUp: 1, slaHours: 48 }],
+  });
+
   // ---- HR knowledge base --------------------------------------------------
   const knowledgeDocs = [
     {

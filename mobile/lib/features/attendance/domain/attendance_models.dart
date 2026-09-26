@@ -178,6 +178,7 @@ class QueuedPunch {
     this.longitude,
     this.accuracyM,
     this.isMockLocation = false,
+    this.isRootedDevice = false,
     this.note,
   });
 
@@ -188,6 +189,10 @@ class QueuedPunch {
   final double? longitude;
   final int? accuracyM;
   final bool isMockLocation;
+
+  /// Device reported root/jailbreak when the punch was captured. Persisted so a
+  /// punch queued offline on a compromised device is still flagged when it syncs.
+  final bool isRootedDevice;
   final String? note;
 
   Map<String, dynamic> toRequestBody() => <String, dynamic>{
@@ -199,6 +204,7 @@ class QueuedPunch {
         if (longitude != null) 'longitude': longitude,
         if (accuracyM != null) 'accuracyM': accuracyM,
         if (isMockLocation) 'isMockLocation': true,
+        if (isRootedDevice) 'isRootedDevice': true,
         if (note != null) 'note': note,
       };
 
@@ -210,6 +216,7 @@ class QueuedPunch {
         'longitude': longitude,
         'accuracyM': accuracyM,
         'isMockLocation': isMockLocation,
+        'isRootedDevice': isRootedDevice,
         'note': note,
       };
 
@@ -221,6 +228,7 @@ class QueuedPunch {
         longitude: (json['longitude'] as num?)?.toDouble(),
         accuracyM: json['accuracyM'] as int?,
         isMockLocation: json['isMockLocation'] as bool? ?? false,
+        isRootedDevice: json['isRootedDevice'] as bool? ?? false,
         note: json['note'] as String?,
       );
 }
