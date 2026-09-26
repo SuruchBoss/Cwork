@@ -4,7 +4,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuditAction } from '@prisma/client';
-import { Observable, tap } from 'rxjs';
+import { mergeMap, Observable } from 'rxjs';
 import type { Request } from 'express';
 import type { AuthenticatedUser } from '../security/current-user';
 import { AuditService } from '../../modules/audit/audit.service';
@@ -14,6 +14,14 @@ import { AUDIT_META_KEY, AuditMetadata } from './audit.decorator';
  * Writes an audit entry for any handler annotated with `@Audited(...)`.
  * Failures are not audited here — the exception filter logs those — so the
  * audit table stays a record of what actually changed.
+ *
+ * The entry is written before the response goes out. It used to be fired and
+ * forgotten, so a caller could be told a change had succeeded and not yet find
+ * it in the audit log — the device re-bind e2e test read the log straight
+ * after the response and failed whenever the insert lost that race. Waiting
+ * costs one insert per audited change and cannot fail it: `record` logs and
+ * swallows its own errors, because a missing audit row is recoverable and a
+ * refused payroll run is not.
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -32,9 +40,9 @@ export class AuditInterceptor implements NestInterceptor {
     const user = request.user;
 
     return next.handle().pipe(
-      tap((result) => {
-        if (!user) return;
-        void this.auditService.record({
+      mergeMap(async (result) => {
+        if (!user) return result;
+        await this.auditService.record({
           organizationId: user.organizationId,
           actorUserId: user.userId,
           action: meta.action as AuditAction,
@@ -45,6 +53,7 @@ export class AuditInterceptor implements NestInterceptor {
           userAgent: request.headers['user-agent'],
           requestId: request.id,
         });
+        return result;
       }),
     );
   }
