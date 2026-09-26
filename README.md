@@ -15,15 +15,98 @@ Built for Thai labour practice. Designed to be self-hosted.
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
-<img src="./docs/demo/walkthrough.gif" alt="Signing in with two-factor authentication, then the approvals inbox, employee register, leave, attendance, a closed payroll run, the hiring pipeline, KPIs and the audit log" width="860">
+<img src="./docs/demo/walkthrough.gif" alt="Signing in with two-factor authentication on the English console, then the approvals inbox, employee directory, leave, attendance, a closed payroll run, candidates, KPIs and the activity log" width="860">
 
 <sub>Real console, real second factor, real payroll run — recorded against the
 company <code>npm run db:seed</code> builds, by <a href="./docs/demo/record.mjs">a
-script in this repository</a>. The interface defaults to Thai and switches to
-English (<a href="./docs/backlog.md">CW-016</a>); this was recorded in Thai, so
-the captions are burned in. <a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a>.</sub>
+script in this repository</a>, on the English interface. Thai is the default and
+one switch turns the whole console English (<a href="./docs/backlog.md">CW-016</a>).
+<a href="./docs/demo/walkthrough.mp4">Higher-quality MP4</a> ·
+<a href="./landing/assets/walkthrough.th.mp4">the Thai take</a>.</sub>
 
 </div>
+
+---
+
+## Why Cwork
+
+Six problems a Thai business pays for every month, and how Cwork answers each
+one — rarely with a single feature, usually with several working together. The
+[overview page](https://suruchboss.github.io/Cwork/en/) tells the same story with
+screenshots.
+
+### 1 · An HR bill that grows with every hire
+
+Per-seat pricing means every hire raises the bill, the contract renews every
+year, and your employee data lives on somebody else's servers.
+
+- **No licence fee, no per-seat fee.** Apache-2.0: twenty employees or two
+  thousand cost the same — the server.
+- **One machine.** Three Docker commands. PostgreSQL alone does the work of a
+  queue, a lock service and a rate-limit store, so there is no Redis or Kafka to run.
+- **Your data, in your database.** Back it up, move it, or leave; nothing locks you in.
+- **Room to grow.** More API replicas are one setting, not another service.
+
+### 2 · Payroll you hold your breath over
+
+A spreadsheet one person understands, progressive tax, social security and
+several overtime rates — one mistake costs money, a correction run and trust.
+
+- **Thai law as tested code.** Withholding tax, social security, provident fund
+  and Labour Protection Act overtime, as pure functions with worked examples.
+- **Whoever prepares a run cannot approve it**, enforced by the API.
+- **No export until the figures reconcile.** Every run in the period approved,
+  and the payslips adding up to the run totals to the baht (CW-044).
+- **Approvers see why the total moved.** The optional assistant narrates the
+  variance against last period, and a test fails on any figure it invents (CW-040).
+- **Payslips you can explain a year later**, with employer contributions kept
+  apart from deductions.
+- *Not yet:* the PND 1, social-security and bank-transfer files.
+
+### 3 · Buddy punching, and sites with no signal
+
+- **Accounts bound to a device.** The first phone binds; a punch from another is
+  flagged, and only HR can move the binding, audited (CW-024).
+- **Flag for review, never refuse.** Punches outside the fence or with a
+  suspicious location are accepted and flagged — whoever turned up can always clock in.
+- **Offline punches kept safe.** An encrypted on-device queue, rooted-device
+  detection, and late deliveries that need confirming before they count (CW-025).
+- **Rosters that lateness is measured against**, assignable a department at a time (CW-010).
+- **A summary for managers** instead of a list of flags: flagged punches grouped
+  by location, so a fence drawn too tight reads differently from fraud (CW-039).
+
+### 4 · Requests stuck waiting for a signature
+
+- **One approval engine, nine request types** — leave, overtime, expenses,
+  attendance corrections, resignations, requisitions, offers, payroll runs and
+  document requests.
+- **Routes that follow the organisation** — line manager, department head, role
+  or named person, with amount thresholds and delegation.
+- **Approve from a phone.** Email and push go out through a transactional outbox
+  that retries, backs off and dead-letters.
+- **Leave balances that cannot go negative.** Pending days are reserved on
+  filing; weekends and public holidays are never counted.
+- **Self-service certificates**, issued as PDFs with a verification code (CW-008).
+
+### 5 · Employee data leaks, and PDPA exposure
+
+- **National IDs and bank accounts encrypted** at rest and masked to the last four digits.
+- **A password alone is not a session** for anyone who can read them or run payroll.
+- **An audit trail nobody can rewrite**, append-only by database trigger.
+- **Keep only what you need** — consent on application, candidates erased after
+  12 months, leavers redacted once past retention (CW-015).
+- **Nothing leaks through the logs.** No salary, national ID, bank account,
+  token or query string reaches a log line, and an e2e test proves it (CW-050).
+- **Uploads scanned** for malware before they are stored.
+
+### 6 · Systems that do not talk to each other
+
+- **Applicant to employee in one click** — requisition, public careers page,
+  auto-graded assessment, scorecards, and an offer that becomes the employee record.
+- **Fairer reviews** — weighted KPIs, check-ins and calibration by HR.
+- **Benefits that flow into payroll** without re-keying (CW-009).
+- **Offboarding** with a clearance checklist and exit interview.
+- **Thai and English throughout**, web and app (CW-016).
 
 ---
 
@@ -196,7 +279,11 @@ real company by accident.
 > message flips between the two from one switch (a header control on the web, the
 > profile screen on mobile), and Thai stays the default. Every image below is a
 > real screenshot of the seeded demo company in Thai — the console in a browser,
-> the employee app on a 390×844 phone.
+> the employee app on a 390×844 phone. The console's are taken by
+> [`docs/screenshots/capture.mjs`](./docs/screenshots/capture.mjs), so they can be
+> retaken whenever a screen changes.
+
+<img src="./docs/screenshots/03-dashboard.png" alt="Dashboard: approvals waiting, headcount, leave requests and the latest payroll run" width="860">
 
 ### People
 
@@ -225,7 +312,7 @@ and overtime at Labour Protection Act rates.
 **A punch outside the fence is flagged, never rejected.** An employee must always
 be able to prove they turned up; HR reviews the flag afterwards.
 
-<img src="./docs/screenshots/06-attendance.png" alt="Attendance" width="860">
+<img src="./docs/screenshots/06-attendance.png" alt="Attendance" width="49%"> <img src="./docs/screenshots/22-roster.png" alt="Shift roster" width="49%">
 
 ### Payroll
 
@@ -284,7 +371,7 @@ deductions, and employer contributions kept visibly separate from what came out
 of the employee's pay.
 
 <details>
-<summary><b>More screenshots</b> — sign-in and 2FA, expenses, offboarding, org chart, audit, dark theme, phone width</summary>
+<summary><b>More screenshots</b> — sign-in and 2FA, expenses, benefits, offboarding, org chart, audit, dark theme, phone width</summary>
 
 <br>
 
@@ -292,9 +379,9 @@ of the employee's pay.
 
 <img src="./docs/screenshots/01-login.png" alt="Sign in" width="49%"> <img src="./docs/screenshots/02-mfa-code.png" alt="Two-factor code" width="49%">
 
-**Expenses and offboarding**
+**Expenses, benefits and offboarding**
 
-<img src="./docs/screenshots/08-expenses.png" alt="Expense claims" width="49%"> <img src="./docs/screenshots/12-offboarding.png" alt="Offboarding" width="49%">
+<img src="./docs/screenshots/08-expenses.png" alt="Expense claims" width="32%"> <img src="./docs/screenshots/23-benefits.png" alt="Benefit plans and enrolments" width="32%"> <img src="./docs/screenshots/12-offboarding.png" alt="Offboarding" width="32%">
 
 **Org chart and the append-only audit trail**
 

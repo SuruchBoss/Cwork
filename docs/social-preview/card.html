@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <!--
-  The 1280x640 card GitHub shows when this repository's link is pasted into
-  LinkedIn, Slack, X or a chat. Rendered by build.mjs; do not edit the PNG.
+  The 1280x640 card shown when a Cwork link is pasted into LINE, Facebook,
+  LinkedIn, Slack or X — GitHub's social preview for the repository, and the
+  og:image of both landing pages. Rendered by build.mjs; do not edit the PNGs.
+  `#th` renders the Thai card for the Thai landing page.
 
   Two constraints shaped it. It is often shown at about a third of this size,
   so exactly one thing may be large and everything else has to survive being
-  small. And GitHub prints the repository description directly underneath, so
-  repeating that description here would waste the only picture anyone sees.
+  small. And the page title is printed underneath it, so repeating the title
+  here would waste the only picture anyone sees.
 
   Deliberately no test counts or version numbers: a figure baked into a PNG is
   the one claim `verify:docs` cannot read, and stale numbers on a shared image
@@ -17,113 +19,129 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&text=%E4%BA%BA%E4%BA%8B&display=swap">
 <style>
-  /* The landing page's palette, so a link preview and the site it points at
-     are recognisably the same product. */
+  /* The landing page's palette — washi, sumi, indigo and a vermilion seal — so
+     a link preview and the site it points at are recognisably one product. */
   :root {
-    --pine:     #123f38;
-    --pine-ink: #e8f1ed;
-    --pine-dim: #9dbcb2;
-    --pop:      #f9a97e;  /* the accent, in the tint that reads on pine */
-    --line:     rgb(232 241 237 / .16);
+    --paper: #f6f4ee;
+    --ink:   #17181c;
+    --ink-2: #45474f;
+    --line:  #d6d1c3;
+    --grid:  rgb(23 24 28 / .05);
+    --shu:   #cf3b24;
+    --ai:    #1d3d6e;
   }
 
   * { box-sizing: border-box; margin: 0; }
 
   body {
-    width: 1280px; height: 640px; overflow: hidden;
+    width: 1280px; height: 640px; overflow: hidden; position: relative;
     display: flex; align-items: stretch;
-    background: var(--pine);
-    color: var(--pine-ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--ink);
     font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
-    /* A wash from the corner the screenshot enters, so the two halves read as
-       one image rather than a panel stuck beside some text. */
-    background-image: radial-gradient(120% 100% at 100% 0%, #1b544a 0%, #123f38 58%);
   }
 
   .say {
-    flex: none; width: 700px;
-    padding: 72px 0 68px 76px;
+    flex: none; width: 640px;
+    padding: 64px 0 60px 72px;
     display: flex; flex-direction: column; justify-content: space-between;
   }
 
   .brand { display: flex; align-items: center; gap: 16px; }
-  .mark {
-    width: 52px; height: 52px; flex: none; border-radius: 14px;
-    background: var(--pine-ink); color: var(--pine);
+  .hanko {
+    width: 54px; height: 54px; flex: none; border-radius: 7px;
+    background: var(--shu); color: #fff;
     display: grid; place-items: center;
-    font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; font-weight: 500;
-    letter-spacing: .02em;
+    font-family: "JetBrains Mono", monospace; font-size: 1.1rem; font-weight: 500;
+    box-shadow: inset 0 0 0 3px rgb(255 255 255 / .18);
   }
-  .brand b {
-    font-family: "Bai Jamjuree", sans-serif; font-weight: 700;
-    font-size: 2.1rem; letter-spacing: -.02em;
-  }
+  .brand b { font-family: "Anuphan", sans-serif; font-weight: 700; font-size: 2.15rem; letter-spacing: -.02em; }
 
   h1 {
-    font-family: "Bai Jamjuree", sans-serif; font-weight: 700;
-    font-size: 4.2rem; line-height: 1.12; letter-spacing: -.028em;
+    font-family: "Anuphan", sans-serif; font-weight: 700;
+    font-size: 4.1rem; line-height: 1.14; letter-spacing: -.025em;
   }
-  /* Broken by hand: left to wrap, "on" ends up hanging alone at the end of
-     the first line, which is the sort of thing only a person notices. */
   h1 span { display: block; }
-  h1 em { font-style: normal; color: var(--pop); }
+  h1 em { font-style: normal; color: var(--shu); }
 
-  .sub {
-    margin-top: 22px; font-size: 1.32rem; font-weight: 300; line-height: 1.5;
-    color: var(--pine-dim); max-width: 31ch;
-  }
+  .sub { margin-top: 22px; font-size: 1.3rem; line-height: 1.55; color: var(--ink-2); max-width: 30ch; }
 
   .stack {
-    display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
-    font-family: "IBM Plex Mono", monospace; font-size: .92rem;
-    color: var(--pine-dim); letter-spacing: .01em;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace; font-size: .9rem; letter-spacing: .04em;
+    color: var(--ink-2);
   }
-  .stack span { white-space: nowrap; }
-  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line); flex: none; }
-  .stack .lic { color: var(--pine-ink); }
+  .stack .lic { color: var(--shu); }
+  .dot { width: 4px; height: 4px; background: var(--line); flex: none; }
 
-  /* The product itself, running and in Thai — the one thing here that cannot
-     be claimed, only shown. Bled off two edges so it reads as a window onto
-     something larger rather than a pasted thumbnail. */
-  .shot {
-    flex: 1; position: relative; overflow: hidden;
+  /* 人事 (jinji, HR) as a signboard between the words and the product. */
+  .tate {
+    position: absolute; left: 640px; top: 64px;
+    writing-mode: vertical-rl; font-family: "Shippori Mincho B1", serif; font-weight: 800;
+    font-size: 4.4rem; line-height: 1; letter-spacing: .18em;
+    color: transparent; -webkit-text-stroke: 1.4px var(--shu);
   }
+
+  /* The product itself, running — bled off two edges so it reads as a window
+     onto something larger, with a printer's crop mark at its corner. */
+  .shot { flex: 1; position: relative; overflow: hidden; }
   .shot img {
-    position: absolute; top: 96px; left: 44px;
-    width: 760px; height: auto;
-    border-radius: 14px 0 0 0;
-    border-top: 1px solid var(--line);
-    border-left: 1px solid var(--line);
-    box-shadow: -34px 34px 80px -28px rgb(0 0 0 / .55);
+    position: absolute; top: 118px; left: 110px;
+    width: 780px; height: auto;
+    border: 1px solid var(--line); border-right: 0; border-bottom: 0;
+    border-radius: 8px 0 0 0;
+    box-shadow: -30px 30px 70px -30px rgb(23 24 28 / .45);
   }
+  .shot i { position: absolute; top: 104px; left: 96px; width: 20px; height: 20px; border-top: 2px solid var(--shu); border-left: 2px solid var(--shu); }
 </style>
 </head>
 <body>
   <div class="say">
     <div class="brand">
-      <span class="mark">CW</span>
+      <span class="hanko">CW</span>
       <b>Cwork</b>
     </div>
 
     <div>
-      <h1><span>All of HR,</span><span>on <em>your</em> own server</span></h1>
-      <p class="sub">Thai payroll, leave, attendance and an offline-tolerant employee app.</p>
+      <h1 data-en='<span>All of HR,</span><span>no <em>per-seat</em> fee</span>'
+          data-th='<span>งาน HR ทั้งบริษัท</span><span>ไม่ต้องจ่าย<em>รายหัว</em></span>'></h1>
+      <p class="sub" data-en="Thai payroll, attendance that is hard to fake, approvals from a phone — on your own server."
+         data-th="เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติจากมือถือ — บนเซิร์ฟเวอร์ของคุณเอง"></p>
     </div>
 
     <div class="stack">
       <span class="lic">Apache-2.0</span><span class="dot"></span>
-      <span>NestJS</span><span class="dot"></span>
-      <span>React</span><span class="dot"></span>
-      <span>Flutter</span><span class="dot"></span>
-      <span>PostgreSQL</span>
+      <span>Self-hosted</span><span class="dot"></span>
+      <span>PostgreSQL</span><span class="dot"></span>
+      <span>TH · EN</span>
     </div>
   </div>
 
+  <span class="tate" aria-hidden="true">人事</span>
+
   <div class="shot">
-    <img src="../../landing/assets/dashboard.png"
-         alt="The Cwork console in Thai, showing pending approvals, headcount and the latest payroll run">
+    <i></i>
+    <img data-en="../../landing/assets/shots/dashboard.en.webp"
+         data-th="../../landing/assets/shots/dashboard.th.webp"
+         alt="The Cwork dashboard, showing pending approvals, headcount and the latest payroll run">
   </div>
+
+  <script>
+    // One card, two languages: the Thai landing page shares the Thai one.
+    var lang = location.hash === '#th' ? 'th' : 'en';
+    document.documentElement.lang = lang;
+    document.querySelector('h1').innerHTML = document.querySelector('h1').dataset[lang];
+    var sub = document.querySelector('.sub');
+    sub.textContent = sub.dataset[lang];
+    var img = document.querySelector('.shot img');
+    img.src = img.dataset[lang];
+  </script>
 </body>
 </html>

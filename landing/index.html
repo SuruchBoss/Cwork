@@ -2,12 +2,10 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<!-- Without this every phone lays the page out at ~980px and zooms out. The
-     Artifact preview injects one of its own, which is why this was invisible
-     right up until the page was served from GitHub Pages. -->
+<!-- Without this every phone lays the page out at ~980px and zooms out. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cwork — ระบบ HR ครบทั้งบริษัท ติดตั้งเอง ไม่จ่ายรายหัว</title>
-<meta name="description" content="ระบบบริหารงานบุคคลโอเพนซอร์สสำหรับ SME ไทย — ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือนตามกฎหมายไทย และแอปพนักงาน ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง จ่ายแค่ค่าเครื่อง">
+<meta name="description" content="ระบบบริหารงานบุคคลโอเพนซอร์สสำหรับธุรกิจไทย — เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติจากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง จ่ายแค่ค่าเครื่อง">
 <link rel="canonical" href="https://suruchboss.github.io/Cwork/">
 <link rel="alternate" hreflang="th" href="https://suruchboss.github.io/Cwork/">
 <link rel="alternate" hreflang="en" href="https://suruchboss.github.io/Cwork/en/">
@@ -17,482 +15,476 @@
 <meta property="og:locale:alternate" content="en_GB">
 <meta property="og:url" content="https://suruchboss.github.io/Cwork/">
 <meta property="og:title" content="Cwork — ระบบ HR ครบทั้งบริษัท ติดตั้งเอง ไม่จ่ายรายหัว">
-<meta property="og:description" content="ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือนตามกฎหมายไทย และแอปพนักงาน ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง จ่ายแค่ค่าเครื่อง ไม่มีค่าใช้จ่ายต่อพนักงาน">
-<meta property="og:image" content="https://suruchboss.github.io/Cwork/assets/dashboard.png">
+<meta property="og:description" content="หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน — เงินเดือน ลงเวลา การอนุมัติ และ PDPA — แก้ได้ในระบบเดียว บนเซิร์ฟเวอร์ของคุณเอง ไม่มีค่ารายหัว">
+<meta property="og:image" content="https://suruchboss.github.io/Cwork/assets/og.th.png">
 <meta property="og:image:width" content="1280">
-<meta property="og:image:height" content="800">
-<meta property="og:image:alt" content="แดชบอร์ด Cwork ภาษาไทย แสดงรายการรออนุมัติ จำนวนพนักงาน และรอบเงินเดือนล่าสุด">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Cwork — งาน HR ทั้งบริษัท ไม่ต้องจ่ายรายหัว พร้อมภาพแดชบอร์ดภาษาไทย">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f4f5f2" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101312" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f4ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1014" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-
-</head>
-<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<!-- The kanji are ornament, and only these few are ever drawn: `text=` asks
+     Google for exactly them, a few kilobytes instead of a Japanese font. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&text=%E4%B8%80%E4%B8%89%E4%B8%AD%E4%BA%8B%E4%BA%8C%E4%BA%BA%E4%BB%95%E4%BF%A1%E5%83%8D%E5%85%A5%E5%89%87%E5%8B%A4%E5%9B%9B%E5%A2%A8%E5%A7%8B%E5%AE%88%E5%B0%8E%E5%BE%AA%E6%88%90%E6%89%BF%E6%9C%B1%E6%A7%98%E6%B1%BA%E7%94%9F%E7%94%BB%E7%A8%BC%E7%B5%A6%E8%97%8D%E8%A6%8F%E8%A7%A3%E8%AA%B2%E8%B2%BB%E9%9D%A2%E9%A0%BC%E9%A1%8C&display=swap">
 <style>
   /* ================================================================ tokens
-     Deep pine for the solid surfaces, burnt orange for money. The page spends
-     its colour in one place — the figure the owner came here to find out. */
+     Modern Japanese, for an IT buyer: 生成り washi paper, 墨 sumi ink, 藍 indigo
+     for anything the product does, and 朱 vermilion — the colour of a hanko
+     seal — spent only on the problem, the money, and the one button that
+     matters. Hairlines, not shadows; a grid you can almost see. */
   :root {
-    --bg:        #f4f5f2;
-    --card:      #ffffff;
-    --sunk:      #e9ebe6;
-    --ink:       #191c1b;
-    --ink-soft:  #4b534f;
-    --ink-faint: #646d68;
-    --line:      #d8ddd7;
-    --line-soft: #e6eae4;
+    --paper:    #f6f4ee;
+    --paper-2:  #eeebe2;
+    --card:     #fffdf8;
+    --ink:      #17181c;
+    --ink-2:    #45474f;
+    --ink-3:    #6e7079;
+    --line:     #d6d1c3;
+    --line-2:   #e5e1d5;
 
-    --pine:      #123f38;
-    --pine-soft: #1c564d;
-    --pine-ink:  #e8f1ed;
-    --pine-dim:  #9dbcb2;
+    --ai:       #1d3d6e;
+    --ai-2:     #2b528d;
+    --ai-soft:  #e3e8f0;
+    --shu:      #cf3b24;
+    --shu-deep: #a52f1c;
+    --shu-soft: #f7e2dc;
 
-    --pop:       #bd450f;      /* money, and the one loud thing on the page */
-    --pop-ink:   #fff4ee;
-    --pop-soft:  #fae6dc;
-    --pop-deep:  #8f3910;      /* small text in the accent colour */
-    --pop-lift:  #f9a97e;      /* the same, over the dark pine band */
+    --band:     #13284a;
+    --band-ink: #eef1f7;
+    --band-dim: #a9b6cc;
 
-    --term-bg:   #11201d;
-    --term-ink:  #dceae5;
-    --term-dim:  #7d958d;
+    --term-bg:  #121418;
+    --term-ink: #e6e4dd;
+    --term-dim: #8b8e97;
 
-    --shadow-sm: 0 1px 2px rgb(25 28 27 / .06);
-    --shadow:    0 2px 4px rgb(25 28 27 / .04), 0 14px 32px -16px rgb(25 28 27 / .28);
+    --grid:     rgb(23 24 28 / .045);
+    --shadow:   0 1px 0 rgb(23 24 28 / .04), 0 18px 40px -24px rgb(23 24 28 / .35);
 
-    --mono: "IBM Plex Mono", "IBM Plex Sans Thai", ui-monospace, monospace;
+    --f-body: "IBM Plex Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-head: "Anuphan", "IBM Plex Sans Thai", system-ui, sans-serif;
+    --f-jp:   "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
-    /* Thai display type stacks vowel and tone marks, so leading never drops
-       below ~1.2 no matter how large the size gets. */
-    --t-micro: .76rem;
-    --t-small: .89rem;
-    --t-body:  clamp(1rem, .97rem + .17vw, 1.08rem);
-    --t-lede:  clamp(1.13rem, 1.04rem + .44vw, 1.38rem);
-    --t-h3:    clamp(1.14rem, 1.06rem + .36vw, 1.34rem);
-    --t-h2:    clamp(1.9rem, 1.45rem + 2.1vw, 3.2rem);
-    --t-h1:    clamp(2.5rem, 1.6rem + 4vw, 5rem);
-    --t-huge:  clamp(2.8rem, 1.7rem + 5vw, 5.6rem);
+    /* Thai stacks vowel and tone marks above the line, so display leading
+       never drops below ~1.25 however large the type gets. */
+    --t-micro: .74rem;
+    --t-small: .9rem;
+    --t-body:  clamp(1rem, .97rem + .16vw, 1.07rem);
+    --t-lede:  clamp(1.1rem, 1.02rem + .4vw, 1.3rem);
+    --t-h3:    clamp(1.45rem, 1.2rem + 1.1vw, 2.1rem);
+    --t-h2:    clamp(1.9rem, 1.4rem + 2.2vw, 3.1rem);
+    --t-h1:    clamp(2.6rem, 1.6rem + 4.6vw, 5.4rem);
 
-    --wrap: 1180px;
-    --prose: 60ch;
-    --r: 10px;
+    --wrap: 1200px;
+    --r: 6px;
   }
 
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg:        #101312;
-      --card:      #181d1b;
-      --sunk:      #0a0d0c;
-      --ink:       #eaefec;
-      --ink-soft:  #aeb8b3;
-      --ink-faint: #7e8a85;
-      --line:      #2a312e;
-      --line-soft: #202724;
+    :root {
+      --paper:    #0f1014;
+      --paper-2:  #0a0b0e;
+      --card:     #16181e;
+      --ink:      #ece9e1;
+      --ink-2:    #b7b5ae;
+      --ink-3:    #8b8a86;
+      --line:     #2b2d34;
+      --line-2:   #1f2127;
 
-      --pine:      #0f342f;
-      --pine-soft: #17463f;
-      --pine-ink:  #e3efeb;
-      --pine-dim:  #8fb0a6;
+      --ai:       #93b3e8;
+      --ai-2:     #b8cdf2;
+      --ai-soft:  #172033;
+      --shu:      #ff6a4d;
+      --shu-deep: #ff9985;
+      --shu-soft: #2c1611;
 
-      --pop:       #f0703a;
-      --pop-ink:   #1d0f08;
-      --pop-soft:  #2d1a11;
-      --pop-deep:  #f5a37b;
-      --pop-lift:  #f9a97e;
+      --band:     #111d33;
+      --term-bg:  #08090c;
 
-      --term-bg:   #080f0e;
-      --term-ink:  #dceae5;
-      --term-dim:  #708880;
-
-      --shadow-sm: 0 1px 2px rgb(0 0 0 / .5);
-      --shadow:    0 2px 4px rgb(0 0 0 / .4), 0 16px 36px -18px rgb(0 0 0 / .85);
+      --grid:     rgb(236 233 225 / .035);
+      --shadow:   0 1px 0 rgb(0 0 0 / .3), 0 20px 44px -24px rgb(0 0 0 / .9);
     }
   }
 
-  :root[data-theme="dark"] {
-    --bg:        #101312;
-    --card:      #181d1b;
-    --sunk:      #0a0d0c;
-    --ink:       #eaefec;
-    --ink-soft:  #aeb8b3;
-    --ink-faint: #7e8a85;
-    --line:      #2a312e;
-    --line-soft: #202724;
-
-    --pine:      #0f342f;
-    --pine-soft: #17463f;
-    --pine-ink:  #e3efeb;
-    --pine-dim:  #8fb0a6;
-
-    --pop:       #f0703a;
-    --pop-ink:   #1d0f08;
-    --pop-soft:  #2d1a11;
-    --pop-deep:  #f5a37b;
-    --pop-lift:  #f9a97e;
-
-    --term-bg:   #080f0e;
-    --term-ink:  #dceae5;
-    --term-dim:  #708880;
-
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / .5);
-    --shadow:    0 2px 4px rgb(0 0 0 / .4), 0 16px 36px -18px rgb(0 0 0 / .85);
-  }
-
-  /* ================================================================== base */
+  /* ================================================================ base */
   *, *::before, *::after { box-sizing: border-box; }
-
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 76px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0;
-    background: var(--bg);
+    background: var(--paper);
     color: var(--ink);
-    font-family: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
-    font-size: var(--t-body);
-    line-height: 1.72;
+    font: 400 var(--t-body)/1.72 var(--f-body);
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-
-  h1, h2, h3 {
-    font-family: "Bai Jamjuree", "IBM Plex Sans Thai", system-ui, sans-serif;
-    font-weight: 600; margin: 0; text-wrap: balance;
-  }
-  h1 { font-size: var(--t-h1); font-weight: 700; line-height: 1.2; letter-spacing: -.022em; }
-  h2 { font-size: var(--t-h2); line-height: 1.24; letter-spacing: -.014em; }
-  h3 { font-size: var(--t-h3); line-height: 1.36; }
-
-  p { margin: 0; }
+  img, video { display: block; max-width: 100%; height: auto; }
   a { color: inherit; }
-  img, video { max-width: 100%; display: block; }
-  code { font-family: var(--mono); font-size: .92em; }
+  p { margin: 0; }
+  h1, h2, h3 { margin: 0; font-family: var(--f-head); font-weight: 700; letter-spacing: -.01em; }
+  ul { margin: 0; padding: 0; list-style: none; }
+  code { font-family: var(--f-mono); font-size: .9em; }
+  :focus-visible { outline: 2px solid var(--shu); outline-offset: 3px; border-radius: 2px; }
 
-  :focus-visible { outline: 2px solid var(--pop); outline-offset: 3px; border-radius: 4px; }
+  .wrap { width: min(100% - 32px, var(--wrap)); margin-inline: auto; }
+  .jp { font-family: var(--f-jp); font-weight: 800; }
+  .mono { font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: .08em; text-transform: uppercase; }
+  /* Small labels in Thai: no tracking, no capitals — Thai has neither, and
+     letter-spacing pulls its vowel and tone marks away from their consonants. */
+  .label { font: 500 .8rem/1.4 var(--f-body); color: var(--ink-3); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-  .wrap { width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: 22px; }
+  /* The graph paper under the hero and the closing band. */
+  .ruled {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
 
-  section { padding-block: clamp(62px, 8vw, 112px); }
-  /* The bar is sticky, so anything jumped to by anchor has to clear it. */
-  :target, section[id], main[id] { scroll-margin-top: 96px; }
-
-  .eyebrow {
-    display: inline-block;
-    font-family: var(--mono); font-size: var(--t-micro); font-weight: 500;
-    letter-spacing: .14em; text-transform: uppercase;
-    color: var(--pop-deep); margin-bottom: 14px;
-  }
-  .lede { color: var(--ink-soft); font-size: var(--t-lede); font-weight: 300; max-width: var(--prose); }
-  .shead { margin-bottom: clamp(34px, 4vw, 54px); display: grid; gap: 16px; }
-
-  /* =================================================================== nav */
-  .bar {
-    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 60;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .bar__in { display: flex; align-items: center; gap: 26px; min-height: 66px; flex-wrap: wrap; }
-  .brand {
-    display: flex; align-items: center; gap: 11px; text-decoration: none;
-    font-family: "Bai Jamjuree", sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -.015em;
-  }
-  .mark {
-    width: 32px; height: 32px; flex: none; border-radius: 9px;
-    background: var(--pine); color: var(--pine-ink);
-    display: grid; place-items: center;
-    font-family: var(--mono); font-size: .68rem; font-weight: 500;
-  }
-  .bar nav { display: flex; gap: 26px; margin-inline-start: auto; flex-wrap: wrap; align-items: center; }
-  /* :not(.btn) — otherwise this beats .btn--pop and sets the download
-     button's label in muted grey on orange. */
-  .bar nav a:not(.btn) {
-    text-decoration: none; color: var(--ink-soft); font-size: var(--t-small);
-    padding-block: 5px; border-bottom: 1.5px solid transparent; transition: color .15s, border-color .15s;
-  }
-  .bar nav a:not(.btn):hover { color: var(--ink); border-bottom-color: var(--pop); }
-  .bar .btn { padding: 8px 16px; font-size: var(--t-small); }
-  .bar nav a.lang {
-    font-family: var(--mono); font-size: var(--t-micro); letter-spacing: .04em;
-    padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
-    color: var(--ink-soft); text-decoration: none; transition: border-color .15s, color .15s;
-  }
-  .bar nav a.lang:hover { border-color: var(--pop); color: var(--pop); }
-
-  /* ================================================================ button */
+  /* ================================================================ buttons */
   .btn {
-    display: inline-flex; align-items: center; gap: 9px;
-    padding: 13px 24px; border-radius: 8px;
-    font-family: "Bai Jamjuree", sans-serif; font-weight: 600; font-size: .97rem;
-    text-decoration: none; border: 1px solid transparent; cursor: pointer;
-    transition: background .15s, border-color .15s, color .15s, transform .12s;
+    display: inline-flex; align-items: center; gap: 10px;
+    min-height: 48px; padding: 0 22px;
+    border: 1px solid var(--ink); border-radius: var(--r);
+    font: 600 1rem/1 var(--f-head); text-decoration: none;
+    transition: transform .15s ease, background .15s ease, color .15s ease;
   }
   .btn:hover { transform: translateY(-1px); }
-  .btn--pop { background: var(--pop); color: var(--pop-ink); }
-  .btn--pop:hover { background: color-mix(in srgb, var(--pop) 86%, #000); }
-  .btn--ghost { border-color: var(--line); color: var(--ink); background: var(--card); }
-  .btn--ghost:hover { border-color: var(--pop); color: var(--pop); }
-  .btn--onpine { background: var(--pine-ink); color: var(--pine); }
-  .btn--onpine:hover { background: #fff; }
-  .btn--outpine {
-    background: transparent; color: var(--pine-ink);
-    border-color: color-mix(in srgb, var(--pine-ink) 34%, transparent);
-  }
-  .btn--outpine:hover { border-color: var(--pine-ink); background: color-mix(in srgb, var(--pine-ink) 10%, transparent); }
-
-  /* ================================================================== hero */
-  .hero { padding-block: clamp(54px, 7vw, 92px) clamp(46px, 6vw, 80px); }
-  /* The headline spans the full measure and the two columns sit under it.
-     Thai has no word spaces, so each phrase is its own block: that fixes the
-     break where it belongs instead of letting the line breaker pick, and a
-     phrase too wide for a phone still wraps on its own without overflowing. */
-  .hero h1 { margin-bottom: clamp(24px, 2.6vw, 36px); }
-  .hero h1 .line { display: block; }
-  .hero h1 em { font-style: normal; color: var(--pop); }
-  /* The headline, the promise and the product each get the full measure in
-     turn. Nothing sits beside the headline, so a long Thai phrase has room
-     to be set large without crowding anything. */
-  .hero__say {
-    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: clamp(24px, 3vw, 52px); align-items: end;
-    margin-bottom: clamp(38px, 4.4vw, 64px);
-  }
-  .hero__lede { max-width: 46ch; }
-
-  .tagrow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-  .tag {
-    font-size: var(--t-micro); padding: 5px 12px; border-radius: 999px;
-    border: 1px solid var(--line); color: var(--ink-faint); background: var(--card);
-  }
-  .tag--live { color: var(--pop-deep); background: var(--pop-soft); border-color: transparent; font-weight: 500; }
-
+  .btn svg { flex: none; }
+  .btn--shu { background: var(--shu); border-color: var(--shu); color: #fff; }
+  .btn--shu:hover { background: var(--shu-deep); border-color: var(--shu-deep); }
+  .btn--line { background: transparent; color: var(--ink); }
+  .btn--line:hover { background: var(--ink); color: var(--paper); }
+  .btn--light { background: var(--band-ink); border-color: var(--band-ink); color: var(--band); }
+  .btn--ghost-light { background: transparent; border-color: rgb(238 241 247 / .5); color: var(--band-ink); }
+  .btn--ghost-light:hover { background: rgb(238 241 247 / .08); }
   .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
-  .handoff {
-    display: flex; align-items: center; gap: 11px; margin-top: 18px;
-    font-size: var(--t-small); color: var(--ink-faint);
+  /* ================================================================ bar */
+  .bar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: saturate(1.2) blur(10px);
+    -webkit-backdrop-filter: saturate(1.2) blur(10px);
+    border-bottom: 1px solid var(--line);
   }
-  .handoff svg { width: 18px; height: 18px; flex: none; color: var(--ink-faint); }
-  .handoff a { color: var(--ink); font-weight: 500; text-underline-offset: 3px; }
+  .bar__in { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+  .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font: 700 1.1rem/1 var(--f-head); }
+  .hanko {
+    display: grid; place-items: center; flex: none;
+    width: 34px; height: 34px; border-radius: 5px;
+    background: var(--shu); color: #fff;
+    font: 600 .8rem/1 var(--f-mono); letter-spacing: .02em;
+    box-shadow: inset 0 0 0 2px rgb(255 255 255 / .18);
+  }
+  .brand small { font: 500 var(--t-micro)/1 var(--f-mono); color: var(--ink-3); letter-spacing: .06em; }
+  .bar nav { display: flex; align-items: center; gap: 4px; }
+  .bar nav a { padding: 8px 12px; border-radius: var(--r); text-decoration: none; font-size: var(--t-small); color: var(--ink-2); }
+  .bar nav a:hover { color: var(--ink); background: var(--paper-2); }
+  .bar nav .lang { font-family: var(--f-mono); font-size: var(--t-micro); letter-spacing: .06em; border: 1px solid var(--line); }
+  .bar nav .btn { min-height: 38px; padding: 0 16px; font-size: var(--t-small); margin-inline-start: 6px; color: #fff; }
+  .bar nav .btn:hover { background: var(--shu-deep); color: #fff; }
+  @media (max-width: 960px) { .bar nav .nav__link { display: none; } }
+  @media (max-width: 420px) { .brand small { display: none; } }
 
-  .hero__shot { margin: 0; min-width: 0; }
-  .hero__shot video {
-    display: block; width: 100%; border-radius: var(--r);
-    border: 1px solid var(--line);
-    box-shadow: var(--shadow); background: var(--sunk);
+  /* ================================================================ hero */
+  .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .hero__grid {
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr);
+    gap: clamp(28px, 7.5vw, 112px); align-items: end;
+    padding-block: clamp(44px, 7vw, 96px) clamp(28px, 4vw, 44px);
   }
-  .hero__shot figcaption {
-    margin-top: 13px; font-size: var(--t-small); color: var(--ink-faint);
-    display: flex; align-items: center; gap: 8px;
+  .status {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 12px 6px 10px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); font: 500 .8rem/1 var(--f-body); color: var(--ink-2);
   }
-  .hero__shot figcaption::before {
-    content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%;
-    background: var(--pop);
+  .status .dot { width: 7px; height: 7px; border-radius: 50%; background: #2f9e62; box-shadow: 0 0 0 3px rgb(47 158 98 / .18); }
+  .status .jp { font-weight: 600; font-size: .86rem; letter-spacing: .1em; color: var(--ink); }
+  .hero h1 {
+    margin-top: 22px;
+    font-size: var(--t-h1); line-height: 1.16; letter-spacing: -.02em;
   }
+  .hero h1 .line { display: block; text-wrap: balance; }
+  /* The English headline is twice the letters of the Thai one. */
+  :lang(en) .hero h1 { font-size: clamp(2.3rem, 1.5rem + 3.4vw, 4.4rem); }
+  .hero h1 em {
+    font-style: normal; color: var(--shu);
+    background: linear-gradient(transparent 78%, var(--shu-soft) 78%);
+  }
+  .hero__lede { margin-top: 22px; max-width: 60ch; font-size: var(--t-lede); line-height: 1.7; color: var(--ink-2); }
+  .hero .cta-row { margin-top: 30px; }
+  .handoff { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; font-size: var(--t-small); color: var(--ink-3); }
+  .handoff svg { width: 18px; height: 18px; flex: none; margin-top: 3px; }
+  .handoff a { color: var(--ai); font-weight: 500; }
 
-  /* ============================================================ calculator
-     The one thing an owner came here to work out, so it is the one loud
-     object on the page and it opens with a plausible company already in it. */
-  .calc { background: var(--pine); color: var(--pine-ink); }
-  .calc .eyebrow { color: var(--pop-lift); }
-  .calc h2 { max-width: 18ch; }
-  .calc .lede { color: var(--pine-dim); }
+  /* 人事 (jinji, HR) standing beside the spec sheet like a shop's signboard. */
+  .tate {
+    position: absolute; top: -2px; right: calc(100% + clamp(14px, 1.6vw, 22px));
+    writing-mode: vertical-rl; font-family: var(--f-jp); font-weight: 800;
+    font-size: clamp(2.4rem, 1.6rem + 1.4vw, 3.4rem); line-height: 1; letter-spacing: .18em;
+    color: transparent; -webkit-text-stroke: 1.2px var(--shu);
+    pointer-events: none; user-select: none;
+  }
+  @media (max-width: 1100px) { .tate { display: none; } }
 
-  .calc__grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr));
-    gap: clamp(28px, 4vw, 56px); align-items: start;
+  /* 仕様 — the spec sheet: the numbers a buyer checks first. */
+  .spec { border: 1px solid var(--ink); background: var(--card); position: relative; }
+  .spec__head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 12px 16px; border-bottom: 1px solid var(--ink);
   }
-  .field { display: grid; gap: 7px; margin-bottom: 22px; }
-  .field label { font-size: var(--t-small); color: var(--pine-dim); }
-  .field__in { display: flex; align-items: center; gap: 10px; }
-  .field input {
-    flex: 1; min-width: 0;
-    background: color-mix(in srgb, var(--pine-ink) 9%, transparent);
-    border: 1px solid color-mix(in srgb, var(--pine-ink) 26%, transparent);
-    border-radius: 8px; padding: 12px 15px;
-    color: var(--pine-ink); font-family: var(--mono); font-size: 1.12rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .field input:focus { border-color: var(--pop); outline: none; }
-  .field__unit { font-size: var(--t-small); color: var(--pine-dim); flex: none; }
-  .hint { font-size: var(--t-micro); color: var(--pine-dim); opacity: .85; }
+  .spec__head .jp { font-size: 1.05rem; letter-spacing: .2em; }
+  .spec dl { margin: 0; }
+  .spec__row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: baseline; padding: 11px 16px; border-bottom: 1px dashed var(--line); }
+  .spec__row:last-child { border-bottom: 0; }
+  .spec dt { font-size: var(--t-small); color: var(--ink-2); }
+  .spec dd { margin: 0; font: 600 1.02rem/1.3 var(--f-mono); text-align: end; }
+  .spec dd.hot { color: var(--shu); }
 
-  .result {
-    background: color-mix(in srgb, var(--pine-ink) 7%, transparent);
-    border: 1px solid color-mix(in srgb, var(--pine-ink) 18%, transparent);
-    border-radius: 14px; padding: clamp(24px, 3vw, 34px);
+  /* The walkthrough, framed like a window, with a printer's crop marks. */
+  .reel { padding-bottom: clamp(44px, 6vw, 80px); }
+  .window { position: relative; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); box-shadow: var(--shadow); }
+  .window__bar {
+    display: flex; align-items: center; gap: 12px; padding: 9px 14px;
+    border-bottom: 1px solid var(--line); font: 500 var(--t-micro)/1 var(--f-mono); color: var(--ink-3); letter-spacing: .04em;
   }
-  .result__label { font-size: var(--t-small); color: var(--pine-dim); }
-  /* The figure never wraps; fitInto() in the script below shrinks it instead.
-     Fixed size steps were tried and cannot work: ฿99,999,999 fits at one size
-     on a wide screen and overflows at the same size on a narrow one, so the
-     threshold would have to know the viewport. Measuring does. */
-  .result__big {
-    font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
-    font-size: var(--t-huge); line-height: 1.1; color: var(--pop-lift);
-    letter-spacing: -.02em; margin: 6px 0 2px; white-space: nowrap;
-  }
-  .result__sub { font-size: var(--t-small); color: var(--pine-dim); }
-  .result__split { display: grid; gap: 14px; margin-top: 24px; padding-top: 22px; border-top: 1px solid color-mix(in srgb, var(--pine-ink) 18%, transparent); }
-  .lineitem { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; font-size: .95rem; }
-  .lineitem b { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .lineitem--free b { color: var(--pop-lift); }
+  .window__bar i { width: 9px; height: 9px; border: 1px solid var(--line); border-radius: 2px; }
+  .window__bar span { margin-inline-start: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .window img, .window video { width: 100%; border-radius: 0 0 var(--r) var(--r); }
+  .marks > b { position: absolute; width: 16px; height: 16px; border: 0 solid var(--shu); pointer-events: none; }
+  .marks > b:nth-of-type(1) { top: -11px; left: -11px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  .marks > b:nth-of-type(2) { top: -11px; right: -11px; border-top-width: 1.5px; border-right-width: 1.5px; }
+  .marks > b:nth-of-type(3) { bottom: -11px; left: -11px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  .marks > b:nth-of-type(4) { bottom: -11px; right: -11px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  .caption { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; font-size: var(--t-small); color: var(--ink-3); }
 
-  /* ================================================================ plates */
-  /* These are 1280px console screenshots. Beside a column of text each one is
-     shown at about half size, which puts the interface's own 14px labels at
-     7px — a picture of the product nobody can read is not evidence of it. So
-     the caption goes above and the screenshot takes the full measure. */
-  .plates { display: grid; gap: clamp(48px, 5.5vw, 88px); }
-  .plate { margin: 0; display: grid; gap: clamp(16px, 1.8vw, 24px); }
-  .plate figcaption {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
-    gap: clamp(8px, 2vw, 44px); align-items: baseline;
-  }
-  .plate figcaption b {
-    font-family: "Bai Jamjuree", sans-serif; font-weight: 600;
-    font-size: var(--t-h3); line-height: 1.32; color: var(--ink);
-  }
-  .plate figcaption span { color: var(--ink-soft); }
-  /* height: auto, or the width/height attributes act as a presentational
-     hint and the CSS width alone stretches every screenshot vertically. */
-  .plate img {
-    display: block; width: 100%; height: auto; border-radius: var(--r);
-    border: 1px solid var(--line); box-shadow: var(--shadow); background: var(--card);
-  }
-  /* Giving the screenshot the full measure is enough on a laptop — a 1280px
-     capture lands at 1136px, so the interface's own 14px labels stay at 12px.
-     On a phone the full measure is 346px: the same labels land at 3.8px, and
-     the picture stops being evidence of anything. There is no width to find,
-     so the image opens on a tap instead and the phone's own zoom takes over. */
-  .plate a { display: block; text-decoration: none; border-radius: var(--r); }
-  .plate__hint { display: none; }
-  @media (max-width: 880px) {
-    .plate__hint {
-      display: block; margin-top: 9px;
-      font-size: var(--t-micro); color: var(--ink-faint);
-    }
+  @media (max-width: 900px) {
+    .hero__grid { grid-template-columns: 1fr; align-items: start; }
   }
 
-  /* ============================================================== features */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
-  .cell {
-    background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r);
-    padding: 28px 26px 30px; display: flex; flex-direction: column; gap: 11px;
-    box-shadow: var(--shadow-sm);
+  /* ================================================================ sections */
+  section { position: relative; }
+  .block { padding-block: clamp(64px, 9vw, 128px); }
+  .block--alt { background: var(--paper-2); border-block: 1px solid var(--line); }
+  .shead { max-width: 820px; margin-bottom: clamp(36px, 5vw, 60px); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 12px; color: var(--ink-3); }
+  .eyebrow .jp { color: var(--shu); font-size: 1.25rem; letter-spacing: .2em; }
+  .eyebrow::after { content: ""; width: 48px; height: 1px; background: var(--line); }
+  .shead h2 { margin-top: 14px; font-size: var(--t-h2); line-height: 1.22; }
+  .shead .lede { margin-top: 16px; font-size: var(--t-lede); color: var(--ink-2); max-width: 64ch; }
+
+  /* ================================================================ pain index */
+  .index { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--ink); background: var(--card); }
+  .index a {
+    position: relative; display: grid; gap: 6px; padding: 18px 16px 16px;
+    text-decoration: none; border-inline-end: 1px solid var(--line);
+    transition: background .15s ease;
   }
-  .cell__key { font-family: var(--mono); font-size: var(--t-micro); letter-spacing: .12em; text-transform: uppercase; color: var(--pop); }
-  .cell p { color: var(--ink-soft); font-size: .96rem; }
-  .cell ul { margin: 3px 0 0; padding-inline-start: 1.05em; color: var(--ink-soft); font-size: .93rem; }
-  .cell li { margin-bottom: 5px; }
-
-  /* ================================================================== pdpa */
-  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: clamp(30px, 4vw, 58px); align-items: start; }
-  /* The steps run twice as long as the terminal beside them; let it ride down
-     rather than leaving half the column empty. */
-  @media (min-width: 881px) {
-    #install .term { position: sticky; top: 92px; }
+  .index a:last-child { border-inline-end: 0; }
+  .index a:hover { background: var(--shu-soft); }
+  .index .jp { font-size: 2.1rem; line-height: 1; color: var(--ink); }
+  .index a:hover .jp { color: var(--shu); }
+  .index .mono { color: var(--ink-3); }
+  .index span:last-child { font-size: var(--t-small); line-height: 1.45; color: var(--ink-2); }
+  @media (max-width: 900px) {
+    .index { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .index a:nth-child(3) { border-inline-end: 0; }
+    .index a:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
   }
-  .claims { list-style: none; margin: 0; padding: 0; }
-  .claims li { display: grid; grid-template-columns: 22px 1fr; gap: 13px; padding: 15px 0; align-items: start; border-bottom: 1px solid var(--line-soft); }
-  .claims li:first-child { border-top: 1px solid var(--line-soft); }
-  .claims svg { width: 19px; height: 19px; margin-top: 5px; flex: none; color: var(--pop); }
-  .claims strong { display: block; font-weight: 600; }
-  .claims span { font-size: .94rem; color: var(--ink-soft); }
-
-  .aside {
-    background: var(--pop-soft); border-radius: var(--r);
-    padding: 24px 26px; font-size: .94rem; color: var(--ink-soft);
+  @media (max-width: 520px) {
+    .index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .index a { border-inline-end: 1px solid var(--line) !important; border-bottom: 1px solid var(--line); }
+    .index a:nth-child(2n) { border-inline-end: 0 !important; }
+    .index a:nth-last-child(-n+2) { border-bottom: 0; }
   }
-  .aside strong { color: var(--ink); }
-  .aside a { color: var(--pop-deep); font-weight: 600; text-underline-offset: 3px; }
 
-  /* ============================================================ guarantees
-     A schedule, not another card grid — these are undertakings, and the eye
-     should not read them as more features. */
-  .schedule { display: grid; border-top: 1px solid var(--line); }
-  .row { display: grid; grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); gap: 8px 40px; padding: 24px 0; border-bottom: 1px solid var(--line-soft); }
-  .row p { color: var(--ink-soft); font-size: .97rem; max-width: 58ch; }
+  /* ================================================================ stories */
+  .story {
+    display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.2fr);
+    gap: clamp(28px, 5vw, 64px); align-items: start;
+    padding-block: clamp(48px, 6vw, 80px);
+    border-top: 1px solid var(--line);
+  }
+  .story:first-of-type { border-top: 0; padding-top: clamp(40px, 5vw, 64px); }
+  .story--flip > .story__text { order: 2; }
+  .story__head { display: flex; align-items: center; gap: 16px; }
+  .seal {
+    display: grid; place-items: center; flex: none;
+    width: 62px; height: 62px; border: 2px solid var(--shu); border-radius: 6px;
+    color: var(--shu); font-family: var(--f-jp); font-weight: 800; font-size: 2.1rem; line-height: 1;
+    background: var(--card);
+  }
+  .story__meta { display: grid; gap: 4px; }
+  .story__meta .mono { color: var(--ink-3); }
+  .story__meta b { font: 600 1.02rem/1.3 var(--f-head); }
+  .story h3 { margin-top: 22px; font-size: var(--t-h3); line-height: 1.3; }
+  .pain {
+    margin-top: 14px; padding: 2px 0 2px 16px; border-inline-start: 3px solid var(--shu);
+    color: var(--ink-2);
+  }
+  .fixlabel { display: flex; align-items: center; gap: 10px; margin-top: 28px; color: var(--ai); }
+  .fixlabel .label { color: var(--ai); font-weight: 600; }
+  .fixlabel .jp { font-size: 1.05rem; letter-spacing: .16em; }
+  .fixlabel::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .fixes { margin-top: 12px; display: grid; gap: 12px; }
+  .fixes li { display: grid; grid-template-columns: 14px 1fr; gap: 12px; }
+  .fixes li::before { content: ""; width: 8px; height: 8px; margin-top: 10px; background: var(--ai); }
+  .fixes b { display: block; font: 600 1.02rem/1.45 var(--f-head); color: var(--ink); }
+  .fixes span { display: block; margin-top: 2px; font-size: var(--t-small); line-height: 1.65; color: var(--ink-2); }
+  .soon {
+    margin-top: 18px; padding: 10px 14px; border: 1px dashed var(--line); border-radius: var(--r);
+    font-size: var(--t-small); color: var(--ink-3);
+  }
+  .soon .label { color: var(--shu); font-weight: 600; margin-inline-end: 8px; }
+  .more { display: inline-block; margin-top: 18px; color: var(--ai); font-weight: 500; font-size: var(--t-small); }
+  .story figure { margin: 0; position: sticky; top: 92px; }
+  .story figure a { display: block; text-decoration: none; }
+  @media (max-width: 900px) {
+    .story { grid-template-columns: 1fr; }
+    .story--flip > .story__text { order: 0; }
+    .story figure { position: static; }
+  }
 
-  /* =================================================================== app */
-  .phones { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  /* ================================================================ calculator */
+  .calc { border: 1px solid var(--ink); background: var(--card); }
+  .calc__head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 18px; border-bottom: 1px solid var(--ink); }
+  .calc__body { padding: 18px; display: grid; gap: 16px; }
+  .field label { display: block; font: 600 var(--t-small)/1.4 var(--f-head); }
+  .field__in { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 0 14px; min-height: 48px; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); }
+  .field__in:focus-within { border-color: var(--ai); box-shadow: 0 0 0 3px var(--ai-soft); }
+  .field input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: 600 1.1rem/1 var(--f-mono); outline: none; }
+  .field__unit { font: 500 var(--t-small)/1 var(--f-mono); color: var(--ink-3); }
+  .hint { margin-top: 6px; font-size: var(--t-micro); line-height: 1.55; color: var(--ink-3); }
+  .result { padding: 20px 18px 18px; background: var(--band); color: var(--band-ink); }
+  .result__label { font: 500 var(--t-small)/1.4 var(--f-head); color: var(--band-dim); }
+  .result__big { margin-top: 6px; font: 600 clamp(2.1rem, 1.5rem + 2.6vw, 3.2rem)/1.1 var(--f-mono); white-space: nowrap; letter-spacing: -.02em; }
+  .result__sub { margin-top: 8px; font-size: var(--t-micro); line-height: 1.55; color: var(--band-dim); min-height: 1.55em; }
+  .result__split { margin-top: 16px; border-top: 1px solid rgb(238 241 247 / .16); }
+  .lineitem { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px dashed rgb(238 241 247 / .14); font-size: var(--t-micro); color: var(--band-dim); }
+  .lineitem b { font: 600 .86rem/1.4 var(--f-mono); color: var(--band-ink); white-space: nowrap; }
+  .lineitem--free b { color: #8fd4a8; }
+
+  /* ================================================================ gallery */
+  .gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.4vw, 30px); }
+  .gallery figure { margin: 0; }
+  .gallery a { display: block; text-decoration: none; }
+  .gallery figcaption { margin-top: 12px; display: grid; gap: 2px; }
+  .gallery figcaption b { font: 600 1rem/1.4 var(--f-head); }
+  .gallery figcaption span { font-size: var(--t-small); color: var(--ink-3); }
+  @media (max-width: 900px) { .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .gallery { grid-template-columns: 1fr; } }
+
+  /* ================================================================ app */
+  .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+  @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+  .claims { display: grid; gap: 18px; }
+  .claims li { display: grid; grid-template-columns: 30px 1fr; gap: 14px; }
+  .claims .n { font: 600 .8rem/30px var(--f-mono); text-align: center; border: 1px solid var(--ink); height: 30px; }
+  .claims b { display: block; font: 600 1.05rem/1.45 var(--f-head); }
+  .claims span { display: block; margin-top: 2px; color: var(--ink-2); font-size: var(--t-small); }
+  .phones { display: flex; justify-content: center; gap: clamp(14px, 3vw, 28px); }
   .phones img {
-    width: min(258px, calc(50% - 11px)); height: auto;
-    border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow);
+    width: min(46%, 250px); border: 1px solid var(--line); border-radius: 26px;
+    box-shadow: var(--shadow); background: var(--card);
   }
+  .phones img:nth-child(2) { margin-top: 48px; }
 
-  /* =============================================================== install */
-  .term {
-    min-width: 0; background: var(--term-bg); color: var(--term-ink);
-    border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden;
-    font-family: var(--mono); font-size: .84rem; line-height: 1.95;
+  /* ================================================================ trust */
+  .rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ink); }
+  .rule { display: grid; grid-template-columns: 58px 1fr; gap: 16px; padding: 22px 8px 22px 0; border-bottom: 1px solid var(--line); }
+  .rules .rule:nth-child(odd) { padding-inline-end: clamp(16px, 3vw, 40px); border-inline-end: 1px solid var(--line); }
+  .rules .rule:nth-child(even) { padding-inline-start: clamp(16px, 3vw, 40px); }
+  .rule .mono { color: var(--shu); padding-top: 6px; }
+  .rule h3 { font-size: 1.12rem; line-height: 1.4; }
+  .rule p { margin-top: 6px; font-size: var(--t-small); color: var(--ink-2); }
+  @media (max-width: 800px) {
+    .rules { grid-template-columns: 1fr; }
+    .rules .rule:nth-child(n) { padding-inline: 0; border-inline-end: 0; }
   }
-  .term__bar {
-    display: flex; align-items: center; gap: 8px; padding: 10px 15px;
-    border-bottom: 1px solid rgb(255 255 255 / .07);
-    color: var(--term-dim); font-size: var(--t-micro);
-  }
-  .term__dot { width: 9px; height: 9px; border-radius: 50%; background: rgb(255 255 255 / .15); }
-  .term__body { padding: 16px 19px 20px; overflow-x: auto; }
-  .term__body p { white-space: pre; }
-  .term .p { color: #e8a87c; }
-  .term .c { color: var(--term-dim); }
-  .term .ok { color: #79c9a8; }
+  .proof { margin-top: clamp(36px, 5vw, 56px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .proof div { padding: 18px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r); }
+  .proof b { display: block; font: 600 1rem/1.4 var(--f-head); }
+  .proof span { display: block; margin-top: 6px; font-size: var(--t-small); color: var(--ink-2); }
+  @media (max-width: 900px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .proof { grid-template-columns: 1fr; } }
 
-  .steps { counter-reset: step; display: grid; gap: 24px; }
-  .step { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 16px; align-items: start; }
-  .step::before {
-    counter-increment: step; content: counter(step);
-    font-family: var(--mono); font-size: .8rem; font-weight: 500;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--pop-soft); color: var(--pop-deep);
-    display: grid; place-items: center;
-  }
-  .step h3 { font-size: var(--t-body); font-weight: 600; margin-bottom: 5px; }
-  .step p { color: var(--ink-soft); font-size: .94rem; margin-bottom: 11px; }
+  /* ================================================================ install */
+  .steps { display: grid; gap: 26px; min-width: 0; }
+  /* A command block is `white-space: pre`; without this it props the column
+     open to its longest line and the page scrolls sideways on a phone. */
+  .step > div, .split > * { min-width: 0; }
+  .step { display: grid; grid-template-columns: 48px 1fr; gap: 16px; }
+  .step .jp { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--ink); font-size: 1.5rem; background: var(--card); }
+  .step h3 { font-size: 1.12rem; line-height: 1.4; padding-top: 10px; }
+  .step p { margin-top: 6px; font-size: var(--t-small); color: var(--ink-2); }
   .cmd {
-    max-width: 100%; background: var(--term-bg); color: var(--term-ink);
-    font-family: var(--mono); font-size: .8rem; padding: 12px 15px;
-    border-radius: 8px; overflow-x: auto; white-space: pre;
+    margin-top: 12px; padding: 14px 16px; border-radius: var(--r); overflow-x: auto;
+    background: var(--term-bg); color: var(--term-ink); font: 400 .84rem/1.75 var(--f-mono); white-space: pre;
   }
-  .cmd .p { color: #e8a87c; }
+  .cmd .p { color: var(--shu); user-select: none; }
   .cmd .c { color: var(--term-dim); }
+  .term { border-radius: var(--r); overflow: hidden; background: var(--term-bg); color: var(--term-ink); box-shadow: var(--shadow); align-self: start; position: sticky; top: 92px; }
+  .term__bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgb(255 255 255 / .08); font: 500 var(--t-micro)/1 var(--f-mono); color: var(--term-dim); }
+  .term__bar i { width: 9px; height: 9px; border-radius: 2px; background: rgb(255 255 255 / .14); }
+  .term__body { padding: 16px 18px 20px; font: 400 .84rem/1.8 var(--f-mono); }
+  .term__body .p { color: var(--shu); }
+  .term__body .c { color: var(--term-dim); }
+  .term__body .ok { color: #8fd4a8; }
+  @media (max-width: 900px) { .term { position: static; } }
+
+  /* ================================================================ closing band */
+  .band { position: relative; overflow: hidden; background: var(--band); color: var(--band-ink); }
+  .band::before {
+    content: ""; position: absolute; inset: 0; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28' viewBox='0 0 56 28'%3E%3Cg fill='none' stroke='%23a9b6cc' stroke-opacity='.22'%3E%3Cpath d='M0 28a28 28 0 0 1 56 0M8 28a20 20 0 0 1 40 0M16 28a12 12 0 0 1 24 0M-28 14a28 28 0 0 1 56 0M-20 14a20 20 0 0 1 40 0M-12 14a12 12 0 0 1 24 0M28 14a28 28 0 0 1 56 0M36 14a20 20 0 0 1 40 0M44 14a12 12 0 0 1 24 0'/%3E%3C/g%3E%3C/svg%3E");
+    -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 10%, #000 70%);
+  }
+  .band__kanji {
+    position: absolute; right: max(16px, calc((100vw - var(--wrap)) / 2)); top: 50%; transform: translateY(-50%);
+    font-family: var(--f-jp); font-weight: 800; font-size: clamp(8rem, 4rem + 14vw, 17rem); line-height: 1;
+    color: transparent; -webkit-text-stroke: 1.5px rgb(255 138 115 / .55); pointer-events: none;
+  }
+  @media (max-width: 760px) { .band__kanji { opacity: .35; } }
+  .band .wrap { position: relative; padding-block: clamp(64px, 9vw, 112px); }
+  .band .eyebrow, .band .label { color: var(--band-dim); }
+  .band .eyebrow::after { background: rgb(238 241 247 / .25); }
+  .band .eyebrow .jp { color: #ff8a73; }
+  .band h2 { margin-top: 14px; font-size: var(--t-h2); line-height: 1.22; max-width: 18ch; }
+  .band p { margin-top: 16px; max-width: 56ch; color: var(--band-dim); font-size: var(--t-lede); }
+  .band .cta-row { margin-top: 30px; }
 
   /* ================================================================ footer */
-  footer { border-top: 1px solid var(--line); padding-block: 44px 60px; }
-  .foot { display: flex; flex-wrap: wrap; gap: 26px 48px; align-items: flex-start; justify-content: space-between; }
-  .foot__links { display: flex; gap: 24px; flex-wrap: wrap; }
-  .foot a { color: var(--ink-soft); text-decoration: none; font-size: var(--t-small); border-bottom: 1px solid var(--line); }
-  .foot a:hover { color: var(--pop); border-bottom-color: var(--pop); }
-  .foot p { font-size: var(--t-small); color: var(--ink-faint); }
-
-  @media (max-width: 880px) {
-    .hero__say { grid-template-columns: minmax(0, 1fr); gap: 26px; align-items: start; }
-    .plate figcaption { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-    /* The section links go; the language switch stays. `:not(.btn)` alone took
-       it with them, so a phone had no way to reach the other language at all —
-       and the page is bilingual mainly for people who arrive on a phone. */
-    .bar nav a:not(.btn):not(.lang) { display: none; }
-    .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-  }
+  footer { border-top: 1px solid var(--line); }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; padding-block: 34px 44px; font-size: var(--t-small); color: var(--ink-3); }
+  .foot__brand { display: flex; gap: 12px; align-items: flex-start; }
+  .foot__brand b { display: block; font: 700 1.02rem/1.3 var(--f-head); color: var(--ink); }
+  .foot__links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .foot__links a { color: var(--ink-2); text-decoration: none; }
+  .foot__links a:hover { color: var(--shu); }
 </style>
+</head>
+<body>
 
 <header class="bar">
   <div class="wrap bar__in">
     <a class="brand" href="#top">
-      <span class="mark" aria-hidden="true">CW</span>
+      <span class="hanko" aria-hidden="true">CW</span>
       <span>Cwork</span>
+      <small>v0.3.1</small>
     </a>
     <nav aria-label="เมนูหลัก">
-      <a href="#calc">คิดค่าใช้จ่าย</a>
-      <a href="#screens">หน้าตาระบบ</a>
-      <a href="#features">ความสามารถ</a>
-      <a href="#pdpa">ข้อมูลพนักงาน</a>
-      <a href="#install">สำหรับฝ่าย IT</a>
+      <a class="nav__link" href="#pain">ปัญหาที่เราแก้</a>
+      <a class="nav__link" href="#calc">คิดค่าใช้จ่าย</a>
+      <a class="nav__link" href="#screens">หน้าตาระบบ</a>
+      <a class="nav__link" href="#install">สำหรับฝ่าย IT</a>
       <a class="lang" href="en/" hreflang="en" lang="en">English</a>
-      <a class="btn btn--pop" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรี</a>
+      <a class="btn btn--shu" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรี</a>
     </nav>
   </div>
 </header>
@@ -500,391 +492,446 @@
 <main id="top">
 
   <!-- ==================================================== hero -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="tagrow">
-        <span class="tag tag--live">ใช้งานได้แล้ว · v0.3.1</span>
-        <span class="tag">ติดตั้งบนเครื่องของคุณเอง</span>
-        <span class="tag">ทำตามกฎหมายแรงงานไทย</span>
-      </div>
+  <section class="hero ruled">
+    <div class="wrap hero__grid">
+      <div>
+        <span class="status"><span class="dot" aria-hidden="true"></span><span class="jp" aria-hidden="true">稼働中</span><span>ใช้งานได้แล้ว · v0.3.1</span></span>
 
-      <h1><span class="line">งาน HR ครบทั้งบริษัท</span><span class="line">ไม่ต้องจ่าย<em>รายหัว</em></span></h1>
+        <h1><span class="line">งาน HR ทั้งบริษัท</span><span class="line">ไม่ต้องจ่าย<em>รายหัว</em></span></h1>
 
-      <div class="hero__say">
-        <p class="lede hero__lede">
-            ทะเบียนพนักงาน วันลา ลงเวลา เงินเดือน และการอนุมัติ ครบในระบบเดียว
-            ติดตั้งบนเครื่องของบริษัทคุณเอง จ่ายแค่ค่าเซิร์ฟเวอร์
-          ไม่มีค่าใช้จ่ายต่อพนักงาน และไม่มีสัญญารายปี
+        <p class="hero__lede">
+          เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA —
+          ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว ไม่มีสัญญารายปี
         </p>
 
-        <div>
-          <div class="cta-row">
-            <a class="btn btn--pop" href="#calc">
-              ดูว่าประหยัดได้เท่าไหร่
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
-            <a class="btn btn--ghost" href="#screens">ดูหน้าตาระบบ</a>
-          </div>
-
-          <p class="handoff">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10M8 9l3 2.5L8 14"/></svg>
-            <span>ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง — <a href="#install">ส่งขั้นตอนให้เขา</a></span>
-          </p>
+        <div class="cta-row">
+          <a class="btn btn--shu" href="#calc">
+            ดูว่าประหยัดได้เท่าไหร่
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn--line" href="#pain">ดูปัญหาที่เราแก้</a>
         </div>
+
+        <p class="handoff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10M8 9l3 2.5L8 14"/></svg>
+          <span>ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง — <a href="#install">ส่งขั้นตอนให้เขา</a></span>
+        </p>
       </div>
 
-      <figure class="hero__shot">
+      <aside class="spec" aria-label="สรุปข้อมูลสำคัญ">
+        <span class="tate" aria-hidden="true">人事</span>
+        <div class="spec__head">
+          <span class="mono">Spec sheet</span>
+          <span class="jp" aria-hidden="true">仕様</span>
+        </div>
+        <dl>
+          <div class="spec__row"><dt>ค่าลิขสิทธิ์</dt><dd class="hot">฿0</dd></div>
+          <div class="spec__row"><dt>ค่ารายหัว ต่อเดือน</dt><dd class="hot">฿0</dd></div>
+          <div class="spec__row"><dt>เซิร์ฟเวอร์ที่ต้องมี</dt><dd>1</dd></div>
+          <div class="spec__row"><dt>ประเภทคำขอในระบบอนุมัติ</dt><dd>9</dd></div>
+          <div class="spec__row"><dt>ภาษา ทั้งเว็บและแอป</dt><dd>TH · EN</dd></div>
+          <div class="spec__row"><dt>สัญญาอนุญาต</dt><dd>Apache-2.0</dd></div>
+        </dl>
+      </aside>
+    </div>
+
+    <div class="wrap reel">
+      <figure class="window marks" style="margin:0">
+        <b></b><b></b><b></b><b></b>
+        <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>cwork · localhost:8080</span></div>
         <video src="assets/walkthrough.th.mp4" autoplay muted loop playsinline
-               poster="assets/dashboard.png"
+               poster="assets/shots/dashboard.th.webp"
                aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
-        <figcaption>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</figcaption>
       </figure>
+      <p class="caption"><span>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</span><span class="mono">REC · demo company</span></p>
     </div>
   </section>
 
-  <!-- ==================================================== calculator -->
-  <section id="calc" class="calc">
+  <!-- ==================================================== pain points -->
+  <section id="pain" class="block">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">คิดค่าใช้จ่าย</span>
-        <h2>ปีหนึ่งคุณจ่ายค่าระบบ HR ไปเท่าไหร่</h2>
+        <span class="eyebrow"><span class="jp" aria-hidden="true">課題</span><span class="label">ปัญหาและทางแก้</span></span>
+        <h2>หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน</h2>
         <p class="lede">
-          ระบบ HR ส่วนใหญ่คิดเป็นรายหัวต่อเดือน ยิ่งบริษัทโต ค่าใช้จ่ายยิ่งโตตาม
-          ลองใส่ตัวเลขของคุณเองดู
+          ไม่มีข้อไหนที่แก้จบด้วยฟีเจอร์เดียว — แต่ละปัญหา Cwork ใช้หลายส่วนของระบบทำงานประสานกัน
+          เพื่อปิดช่องโหว่ให้จบจริง ไม่ใช่แค่ย้ายปัญหาไปไว้ที่อื่น
         </p>
       </div>
 
-      <div class="calc__grid">
-        <div>
-          <div class="field">
-            <label for="headcount">พนักงานในระบบ</label>
-            <div class="field__in">
-              <input id="headcount" type="number" min="1" max="100000" step="1" value="50" inputmode="numeric">
-              <span class="field__unit">คน</span>
-            </div>
-          </div>
+      <nav class="index" aria-label="หกปัญหา">
+        <a href="#p1"><span class="jp" aria-hidden="true">費</span><span class="mono">01</span><span>ค่าระบบโตตามจำนวนคน</span></a>
+        <a href="#p2"><span class="jp" aria-hidden="true">給</span><span class="mono">02</span><span>เงินเดือนผิด ต้องลุ้นทุกงวด</span></a>
+        <a href="#p3"><span class="jp" aria-hidden="true">勤</span><span class="mono">03</span><span>ลงเวลาแทนกัน หน้างานไม่มีสัญญาณ</span></a>
+        <a href="#p4"><span class="jp" aria-hidden="true">承</span><span class="mono">04</span><span>คำขอค้าง รอลายเซ็น</span></a>
+        <a href="#p5"><span class="jp" aria-hidden="true">守</span><span class="mono">05</span><span>ข้อมูลพนักงานรั่ว เสี่ยง PDPA</span></a>
+        <a href="#p6"><span class="jp" aria-hidden="true">循</span><span class="mono">06</span><span>ระบบหลายตัวที่ไม่คุยกัน</span></a>
+      </nav>
 
-          <div class="field">
-            <label for="rate">ค่าระบบที่จ่ายอยู่ ต่อคนต่อเดือน</label>
-            <div class="field__in">
-              <span class="field__unit">฿</span>
-              <input id="rate" type="number" min="0" max="100000" step="10" value="120" inputmode="numeric">
-            </div>
-            <p class="hint">ใส่ราคาที่คุณจ่ายอยู่จริง ตัวเลขที่ใส่ไว้เป็นแค่ตัวอย่าง</p>
+      <!-- 01 ----------------------------------------------------------- cost -->
+      <article id="p1" class="story">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">費</span>
+            <div class="story__meta"><span class="mono">01 / 06</span><b>ค่าใช้จ่าย</b></div>
           </div>
-
-          <div class="field">
-            <label for="server">ค่าเซิร์ฟเวอร์ที่จะใช้รัน Cwork ต่อเดือน</label>
-            <div class="field__in">
-              <span class="field__unit">฿</span>
-              <input id="server" type="number" min="0" max="100000" step="100" value="900" inputmode="numeric">
-            </div>
-            <p class="hint">VPS ขนาดเล็กก็พอสำหรับบริษัทหลักร้อยคน ถ้ามีเซิร์ฟเวอร์อยู่แล้วใส่ 0</p>
-          </div>
+          <h3>ค่าระบบ HR โตตามจำนวนพนักงาน</h3>
+          <p class="pain">
+            ระบบ HR ส่วนใหญ่คิดเงินรายหัวทุกเดือน รับคนเพิ่มเมื่อไรบิลก็เพิ่มตาม ผูกสัญญารายปี
+            และข้อมูลพนักงานทั้งหมดไปอยู่บนเซิร์ฟเวอร์ของผู้ให้บริการ
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>ไม่มีค่าลิขสิทธิ์ ไม่มีค่ารายหัว</b><span>โอเพนซอร์ส Apache-2.0 พนักงาน 20 หรือ 2,000 คนก็ราคาเดียว คือค่าเซิร์ฟเวอร์</span></div></li>
+            <li><div><b>เครื่องเดียวจบ ไม่ต้องมีทีม DevOps</b><span>Docker สามคำสั่ง ใช้ PostgreSQL ตัวเดียวทำงานแทนคิว แคช และระบบล็อก ไม่ต้องมี Redis หรือ Kafka</span></div></li>
+            <li><div><b>ข้อมูลเป็นของคุณ</b><span>อยู่ในฐานข้อมูลของบริษัทเอง สำรอง ย้าย หรือเลิกใช้เมื่อไรก็ได้ ไม่มีใครล็อกคุณไว้</span></div></li>
+            <li><div><b>ขยายได้เมื่อบริษัทโต</b><span>เพิ่มเครื่อง API เป็นหลายเครื่องได้ด้วยการตั้งค่าเดียว</span></div></li>
+          </ul>
         </div>
 
-        <div class="result">
-          <p class="result__label">ประหยัดได้ปีละ</p>
-          <p class="result__big" id="saved">฿0</p>
-          <p class="result__sub" id="savedNote">&nbsp;</p>
-
-          <div class="result__split">
-            <div class="lineitem">
-              <span>ระบบเดิม · <span id="hcEcho">50</span> คน × ฿<span id="rateEcho">120</span> × 12 เดือน</span>
-              <b id="current">฿0</b>
+        <figure id="calc" class="calc" aria-labelledby="calcTitle">
+          <div class="calc__head">
+            <span id="calcTitle" class="label" style="color:var(--ink)">ปีหนึ่งคุณจ่ายค่าระบบ HR ไปเท่าไหร่</span>
+            <span class="jp" aria-hidden="true">費</span>
+          </div>
+          <div class="calc__body">
+            <div class="field">
+              <label for="headcount">พนักงานในระบบ</label>
+              <div class="field__in">
+                <input id="headcount" type="number" min="1" max="100000" step="1" value="50" inputmode="numeric">
+                <span class="field__unit">คน</span>
+              </div>
             </div>
-            <div class="lineitem lineitem--free">
-              <span>Cwork · ค่าลิขสิทธิ์</span>
-              <b>฿0</b>
+            <div class="field">
+              <label for="rate">ค่าระบบที่จ่ายอยู่ ต่อคนต่อเดือน</label>
+              <div class="field__in">
+                <span class="field__unit">฿</span>
+                <input id="rate" type="number" min="0" max="100000" step="10" value="120" inputmode="numeric">
+              </div>
+              <p class="hint">ใส่ราคาที่คุณจ่ายอยู่จริง ตัวเลขที่ใส่ไว้เป็นแค่ตัวอย่าง</p>
             </div>
-            <div class="lineitem">
-              <span>Cwork · ค่าเซิร์ฟเวอร์ปีละ</span>
-              <b id="serverYear">฿0</b>
+            <div class="field">
+              <label for="server">ค่าเซิร์ฟเวอร์ที่จะใช้รัน Cwork ต่อเดือน</label>
+              <div class="field__in">
+                <span class="field__unit">฿</span>
+                <input id="server" type="number" min="0" max="100000" step="100" value="900" inputmode="numeric">
+              </div>
+              <p class="hint">VPS ขนาดเล็กก็พอสำหรับบริษัทหลักร้อยคน ถ้ามีเซิร์ฟเวอร์อยู่แล้วใส่ 0</p>
             </div>
           </div>
-        </div>
-      </div>
+          <div class="result" aria-live="polite">
+            <p class="result__label">ประหยัดได้ปีละ</p>
+            <p class="result__big" id="saved">฿0</p>
+            <p class="result__sub" id="savedNote">&nbsp;</p>
+            <div class="result__split">
+              <div class="lineitem">
+                <span>ระบบเดิม · <span id="hcEcho">50</span> คน × ฿<span id="rateEcho">120</span> × 12 เดือน</span>
+                <b id="current">฿0</b>
+              </div>
+              <div class="lineitem lineitem--free">
+                <span>Cwork · ค่าลิขสิทธิ์</span>
+                <b>฿0</b>
+              </div>
+              <div class="lineitem">
+                <span>Cwork · ค่าเซิร์ฟเวอร์ปีละ</span>
+                <b id="serverYear">฿0</b>
+              </div>
+            </div>
+          </div>
+        </figure>
+      </article>
 
-      <div class="cta-row" style="margin-top:38px">
-        <a class="btn btn--onpine" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรี</a>
-        <a class="btn btn--outpine" href="#install">ดูขั้นตอนติดตั้ง</a>
-      </div>
+      <!-- 02 -------------------------------------------------------- payroll -->
+      <article id="p2" class="story story--flip">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">給</span>
+            <div class="story__meta"><span class="mono">02 / 06</span><b>เงินเดือน</b></div>
+          </div>
+          <h3>ปิดงวดเงินเดือนแบบลุ้นทุกเดือน</h3>
+          <p class="pain">
+            สูตร Excel ที่มีคนเดียวเข้าใจ ภาษีขั้นบันได ประกันสังคม และโอทีหลายอัตรา —
+            ผิดครั้งเดียวเสียทั้งเงิน เสียเวลาแก้ และเสียความเชื่อใจของพนักงาน
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>คำนวณตามกฎหมายไทย</b><span>ภาษีหัก ณ ที่จ่ายแบบขั้นบันได ประกันสังคม กองทุนสำรองเลี้ยงชีพ และโอทีตาม พ.ร.บ. คุ้มครองแรงงาน</span></div></li>
+            <li><div><b>คนทำไม่ใช่คนอนุมัติ</b><span>เจ้าหน้าที่เตรียมรอบ ผู้จัดการ HR เป็นคนอนุมัติ ระบบบังคับไว้เอง ไม่ใช่แค่นโยบายบนกระดาษ</span></div></li>
+            <li><div><b>ยอดไม่ลงตัว ไม่ให้ส่งออก</b><span>ทุกรอบในงวดต้องอนุมัติแล้ว และยอดสลิปรวมต้องตรงกับยอดรอบทุกบาท ระบบจึงยอมออกไฟล์ให้</span></div></li>
+            <li><div><b>ผู้อนุมัติเห็นว่าทำไมยอดขยับ</b><span>ผู้ช่วย AI สรุปความต่างจากงวดก่อน — คนเข้า-ออก โอที ลาไม่รับค่าจ้าง — โดยห้ามแต่งตัวเลขที่ไม่มีในข้อมูล เปิดใช้เมื่อต้องการ</span></div></li>
+            <li><div><b>สลิปที่อธิบายได้แม้ผ่านไปเป็นปี</b><span>แยกเงินสมทบฝั่งนายจ้างออกจากยอดที่หักพนักงาน และพนักงานเปิดดูสลิปเองได้ในแอป</span></div></li>
+          </ul>
+          <p class="soon"><span class="label">กำลังพัฒนา</span>ไฟล์ยื่น ภ.ง.ด.1 ประกันสังคม และไฟล์โอนเงินธนาคาร</p>
+        </div>
+        <figure>
+          <a href="assets/shots/payroll-run.th.webp" target="_blank" rel="noopener">
+            <div class="window marks">
+              <b></b><b></b><b></b><b></b>
+              <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/payroll/runs/PAY-2026-00001</span></div>
+              <img src="assets/shots/payroll-run.th.webp" alt="รอบเงินเดือนที่ปิดแล้ว แสดงจำนวนพนักงาน รายได้รวม รายการหัก ยอดสุทธิ และสลิปรายคน" loading="lazy" width="1280" height="800">
+            </div>
+          </a>
+          <p class="caption"><span>รอบที่ปิดแล้ว — รายได้รวม รายการหัก ยอดสุทธิ และต้นทุนนายจ้าง</span></p>
+        </figure>
+      </article>
+
+      <!-- 03 ----------------------------------------------------- attendance -->
+      <article id="p3" class="story">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">勤</span>
+            <div class="story__meta"><span class="mono">03 / 06</span><b>ลงเวลาทำงาน</b></div>
+          </div>
+          <h3>ลงเวลาแทนกัน และหน้างานที่ไม่มีสัญญาณ</h3>
+          <p class="pain">
+            เพื่อนกดแทนกัน พิกัดปลอม หรือพนักงานหน้างานที่เน็ตหลุดจนลงเวลาไม่ได้ —
+            สุดท้าย HR ต้องมานั่งไล่เช็คทีละคนตอนปิดงวด
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>ผูกบัญชีกับเครื่อง</b><span>เครื่องแรกที่ใช้ลงเวลาผูกกับพนักงานคนนั้น ลงเวลาจากเครื่องอื่นจะถูกติดธงให้ตรวจ การย้ายเครื่องต้องผ่าน HR และมีบันทึก</span></div></li>
+            <li><div><b>ติดธงให้ตรวจ ไม่ใช่ปฏิเสธ</b><span>ลงเวลานอกพื้นที่หรือพิกัดดูผิดปกติ ระบบรับไว้พร้อมธง คนที่มาทำงานจริงต้องลงเวลาได้เสมอ</span></div></li>
+            <li><div><b>ออฟไลน์ก็ลงเวลาได้อย่างปลอดภัย</b><span>เก็บไว้ในพื้นที่เข้ารหัสของเครื่อง ส่งเองเมื่อกลับมาออนไลน์ ตรวจจับเครื่องที่ถูกเจาะระบบ และรายการที่ส่งช้าเกินต้องยืนยันก่อนนับ</span></div></li>
+            <li><div><b>ตารางกะที่ระบบใช้คิดมาสายจริง</b><span>กำหนดกะและตารางเวร มอบหมายทั้งแผนกได้ในครั้งเดียว</span></div></li>
+            <li><div><b>หัวหน้าอ่านสรุป ไม่ต้องไล่ธงทีละรายการ</b><span>ผู้ช่วย AI จัดกลุ่มรายการผิดปกติตามสถานที่ บอกได้ว่าเป็นรั้วพื้นที่ที่ตั้งแคบไป หรือเรื่องที่ควรถามจริง</span></div></li>
+          </ul>
+        </div>
+        <figure>
+          <a href="assets/shots/roster.th.webp" target="_blank" rel="noopener">
+            <div class="window marks">
+              <b></b><b></b><b></b><b></b>
+              <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/roster</span></div>
+              <img src="assets/shots/roster.th.webp" alt="ตารางกะและเวรรายวันของพนักงานแต่ละคน พร้อมวันหยุด" loading="lazy" width="1280" height="800">
+            </div>
+          </a>
+          <p class="caption"><span>ตารางกะและเวร — ค่าที่ตั้งตรงนี้คือสิ่งที่ระบบใช้คิดการมาสาย</span></p>
+        </figure>
+      </article>
+
+      <!-- 04 ------------------------------------------------------- approvals -->
+      <article id="p4" class="story story--flip">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">承</span>
+            <div class="story__meta"><span class="mono">04 / 06</span><b>การอนุมัติ</b></div>
+          </div>
+          <h3>คำขอค้าง เพราะรอลายเซ็น</h3>
+          <p class="pain">
+            ใบลาอยู่ในแชต ใบเบิกเป็นกระดาษ หัวหน้าไม่อยู่ออฟฟิศ —
+            เรื่องที่ควรจบในห้านาทีค้างเป็นสัปดาห์ และไม่มีใครรู้ว่าติดอยู่ที่ใคร
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>ระบบอนุมัติชุดเดียว เก้าเรื่อง</b><span>ลา โอที เบิกค่าใช้จ่าย แก้เวลา ลาออก ขออัตรากำลัง ใบเสนอจ้าง รอบเงินเดือน และขอเอกสาร</span></div></li>
+            <li><div><b>เส้นทางตามโครงสร้างจริง</b><span>ส่งหาหัวหน้าสายงาน หัวหน้าแผนก บทบาท หรือตัวบุคคล ตั้งเงื่อนไขวงเงิน และมอบอำนาจแทนได้</span></div></li>
+            <li><div><b>อนุมัติจากมือถือ พร้อมแจ้งเตือน</b><span>อีเมลและ push แจ้งทันที ถ้าส่งไม่สำเร็จระบบลองส่งใหม่ให้เอง</span></div></li>
+            <li><div><b>วันลาไม่มีวันติดลบ</b><span>ยื่นปุ๊บกันวันไว้ทันที สองคำขอจึงแย่งวันเดียวกันไม่ได้ และไม่นับเสาร์-อาทิตย์หรือวันหยุดนักขัตฤกษ์</span></div></li>
+            <li><div><b>หนังสือรับรองแบบบริการตัวเอง</b><span>พนักงานขอเอง อนุมัติแล้วออกเป็น PDF พร้อมรหัสตรวจสอบว่าเป็นของจริง</span></div></li>
+          </ul>
+        </div>
+        <figure>
+          <a href="assets/shots/approvals.th.webp" target="_blank" rel="noopener">
+            <div class="window marks">
+              <b></b><b></b><b></b><b></b>
+              <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/approvals</span></div>
+              <img src="assets/shots/approvals.th.webp" alt="กล่องรออนุมัติ แสดงคำขอลาและคำขอเบิกค่าใช้จ่ายที่รอการตัดสินใจ" loading="lazy" width="1280" height="800">
+            </div>
+          </a>
+          <p class="caption"><span>กล่องรออนุมัติ — ทุกเรื่องที่รอคุณ อยู่ในที่เดียว</span></p>
+        </figure>
+      </article>
+
+      <!-- 05 ------------------------------------------------------------ PDPA -->
+      <article id="p5" class="story">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">守</span>
+            <div class="story__meta"><span class="mono">05 / 06</span><b>PDPA และความปลอดภัย</b></div>
+          </div>
+          <h3>ข้อมูลพนักงานรั่ว คือความเสี่ยงตาม PDPA</h3>
+          <p class="pain">
+            เลขบัตรประชาชน เลขบัญชี และเงินเดือน คือข้อมูลที่อ่อนไหวที่สุดในบริษัท
+            แต่มักอยู่ใน Excel ที่ส่งต่อกันทางอีเมล — PDPA กำหนดโทษปรับทางปกครองได้สูงสุดห้าล้านบาท
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>เข้ารหัสข้อมูลอ่อนไหว</b><span>เลขบัตรประชาชนและเลขบัญชีเข้ารหัสในฐานข้อมูล หน้าจอแสดงแค่สี่หลักท้าย</span></div></li>
+            <li><div><b>รหัสผ่านอย่างเดียวเข้าไม่ได้</b><span>บัญชีที่เข้าถึงข้อมูลอ่อนไหวหรือทำเงินเดือนได้ ต้องยืนยันตัวตนสองขั้นตอน</span></div></li>
+            <li><div><b>ประวัติที่แก้ไม่ได้แม้แต่ผู้ดูแล</b><span>บันทึกการใช้งานเขียนเพิ่มได้อย่างเดียว ฐานข้อมูลเป็นผู้บังคับ ไม่ใช่โค้ดของแอป</span></div></li>
+            <li><div><b>เก็บเท่าที่จำเป็น</b><span>ขอความยินยอมตั้งแต่ใบสมัคร ลบข้อมูลผู้สมัครที่ไม่ได้รับเข้าทำงานใน 12 เดือน และลบข้อมูลระบุตัวตนของคนที่ลาออกเกินระยะเก็บ</span></div></li>
+            <li><div><b>ไม่หลุดไปกับ log</b><span>log ของระบบไม่มีเงินเดือน เลขบัตร เลขบัญชี หรือรหัสผ่าน และมีชุดทดสอบพิสูจน์ทุกครั้งที่แก้โค้ด</span></div></li>
+            <li><div><b>สแกนไฟล์ก่อนเก็บ</b><span>ไฟล์ที่อัปโหลดเข้ามาถูกส่งไปสแกนมัลแวร์ก่อนเสมอ</span></div></li>
+          </ul>
+          <a class="more" href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">อ่านเอกสารข้อมูลส่วนบุคคลฉบับเต็ม →</a>
+        </div>
+        <figure>
+          <a href="assets/shots/audit.th.webp" target="_blank" rel="noopener">
+            <div class="window marks">
+              <b></b><b></b><b></b><b></b>
+              <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/audit</span></div>
+              <img src="assets/shots/audit.th.webp" alt="บันทึกการใช้งาน แสดงผู้กระทำ การกระทำ และเวลา ของทุกเหตุการณ์ในระบบ" loading="lazy" width="1280" height="800">
+            </div>
+          </a>
+          <p class="caption"><span>บันทึกการใช้งาน — ใครทำอะไรเมื่อไร แก้ย้อนหลังไม่ได้</span></p>
+        </figure>
+      </article>
+
+      <!-- 06 ------------------------------------------------------- lifecycle -->
+      <article id="p6" class="story story--flip">
+        <div class="story__text">
+          <div class="story__head">
+            <span class="seal" aria-hidden="true">循</span>
+            <div class="story__meta"><span class="mono">06 / 06</span><b>วงจรชีวิตพนักงาน</b></div>
+          </div>
+          <h3>ระบบหลายตัวที่ไม่คุยกัน</h3>
+          <p class="pain">
+            สรรหาอยู่ในอีเมล ทะเบียนพนักงานอยู่ใน Excel ประเมินผลอยู่ในสเปรดชีตอีกไฟล์ —
+            ข้อมูลเดียวกันถูกพิมพ์ซ้ำหลายรอบ และไม่มีที่ไหนถูกต้องที่สุด
+          </p>
+          <p class="fixlabel"><span class="jp" aria-hidden="true">解決</span><span class="label">วิธีที่ Cwork แก้</span></p>
+          <ul class="fixes">
+            <li><div><b>สรรหาจนเป็นพนักงานในคลิกเดียว</b><span>คำขออัตรากำลัง หน้าประกาศงานสาธารณะ แบบทดสอบที่ตรวจอัตโนมัติ สัมภาษณ์พร้อมใบให้คะแนน และใบเสนอจ้างที่กลายเป็นพนักงานในระบบ</span></div></li>
+            <li><div><b>ประเมินผลที่ยุติธรรมขึ้น</b><span>KPI ถ่วงน้ำหนัก เช็คอินระหว่างรอบ และ HR ปรับเทียบเกรดทั้งองค์กร</span></div></li>
+            <li><div><b>สวัสดิการที่ไหลเข้าเงินเดือนเอง</b><span>ลงทะเบียนสวัสดิการแล้ว รอบเงินเดือนถัดไปคิดส่วนพนักงานและส่วนนายจ้างให้อัตโนมัติ</span></div></li>
+            <li><div><b>ลาออกอย่างเป็นระบบ</b><span>เช็คลิสต์คืนทรัพย์สิน สัมภาษณ์ก่อนออก และประวัติการจ้างงานที่ครบถ้วน</span></div></li>
+            <li><div><b>สองภาษาทั้งระบบ</b><span>ไทยเป็นค่าเริ่มต้น สลับเป็นอังกฤษได้ทั้งเว็บและแอป สำหรับผู้บริหารหรือผู้ตรวจสอบที่ไม่อ่านไทย</span></div></li>
+          </ul>
+        </div>
+        <figure>
+          <a href="assets/shots/recruitment.th.webp" target="_blank" rel="noopener">
+            <div class="window marks">
+              <b></b><b></b><b></b><b></b>
+              <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/recruitment</span></div>
+              <img src="assets/shots/recruitment.th.webp" alt="หน้าผู้สมัครงาน แสดงตำแหน่งที่เปิดรับและผู้สมัครในแต่ละขั้นตอน" loading="lazy" width="1280" height="800">
+            </div>
+          </a>
+          <p class="caption"><span>ผู้สมัครงาน — ตั้งแต่ใบสมัครจนถึงใบเสนอจ้าง</span></p>
+        </figure>
+      </article>
     </div>
   </section>
 
   <!-- ==================================================== screens -->
-  <section id="screens">
+  <section id="screens" class="block block--alt">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">หน้าตาระบบ</span>
+        <span class="eyebrow"><span class="jp" aria-hidden="true">画面</span><span class="label">หน้าตาระบบ</span></span>
         <h2>หน้าจอที่ฝ่ายบุคคลเปิดทุกวัน</h2>
-        <p class="lede">ไทยและอังกฤษ สลับได้ทั้งระบบ เงินบาท และคำที่ HR ใช้จริง</p>
+        <p class="lede">ภาพจากระบบจริงกับบริษัทตัวอย่าง ไทยเป็นค่าเริ่มต้น และสลับเป็นอังกฤษได้ทั้งระบบ</p>
       </div>
 
-      <div class="plates">
-        <figure class="plate">
-          <figcaption>
-            <b>ใบลาทั้งบริษัท อยู่ในหน้าจอเดียว</b>
-            <span>ใครขอ ลาประเภทไหน กี่วัน — ระบบนับวันให้ตามปฏิทินวันหยุดของบริษัท หัวหน้ากดอนุมัติจากตรงนี้ได้เลย</span>
-          </figcaption>
-          <a href="assets/leave.png" target="_blank" rel="noopener">
-            <img src="assets/leave.png" alt="หน้ารายการคำขอลา แสดงชื่อพนักงาน ประเภทการลา ช่วงวันที่ จำนวนวัน และสถานะรออนุมัติ" loading="lazy" width="1280" height="800">
-            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+      <div class="gallery">
+        <figure>
+          <a href="assets/shots/dashboard.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/</span></div>
+              <img src="assets/shots/dashboard.th.webp" alt="แดชบอร์ด แสดงรายการรออนุมัติ จำนวนพนักงาน คำขอลา และรอบเงินเดือนล่าสุด" loading="lazy" width="1280" height="800"></div>
           </a>
+          <figcaption><b>แดชบอร์ด</b><span>งานที่รอ พนักงาน และรอบเงินเดือนล่าสุดในหน้าเดียว</span></figcaption>
         </figure>
-        <figure class="plate">
-          <figcaption>
-            <b>ทะเบียนพนักงานที่ค้นเจอโดยไม่ต้องเปิด Excel</b>
-            <span>ชื่อ รหัส ตำแหน่ง แผนก อายุงาน สัญญา และเอกสารประจำตัว รวมอยู่ที่เดียว ไม่ต้องเปิดไฟล์ Excel หลายไฟล์</span>
-          </figcaption>
-          <a href="assets/employees.png" target="_blank" rel="noopener">
-            <img src="assets/employees.png" alt="หน้าทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800">
-            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+        <figure>
+          <a href="assets/shots/employees.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/employees</span></div>
+              <img src="assets/shots/employees.th.webp" alt="ทะเบียนพนักงาน แสดงรายชื่อ รหัสพนักงาน ตำแหน่ง แผนก และอายุงาน" loading="lazy" width="1280" height="800"></div>
           </a>
+          <figcaption><b>ทะเบียนพนักงาน</b><span>ค้นเจอทุกคนโดยไม่ต้องเปิด Excel</span></figcaption>
         </figure>
-        <figure class="plate">
-          <figcaption>
-            <b>ปิดรอบเงินเดือนแล้วเห็นยอดทันที</b>
-            <span>รายได้รวม ภาษีหัก ณ ที่จ่าย ประกันสังคม และยอดจ่ายสุทธิ พร้อมสลิปที่พนักงานเปิดดูเองได้จากมือถือ</span>
-          </figcaption>
-          <a href="assets/payroll.png" target="_blank" rel="noopener">
-            <img src="assets/payroll.png" alt="หน้าสรุปเงินเดือน แสดงรอบล่าสุด จำนวนพนักงาน รายได้รวม และยอดจ่ายสุทธิ" loading="lazy" width="1280" height="800">
-            <span class="plate__hint">แตะเพื่อดูภาพขนาดเต็ม</span>
+        <figure>
+          <a href="assets/shots/leave.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/leave</span></div>
+              <img src="assets/shots/leave.th.webp" alt="หน้าการลา แสดงคำขอลา ประเภทการลา ช่วงวันที่ และสถานะ" loading="lazy" width="1280" height="800"></div>
           </a>
+          <figcaption><b>การลา</b><span>นับวันให้ตามปฏิทินวันหยุดของบริษัท</span></figcaption>
         </figure>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================================================== features -->
-  <section id="features" style="background:var(--sunk);border-block:1px solid var(--line-soft)">
-    <div class="wrap">
-      <div class="shead">
-        <span class="eyebrow">ความสามารถ</span>
-        <h2>ครบตั้งแต่วันแรกที่พนักงานเข้างาน จนถึงวันที่ลาออก</h2>
-      </div>
-
-      <div class="grid">
-        <div class="cell">
-          <span class="cell__key">เงินเดือน</span>
-          <h3>คำนวณตามกฎหมายไทย ไม่ใช่สูตรต่างประเทศที่ดัดแปลงมา</h3>
-          <p>ภาษีหัก ณ ที่จ่ายแบบขั้นบันได ประกันสังคม กองทุนสำรองเลี้ยงชีพ และอัตราโอทีตาม พ.ร.บ. คุ้มครองแรงงาน</p>
-          <ul>
-            <li>ย้อนดูที่มาของทุกตัวเลขในสลิปได้ แม้ผ่านไปเป็นปี</li>
-            <li>แยกให้เห็นว่าอะไรคือเงินสมทบฝั่งนายจ้าง ไม่ได้หักจากพนักงาน</li>
-            <li>พนักงานรายเดือนได้เต็มเดือน ไม่ถูกหารตามจำนวนวันที่มีข้อมูลลงเวลา</li>
-          </ul>
-        </div>
-
-        <div class="cell">
-          <span class="cell__key">การลา</span>
-          <h3>ยอดวันลาที่ตรงกับความจริงเสมอ</h3>
-          <p>ประเภทการลาตามกฎหมายไทย สะสมตามอายุงาน ลาครึ่งวันและลาเป็นชั่วโมงได้</p>
-          <ul>
-            <li>คำขอที่ยังไม่อนุมัติ <strong>กันวันไว้ทันที</strong> สองคำขอที่ทับกันจึงแย่งวันเดียวกันไม่ได้</li>
-            <li>ระบบตัดวันหยุดนักขัตฤกษ์ออกจากการนับให้เอง</li>
-          </ul>
-        </div>
-
-        <div class="cell">
-          <span class="cell__key">ลงเวลา</span>
-          <h3>กำหนดพื้นที่ลงเวลาได้ โดยไม่กันคนเข้างาน</h3>
-          <p>ลงเวลาเข้า-ออกพร้อมพิกัดและการตรวจจับความผิดปกติ ตารางกะ และการแก้ไขเวลาย้อนหลังที่มีร่องรอย</p>
-          <ul>
-            <li>ลงเวลานอกพื้นที่จะ<em>ขึ้นเตือนให้ตรวจ</em> ไม่ใช่ถูกปฏิเสธ — คนที่มาทำงานจริงต้องลงเวลาได้เสมอ</li>
-            <li>HR มาไล่ดูทีหลังได้ ดีกว่าปล่อยให้พนักงานยืนเถียงกับโทรศัพท์อยู่หน้างาน</li>
-          </ul>
-        </div>
-
-        <div class="cell">
-          <span class="cell__key">การอนุมัติ</span>
-          <h3>ระบบอนุมัติชุดเดียว ใช้กับทุกเรื่อง</h3>
-          <p>ลา โอที เบิกค่าใช้จ่าย แก้ไขเวลา ลาออก คำขออัตรากำลัง ใบเสนอจ้าง รอบเงินเดือน และคำขอเอกสาร</p>
-          <ul>
-            <li>กำหนดผู้อนุมัติจากหัวหน้าสายงาน หัวหน้าแผนก บทบาท หรือระบุตัวบุคคล</li>
-            <li>ตั้งเงื่อนไขได้ เช่น วงเงินเกินเท่าไรถึงต้องผ่านอีกขั้น</li>
-          </ul>
-        </div>
-
-        <div class="cell">
-          <span class="cell__key">สรรหา</span>
-          <h3>เปิดหน้าสมัครงานให้คนนอก พร้อมขอความยินยอมตาม PDPA</h3>
-          <p>ตั้งแต่คำขออัตรากำลัง ประกาศงาน แบบทดสอบที่ตรวจอัตโนมัติ สัมภาษณ์ ไปจนถึงใบเสนอจ้างที่กดครั้งเดียวกลายเป็นพนักงานในระบบ</p>
-          <ul>
-            <li>ไม่ให้ความยินยอม PDPA ระบบไม่รับใบสมัครตั้งแต่ต้น</li>
-            <li>ข้อมูลผู้สมัครที่ไม่ได้รับเข้าทำงานถูกลบอัตโนมัติใน 12 เดือน</li>
-          </ul>
-        </div>
-
-        <div class="cell">
-          <span class="cell__key">ประเมินผล</span>
-          <h3>KPI ถ่วงน้ำหนักได้ และปรับเทียบกันทั้งองค์กร</h3>
-          <p>รอบประเมินที่มีการตั้งเป้า เช็คอินระหว่างทาง ประเมินตนเอง ประเมินโดยหัวหน้า และการปรับเทียบโดย HR</p>
-          <ul>
-            <li>น้ำหนัก KPI รวมกันเกิน 100 ไม่ได้ เพราะมันคือตัวหารของคะแนน</li>
-            <li>หัวหน้าที่ให้เกรดไม่สามารถปรับเทียบเกรดของตัวเองได้</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================================================== pdpa -->
-  <section id="pdpa">
-    <div class="wrap">
-      <div class="shead">
-        <span class="eyebrow">ข้อมูลพนักงาน · PDPA</span>
-        <h2>ข้อมูลพนักงานคือภาระ ไม่ใช่สินทรัพย์</h2>
-        <p class="lede">
-          ระบบ HR เก็บของที่อ่อนไหวที่สุดในบริษัท — เลขบัตรประชาชน เลขบัญชีธนาคาร
-          ประวัติการลาป่วย และพิกัดของคน Cwork ออกแบบมาโดยถือว่าของพวกนี้คือภาระที่ต้องรับผิดชอบ
-          ไม่ใช่ข้อมูลที่ยิ่งเก็บยิ่งดี
-        </p>
-      </div>
-
-      <div class="split">
-        <ul class="claims">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-            <div>
-              <strong>พิกัดบันทึกเฉพาะตอนกดลงเวลา</strong>
-              <span>ไม่มีการตามตำแหน่งระหว่างวัน ไม่มีอะไรทำงานอยู่เบื้องหลัง และไม่บันทึกพิกัดในจังหวะอื่นเลย</span>
-            </div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-            <div>
-              <strong>เลขบัตรประชาชนและเลขบัญชีเข้ารหัสในฐานข้อมูล</strong>
-              <span>ฝ่ายบุคคลเห็นแค่สี่หลักท้าย จะดูเลขเต็มต้องกดขอ และทุกครั้งที่กดถูกบันทึกไว้</span>
-            </div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-            <div>
-              <strong>มีเอกสารกำหนดว่าเก็บข้อมูลนานแค่ไหน และลบอย่างไร</strong>
-              <span>พร้อมแบบร่างประกาศความเป็นส่วนตัวภาษาไทยสำหรับแจกพนักงาน และขั้นตอนที่ทดสอบกับฐานข้อมูลจริงมาแล้ว</span>
-            </div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-            <div>
-              <strong>ถ้าไม่เปิดเอง ไม่มีข้อมูลออกนอกเครื่องเลย</strong>
-              <span>อีเมล แจ้งเตือนเข้ามือถือ ผู้ช่วย AI และที่เก็บไฟล์ภายนอก ปิดไว้ทั้งหมดจนกว่าคุณจะเปิดเอง</span>
-            </div>
-          </li>
-        </ul>
-
-        <div class="aside">
-          <strong>ข้อที่เราบอกตรง ๆ:</strong>
-          ระบบยังไม่ลบข้อมูลพนักงานให้อัตโนมัติเมื่อครบกำหนด — ผู้ดูแลต้องกำหนดนโยบายและลงมือเอง
-          เอกสารบอกไว้ว่าต้องทำอย่างไรทีละขั้น รวมถึงข้อเท็จจริงที่ไม่สวย เช่น
-          <strong>พนักงานที่เคยลงเวลาแล้วจะลบออกจากฐานข้อมูลไม่ได้</strong>
-          เพราะตารางลงเวลาถูกล็อกให้เขียนเพิ่มได้อย่างเดียว วิธีที่ถูกคือลบข้อมูลระบุตัวตนออก แล้วเก็บเวลาทำงานไว้
-          <br><br>
-          <a href="https://github.com/SuruchBoss/Cwork/blob/main/docs/privacy.md">อ่านเอกสารข้อมูลส่วนบุคคลฉบับเต็ม →</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ==================================================== guarantees -->
-  <section style="background:var(--sunk);border-block:1px solid var(--line-soft)">
-    <div class="wrap">
-      <div class="shead">
-        <span class="eyebrow">ความปลอดภัย</span>
-        <h2>กฎที่ผู้ดูแลระบบก็แหกไม่ได้</h2>
-      </div>
-
-      <div class="schedule">
-        <div class="row">
-          <h3>แก้ประวัติย้อนหลังไม่ได้</h3>
-          <p>ฐานข้อมูลปฏิเสธการแก้และการลบรายการเก่า แม้คำสั่งนั้นจะมาจากตัวระบบเอง ถึงมีคนเจาะเข้ามาได้ ก็เพิ่มรายการใหม่ได้อย่างเดียว ลบร่องรอยของตัวเองไม่ได้</p>
-        </div>
-        <div class="row">
-          <h3>รหัสผ่านอย่างเดียวเข้าไม่ได้</h3>
-          <p>ใครที่อ่านเลขบัตรประชาชนได้ ทำเงินเดือนได้ หรือแจกสิทธิ์ให้คนอื่นได้ ต้องใส่รหัสจากแอปยืนยันตัวตนทุกครั้ง และรหัสหนึ่งตัวใช้ได้ครั้งเดียว</p>
-        </div>
-        <div class="row">
-          <h3>คนเตรียมรอบเงินเดือน อนุมัติเองไม่ได้</h3>
-          <p>เจ้าหน้าที่เงินเดือนเตรียมรอบ ผู้จัดการ HR เป็นคนเซ็นอนุมัติ ระบบบังคับไว้เอง ไม่ใช่แค่นโยบายบนกระดาษที่ใครก็ข้ามได้</p>
-        </div>
-        <div class="row">
-          <h3>สแกนไฟล์ที่อัปโหลดเข้ามาก่อนเก็บเสมอ</h3>
-          <p>เรซูเม่ที่คนนอกอัปโหลดเข้ามาคือไฟล์ที่ไว้ใจได้น้อยที่สุดในระบบ ระบบจึงส่งไปสแกนก่อนทุกไฟล์ และสแกนเนอร์ที่ใช้งานไม่ได้ไม่เคยแปลว่า “ผ่าน”</p>
-        </div>
-        <div class="row">
-          <h3>ระบบที่เพิ่งติดตั้ง ไม่ตกเป็นของคนที่เข้ามาก่อน</h3>
-          <p>ผู้ดูแลคนแรกสร้างได้สองทางเท่านั้น: คำสั่งที่ต้องมีสิทธิ์เข้าถึงเซิร์ฟเวอร์ หรือหน้าเว็บที่ถือโทเคนใช้ครั้งเดียวซึ่งมีแต่คำสั่งนั้นออกให้ได้</p>
-        </div>
-        <div class="row">
-          <h3>ผู้ช่วย AI ถามแทนคนอื่นไม่ได้</h3>
-          <p>ผู้ช่วยไม่มีช่องทางให้ระบุว่า “ขอดูข้อมูลของคนนั้น” ได้เลย มันเห็นได้แค่ข้อมูลของคนที่กำลังถามอยู่ ต่อให้ถูกหลอกสำเร็จก็ไม่มีอะไรให้หลุด และระบบปิดผู้ช่วยไว้เป็นค่าตั้งต้น</p>
-        </div>
+        <figure>
+          <a href="assets/shots/employee.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/employees/…</span></div>
+              <img src="assets/shots/employee.th.webp" alt="ประวัติพนักงานรายคน แสดงข้อมูลการจ้าง วันลาคงเหลือ และผู้ใต้บังคับบัญชา" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>ประวัติพนักงาน</b><span>ข้อมูลการจ้าง วันลาคงเหลือ และสายบังคับบัญชา</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/performance.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/performance</span></div>
+              <img src="assets/shots/performance.th.webp" alt="หน้าประเมินผล แสดงรอบประเมินและเป้าหมาย KPI ถ่วงน้ำหนัก" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>ประเมินผล / KPI</b><span>น้ำหนักรวมต้องได้ 100 และ HR ปรับเทียบเกรด</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/attendance.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance</span></div>
+              <img src="assets/shots/attendance.th.webp" alt="หน้าลงเวลาทำงาน แสดงเวลาเข้า-ออก ชั่วโมงทำงาน การมาสาย และรายการที่ต้องตรวจสอบ" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>ลงเวลาทำงาน</b><span>เวลาเข้า-ออก มาสาย และรายการที่ติดธงให้ตรวจ</span></figcaption>
+        </figure>
       </div>
     </div>
   </section>
 
   <!-- ==================================================== app -->
-  <section id="app">
+  <section id="app" class="block">
+    <div class="wrap split">
+      <div>
+        <div class="shead" style="margin-bottom:32px">
+          <span class="eyebrow"><span class="jp" aria-hidden="true">人</span><span class="label">แอปพนักงาน</span></span>
+          <h2>ออกแบบมาสำหรับโทรศัพท์ที่สัญญาณหลุด</h2>
+          <p class="lede">ไซต์ก่อสร้าง ห้องเย็น ชั้นใต้ดินของห้าง — ที่ที่พนักงานต้องลงเวลาจริง มักเป็นที่ที่เน็ตไม่มี</p>
+        </div>
+        <ul class="claims">
+          <li><span class="n" aria-hidden="true">01</span><div><b>ลงเวลาตอนออฟไลน์ได้</b><span>รายการที่ยังส่งไม่ได้ถูกเก็บแบบเข้ารหัสไว้ในเครื่อง แล้วส่งให้เองเมื่อกลับมาออนไลน์</span></div></li>
+          <li><span class="n" aria-hidden="true">02</span><div><b>ส่งซ้ำไม่กลายเป็นลงเวลาสองครั้ง</b><span>ทุกรายการมีรหัสประจำตัวที่เครื่องสร้างขึ้นเอง เซิร์ฟเวอร์จึงรู้ว่ารายการไหนซ้ำ</span></div></li>
+          <li><span class="n" aria-hidden="true">03</span><div><b>ดูสลิป ขอลา และอนุมัติได้ในเครื่องเดียว</b><span>หัวหน้างานกดอนุมัติจากมือถือได้ ไม่ต้องรอกลับไปเปิดคอม</span></div></li>
+        </ul>
+      </div>
+      <div class="phones" aria-label="ภาพหน้าจอแอปพนักงาน">
+        <img src="assets/mobile-home.png" alt="หน้าแรกของแอปพนักงาน แสดงปุ่มลงเวลาและสรุปวันลา" loading="lazy" width="390" height="844">
+        <img src="assets/mobile-payslip.png" alt="หน้าสลิปเงินเดือนในแอปพนักงาน" loading="lazy" width="390" height="844">
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== trust -->
+  <section id="trust" class="block block--alt">
     <div class="wrap">
-      <div class="split">
-        <div>
-          <div class="shead">
-            <span class="eyebrow">แอปพนักงาน</span>
-            <h2>ออกแบบมาสำหรับโทรศัพท์ที่สัญญาณหลุด</h2>
-            <p class="lede">
-              ไซต์ก่อสร้าง ห้องเย็น ชั้นใต้ดินของห้าง — ที่ที่พนักงานต้องลงเวลาจริง
-              มักเป็นที่ที่เน็ตไม่มี
-            </p>
-          </div>
-          <ul class="claims">
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <div>
-                <strong>ลงเวลาตอนออฟไลน์ได้</strong>
-                <span>รายการที่ยังส่งไม่ได้ถูกเก็บไว้ในเครื่อง แล้วส่งให้เองเมื่อกลับมาออนไลน์</span>
-              </div>
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <div>
-                <strong>ส่งซ้ำไม่กลายเป็นลงเวลาสองครั้ง</strong>
-                <span>ทุกรายการมีรหัสประจำตัวที่เครื่องสร้างขึ้นเอง เซิร์ฟเวอร์จึงรู้ว่ารายการไหนซ้ำ</span>
-              </div>
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <div>
-                <strong>ดูสลิป ขอลา และอนุมัติได้ในเครื่องเดียว</strong>
-                <span>หัวหน้างานกดอนุมัติจากมือถือได้ ไม่ต้องรอกลับไปเปิดคอม</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="phones" aria-label="ภาพหน้าจอแอปพนักงาน">
-          <img src="assets/mobile-home.png" alt="หน้าแรกของแอปพนักงาน แสดงปุ่มลงเวลาและสรุปวันลา" loading="lazy" width="390" height="844">
-          <img src="assets/mobile-payslip.png" alt="หน้าสลิปเงินเดือนในแอปพนักงาน" loading="lazy" width="390" height="844">
-        </div>
+      <div class="shead">
+        <span class="eyebrow"><span class="jp" aria-hidden="true">信頼</span><span class="label">ความน่าเชื่อถือ</span></span>
+        <h2>กฎที่ผู้ดูแลระบบก็แหกไม่ได้</h2>
+        <p class="lede">นโยบายบนกระดาษข้ามได้เสมอ Cwork จึงเขียนกฎสำคัญไว้ในระบบ ให้ระบบเป็นคนปฏิเสธ</p>
+      </div>
+
+      <div class="rules">
+        <div class="rule"><span class="mono">規則 01</span><div><h3>แก้ประวัติย้อนหลังไม่ได้</h3><p>ฐานข้อมูลปฏิเสธการแก้และการลบรายการเก่า แม้คำสั่งนั้นจะมาจากตัวระบบเอง ต่อให้มีคนเจาะเข้ามาได้ ก็ลบร่องรอยของตัวเองไม่ได้</p></div></div>
+        <div class="rule"><span class="mono">規則 02</span><div><h3>คนเตรียมรอบเงินเดือน อนุมัติเองไม่ได้</h3><p>เจ้าหน้าที่เงินเดือนเตรียมรอบ ผู้จัดการ HR เป็นคนอนุมัติ ระบบบังคับไว้เอง</p></div></div>
+        <div class="rule"><span class="mono">規則 03</span><div><h3>รหัสผ่านอย่างเดียวเข้าไม่ได้</h3><p>ใครที่อ่านเลขบัตรประชาชนได้ ทำเงินเดือนได้ หรือแจกสิทธิ์ให้คนอื่นได้ ต้องใส่รหัสจากแอปยืนยันตัวตน และรหัสหนึ่งตัวใช้ได้ครั้งเดียว</p></div></div>
+        <div class="rule"><span class="mono">規則 04</span><div><h3>สแกนไฟล์ก่อนเก็บเสมอ</h3><p>เรซูเม่ที่คนนอกอัปโหลดคือไฟล์ที่ไว้ใจได้น้อยที่สุดในระบบ และสแกนเนอร์ที่ใช้งานไม่ได้ ไม่เคยแปลว่า “ผ่าน”</p></div></div>
+        <div class="rule"><span class="mono">規則 05</span><div><h3>ระบบที่เพิ่งติดตั้ง ไม่ตกเป็นของคนที่เข้ามาก่อน</h3><p>ผู้ดูแลคนแรกสร้างได้จากคำสั่งบนเซิร์ฟเวอร์ หรือหน้าเว็บที่ถือโทเคนใช้ครั้งเดียวซึ่งคำสั่งนั้นออกให้เท่านั้น</p></div></div>
+        <div class="rule"><span class="mono">規則 06</span><div><h3>ผู้ช่วย AI เห็นไม่เกินสิทธิ์ของคนที่ถาม</h3><p>ไม่มีคำถามไหนขยายสิทธิ์ได้ ต่อให้ถูกหลอกสำเร็จ ก็เห็นได้แค่ที่ผู้ถามเห็นอยู่แล้ว และปิดไว้เป็นค่าเริ่มต้น</p></div></div>
+      </div>
+
+      <div class="proof">
+        <div><b>ทดสอบทุกครั้งที่แก้โค้ด</b><span>กฎธุรกิจทุกข้อมี unit test และชุด end-to-end ที่ยิงผ่าน HTTP จริง รันใน CI ทุกครั้ง</span></div>
+        <div><b>แก้ช่องโหว่อย่างเปิดเผย</b><span>รับแจ้งผ่าน GitHub Security Advisory แก้ ออกเวอร์ชันใหม่ และประกาศให้รู้ทั่วกัน</span></div>
+        <div><b>IT ดูแลง่าย</b><span>log แบบ JSON มาตรฐาน และ /metrics สำหรับ Prometheus บนพอร์ตที่ไม่เปิดสู่ภายนอก</span></div>
+        <div><b>โค้ดเปิดทั้งหมด</b><span>ตรวจสอบได้ทุกบรรทัด ไม่มีส่วนที่ต้องเชื่อใจโดยไม่เห็น</span></div>
       </div>
     </div>
   </section>
 
   <!-- ==================================================== install -->
-  <section id="install" style="background:var(--sunk);border-block:1px solid var(--line-soft)">
+  <section id="install" class="block">
     <div class="wrap">
       <div class="shead">
-        <span class="eyebrow">สำหรับฝ่าย IT</span>
+        <span class="eyebrow"><span class="jp" aria-hidden="true">導入</span><span class="label">สำหรับฝ่าย IT</span></span>
         <h2>เครื่องเดียวจบ ไม่ต้องมีทีมดูแล</h2>
         <p class="lede">
           ส่งหัวข้อนี้ให้คนที่ดูแลเซิร์ฟเวอร์ของบริษัทได้เลย สิ่งที่ต้องมีคือเครื่องหนึ่งเครื่องกับ Docker —
           ไม่ต้องมี Redis ไม่ต้องมี message broker ไม่ต้องมี Kubernetes
-          เพราะ PostgreSQL ตัวเดียวทำงานทั้งหมดนั้นแทน
         </p>
       </div>
 
-      <div class="split">
+      <div class="split" style="align-items:start">
         <div class="steps">
           <div class="step">
+            <span class="jp" aria-hidden="true">一</span>
             <div>
               <h3>เตรียมเครื่องและความลับ</h3>
               <p>compose จะไม่ยอมเริ่มทำงานถ้ายังไม่ได้ตั้งคีย์พวกนี้</p>
@@ -894,6 +941,7 @@
             </div>
           </div>
           <div class="step">
+            <span class="jp" aria-hidden="true">二</span>
             <div>
               <h3>เริ่มระบบ แล้วสร้างตารางฐานข้อมูล</h3>
               <p>ขั้นนี้ยังไม่มีข้อมูลอะไรในระบบ</p>
@@ -902,15 +950,17 @@
             </div>
           </div>
           <div class="step">
+            <span class="jp" aria-hidden="true">三</span>
             <div>
               <h3>เลือกทางที่ต้องการ</h3>
               <p><strong>ลองดูก่อน</strong> — โหลดบริษัทตัวอย่างที่มีพนักงาน 8 คน รอบเงินเดือนที่ปิดแล้ว ใบลาที่รออนุมัติ และผู้สมัครงานกลางขั้นตอน ทุกหน้ามีของให้ดู</p>
               <div class="cmd"><span class="p">$</span> docker compose run --rm migrate npm run db:seed</div>
-              <p style="margin-top:14px"><strong>ใช้งานจริง</strong> — สร้างองค์กรของคุณเอง หนึ่งองค์กร บทบาทระบบ 8 บทบาท ผู้ดูแลหนึ่งบัญชี ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</p>
+              <p style="margin-top:14px"><strong>ใช้งานจริง</strong> — สร้างองค์กรของคุณเอง ผู้ดูแลหนึ่งบัญชี ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ</p>
               <div class="cmd"><span class="p">$</span> docker compose run --rm migrate npm run db:init</div>
             </div>
           </div>
           <div class="step">
+            <span class="jp" aria-hidden="true">四</span>
             <div>
               <h3>เปิดใช้งาน</h3>
               <p>เข้าที่ <code>http://localhost:8080</code> — ผู้ดูแลคนแรกถือสิทธิ์ทั้งหมด ระบบจึงบังคับให้ตั้งการยืนยันตัวตนสองขั้นตอนก่อนเข้าใช้งานครั้งแรก เตรียมแอป Authenticator ไว้ด้วย</p>
@@ -919,10 +969,7 @@
         </div>
 
         <div class="term" role="img" aria-label="ตัวอย่างการติดตั้ง จบด้วยการสร้างองค์กรและผู้ดูแลคนแรก">
-          <div class="term__bar">
-            <span class="term__dot"></span><span class="term__dot"></span><span class="term__dot"></span>
-            <span style="margin-inline-start:6px">เซิร์ฟเวอร์ของบริษัท</span>
-          </div>
+          <div class="term__bar"><i></i><i></i><i></i><span style="margin-inline-start:6px">เซิร์ฟเวอร์ของบริษัท</span></div>
           <div class="term__body">
 <p><span class="p">$</span> npm run db:init</p>
 <p>&nbsp;</p>
@@ -939,14 +986,28 @@
     </div>
   </section>
 
+  <!-- ==================================================== closing -->
+  <section class="band">
+    <span class="band__kanji" aria-hidden="true">始</span>
+    <div class="wrap">
+      <span class="eyebrow"><span class="jp" aria-hidden="true">始</span><span class="label">เริ่มต้น</span></span>
+      <h2>ลองกับบริษัทตัวอย่าง ภายในห้านาที</h2>
+      <p>ดาวน์โหลดฟรี ติดตั้งบนเครื่องของคุณ ทุกหน้ามีข้อมูลตัวอย่างให้กดลองจริง ตั้งแต่ใบลาจนถึงรอบเงินเดือนที่ปิดแล้ว</p>
+      <div class="cta-row">
+        <a class="btn btn--light" href="https://github.com/SuruchBoss/Cwork">ดาวน์โหลดฟรีบน GitHub</a>
+        <a class="btn btn--ghost-light" href="#install">ดูขั้นตอนติดตั้ง</a>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer>
   <div class="wrap foot">
-    <div style="display:flex;gap:12px;align-items:flex-start">
-      <span class="mark" aria-hidden="true">CW</span>
+    <div class="foot__brand">
+      <span class="hanko" aria-hidden="true">CW</span>
       <div>
-        <p style="font-family:'Bai Jamjuree',sans-serif;font-weight:700;font-size:1.04rem;color:var(--ink)">Cwork</p>
+        <b>Cwork</b>
         <p>ระบบบริหารทรัพยากรบุคคลแบบโอเพนซอร์ส · Apache-2.0</p>
       </div>
     </div>
@@ -976,11 +1037,8 @@
     }
 
     /**
-     * Shrinks the figure until it fits its card on one line.
-     *
-     * It wrapped mid-number for any company over about eighty people — the
-     * single number this section exists to show, broken between two digits.
-     * Nothing caught it because the default inputs produce a short figure.
+     * Shrinks the figure until it fits its card on one line: the single number
+     * this section exists to show must never break between two digits.
      */
     function fitInto(node) {
       var card = node.parentNode;
@@ -1017,7 +1075,7 @@
         : saved === 0
           ? 'เท่าทุนพอดีในปีแรก — ปีถัดไปค่าเซิร์ฟเวอร์เท่าเดิม แต่ค่าระบบเดิมมักขึ้นตามจำนวนคน'
           : 'ค่าเซิร์ฟเวอร์สูงกว่าค่าระบบเดิม — ลองใช้เครื่องที่มีอยู่แล้ว หรือดูใหม่เมื่อพนักงานเพิ่มขึ้น';
-      el('saved').style.color = saved >= 0 ? 'var(--pop-lift)' : 'var(--pine-dim)';
+      el('saved').style.color = saved >= 0 ? '#ffb4a3' : 'var(--band-dim)';
     }
 
     [headcount, rate, server].forEach(function (input) {

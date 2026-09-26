@@ -170,6 +170,13 @@ entry, tags it and publishes the notes.
   through the API to prove it. See
   [operations](./docs/operations.md#observability).
 
+- **Every console screenshot is retaken by a script** —
+  [`docs/screenshots/capture.mjs`](./docs/screenshots/capture.mjs) signs in to the
+  seeded demo with a real second factor and captures each screen, in Thai for the
+  READMEs and in both languages for the overview page, in the organisation's time
+  zone. The screenshots are refreshed with it, and gain the dashboard, the shift
+  roster and benefits.
+
 ### Removed
 
 - **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`
@@ -204,6 +211,16 @@ entry, tags it and publishes the notes.
   `NOTICE`, `WARNING`, `ERROR`, `CRITICAL`, in any case. The old names
   (`info`, `warn`, `debug`, `fatal`, …) still work, so no `.env` needs to
   change. The default is `INFO`.
+- **The overview page is rebuilt around six problems it solves** — an HR bill
+  that grows with headcount, payroll you hold your breath over, buddy punching and
+  sites with no signal, requests waiting for a signature, PDPA exposure, and
+  systems that do not talk to each other — each answered by the several features
+  that close it, in a modern Japanese design. The English page now shows the
+  English console, and each page has a link-preview card in its own language. Both READMEs
+  open with the same six problems.
+- **The walkthrough's English take is recorded on the English console**, in the
+  organisation's time zone; it had shown the Thai interface under English
+  captions, ending on a line that the English locale was still on the backlog.
 
 ## [0.3.1] — 2026-09-26
 
