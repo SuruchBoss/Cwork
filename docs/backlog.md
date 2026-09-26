@@ -424,6 +424,16 @@ Reading the older version is the likeliest way to get this wrong.
   `http_request_duration_seconds`, `auth_sign_in_failures_total`,
   `outbox_pending_events`, `outbox_oldest_pending_age_seconds`. `route` is the
   template (`/employees/:id`), never the concrete path.
+- **The two outbox gauges are queried from the database, never held in process
+  memory.** CW-003 and CW-007 made replicas a supported configuration, so a
+  counter kept in memory means every instance reports a different backlog and a
+  deploy silently resets it to zero — a metric that reads healthy because it
+  forgot is worse than no metric.
+- **A request refused before the controller still produces
+  `http.request.completed`** — a 401 from `JwtAuthGuard`, a 429 from the
+  throttler. If a guard short-circuits ahead of the logging, a lockout storm or
+  a credential being hammered is exactly the traffic that leaves no trace,
+  which is the opposite of what this ticket is for.
 - **Nothing from the contract's "never in logs" list.** Cwork holds salaries,
   national IDs and bank accounts; this matters more here than anywhere else in
   the ecosystem. A test should assert it, not a reviewer.
@@ -436,6 +446,11 @@ Reading the older version is the likeliest way to get this wrong.
 - `/metrics` serves all five, with `route` as a template.
 - A test proves no salary, national ID, bank account, token or query string
   reaches a log line or a metric label.
+- Two instances against one database report the same `outbox_pending_events`,
+  and restarting one does not change it.
+- A refused sign-in and a throttled request each produce an
+  `http.request.completed` line carrying the caller's correlation id and the
+  status that was returned.
 
 **Files** `backend/src/core/http/`, `backend/src/core/config/`, `backend/src/main.ts`
 
