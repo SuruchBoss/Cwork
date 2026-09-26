@@ -145,7 +145,7 @@ export class Api {
    * suite can produce a real code rather than mocking the check away — which
    * would leave the interesting half of the flow untested.
    */
-  async login(email: string, password = process.env.SEED_PASSWORD ?? 'Cwork2026!') {
+  async login(email: string, password = seedPassword()) {
     const res = await this.post('/auth/login', undefined, { email, password });
     if (res.status !== 200) {
       throw new Error(`login failed for ${email}: ${res.status} ${JSON.stringify(res.body)}`);
@@ -182,6 +182,15 @@ export class Api {
   async token(email: string): Promise<string> {
     return (await this.login(email)).accessToken;
   }
+}
+
+/** The demo accounts' password, chosen for this run by global-setup. */
+export function seedPassword(): string {
+  const password = process.env.SEED_PASSWORD;
+  if (!password) {
+    throw new Error('SEED_PASSWORD is not set; test/global-setup.ts chooses one for the run');
+  }
+  return password;
 }
 
 export interface SessionResponse {

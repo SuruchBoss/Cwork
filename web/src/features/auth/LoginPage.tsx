@@ -240,9 +240,7 @@ export default function LoginPage() {
             <br />
             hr.manager@cwork.example · eng.manager@cwork.example · dev2@cwork.example
             <br />
-            {t('Password:')} <code className="mono">Cwork2026!</code>
-            <br />
-            {t('Admin accounts need a 2FA code — see the key in the output of')}{' '}
+            {t('The password, and the 2FA key admin accounts need, are in the output of')}{' '}
             <code className="mono">db:seed</code>
           </div>
         )}

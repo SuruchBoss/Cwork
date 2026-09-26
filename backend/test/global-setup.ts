@@ -14,6 +14,7 @@
 // confusing "no database configured".
 import 'dotenv/config';
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { resolveDatabaseUrl, seedDemoCompany, truncateAll } from './utils/database';
 
 export default async function globalSetup(): Promise<void> {
@@ -31,6 +32,10 @@ export default async function globalSetup(): Promise<void> {
   // `drainOnce()` itself, and a timer draining the same rows underneath would
   // turn "exactly one delivery" into a coin toss.
   process.env.OUTBOX_POLL_MS = '0';
+
+  // The seed has no default password any more, so the suite picks the demo
+  // accounts' password for this run; specs read it back through `seedPassword()`.
+  process.env.SEED_PASSWORD = process.env.SEED_PASSWORD || `e2e-${randomUUID()}`;
   process.env.DATABASE_URL = databaseUrl;
   process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
 

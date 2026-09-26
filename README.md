@@ -102,12 +102,18 @@ nothing about whether the thing works.
 
 | | |
 |---|---|
-| **As an employee** | `dev2@cwork.example` / `Cwork2026!` — password only |
-| **As HR** | `hr.manager@cwork.example` / `Cwork2026!` — **plus a 2FA code** |
+| **As an employee** | `dev2@cwork.example` — password only |
+| **As HR** | `hr.manager@cwork.example` — **plus a 2FA code** |
 
-Admin accounts genuinely require a second factor, so `db:seed` prints a demo
-TOTP secret and a QR link. Add it to any authenticator app once and every admin
-account works.
+Every demo account shares one password, which `db:seed` generates and prints
+once, at the end of its output — or choose it yourself with
+`docker compose run --rm -e SEED_PASSWORD=… migrate npm run db:seed`. There is no
+default: a password printed here would be the same on every installation that
+did not change it.
+
+Admin accounts genuinely require a second factor too, so `db:seed` also prints a
+demo TOTP secret and a QR link. Add it to any authenticator app once and every
+admin account works.
 
 > **Migrations run through the `migrate` service, not `exec api`.** The API image
 > is pruned to production dependencies and ships no Prisma CLI. That service sits

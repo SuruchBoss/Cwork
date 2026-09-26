@@ -4,8 +4,9 @@
  * Creates one fictional organisation with realistic Thai HR configuration:
  * roles, leave types, shifts, pay components, approval policies, a small org
  * chart, and HR policy documents for the assistant to answer from. Every account
- * shares a published password, and the privileged ones share a published TOTP
- * secret, so that anybody can open the console in a minute and look around.
+ * shares one password — `SEED_PASSWORD`, or one generated for the run and
+ * printed at the end — and the privileged ones share a published TOTP secret, so
+ * that anybody can open the console in a minute and look around.
  *
  * Setting up an installation for real people is `npm run db:init` instead, which
  * creates an organisation, the role set and one administrator, and nothing else.
@@ -36,7 +37,15 @@ import { SYSTEM_ROLE_DEFINITIONS, SystemRole } from '../src/core/security/roles'
 const prisma = new PrismaClient();
 
 const ORG_CODE = 'CWORK';
-const DEFAULT_PASSWORD = process.env.SEED_PASSWORD ?? 'Cwork2026!';
+/**
+ * The demo accounts' password: `SEED_PASSWORD` when it is set, otherwise one
+ * generated for this run and printed once, at the end. Never a value written
+ * down anywhere — the privileged demo accounts sit behind it too, and a default
+ * printed in the README would be the same password on every installation that
+ * did not override it.
+ */
+const PASSWORD_FROM_ENV = Boolean(process.env.SEED_PASSWORD);
+const DEFAULT_PASSWORD = process.env.SEED_PASSWORD || randomBytes(15).toString('base64url');
 
 /**
  * Roles holding a privileged permission may not sign in with a password alone,
@@ -102,9 +111,9 @@ async function assertDemoDatabase(): Promise<void> {
     [
       `This database already holds "${foreign.name}" (${foreign.code}), which the demo seed did not create.`,
       '',
-      'The seed is evaluation-only: it creates accounts with a published password',
-      'and a published two-factor secret. Adding those beside a real organisation',
-      'is not something to do by accident.',
+      'The seed is evaluation-only: it creates accounts that share one password and',
+      'a published two-factor secret. Adding those beside a real organisation is',
+      'not something to do by accident.',
       '',
       'Nothing has been written. Point DATABASE_URL at a throwaway database, or',
       'set SEED_FORCE=1 if you genuinely mean to do this.',
@@ -999,6 +1008,10 @@ async function main(): Promise<void> {
     console.log(`    ${person.email.padEnd(30)} (${person.role})${marker}`);
   }
   console.log(`  Password: ${DEFAULT_PASSWORD}`);
+  if (!PASSWORD_FROM_ENV) {
+    console.log('            (generated for this run and shown only here — note it now,');
+    console.log('             or set SEED_PASSWORD and re-run to choose your own)');
+  }
 
   if (mfaDemoAccounts.length > 0) {
     console.log('\n  Two-factor authentication');
@@ -1020,7 +1033,7 @@ async function main(): Promise<void> {
     console.log('  left without a second factor — and they cannot sign in until they enrol.');
   }
 
-  console.log('\n  Every credential above is published in this repository. Setting up an');
+  console.log('\n  These are demo credentials, not a way to run Cwork. Setting up an');
   console.log('  installation for real people is `npm run db:init`, not this.');
 }
 

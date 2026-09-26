@@ -10,8 +10,11 @@
  * Needs a running stack, Playwright and ffmpeg. Neither is a dependency of the
  * project itself; this is a tool for whoever refreshes the asset.
  *
- *   cd backend && npm run db:seed && npm run start:dev
+ *   cd backend && SEED_PASSWORD=… npm run db:seed && npm run start:dev
  *   cd web && npm run dev
+ *
+ * Run this with the same SEED_PASSWORD the seed was given: the demo password is
+ * not fixed, so the recording signs in with whatever you chose.
  *
  *   npm i playwright && npx playwright install chromium
  *   RECORD=1 OUT=video LANG_=en node docs/demo/record.mjs   # README + landing/en
@@ -46,6 +49,12 @@ import { totp } from './totp.mjs';
 
 const RECORD = process.env.RECORD === '1';
 const OUT = process.env.OUT ?? 'video';
+/** The password the seed was run with — see the usage note above. */
+const seedPassword = process.env.SEED_PASSWORD;
+if (!seedPassword) {
+  console.error('Set SEED_PASSWORD to the password `npm run db:seed` was given.');
+  process.exit(1);
+}
 /**
  * Which language the burned-in captions speak.
  *
@@ -312,7 +321,7 @@ await step('open sign-in', async () => {
 
 await step('type credentials', async () => {
   await page.getByPlaceholder('you@company.com').type('ceo@cwork.example', { delay: 45 });
-  await page.locator('input[type=password]').type('Cwork2026!', { delay: 60 });
+  await page.locator('input[type=password]').type(seedPassword, { delay: 60 });
   await beat(600);
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
 });

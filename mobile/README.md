@@ -17,8 +17,8 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000/api/v1
 ```
 
-Sign in with a seeded account (see the backend's `npm run db:seed` output), e.g.
-`dev2@cwork.example` / `Cwork2026!`.
+Sign in with a seeded account, e.g. `dev2@cwork.example`, using the password the
+backend's `npm run db:seed` printed (or the `SEED_PASSWORD` you gave it).
 
 ## Checks
 
