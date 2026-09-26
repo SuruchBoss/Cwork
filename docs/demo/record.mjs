@@ -20,12 +20,12 @@
  * not fixed, so the recording signs in with whatever you chose.
  *
  *   npm i playwright && npx playwright install chromium
- *   RECORD=1 OUT=video LANG_=en node docs/demo/record.mjs   # README + landing/en
- *   RECORD=1 OUT=video LANG_=th node docs/demo/record.mjs   # landing/ (Thai)
+ *   RECORD=1 OUT=video LANG_=en node docs/demo/record.mjs   # README.md + landing/en
+ *   RECORD=1 OUT=video LANG_=th node docs/demo/record.mjs   # README.th.md + landing/
  *   ffmpeg -i video/*.webm -vf "fps=10,scale=900:-1:flags=lanczos,\
  *     split[a][b];[a]palettegen=stats_mode=diff:max_colors=96[p];\
  *     [b][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle" \
- *     -loop 0 docs/demo/walkthrough.gif
+ *     -loop 0 docs/demo/walkthrough.gif      # walkthrough.th.gif for the Thai take
  *
  * 96 colours, not 128: the opaque caption bar and the real webfont give the
  * palette more to do, and 128 pushed the GIF to 4.3MB for no visible gain on
@@ -33,12 +33,13 @@
  * the English console's longer labels took the 12 fps GIF to 4.7MB. The
  * README autoplays it on every view.
  *
- * The MP4s, and where each of the four outputs belongs:
+ * The MP4s, and where each of the five outputs belongs:
  *
  *   ffmpeg -i video/*.webm -c:v libx264 -preset slow -crf 30 \
  *     -pix_fmt yuv420p -movflags +faststart -an out.mp4
  *
- *   docs/demo/walkthrough.gif         en   both READMEs, inline
+ *   docs/demo/walkthrough.gif         en   README.md, inline
+ *   docs/demo/walkthrough.th.gif      th   README.th.md, inline
  *   docs/demo/walkthrough.mp4         en   README.md, "higher-quality MP4"
  *   landing/assets/walkthrough.en.mp4 en   landing/en/
  *   landing/assets/walkthrough.th.mp4 th   landing/, and README.th.md's MP4 link

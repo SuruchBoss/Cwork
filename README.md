@@ -278,12 +278,16 @@ real company by accident.
 > the console and the employee app, every label, form, status and validation
 > message flips between the two from one switch (a header control on the web, the
 > profile screen on mobile), and Thai stays the default. Every image below is a
-> real screenshot of the seeded demo company in Thai — the console in a browser,
-> the employee app on a 390×844 phone. The console's are taken by
-> [`docs/screenshots/capture.mjs`](./docs/screenshots/capture.mjs), so they can be
+> real screenshot of the seeded demo company on the English interface — the
+> console in a browser, the employee app on a 390×844 phone; [the Thai
+> README](./README.th.md) shows the same screens in Thai. Names, leave types and
+> anything else the company typed in stay Thai, as they would for a Thai
+> company: the interface is translated, its content is not. They are taken by
+> [`capture.mjs`](./docs/screenshots/capture.mjs) and
+> [`capture-mobile.mjs`](./docs/screenshots/capture-mobile.mjs), so they can be
 > retaken whenever a screen changes.
 
-<img src="./docs/screenshots/03-dashboard.png" alt="Dashboard: approvals waiting, headcount, leave requests and the latest payroll run" width="860">
+<img src="./docs/screenshots/en/03-dashboard.png" alt="Dashboard: approvals waiting, headcount, leave requests and the latest payroll run" width="860">
 
 ### People
 
@@ -291,7 +295,7 @@ Employee records with encrypted national IDs and bank accounts, an org chart,
 employment history, and resignation with a clearance checklist and exit
 interview.
 
-<img src="./docs/screenshots/04-employees.png" alt="Employee register" width="49%"> <img src="./docs/screenshots/18-employee-detail.png" alt="Employee record" width="49%">
+<img src="./docs/screenshots/en/04-employees.png" alt="Employee register" width="49%"> <img src="./docs/screenshots/en/18-employee-detail.png" alt="Employee record" width="49%">
 
 ### Leave
 
@@ -302,7 +306,7 @@ both fit inside one remaining day.
 **Friday to Monday costs two days, not four.** Weekends and public holidays are
 excluded, not charged.
 
-<img src="./docs/screenshots/05-leave.png" alt="Leave" width="860">
+<img src="./docs/screenshots/en/05-leave.png" alt="Leave" width="860">
 
 ### Attendance
 
@@ -312,7 +316,7 @@ and overtime at Labour Protection Act rates.
 **A punch outside the fence is flagged, never rejected.** An employee must always
 be able to prove they turned up; HR reviews the flag afterwards.
 
-<img src="./docs/screenshots/06-attendance.png" alt="Attendance" width="49%"> <img src="./docs/screenshots/22-roster.png" alt="Shift roster" width="49%">
+<img src="./docs/screenshots/en/06-attendance.png" alt="Attendance" width="49%"> <img src="./docs/screenshots/en/22-roster.png" alt="Shift roster" width="49%">
 
 ### Payroll
 
@@ -322,7 +326,7 @@ expense reimbursement — and payslips you can still explain a year later.
 **Whoever calculates a run cannot approve it**, enforced by the API rather than
 by policy.
 
-<img src="./docs/screenshots/07-payroll.png" alt="Payroll periods and runs" width="49%"> <img src="./docs/screenshots/19-payroll-run.png" alt="Payroll run" width="49%">
+<img src="./docs/screenshots/en/07-payroll.png" alt="Payroll periods and runs" width="49%"> <img src="./docs/screenshots/en/19-payroll-run.png" alt="Payroll run" width="49%">
 
 ### Approvals
 
@@ -331,7 +335,7 @@ resignations, requisitions, offers, payroll runs and document requests. Policies
 resolve approvers by line manager, department head, role or named user, and carry
 conditions such as amount thresholds.
 
-<img src="./docs/screenshots/09-approvals.png" alt="Approval queue" width="860">
+<img src="./docs/screenshots/en/09-approvals.png" alt="Approval queue" width="860">
 
 ### Hiring, performance, documents
 
@@ -340,7 +344,7 @@ auto-graded assessments, interviews with scorecards, and offers that convert int
 employee records. Review cycles with weighted KPIs and calibration. Certificates
 and letters employees can request for themselves.
 
-<img src="./docs/screenshots/11-recruitment.png" alt="Recruitment" width="32%"> <img src="./docs/screenshots/10-performance.png" alt="Performance" width="32%"> <img src="./docs/screenshots/13-documents.png" alt="Document requests" width="32%">
+<img src="./docs/screenshots/en/11-recruitment.png" alt="Recruitment" width="32%"> <img src="./docs/screenshots/en/10-performance.png" alt="Performance" width="32%"> <img src="./docs/screenshots/en/13-documents.png" alt="Document requests" width="32%">
 
 ### The HR assistant
 
@@ -351,7 +355,7 @@ and document requests — scoped so it can only ever see the asker's own data.
 full-text plus trigram matching, which needs no embeddings and copes with Thai's
 lack of word boundaries.
 
-<img src="./docs/screenshots/14-knowledge.png" alt="The HR knowledge base, which answers policy questions with no AI provider configured" width="80%">
+<img src="./docs/screenshots/en/14-knowledge.png" alt="The HR knowledge base, which answers policy questions with no AI provider configured" width="80%">
 
 
 ### The employee app
@@ -364,7 +368,7 @@ Built for a phone that loses signal: punches queue in durable storage and replay
 on reconnect, carrying a client-generated id so a retry cannot become a second
 punch.
 
-<img src="./docs/screenshots/mobile/01-login.png" alt="Mobile sign-in" width="23%"> <img src="./docs/screenshots/mobile/02-home.png" alt="Clock in and out" width="23%"> <img src="./docs/screenshots/mobile/03-leave.png" alt="Leave balances and requests" width="23%"> <img src="./docs/screenshots/mobile/05-payslip-detail.png" alt="Payslip breakdown" width="23%">
+<img src="./docs/screenshots/mobile/en/02-home.png" alt="Clocked in, with the shift, the office and how far from it the punch was" width="23%"> <img src="./docs/screenshots/mobile/en/03-leave.png" alt="Leave balances and requests" width="23%"> <img src="./docs/screenshots/mobile/en/06-approvals.png" alt="A manager's approvals, with approve and reject on the card" width="23%"> <img src="./docs/screenshots/mobile/en/05-payslip-detail.png" alt="Payslip breakdown" width="23%">
 
 That payslip is the "explain it a year later" claim in practice: earnings,
 deductions, and employer contributions kept visibly separate from what came out
@@ -377,23 +381,23 @@ of the employee's pay.
 
 **Sign-in, and the second factor an admin account cannot skip**
 
-<img src="./docs/screenshots/01-login.png" alt="Sign in" width="49%"> <img src="./docs/screenshots/02-mfa-code.png" alt="Two-factor code" width="49%">
+<img src="./docs/screenshots/en/01-login.png" alt="Sign in" width="49%"> <img src="./docs/screenshots/en/02-mfa-code.png" alt="Two-factor code" width="49%">
 
 **Expenses, benefits and offboarding**
 
-<img src="./docs/screenshots/08-expenses.png" alt="Expense claims" width="32%"> <img src="./docs/screenshots/23-benefits.png" alt="Benefit plans and enrolments" width="32%"> <img src="./docs/screenshots/12-offboarding.png" alt="Offboarding" width="32%">
+<img src="./docs/screenshots/en/08-expenses.png" alt="Expense claims" width="32%"> <img src="./docs/screenshots/en/23-benefits.png" alt="Benefit plans and enrolments" width="32%"> <img src="./docs/screenshots/en/12-offboarding.png" alt="Offboarding" width="32%">
 
 **Org chart and the append-only audit trail**
 
-<img src="./docs/screenshots/16-organization.png" alt="Organisation structure" width="49%"> <img src="./docs/screenshots/17-audit.png" alt="Audit log" width="49%">
+<img src="./docs/screenshots/en/16-organization.png" alt="Organisation structure" width="49%"> <img src="./docs/screenshots/en/17-audit.png" alt="Audit log" width="49%">
 
-**More of the employee app** — payslips, the assistant, profile, and filing leave
+**More of the employee app** — sign-in, payslips, profile, and filing leave
 
-<img src="./docs/screenshots/mobile/04-payslip.png" alt="Payslips" width="23%"> <img src="./docs/screenshots/mobile/06-assistant.png" alt="HR assistant on mobile" width="23%"> <img src="./docs/screenshots/mobile/07-profile.png" alt="Profile" width="23%"> <img src="./docs/screenshots/mobile/08-leave-request.png" alt="Filing a leave request" width="23%">
+<img src="./docs/screenshots/mobile/en/01-login.png" alt="Mobile sign-in" width="23%"> <img src="./docs/screenshots/mobile/en/04-payslip.png" alt="Payslips" width="23%"> <img src="./docs/screenshots/mobile/en/07-profile.png" alt="Profile, with the language switch" width="23%"> <img src="./docs/screenshots/mobile/en/08-leave-request.png" alt="Filing a leave request" width="23%">
 
 **Dark theme, and the console at phone width**
 
-<img src="./docs/screenshots/20-dashboard-dark.png" alt="Dark theme" width="64%"> <img src="./docs/screenshots/21-mobile-width.png" alt="Phone width" width="20%">
+<img src="./docs/screenshots/en/20-dashboard-dark.png" alt="Dark theme" width="64%"> <img src="./docs/screenshots/en/21-mobile-width.png" alt="Phone width" width="20%">
 
 </details>
 

@@ -15,12 +15,12 @@
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
-<img src="./docs/demo/walkthrough.gif" alt="เข้าสู่ระบบด้วยการยืนยันตัวตนสองขั้นตอนบนคอนโซลภาษาอังกฤษ แล้วดูรายการรออนุมัติ ทะเบียนพนักงาน การลา การลงเวลา รอบเงินเดือนที่ปิดแล้ว ผู้สมัครงาน KPI และบันทึกการใช้งาน" width="860">
+<img src="./docs/demo/walkthrough.th.gif" alt="เข้าสู่ระบบด้วยการยืนยันตัวตนสองขั้นตอนบนคอนโซลภาษาไทย แล้วดูรายการรออนุมัติ ทะเบียนพนักงาน การลา การลงเวลา รอบเงินเดือนที่ปิดแล้ว ผู้สมัครงาน KPI และบันทึกการใช้งาน" width="860">
 
 <sub>คอนโซลจริง ปัจจัยที่สองจริง รอบเงินเดือนจริง — อัดจากบริษัทที่
 <code>npm run db:seed</code> สร้างขึ้น ด้วย<a href="./docs/demo/record.mjs">สคริปต์ในรีโพนี้</a>
-ภาพเคลื่อนไหวด้านบนเป็นหน้าจอภาษาอังกฤษ เพราะใช้ไฟล์เดียวกับ README ฉบับภาษาอังกฤษ
-· <a href="./landing/assets/walkthrough.th.mp4">ไฟล์ MP4 หน้าจอภาษาไทย</a>
+บนหน้าจอภาษาไทย
+· <a href="./landing/assets/walkthrough.th.mp4">ไฟล์ MP4 คุณภาพสูง</a>
 · <a href="./docs/demo/walkthrough.mp4">ฉบับภาษาอังกฤษ</a></sub>
 
 </div>
@@ -264,9 +264,11 @@ docker compose run --rm migrate npm run db:init -- --web
 > **หน้าจอเป็นภาษาไทยโดยค่าเริ่มต้น และสลับเป็นภาษาอังกฤษได้** (CW-016) — ทั้งเว็บคอนโซล
 > และแอปพนักงาน ทุกป้ายกำกับ ฟอร์ม สถานะ และข้อความแจ้งเตือนสลับได้จากสวิตช์เดียว
 > (แถบด้านบนบนเว็บ หน้าโปรไฟล์บนมือถือ) โดยยังคงเป็นภาษาไทยเป็นค่าเริ่มต้น
-> ภาพทั้งหมดด้านล่างเป็นภาพหน้าจอจริง (ภาษาไทย) จากบริษัทตัวอย่างที่ seed ไว้ — เว็บคอนโซล
-> บนเบราว์เซอร์ และแอปพนักงานบนหน้าจอขนาด 390×844 ภาพคอนโซลถ่ายด้วย
-> [`docs/screenshots/capture.mjs`](./docs/screenshots/capture.mjs) จึงถ่ายใหม่ได้ทุกครั้งที่หน้าจอเปลี่ยน
+> ภาพทั้งหมดด้านล่างเป็นภาพหน้าจอจริงภาษาไทยจากบริษัทตัวอย่างที่ seed ไว้ — เว็บคอนโซล
+> บนเบราว์เซอร์ และแอปพนักงานบนหน้าจอขนาด 390×844 ส่วน [README ภาษาอังกฤษ](./README.md)
+> แสดงหน้าจอชุดเดียวกันในภาษาอังกฤษ ทุกภาพถ่ายด้วย
+> [`capture.mjs`](./docs/screenshots/capture.mjs) และ
+> [`capture-mobile.mjs`](./docs/screenshots/capture-mobile.mjs) จึงถ่ายใหม่ได้ทุกครั้งที่หน้าจอเปลี่ยน
 
 <img src="./docs/screenshots/03-dashboard.png" alt="แดชบอร์ด แสดงรายการรออนุมัติ จำนวนพนักงาน คำขอลา และรอบเงินเดือนล่าสุด" width="860">
 
@@ -346,7 +348,7 @@ Flutter สำหรับทุกคนที่ไม่เคยเปิด
 แล้วส่งใหม่เมื่อกลับมาออนไลน์ โดยแนบรหัสที่สร้างจากฝั่งเครื่อง การส่งซ้ำจึง
 ไม่กลายเป็นการลงเวลาสองครั้ง
 
-<img src="./docs/screenshots/mobile/01-login.png" alt="เข้าสู่ระบบบนมือถือ" width="23%"> <img src="./docs/screenshots/mobile/02-home.png" alt="ลงเวลาเข้า-ออกงาน" width="23%"> <img src="./docs/screenshots/mobile/03-leave.png" alt="วันลาคงเหลือและคำขอลา" width="23%"> <img src="./docs/screenshots/mobile/05-payslip-detail.png" alt="รายละเอียดสลิปเงินเดือน" width="23%">
+<img src="./docs/screenshots/mobile/02-home.png" alt="ลงเวลาเข้างานแล้ว พร้อมกะ สถานที่ และระยะห่างจากสำนักงานตอนลงเวลา" width="23%"> <img src="./docs/screenshots/mobile/03-leave.png" alt="วันลาคงเหลือและคำขอลา" width="23%"> <img src="./docs/screenshots/mobile/06-approvals.png" alt="รายการรออนุมัติของหัวหน้างาน กดอนุมัติหรือไม่อนุมัติได้จากการ์ด" width="23%"> <img src="./docs/screenshots/mobile/05-payslip-detail.png" alt="รายละเอียดสลิปเงินเดือน" width="23%">
 
 สลิปใบนั้นคือคำว่า "อธิบายที่มาของตัวเลขได้แม้ผ่านไปหนึ่งปี" ในทางปฏิบัติ —
 รายได้ รายการหัก และเงินสมทบฝั่งนายจ้าง แยกให้เห็นชัดว่าอะไรไม่ได้หักจากเงินพนักงาน
@@ -368,9 +370,9 @@ Flutter สำหรับทุกคนที่ไม่เคยเปิด
 
 <img src="./docs/screenshots/16-organization.png" alt="โครงสร้างองค์กร" width="49%"> <img src="./docs/screenshots/17-audit.png" alt="บันทึกการใช้งาน" width="49%">
 
-**แอปพนักงานเพิ่มเติม** — สลิป ผู้ช่วย HR โปรไฟล์ และการยื่นใบลา
+**แอปพนักงานเพิ่มเติม** — เข้าสู่ระบบ สลิป โปรไฟล์ และการยื่นใบลา
 
-<img src="./docs/screenshots/mobile/04-payslip.png" alt="สลิปเงินเดือน" width="23%"> <img src="./docs/screenshots/mobile/06-assistant.png" alt="ผู้ช่วย HR บนมือถือ" width="23%"> <img src="./docs/screenshots/mobile/07-profile.png" alt="โปรไฟล์" width="23%"> <img src="./docs/screenshots/mobile/08-leave-request.png" alt="ยื่นคำขอลา" width="23%">
+<img src="./docs/screenshots/mobile/01-login.png" alt="เข้าสู่ระบบบนมือถือ" width="23%"> <img src="./docs/screenshots/mobile/04-payslip.png" alt="สลิปเงินเดือน" width="23%"> <img src="./docs/screenshots/mobile/07-profile.png" alt="โปรไฟล์ พร้อมตัวสลับภาษา" width="23%"> <img src="./docs/screenshots/mobile/08-leave-request.png" alt="ยื่นคำขอลา" width="23%">
 
 **ธีมมืด และคอนโซลบนความกว้างระดับมือถือ**
 

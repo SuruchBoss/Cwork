@@ -17,13 +17,15 @@
  *
  * What it writes, and where each output belongs:
  *
- *   docs/screenshots/NN-name.png          Thai, 1280×800 at 1×   both READMEs
+ *   docs/screenshots/NN-name.png          Thai, 1280×800 at 1×   README.th.md
+ *   docs/screenshots/en/NN-name.png       English, same          README.md
  *   landing/assets/shots/name.th.webp     Thai, 1280×800 at 2×   landing/
  *   landing/assets/shots/name.en.webp     English, same          landing/en/
  *
- * The landing page gets a take per language because the interface has one
- * (CW-016): an English visitor should see the English console, not be told in
+ * Every screenshot is taken once per language because the interface has two
+ * (CW-016): an English reader should see the English console, not be told in
  * a caption that it exists. The WebP conversion needs ffmpeg with libwebp.
+ * The employee app's are taken by capture-mobile.mjs.
  * The share cards are built from these takes afterwards, by
  * docs/social-preview/build.mjs.
  */
@@ -34,6 +36,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { totp } from '../demo/totp.mjs';
+import { followApiClock } from './clock.mjs';
 
 const seedPassword = process.env.SEED_PASSWORD;
 if (!seedPassword) {
@@ -44,6 +47,7 @@ if (!seedPassword) {
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '..', '..');
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173';
+const API = process.env.API_URL ?? 'http://localhost:3000/api/v1';
 const SECRET = 'CWORKDEMOMFASECRET234567';
 const ACCOUNT = 'ceo@cwork.example';
 const DESKTOP = { width: 1280, height: 800 };
@@ -52,9 +56,8 @@ const LANDING = join(repo, 'landing', 'assets', 'shots');
 const scratch = join(tmpdir(), 'cwork-capture');
 
 /**
- * Every console screen, by route. `docs` is the README file name (null when the
- * READMEs do not show it); `landing` marks the ones the landing page tells its
- * stories with.
+ * Every console screen, by route. `docs` is the README file name; `landing`
+ * marks the ones the landing page tells its stories with.
  */
 const SCREENS = [
   { key: 'dashboard', route: '/', docs: '03-dashboard', landing: true },
@@ -142,13 +145,23 @@ async function open(page, route) {
   await page.goto(BASE + href);
 }
 
+/** Thai at the top of docs/screenshots, English in en/ beside it. */
+function docsDir(language) {
+  return language === 'th'
+    ? join(repo, 'docs', 'screenshots')
+    : join(repo, 'docs', 'screenshots', 'en');
+}
+
 async function webp(png, out) {
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-quality', '82', out]);
 }
 
-/** Waits for the start of a TOTP step: a code is single-use, and each sign-in spends one. */
-async function freshStep() {
-  const into = Date.now() % 30000;
+/**
+ * Waits for the start of a TOTP step: a code is single-use, and each sign-in
+ * spends one. Steps are counted on the API's clock, which is the one checking.
+ */
+async function freshStep(offset) {
+  const into = (Date.now() + offset) % 30000;
   if (into > 3000) await new Promise((resolve) => setTimeout(resolve, 30000 - into + 400));
 }
 
@@ -160,7 +173,7 @@ async function freshStep() {
  * a 09:00 clock-in in Bangkok is captured as 02:00 — a screenshot of a product
  * bug that does not exist.
  */
-async function signedIn(language, { captureAuth = false } = {}) {
+async function signedIn(language) {
   const context = await browser.newContext({
     viewport: DESKTOP,
     deviceScaleFactor: 2,
@@ -168,6 +181,7 @@ async function signedIn(language, { captureAuth = false } = {}) {
     timezoneId: 'Asia/Bangkok',
   });
   await serveWebfonts(context);
+  const offset = await followApiClock(context, `${API}/config`);
   await context.addInitScript((state) => {
     if (!sessionStorage.getItem('capture-ui-set')) {
       localStorage.setItem('cwork.ui', state);
@@ -176,24 +190,20 @@ async function signedIn(language, { captureAuth = false } = {}) {
   }, uiState(language));
   const page = await context.newPage();
 
-  await freshStep();
+  await freshStep(offset);
   await page.goto(BASE + '/login');
   await page.waitForSelector('.auth__card');
   await page.evaluate(() => document.fonts.ready);
   await page.locator('input[type=email]').fill(ACCOUNT);
-  if (captureAuth) {
-    await page.screenshot({ path: join(repo, 'docs/screenshots/01-login.png'), scale: 'css' });
-  }
+  await page.screenshot({ path: join(docsDir(language), '01-login.png'), scale: 'css' });
   await page.locator('input[type=password]').fill(seedPassword);
   await page.locator('.auth__card button[type=submit]').click();
 
   // The sign-in card has inputs of its own, so wait for the code field itself.
   const code = page.locator('.auth__card input[autocomplete=one-time-code]');
   await code.waitFor({ timeout: 15000 });
-  await code.fill(totp(SECRET));
-  if (captureAuth) {
-    await page.screenshot({ path: join(repo, 'docs/screenshots/02-mfa-code.png'), scale: 'css' });
-  }
+  await code.fill(totp(SECRET, Date.now() + offset));
+  await page.screenshot({ path: join(docsDir(language), '02-mfa-code.png'), scale: 'css' });
   await page.locator('.auth__card button[type=submit]').click();
   await page.waitForSelector('.sidebar__nav', { timeout: 20000 });
   console.log(`signed in (${language})`);
@@ -202,45 +212,35 @@ async function signedIn(language, { captureAuth = false } = {}) {
 
 // ------------------------------------------------------------ both languages
 for (const language of ['th', 'en']) {
-  const { context, page } = await signedIn(language, { captureAuth: language === 'th' });
+  mkdirSync(docsDir(language), { recursive: true });
+  const { context, page } = await signedIn(language);
 
   for (const screen of SCREENS) {
-    if (language === 'en' && !screen.landing) continue;
     await open(page, screen.route);
     await settle(page);
 
     const png = join(scratch, `${screen.key}.${language}.png`);
     await page.screenshot({ path: png });
     if (screen.landing) await webp(png, join(LANDING, `${screen.key}.${language}.webp`));
-    if (language === 'th' && screen.docs) {
-      await page.screenshot({
-        path: join(repo, 'docs/screenshots', `${screen.docs}.png`),
-        scale: 'css',
-      });
-    }
+    await page.screenshot({ path: join(docsDir(language), `${screen.docs}.png`), scale: 'css' });
     console.log(`  ${language} ${screen.key}`);
   }
 
-  if (language === 'th') {
-    // Dark theme.
-    await page.evaluate((state) => localStorage.setItem('cwork.ui', state), uiState('th', 'dark'));
-    await page.goto(BASE + '/');
-    await settle(page);
-    await page.screenshot({
-      path: join(repo, 'docs/screenshots/20-dashboard-dark.png'),
-      scale: 'css',
-    });
+  // Dark theme.
+  await page.evaluate(
+    (state) => localStorage.setItem('cwork.ui', state),
+    uiState(language, 'dark'),
+  );
+  await page.goto(BASE + '/');
+  await settle(page);
+  await page.screenshot({ path: join(docsDir(language), '20-dashboard-dark.png'), scale: 'css' });
 
-    // The console at phone width.
-    await page.evaluate((state) => localStorage.setItem('cwork.ui', state), uiState('th'));
-    await page.setViewportSize(PHONE);
-    await page.goto(BASE + '/');
-    await settle(page);
-    await page.screenshot({
-      path: join(repo, 'docs/screenshots/21-mobile-width.png'),
-      scale: 'css',
-    });
-  }
+  // The console at phone width.
+  await page.evaluate((state) => localStorage.setItem('cwork.ui', state), uiState(language));
+  await page.setViewportSize(PHONE);
+  await page.goto(BASE + '/');
+  await settle(page);
+  await page.screenshot({ path: join(docsDir(language), '21-mobile-width.png'), scale: 'css' });
 
   await context.close();
 }

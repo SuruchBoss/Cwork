@@ -170,12 +170,18 @@ entry, tags it and publishes the notes.
   through the API to prove it. See
   [operations](./docs/operations.md#observability).
 
-- **Every console screenshot is retaken by a script** —
+- **Every screenshot is retaken by a script, in both languages** —
   [`docs/screenshots/capture.mjs`](./docs/screenshots/capture.mjs) signs in to the
-  seeded demo with a real second factor and captures each screen, in Thai for the
-  READMEs and in both languages for the overview page, in the organisation's time
-  zone. The screenshots are refreshed with it, and gain the dashboard, the shift
-  roster and benefits.
+  seeded demo with a real second factor and captures each console screen, and
+  [`capture-mobile.mjs`](./docs/screenshots/capture-mobile.mjs) builds the
+  employee app for the web in a throwaway copy and drives it at phone size by
+  the labels its screen-reader tree announces. Each takes every screen in Thai
+  and in English, in the organisation's time zone, on the API's clock. The
+  English README and overview page now show the English interface throughout,
+  the app included; the Thai README shows Thai throughout and gets a Thai
+  walkthrough GIF of its own. The screenshots gain the dashboard, the shift
+  roster, benefits and a manager's approvals on the phone; the app's assistant
+  screen goes, since a default install does not show that tab.
 
 ### Removed
 

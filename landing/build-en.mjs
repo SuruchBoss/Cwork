@@ -15,11 +15,11 @@
  * Every Thai string in the source must have an entry below. One that does not
  * fails the build rather than shipping a half-translated page.
  *
- * The console screenshots come in two takes, one per interface language
- * (docs/screenshots/capture.mjs), so the English page shows the English
- * console: every `.th.webp` becomes `.en.webp`, and a take that is missing
- * fails the build rather than falling back to Thai. The employee-app shots
- * are Thai only, which their descriptions say.
+ * The screenshots come in two takes, one per interface language
+ * (docs/screenshots/capture.mjs for the console, capture-mobile.mjs for the
+ * employee app), so the English page shows the English interface: every
+ * `.th.webp` becomes `.en.webp`, and a take that is missing fails the build
+ * rather than falling back to Thai.
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -361,9 +361,10 @@ const COPY = {
   'หน้าลงเวลาทำงาน แสดงเวลาเข้า-ออก ชั่วโมงทำงาน การมาสาย และรายการที่ต้องตรวจสอบ':
     'The attendance page, showing clock-in and clock-out times, hours worked, lateness and punches to review',
   'ภาพหน้าจอแอปพนักงาน': 'Screenshots of the employee app',
-  'หน้าแรกของแอปพนักงาน แสดงปุ่มลงเวลาและสรุปวันลา':
-    'The employee app’s home screen, in Thai, with the clock-in button and leave balances',
-  'หน้าสลิปเงินเดือนในแอปพนักงาน': 'A payslip in the employee app, in Thai',
+  'หน้าแรกของแอปพนักงาน ลงเวลาเข้างานแล้ว พร้อมสถานที่ ระยะห่างจากสำนักงาน และวันลาคงเหลือ':
+    'The employee app’s home screen after clocking in, with the office, the distance from it and leave balances',
+  'รายการรออนุมัติบนมือถือของหัวหน้างาน พร้อมปุ่มอนุมัติและไม่อนุมัติ':
+    'A manager’s approvals on the phone, with approve and reject buttons',
   'ตัวอย่างการติดตั้ง จบด้วยการสร้างองค์กรและผู้ดูแลคนแรก':
     'A sample install, ending with the organisation and its first administrator created',
   // ----------------------------------- calculator notes, in the script
@@ -517,7 +518,9 @@ if (/walkthrough\.th\.mp4/.test(out)) {
 const takes = [...out.matchAll(/"\.\.\/(assets\/shots\/[\w-]+\.en\.webp)"/g)].map((m) => m[1]);
 const absent = [...new Set(takes)].filter((file) => !existsSync(join(here, file)));
 if (absent.length > 0) {
-  console.error(`English screenshots missing (run docs/screenshots/capture.mjs): ${absent.join(', ')}`);
+  console.error(
+    `English screenshots missing (run docs/screenshots/capture.mjs and capture-mobile.mjs): ${absent.join(', ')}`,
+  );
   process.exit(1);
 }
 
