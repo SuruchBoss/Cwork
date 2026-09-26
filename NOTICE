@@ -11,3 +11,15 @@ If you fork, redistribute, or build a derivative work of this project,
 please keep this NOTICE file (or an equivalent readable attribution) as
 required by Section 4(d) of the License, and consider linking back to the
 original repository above.
+
+--------------------------------------------------------------------------------
+Third-party assets bundled with this project
+--------------------------------------------------------------------------------
+
+backend/assets/fonts/Sarabun-Regular.ttf, backend/assets/fonts/Sarabun-Bold.ttf
+  Sarabun
+  Copyright 2018 The Sarabun Project Authors (https://github.com/cadsondemak/Sarabun)
+  Licensed under the SIL Open Font License, Version 1.1.
+  The full licence travels with the fonts in backend/assets/fonts/OFL.txt, as the OFL
+  requires. The fonts are embedded into generated PDFs so that Thai text renders;
+  they are not modified, and they are not sold on their own.
