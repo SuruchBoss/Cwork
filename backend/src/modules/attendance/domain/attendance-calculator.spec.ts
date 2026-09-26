@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { AttendanceStatus, PunchType } from '@prisma/client';
 import { toDateOnly } from '../../../core/utils/date.util';
 import {

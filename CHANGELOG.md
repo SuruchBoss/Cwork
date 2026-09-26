@@ -166,6 +166,16 @@ entry, tags it and publishes the notes.
 - **ADR-0004 is amended, not superseded** (CW-042): the rule is stated as its
   intended "no tool parameter may extend the caller's reach", rather than the
   literal "no employee id" that read as forbidding every manager-facing tool.
+- **The copyright holder is named: Suruch Chakrapeesirisuk.** The LICENSE
+  appendix said "Cwork contributors"; it now names the owner, a new `NOTICE`
+  file carries the attribution Apache-2.0 section 4(d) asks derivative works to
+  keep, and every source file starts with its copyright line and
+  `SPDX-License-Identifier: Apache-2.0` (applied migrations and Flutter's
+  platform scaffolding excepted). `node scripts/license-headers.mjs` checks it
+  in CI and `--fix` adds it. The licence itself is unchanged.
+- **Only pull requests from a fork need a DCO sign-off.** The check moved from
+  `ci.yml` to `license-check.yml` and now also requires the sign-off to name the
+  commit's author.
 
 ## [0.3.1] — 2026-09-26
 

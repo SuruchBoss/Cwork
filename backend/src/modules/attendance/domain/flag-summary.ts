@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Groups a team's flagged attendance punches so their likely cause is legible
  * (CW-039).

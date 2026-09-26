@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import {
   BASE_DELAY_MS,
   MAX_DELAY_MS,

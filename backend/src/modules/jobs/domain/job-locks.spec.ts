@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { JOB_LOCKS, JOB_LOCK_NAMESPACE, lockIdFor } from './job-locks';
 
 const INT32_MAX = 2_147_483_647;

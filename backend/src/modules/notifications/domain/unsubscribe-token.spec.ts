@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { createUnsubscribeToken, readUnsubscribeToken } from './unsubscribe-token';
 
 const SECRET = 'a-session-secret-that-is-at-least-32-characters';

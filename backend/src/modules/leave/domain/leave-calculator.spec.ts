@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { DayPortion, LeaveAccrualMethod } from '@prisma/client';
 import { toDateOnly } from '../../../core/utils/date.util';
 import { Decimal } from '../../../core/utils/money.util';

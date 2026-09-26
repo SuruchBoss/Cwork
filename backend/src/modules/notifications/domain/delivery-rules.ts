@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Who gets told what, and where a message points — all decided without
  * touching the database or the network, so the rules can be read and tested

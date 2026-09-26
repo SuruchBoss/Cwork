@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /// Build-time configuration.
 ///
 /// Values come from `--dart-define`, so a release build is pinned to the API it

@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * "ขอเอกสาร" — the HR documents an employee asks for and HR issues.
  *

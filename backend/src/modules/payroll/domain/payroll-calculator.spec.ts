@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { PayComponentType } from '@prisma/client';
 import { buildPayslip, type PayslipInput } from './payroll-calculator';
 

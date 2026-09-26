@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { missingAnswers, parseCliOptions } from './cli-options';
 
 describe('db:init arguments', () => {

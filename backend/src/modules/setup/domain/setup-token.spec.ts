@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { SETUP_TOKEN_TTL_MINUTES, classifySetupToken, setupTokenExpiry } from './setup-token';
 
 describe('setup token rules', () => {

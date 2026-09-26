@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Argument parsing for `npm run db:init`, kept pure so it can be tested without
  * a terminal, a database or a Nest context.

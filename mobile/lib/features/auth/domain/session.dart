@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /// The signed-in user, as returned by `GET /auth/me`.
 class SessionUser {
   const SessionUser({

@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * What changed between one payroll run and the period before it — computed, not
  * narrated (CW-040).

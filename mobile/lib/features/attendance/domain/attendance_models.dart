@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 // Attendance models. Hand-written rather than generated: the app has a dozen
 // of these and adding build_runner to the contributor workflow would cost more
 // than it saves.

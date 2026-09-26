@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 const EARTH_RADIUS_M = 6_371_008.8;
 
 export interface Coordinates {

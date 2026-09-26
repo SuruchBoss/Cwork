@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Reports work-location codes that do not match the ecosystem's identifier
  * shape (CW-049 / ADR-0006) — and changes nothing.

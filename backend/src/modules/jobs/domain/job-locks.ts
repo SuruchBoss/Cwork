@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Which scheduled tasks must run once across the whole fleet, and the advisory
  * lock each one holds while it runs.

@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';

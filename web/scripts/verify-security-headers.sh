@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Proves the web console serves its security headers — from the image as it
 # ships, not a hand-assembled nginx (CW-053).

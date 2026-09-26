@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * After a database seeded at the previous release has been migrated up to the
  * current commit, this asserts the seeded data is still readable through the

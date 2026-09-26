@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:safe_device/safe_device.dart';
 
 /// Reports whether the device's OS integrity is compromised (rooted on Android,

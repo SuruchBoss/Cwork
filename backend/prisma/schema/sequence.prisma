@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /// Human-readable document numbers (LV-2026-00042, EXP-2026-00007…).
 /// Allocated with a single atomic UPDATE … RETURNING so concurrent submissions
 /// can never receive the same number.

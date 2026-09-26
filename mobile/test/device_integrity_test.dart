@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import 'package:cwork/features/attendance/data/device_integrity.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

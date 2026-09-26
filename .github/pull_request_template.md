@@ -15,7 +15,8 @@
       hand-written objects, and `npm run db:verify` passes
 - [ ] `npm run typecheck && npm run lint && npm test` passes in the affected
       package (`flutter analyze && flutter test` for mobile)
-- [ ] Every commit is signed off (`git commit -s`) — see
+- [ ] New source files carry the licence header (`node scripts/license-headers.mjs --fix`)
+- [ ] From a fork: every commit is signed off (`git commit -s`) — see
       [CONTRIBUTING.md](../CONTRIBUTING.md#signing-off-your-work)
 
 ## How to verify

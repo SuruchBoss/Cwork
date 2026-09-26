@@ -290,49 +290,5 @@ jobs:
           npm ci --ignore-scripts
           npm run audit:prod
 
-  dco:
-    name: Sign-off
-    # Pull requests only: the check is about what a contribution carries, and a
-    # push to main is not a contribution being offered.
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # The whole range between base and head has to be readable, and the
-          # default shallow clone gives one commit.
-          fetch-depth: 0
-
-      - name: Every commit is signed off
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          # Merge commits are skipped: merging main into a branch is not the
-          # contributor certifying anything, and asking them to sign it would
-          # teach people to sign reflexively.
-          missing=$(
-            git log --no-merges --format='%H' "$BASE..$HEAD" | while read -r sha; do
-              if ! git log -1 --format='%(trailers:key=Signed-off-by,valueonly)' "$sha" | grep -q '[^[:space:]]'; then
-                printf '  %s %s\n' "$(git rev-parse --short "$sha")" "$(git log -1 --format=%s "$sha")"
-              fi
-            done
-          )
-
-          if [ -n "$missing" ]; then
-            echo "These commits have no Signed-off-by line:"
-            echo "$missing"
-            echo
-            echo "Sign-off certifies you have the right to submit the change —"
-            echo "see CONTRIBUTING.md#signing-off-your-work and the DCO file."
-            echo
-            echo "To fix the most recent commit:"
-            echo "    git commit --amend -s && git push --force-with-lease"
-            echo
-            echo "To fix every commit on this branch:"
-            echo "    git rebase --signoff origin/main && git push --force-with-lease"
-            exit 1
-          fi
-
-          echo "Every commit in this pull request is signed off."
+  # The sign-off check for pull requests from forks lives in license-check.yml,
+  # beside the check that every source file carries its licence header.

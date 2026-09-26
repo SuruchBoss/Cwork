@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Every protected endpoint declares the permissions it needs with
  * `@RequirePermissions(...)`. Roles are just named bundles of these strings, so

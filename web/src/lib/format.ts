@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { differenceInYears, format, formatDistanceToNowStrict, parseISO } from 'date-fns';
 import { enUS, th } from 'date-fns/locale';
 import { getLanguage, translate } from '@/lib/i18n';

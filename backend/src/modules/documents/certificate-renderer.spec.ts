@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { DocumentRequestType } from '@prisma/client';
 import { CertificateRenderer, certificateBody, type CertificateData } from './certificate-renderer';
 

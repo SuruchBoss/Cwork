@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { useCallback } from 'react';
 import { useUiStore } from '@/stores/ui.store';
 import { translate } from './index';

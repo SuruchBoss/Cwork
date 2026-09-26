@@ -464,7 +464,7 @@ migration เดินหน้าทางเดียว — สำรอง�
 เครื่องหมาย *good first issue* กำกับไว้ ส่วนใหญ่เป็นเรื่องรูปแบบนโยบายการลา
 กรณีขอบของเงินเดือน หรือการรองรับกฎหมายของประเทศอื่น
 
-ทุก commit ต้องมีบรรทัด sign-off (`git commit -s`) ตาม
+ทุก commit ใน pull request ที่ส่งมาจาก fork ต้องมีบรรทัด sign-off (`git commit -s`) ตาม
 [Developer Certificate of Origin](./DCO) ซึ่งเป็นการยืนยันว่าท่านมีสิทธิ์ส่ง
 การเปลี่ยนแปลงนั้น และมีการตรวจใน CI **ไม่มี CLA** โดยตั้งใจ — เอกสาร CLA
 คือกำแพงที่ตั้งขวางหน้าการแก้โค้ดบรรทัดเดียว ส่วน DCO ตอบคำถามเดียวกับที่
@@ -473,4 +473,10 @@ migration เดินหน้าทางเดียว — สำรอง�
 
 ## สัญญาอนุญาต
 
-[Apache 2.0](./LICENSE)
+[Apache 2.0](./LICENSE) ลิขสิทธิ์ 2026 Suruch Chakrapeesirisuk ดูเพิ่มเติมที่
+[NOTICE](./NOTICE)
+
+ไฟล์ซอร์สทุกไฟล์ขึ้นต้นด้วยบรรทัดลิขสิทธิ์และตัวระบุ SPDX
+(`SPDX-License-Identifier: Apache-2.0`) ซึ่งตรวจใน CI ยกเว้นไฟล์ migration ของฐานข้อมูล
+ที่ถูก apply ไปแล้ว ส่วนการมีส่วนร่วมจากภายนอกต้อง sign-off ตาม Developer Certificate
+of Origin — ดู [CONTRIBUTING.md](./CONTRIBUTING.md#developer-certificate-of-origin-dco)

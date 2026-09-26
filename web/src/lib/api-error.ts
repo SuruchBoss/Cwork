@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { t } from '@/lib/i18n';
 import type { ApiErrorBody } from '@/types/api';
 

@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AuditAction, Prisma, UserStatus } from '@prisma/client';
 import { APP_CONFIG } from '../../core/config/config.token';
