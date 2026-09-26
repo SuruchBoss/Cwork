@@ -23,8 +23,11 @@ interface AuthState {
   login: (email: string, password: string) => Promise<MfaChallenge | null>;
   /** Exchanges a challenge and a code for a session. */
   verifyMfa: (challengeToken: string, code: string) => Promise<void>;
-  /** Finishes a sign-in that had to enrol first. */
-  completeMfaEnrolment: (challengeToken: string) => Promise<void>;
+  /**
+   * Finishes a sign-in that had to enrol first, with the session activation
+   * returned. Held back until then only so the recovery codes can be shown.
+   */
+  completeMfaEnrolment: (session: LoginSession) => void;
   logout: () => Promise<void>;
   setTokens: (tokens: AuthTokens) => void;
   refreshUser: () => Promise<void>;
@@ -91,19 +94,8 @@ export const useAuthStore = create<AuthState>()(
         adoptSession(set, result);
       },
 
-      async completeMfaEnrolment(challengeToken) {
-        const result = await api.post<LoginSession>(
-          '/auth/mfa/complete-enrolment',
-          {
-            challengeToken,
-            // The endpoint shares a DTO with verify, which wants a code field.
-            code: 'enrolled',
-            platform: 'web',
-            deviceName: navigator.userAgent.slice(0, 80),
-          },
-          { anonymous: true },
-        );
-        adoptSession(set, result);
+      completeMfaEnrolment(session) {
+        adoptSession(set, session);
       },
 
       async logout() {

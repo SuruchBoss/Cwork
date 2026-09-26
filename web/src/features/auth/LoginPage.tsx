@@ -9,7 +9,7 @@ import { fetchSetupStatus } from '@/features/setup/setup.api';
 import { env } from '@/lib/env';
 import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
-import type { MfaChallenge, MfaEnrolment } from '@/types/api';
+import type { LoginSession, MfaActivation, MfaChallenge, MfaEnrolment } from '@/types/api';
 
 // Messages are English keys (CW-016); the form translates them through `t()`
 // when it shows them.
@@ -27,12 +27,16 @@ type FormValues = z.infer<typeof schema>;
  * The challenge token is held in component state only. It is not a session and
  * has no business being persisted — if the tab closes mid-enrolment, starting
  * again from the password is the correct outcome.
+ *
+ * Enrolling ends with the session already issued: the code that switched the
+ * factor on is the code that signed the account in. It waits in component state
+ * until the recovery codes have been seen, then becomes the session.
  */
 type Step =
   | { name: 'credentials' }
   | { name: 'code'; challenge: MfaChallenge }
   | { name: 'enrol'; challenge: MfaChallenge }
-  | { name: 'recovery'; challenge: MfaChallenge; codes: string[] };
+  | { name: 'recovery'; session: LoginSession; codes: string[] };
 
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
@@ -148,7 +152,7 @@ export default function LoginPage() {
         challenge={step.challenge}
         error={serverError}
         setError={setServerError}
-        onEnrolled={(codes) => setStep({ name: 'recovery', challenge: step.challenge, codes })}
+        onEnrolled={(codes, session) => setStep({ name: 'recovery', session, codes })}
         onBack={() => {
           setServerError(null);
           setStep({ name: 'credentials' });
@@ -168,22 +172,12 @@ export default function LoginPage() {
             <li key={code}>{code}</li>
           ))}
         </ul>
-        {serverError && (
-          <div className="alert alert--danger" role="alert" style={{ marginTop: 12 }}>
-            {serverError}
-          </div>
-        )}
         <Button
           variant="primary"
           style={{ width: '100%', marginTop: 16 }}
-          onClick={async () => {
-            setServerError(null);
-            try {
-              await completeMfaEnrolment(step.challenge.challengeToken);
-              goHome();
-            } catch (error) {
-              setServerError(describe(error, t('Could not sign in, please sign in again')));
-            }
+          onClick={() => {
+            completeMfaEnrolment(step.session);
+            goHome();
           }}
         >
           {t('Saved, sign in')}
@@ -357,7 +351,7 @@ function EnrolStep({
   challenge: MfaChallenge;
   error: string | null;
   setError: (message: string | null) => void;
-  onEnrolled: (codes: string[]) => void;
+  onEnrolled: (codes: string[], session: LoginSession) => void;
   onBack: () => void;
 }) {
   const t = useT();
@@ -430,9 +424,14 @@ function EnrolStep({
           onSubmit={async (code) => {
             setError(null);
             const result = await api
-              .post<{ recoveryCodes: string[] }>(
+              .post<MfaActivation>(
                 '/auth/mfa/activate',
-                { challengeToken: challenge.challengeToken, code },
+                {
+                  challengeToken: challenge.challengeToken,
+                  code,
+                  platform: 'web',
+                  deviceName: navigator.userAgent.slice(0, 80),
+                },
                 { anonymous: true },
               )
               .catch((caught: unknown) => {
@@ -441,8 +440,14 @@ function EnrolStep({
                 );
                 return null;
               });
+            if (!result) return;
 
-            if (result) onEnrolled(result.recoveryCodes);
+            // Sent with a challenge token, activation always finishes the sign-in.
+            if (!result.session) {
+              setError(t('Could not sign in, please sign in again'));
+              return;
+            }
+            onEnrolled(result.recoveryCodes, result.session);
           }}
           onBack={onBack}
         />

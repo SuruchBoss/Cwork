@@ -23,6 +23,7 @@ import {
   LoginDto,
   LoginResponseDto,
   MfaActivateDto,
+  MfaActivateResponseDto,
   MfaChallengeResponseDto,
   MfaCodeDto,
   MfaEnrolDto,
@@ -103,29 +104,32 @@ export class AuthController {
     return this.mfa.beginEnrolment(userId);
   }
 
+  /**
+   * Mid-sign-in (a challenge token is sent), the code that activates the factor
+   * is also the code that completes the sign-in, so the session comes back in
+   * this response. There is no separate step that swaps a challenge for a
+   * session: that would issue one without a code.
+   */
   @Public()
   @Post('mfa/activate')
   @HttpCode(HttpStatus.OK)
   @Throttle(CREDENTIAL_THROTTLE)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Confirm a code to switch two-factor on, returning recovery codes' })
+  @ApiOperation({
+    summary: 'Confirm a code to switch two-factor on, returning recovery codes',
+    description:
+      'With a challenge token (enrolling mid-sign-in) the response also carries ' +
+      'the session in `session`. From an existing session it returns the codes only.',
+  })
   async activateMfa(
     @Body() dto: MfaActivateDto,
     @Req() req: Request,
-  ): Promise<MfaRecoveryCodesResponseDto> {
-    const userId = await this.resolveMfaSubject(req, dto.challengeToken);
+  ): Promise<MfaActivateResponseDto> {
+    if (dto.challengeToken) {
+      return this.authService.activateMfaAndSignIn(dto.challengeToken, dto, requestMeta(req));
+    }
+    const userId = await this.resolveMfaSubject(req);
     return this.mfa.activate(userId, dto.code, requestMeta(req));
-  }
-
-  @Public()
-  @Post('mfa/complete-enrolment')
-  @HttpCode(HttpStatus.OK)
-  @Throttle(CREDENTIAL_THROTTLE)
-  @ApiOperation({
-    summary: 'Exchange a challenge token for a session, once enrolment is finished',
-  })
-  completeMfaEnrolment(@Body() dto: MfaVerifyDto, @Req() req: Request): Promise<LoginResponseDto> {
-    return this.authService.completeEnrolmentLogin(dto.challengeToken, dto, requestMeta(req));
   }
 
   @Get('mfa/status')

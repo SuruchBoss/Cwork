@@ -307,20 +307,16 @@ describe('First-run setup (e2e)', () => {
       expect(enrolment.status).toBe(200);
       const secret = enrolment.body.secret as string;
 
+      // The code that switches the factor on is the code that finishes the
+      // sign-in: the session comes back from activation itself.
       const activated = await api.post('/auth/mfa/activate', undefined, {
         challengeToken,
         code: generateTotpForStep(secret, timeStepAt(Date.now())),
       });
       expect(activated.status).toBe(200);
       expect(activated.body.recoveryCodes).toHaveLength(10);
-
-      const session = await api.post('/auth/mfa/complete-enrolment', undefined, {
-        challengeToken,
-        code: generateTotpForStep(secret, timeStepAt(Date.now())),
-      });
-      expect(session.status).toBe(200);
-      expect(session.body.accessToken).toEqual(expect.any(String));
-      accessToken = session.body.accessToken as string;
+      expect(activated.body.session.accessToken).toEqual(expect.any(String));
+      accessToken = activated.body.session.accessToken as string;
     });
 
     it('holds every permission, so the console is usable from the first screen', async () => {
