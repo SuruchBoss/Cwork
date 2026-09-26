@@ -46,10 +46,10 @@ severity; this is the sequence work is actually taken in.
 |---|---|---|
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
-| **2** | The pilot can run | CW-025 |
-| **3** | Payroll can file and pay · the app is complete | CW-044 → CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
+| **2** | The pilot can run | ✅ closed 2026-09-26 |
+| **3** | Payroll can file and pay · the app is complete | CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 · CW-031 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
-| **E** | Ecosystem — runs alongside, does not displace | CW-049 · CW-052 · CW-050 · CW-051 |
+| **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
 **Phase E added 2026-09-25.** Cwork is the system of record for people and
 labour cost in an ecosystem with PaynEat POS and PaynEat ERP (the ERP's
@@ -145,43 +145,6 @@ exists to remove.
 
 
 
-### CW-025 · Harden offline punch capture
-`P1` · attendance · security · **M**
-
-The server credits the instant a punch was captured, which is right — someone in
-a warehouse with no signal should not lose the time. But `punch_queue.dart`
-keeps that queue in `SharedPreferences`, which the owner of a rooted device can
-edit, so arrival times are forgeable. Meanwhile the API accepts
-`dto.isRootedDevice` and **the app never sends it**: there is no root-detection
-dependency in `pubspec.yaml`, so `ROOTED_DEVICE` can never be raised.
-
-**Scope**
-- Move the queue to `flutter_secure_storage`, which tokens already use.
-- Detect and send rooted/jailbroken status so the flag the backend is waiting
-  for actually fires.
-- A configurable ceiling — 12 hours as the starting value — beyond which a
-  queued punch is flagged for a manager to confirm. The real number comes from
-  the pilot's flag rate.
-- Confirmation runs through the existing approval engine, with **only two
-  outcomes: acknowledge, or reject the flag.** It must never create or delete a
-  punch: `attendance_punches` is append-only at the database level and that
-  property is load-bearing.
-
-**Acceptance**
-- A punch replayed 14 hours late is accepted, flagged, and appears in a
-  manager's queue.
-- Confirming or rejecting writes no new punch and deletes none.
-- A rooted device produces `ROOTED_DEVICE` end to end.
-
-**Files** `mobile/lib/features/attendance/data/`,
-`backend/src/modules/attendance/`, `backend/src/modules/approvals/`
-
----
-
-
-
-
-
 
 ### CW-041 · Draft the manager's half of a review
 `P3` · assistant · performance · **M**
@@ -267,31 +230,6 @@ of model. Chat and embeddings should not share a ticket.
 
 ---
 
-### CW-044 · A payroll export that reconciles before it writes anything
-`P1` · payroll · **M** · blocks CW-045, CW-048, CW-019
-
-A payroll officer picks a period and downloads a file of what it paid. A period
-whose runs are not all `APPROVED`, or whose payslip totals do not add up to the
-run totals, is **refused with the difference named** rather than producing a
-file that is quietly wrong. Every export is audited.
-
-The file this produces is a plain CSV — deliberately the least interesting
-output. What is being built is the path through every layer, so that each
-filing becomes a formatter over checked figures instead of five separate
-implementations of the same reconciliation, each able to be wrong in its own
-way. Everything the formatters need is already on `Payslip`.
-
-**Acceptance**
-- A reconciling period downloads; a period with an unapproved run is refused,
-  naming the run.
-- A period whose payslip totals disagree with its run totals is refused, naming
-  the difference.
-- Every export appends actor, period, format and row count to the audit log.
-- Export requires its own permission.
-
-**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
-
----
 
 ### CW-045 · ภ.ง.ด.1 monthly withholding filing
 `P1` · payroll · **M** · blocked by CW-044 · parent CW-004
@@ -368,100 +306,7 @@ and nothing else.
 
 ---
 
-### CW-049 · A work location's code becomes an identifier
-`P2` · organization · **M** · phase E
 
-`WorkLocation.code` is free text that anyone can edit. That is fine while
-nothing refers to a location from outside, and wrong the moment anything does —
-including Cwork's own payroll exports, which will carry a location and cannot be
-reconciled if last month's key has since been renamed.
-
-Adopt the ecosystem's rule, recorded in
-[ADR-0006](./adr/0006-location-code.md): `^[A-Z0-9][A-Z0-9-]{1,31}$`,
-correctable until the location is first used, fixed afterwards, and replaced by
-creating a new location with a *superseded by* link.
-
-"First used" in Cwork means any of: a punch recorded against it, a shift or
-schedule assigned to it, or its appearance in an export that left the system.
-
-**Scope**
-- Validate the format on create and update.
-- Enforce the mutability rule; a correction before first use is ordinary editing.
-- Supersede: new location, old one deactivated and pointing at it, **history
-  intact** — attendance is append-only and a renamed site must not rewrite where
-  somebody worked last year.
-- A migration that **reports what it would change before changing anything**,
-  and refuses rather than mangling a code it cannot mechanically fix. The demo
-  seed is in scope.
-
-**Acceptance**
-- A code that does not match the format is refused with the pattern in the message.
-- A code is editable before first use and refused after it, and the error says which
-  of the three events fixed it.
-- A superseded location keeps every punch and schedule it ever had.
-- The migration's dry run lists affected rows and changes nothing.
-
-**Files** `backend/prisma/`, `backend/src/modules/organization/`, `web/src/features/settings/`
-
----
-
-### CW-050 · Conform to telemetry contract v1.2
-`P2` · platform · **M** · phase E · blocked by CW-044
-
-An HRIS nobody can debug is an HRIS nobody should run, and Cwork currently
-emits a numeric pino `level` and no metrics at all. Conform to
-[telemetry contract v1.2](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/TELEMETRY.md)
-— v1.1 plus `app.log` and a metrics port of its own; the ticket was written
-against v1.1 and the contract moved while it was being built.
-
-Read v1.1, not v1: **`event` moved from a top-level field into `labels`**, and
-`httpRequest.latency` is a duration string such as `"0.231s"`, not a number.
-Reading the older version is the likeliest way to get this wrong.
-
-**Scope**
-- String `severity` (`DEBUG`…`CRITICAL`), not a numeric level.
-- A plain `labels` object carrying `app=cwork-api`, `event`, and
-  `correlation_id` from the existing `x-request-id`. Under `LOG_FORMAT=gcp`, and
-  only then, it moves to `logging.googleapis.com/labels`, and `trace` to
-  `logging.googleapis.com/trace`. Plain is the default — Cwork proposed that
-  clause and it is in the contract.
-- Events Cwork emits: `http.request.completed`, `auth.sign_in.failed`,
-  `outbox.delivery.failed`.
-- `GET /metrics`, not public: `http_requests_total`,
-  `http_request_duration_seconds`, `auth_sign_in_failures_total`,
-  `outbox_pending_events`, `outbox_oldest_pending_age_seconds`. `route` is the
-  template (`/employees/:id`), never the concrete path.
-- **The two outbox gauges are queried from the database, never held in process
-  memory.** CW-003 and CW-007 made replicas a supported configuration, so a
-  counter kept in memory means every instance reports a different backlog and a
-  deploy silently resets it to zero — a metric that reads healthy because it
-  forgot is worse than no metric.
-- **A request refused before the controller still produces
-  `http.request.completed`** — a 401 from `JwtAuthGuard`, a 429 from the
-  throttler. If a guard short-circuits ahead of the logging, a lockout storm or
-  a credential being hammered is exactly the traffic that leaves no trace,
-  which is the opposite of what this ticket is for.
-- **Nothing from the contract's "never in logs" list.** Cwork holds salaries,
-  national IDs and bank accounts; this matters more here than anywhere else in
-  the ecosystem. A test should assert it, not a reviewer.
-
-**Acceptance**
-- A request produces one JSON line with `severity`, `event` inside `labels`, and
-  the correlation id the caller sent.
-- `LOG_FORMAT=gcp` moves the labels and trace to the Google keys and changes
-  nothing else.
-- `/metrics` serves all five, with `route` as a template.
-- A test proves no salary, national ID, bank account, token or query string
-  reaches a log line or a metric label.
-- Two instances against one database report the same `outbox_pending_events`,
-  and restarting one does not change it.
-- A refused sign-in and a throttled request each produce an
-  `http.request.completed` line carrying the caller's correlation id and the
-  status that was returned.
-
-**Files** `backend/src/core/http/`, `backend/src/core/config/`, `backend/src/main.ts`
-
----
 
 ### CW-052 · Say where Cwork sits in the ecosystem
 `P3` · docs · **S** · 🌱 · phase E
@@ -524,41 +369,6 @@ not because there is a date.
 
 ---
 
-### CW-053 · Prove the security headers are actually served
-`P2` · web · security · **S** · 🌱
-
-`a6d2c43` fixed a silent one: nginx inherits `add_header` into a `location`
-only when that location declares none of its own, so `location /assets/` and
-`location = /index.html` — each adding a `Cache-Control` — were served with no
-CSP and no `X-Frame-Options`. Every SPA deep link resolves to `index.html`
-through `try_files`, so that was the app's own HTML.
-
-The fix is right. Nothing checks that it stays right. Add a `location` tomorrow
-with any header of its own, forget the `include`, and it breaks exactly the same
-way — silently, with `security.md` still claiming the console ships a strict CSP.
-
-**Scope**
-- A CI step that runs the web image **as it ships** and requests `/`,
-  `/index.html`, `/assets/<a hashed file>` and a deep link such as
-  `/employees`, asserting the security headers on every one.
-- Exercise the built image rather than a hand-assembled nginx. Where
-  `security-headers.conf` lands is part of what broke: `a6d2c43` had to put it
-  in `/etc/nginx/` rather than `conf.d/`, which nginx would load as a standalone
-  config and reject. A test against a config assembled by hand would have missed
-  that, and it is the failure that takes the whole container down.
-- Assert the `Cache-Control` on `/assets/` too — it is the header the `include`
-  sits next to, and a careless fix could drop the thing the location exists for.
-
-**Acceptance**
-- CI fails when a `location` in `web/nginx.conf` gains an `add_header` without
-  the `include`.
-- CI fails if `security-headers.conf` stops reaching `/etc/nginx/` in the image.
-- All four paths carry the CSP and `X-Frame-Options`; `/assets/` still carries
-  its `Cache-Control`.
-
-**Files** `.github/workflows/ci.yml`, `web/`
-
----
 
 ## P2 — worth doing
 
@@ -803,3 +613,8 @@ Kept so the reasoning survives.
 | **CW-039** · Managers saw flag lists and had to guess what they meant | `OUTSIDE_GEOFENCE`, `IMPOSSIBLE_TRAVEL` and the rest told a manager something happened, not whether they were looking at a dishonest employee or a badly drawn geofence. Explained now, scoped to the caller's reports through the same visibility filter the console uses. f77d1df. |
 | **CW-040** · Payroll approval was a control on paper | Separation of duties means the approver did not prepare the run; what they saw was a total they had no practical way to interrogate. The variance is narrated against the previous period, from the components the payslip already stores. 2445ad3. |
 | **CW-042** · ADR-0004 forbade the features that were about to be built | Its title said assistant tools take no employee id, and it named "lets a manager ask about their team" as the signature it rejected — which read as forbidding CW-039 and CW-040. Amended to the rule it was reaching for: no tool parameter may extend the caller's reach. f849688. |
+| **CW-025** · An offline punch could be forged on a rooted phone | The server credits the instant a punch was captured, which is right for someone clocking in at a warehouse with no signal — but the queue sat in `SharedPreferences`, which a rooted device's owner can edit, and the `isRootedDevice` the API accepted was never sent. The queue moved to the keystore, root is detected and reported, and a punch held beyond the ceiling is flagged for a manager to acknowledge — never rewritten, because `attendance_punches` is append-only. The ceiling's real value is still the pilot's to decide. 2af6a71. **Closed phase 2: the pilot can run.** |
+| **CW-044** · Every payroll filing would have reconciled its own figures | Five formatters were queued behind this — ภ.ง.ด.1, 1ก, 50 ทวิ, ประกันสังคม, the bank file — and each would otherwise have gathered a period and checked it adds up in its own way, which on these outputs means filing wrong numbers with the Revenue Department. Built once: reconciliation is a pure domain module with its own unit tests, and a period is refused, naming the run or the difference, when a run is not `APPROVED` or its payslips do not add up. It also refuses when the payslip count disagrees with the recorded headcount — a check the ticket did not ask for and should have. 1073152. |
+| **CW-049** · A location's code was free text anyone could edit | The ecosystem's location code (ADR-0006): a fixed format, correctable until first use — a punch, a schedule, an export — and superseded rather than renamed afterwards, with the old location keeping its history. A breaking change for existing installs, with a migration that reports before it changes anything. 34cb1ae. |
+| **CW-050** · Cwork could not be investigated from its logs | Conforms to telemetry contract **v1.2**, which moved on from the v1.1 the ticket named while the work was under way. String `severity`, a plain `labels` object, `app.log`, and five metrics on a port of their own so `/metrics` is never published with the API. Two acceptance criteria were added mid-ticket from notes written for other systems, and both have tests by their own names: the outbox gauges read from the database, so two instances agree and a restart does not reset them; and a request refused by the auth guard or the throttler still gets its log line. **The ticket's premise was wrong:** it said Cwork emitted a numeric pino `level`. The dependency was installed and never wired in; it was removed, with a `LOG_PRETTY` nothing read. 783171f. |
+| **CW-053** · Nothing proved the security headers were served | A fix to nginx's `add_header` inheritance had put CSP and `X-Frame-Options` back on `/assets/` and `index.html`; nothing stopped the next `location` from dropping them again. CI now runs the image as shipped and asserts the headers on the paths that broke. b160cbb. |
