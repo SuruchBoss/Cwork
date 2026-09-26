@@ -206,6 +206,21 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  web-image:
+    name: Web image security headers
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Builds and runs the web image as it ships, then asserts the CSP and
+      # X-Frame-Options on every path the console is served on — including a
+      # deep link, which reaches index.html through try_files (CW-053). The
+      # `web` job above cannot catch this: the bug lived in how nginx serves the
+      # built image, and in where security-headers.conf lands inside it.
+      - name: The shipped web image serves its security headers
+        run: web/scripts/verify-security-headers.sh
+
   mobile:
     name: Mobile app
     runs-on: ubuntu-latest
