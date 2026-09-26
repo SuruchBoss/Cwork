@@ -132,6 +132,13 @@ model WorkLocation {
   ipAllowlist      String[] @default([])
   timezone         String?
   isActive         Boolean  @default(true)
+  /// Set when this code was retired by a supersede (CW-049): the old row is kept
+  /// so its history stays valid, deactivated, and points at its replacement. A
+  /// code is immutable once the site is first used, so a wrong one is replaced,
+  /// never edited in place.
+  supersededById   String?  @db.Uuid
+  supersededBy     WorkLocation?  @relation("WorkLocationSupersede", fields: [supersededById], references: [id], onDelete: SetNull)
+  supersedes       WorkLocation[] @relation("WorkLocationSupersede")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   deletedAt        DateTime?

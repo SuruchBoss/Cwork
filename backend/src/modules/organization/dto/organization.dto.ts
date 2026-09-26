@@ -18,6 +18,17 @@ import {
 
 const CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{0,31}$/;
 
+/**
+ * A work location's code is the ecosystem's location code (ADR-0006), so it is
+ * stricter than the department/position codes above: uppercase letters, digits
+ * and hyphens only (no underscore), 2 to 32 characters. It becomes an
+ * identifier the moment the site is first used, so its shape has to be one every
+ * system in the ecosystem agrees on.
+ */
+export const WORK_LOCATION_CODE_PATTERN = /^[A-Z0-9][A-Z0-9-]{1,31}$/;
+const WORK_LOCATION_CODE_MESSAGE =
+  'code must match ^[A-Z0-9][A-Z0-9-]{1,31}$ — uppercase letters, digits and hyphens, 2 to 32 characters';
+
 export class CreateDepartmentDto {
   @ApiProperty({ example: 'ENG' })
   @IsString()
@@ -114,7 +125,7 @@ export class UpdatePositionDto extends PartialType(CreatePositionDto) {
 export class CreateWorkLocationDto {
   @ApiProperty({ example: 'HQ' })
   @IsString()
-  @Matches(CODE_PATTERN)
+  @Matches(WORK_LOCATION_CODE_PATTERN, { message: WORK_LOCATION_CODE_MESSAGE })
   code!: string;
 
   @ApiProperty({ example: 'สำนักงานใหญ่' })

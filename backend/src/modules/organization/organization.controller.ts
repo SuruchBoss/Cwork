@@ -160,6 +160,18 @@ export class OrganizationController {
     return this.service.updateWorkLocation(user.organizationId, id, dto);
   }
 
+  @Post('work-locations/:id/supersede')
+  @RequirePermissions(Permission.ORG_MANAGE)
+  @Audited({ action: AuditAction.UPDATE, entityType: 'WorkLocation' })
+  @ApiOperation({ summary: 'Replace a worksite whose code is locked with a new one (CW-049)' })
+  supersedeWorkLocation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateWorkLocationDto,
+  ) {
+    return this.service.supersedeWorkLocation(user.organizationId, id, dto);
+  }
+
   // ------------------------------------------------------------------- holidays
 
   @Get('holidays')

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { NotFoundError } from '../../core/errors/domain.errors';
+import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { toDateOnly } from '../../core/utils/date.util';
 import type {
@@ -151,7 +151,27 @@ export class OrganizationService {
   }
 
   async updateWorkLocation(organizationId: string, id: string, dto: UpdateWorkLocationDto) {
-    await this.assertOwned('workLocation', organizationId, id);
+    const existing = await this.prisma.workLocation.findFirst({
+      where: { id, organizationId, deletedAt: null },
+      select: { code: true },
+    });
+    if (!existing) throw new NotFoundError('WorkLocation', id);
+
+    // The code is an identifier once the site is first used: a correction before
+    // that is ordinary editing, but after it the code is fixed and must be
+    // replaced by superseding, never edited in place (CW-049). Every other field
+    // stays freely editable.
+    if (dto.code !== undefined && dto.code !== existing.code) {
+      const reasons = await this.firstUseReasons(id);
+      if (reasons.length > 0) {
+        throw new BusinessRuleError(
+          'WORK_LOCATION_CODE_LOCKED',
+          `รหัสสถานที่ "${existing.code}" ถูกใช้งานแล้วจึงเปลี่ยนไม่ได้ (${reasons.join('; ')}) — ` +
+            'หากรหัสผิด ให้สร้างสถานที่ใหม่แล้วแทนที่ (supersede) ของเดิม',
+        );
+      }
+    }
+
     return this.prisma.workLocation.update({
       where: { id },
       data: {
@@ -160,6 +180,64 @@ export class OrganizationService {
         longitude: dto.longitude !== undefined ? new Prisma.Decimal(dto.longitude) : undefined,
       },
     });
+  }
+
+  /**
+   * Replaces a work location whose code is locked with a new one (CW-049).
+   *
+   * The old row is kept, deactivated, and pointed at its replacement, so every
+   * punch and record that referenced it still resolves — where somebody worked
+   * last year is a fact and is not rewritten. Employees based at the old site
+   * are moved to the replacement so new punches go there.
+   */
+  async supersedeWorkLocation(organizationId: string, id: string, dto: CreateWorkLocationDto) {
+    const old = await this.prisma.workLocation.findFirst({
+      where: { id, organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!old) throw new NotFoundError('WorkLocation', id);
+
+    return this.prisma.$transaction(async (tx) => {
+      const replacement = await tx.workLocation.create({
+        data: {
+          ...dto,
+          organizationId,
+          latitude: dto.latitude !== undefined ? new Prisma.Decimal(dto.latitude) : null,
+          longitude: dto.longitude !== undefined ? new Prisma.Decimal(dto.longitude) : null,
+        },
+      });
+      await tx.workLocation.update({
+        where: { id },
+        data: { isActive: false, supersededById: replacement.id },
+      });
+      await tx.employee.updateMany({
+        where: { workLocationId: id },
+        data: { workLocationId: replacement.id },
+      });
+      return replacement;
+    });
+  }
+
+  /**
+   * Which of ADR-0006's "first used" events have happened to this location, as
+   * human-readable reasons — empty while the code is still free to correct.
+   *
+   * Event 1 (a punch against it) and event 2 (an employee based at it) are
+   * checked here. Event 2 is Cwork's representable form of the ADR's "a shift or
+   * schedule assigned to it", since shifts and schedules attach to employees,
+   * not to sites. Event 3 ("it appeared in an export that left the system") has
+   * no source yet — no export carries a location code today — and is wired in
+   * here the moment one does.
+   */
+  private async firstUseReasons(workLocationId: string): Promise<string[]> {
+    const [punches, employees] = await Promise.all([
+      this.prisma.attendancePunch.count({ where: { workLocationId } }),
+      this.prisma.employee.count({ where: { workLocationId, deletedAt: null } }),
+    ]);
+    const reasons: string[] = [];
+    if (punches > 0) reasons.push('มีการลงเวลาที่สถานที่นี้แล้ว');
+    if (employees > 0) reasons.push('มีพนักงานประจำอยู่ที่สถานที่นี้');
+    return reasons;
   }
 
   // ------------------------------------------------------------------- holidays
