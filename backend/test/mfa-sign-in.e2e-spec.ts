@@ -1,3 +1,6 @@
+// Copyright 2026 Suruch Chakrapeesirisuk
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Signing in with a second factor (GHSA-3cgw-73cr-r8c6, fixed in 0.3.1).
  *
