@@ -589,7 +589,7 @@ and so does the same for web and mobile.
 ## P3 — nice to have
 
 
-### CW-055 · The phone frame covers the mobile app in the "เงินเดือน" slide
+### CW-055 · The phone frame covers the mobile app in the walkthrough slides
 `P3` · project · **S** · 🌱
 
 Reported by the owner on 2026-09-27, from a screenshot on a phone. Slide
@@ -598,7 +598,10 @@ inside a phone frame. The frame's camera cut-out sits on top of the app's
 greeting, the employee's name, so the first line of the app cannot be read, and
 the right edge of the app runs under the frame's border.
 
-The slide comes from the video the dev session is producing now, which is not
+A second screenshot the same day shows the same thing on slide **03 / 06,
+"ลงเวลาที่โกงยาก"**, so the fault is in the frame, not in one slide.
+
+The slides come from the video the dev session is producing now, which is not
 yet in the repository. The fix belongs in that work before the video lands,
 not as a follow-up after it.
 
