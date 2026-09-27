@@ -138,12 +138,23 @@ async function seedLeave(
     return found.id;
   };
 
+  // Counted in working days, not calendar days: "twenty days from now" is a
+  // Saturday often enough that the request was refused — correctly, there is
+  // nothing to charge — depending on which day of the week the seed ran, and
+  // the demo lost the one request waiting on a decision.
+  const holidays = new Set(
+    (await prisma.holiday.findMany({ where: { organizationId }, select: { date: true } })).map(
+      (h) => h.date.toISOString().slice(0, 10),
+    ),
+  );
+  const workingDay = (after: number): string => workingDayFromToday(after, holidays);
+
   const plan = [
     {
       who: people.dev2,
       type: 'ANNUAL',
-      from: 12,
-      to: 14,
+      from: workingDay(10),
+      to: workingDay(11),
       reason: 'พาครอบครัวไปเที่ยว',
       decide: 'APPROVE' as const,
     },
@@ -152,16 +163,16 @@ async function seedLeave(
     {
       who: people.dev1,
       type: 'SICK',
-      from: 0,
-      to: 0,
+      from: workingDay(0),
+      to: workingDay(0),
       reason: 'เป็นไข้',
       decide: 'APPROVE' as const,
     },
     {
       who: people.sales1,
       type: 'PERSONAL',
-      from: 20,
-      to: 20,
+      from: workingDay(14),
+      to: workingDay(14),
       reason: 'ติดต่อราชการ',
       decide: null,
     },
@@ -172,8 +183,8 @@ async function seedLeave(
     try {
       request = await leave.create(entry.who, {
         leaveTypeId: typeId(entry.type),
-        startDate: dayFromToday(entry.from),
-        endDate: dayFromToday(entry.to),
+        startDate: entry.from,
+        endDate: entry.to,
         reason: entry.reason,
       });
     } catch (error) {
@@ -266,11 +277,18 @@ async function seedExpenses(
 }
 
 /**
- * Last month's payroll, run for real.
+ * This year's payroll up to last month, run for real, one month at a time.
  *
- * Create → calculate → approve → mark paid, so the console shows a closed run
+ * Create → calculate → approve → mark paid, so the console shows closed runs
  * with payslips every employee can open, and the numbers come from the actual
  * Thai tax and social-security code rather than from this file.
+ *
+ * Every month, not just the last one: withholding tax is the year's projected
+ * liability less what has been withheld so far, spread over the months left
+ * (spec §6.3). A company whose history starts last month looks, to that code,
+ * like one that paid its staff nothing until August — so a ฿45,000 salary
+ * withheld ฿0, and the demo showed a Thai payroll reader exactly the mistake
+ * the product exists to prevent.
  */
 async function seedPayroll(
   app: Awaited<ReturnType<typeof NestFactory.createApplicationContext>>,
@@ -287,43 +305,46 @@ async function seedPayroll(
 
   const payroll = app.get(PayrollService);
 
-  const now = new Date();
-  const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  const year = month.getUTCFullYear();
-  const monthNo = month.getUTCMonth() + 1;
-  const lastDay = new Date(Date.UTC(year, monthNo, 0)).getUTCDate();
-  const iso = (day: number): string =>
-    `${year}-${String(monthNo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-  const period = await payroll.createPeriod(organizationId, {
-    year,
-    month: monthNo,
-    periodStart: iso(1),
-    periodEnd: iso(lastDay),
-    payDate: iso(lastDay),
-  });
-
   // Two people on purpose. Payroll refuses to let whoever prepared a run also
   // approve it, so the demo has to respect the same separation of duties a real
   // finance team would — the officer prepares, the HR manager signs it off.
   const officer = people.payrollOfficer;
   const approver = people.hrManager;
 
-  const run = await payroll.createRun(officer, { periodId: period.id });
-  await payroll.calculateRun(officer, run.id);
-  await payroll.approveRun(approver, run.id);
-  await payroll.markPaid(approver, run.id);
+  const now = new Date();
+  const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const year = last.getUTCFullYear();
 
-  const payslips = await prisma.payslip.count({ where: { runId: run.id } });
-  const final = await prisma.payrollRun.findUniqueOrThrow({
-    where: { id: run.id },
-    select: { runNo: true, status: true, totalNet: true, employeeCount: true },
-  });
-  log.log(
-    `payroll: ${final.runNo} ${final.status === PayrollRunStatus.PAID ? 'paid' : final.status} — ` +
-      `${payslips} payslip(s) for ${final.employeeCount} employee(s), ` +
-      `net ${final.totalNet.toString()} THB`,
-  );
+  for (let monthNo = 1; monthNo <= last.getUTCMonth() + 1; monthNo += 1) {
+    const lastDay = new Date(Date.UTC(year, monthNo, 0)).getUTCDate();
+    const iso = (day: number): string =>
+      `${year}-${String(monthNo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    const period = await payroll.createPeriod(organizationId, {
+      year,
+      month: monthNo,
+      periodStart: iso(1),
+      periodEnd: iso(lastDay),
+      payDate: iso(lastDay),
+    });
+
+    const run = await payroll.createRun(officer, { periodId: period.id });
+    await payroll.calculateRun(officer, run.id);
+    await payroll.approveRun(approver, run.id);
+    await payroll.markPaid(approver, run.id);
+
+    const payslips = await prisma.payslip.count({ where: { runId: run.id } });
+    const final = await prisma.payrollRun.findUniqueOrThrow({
+      where: { id: run.id },
+      select: { runNo: true, status: true, totalNet: true, employeeCount: true },
+    });
+    log.log(
+      `payroll: ${final.runNo} (${iso(1).slice(0, 7)}) ` +
+        `${final.status === PayrollRunStatus.PAID ? 'paid' : final.status} — ` +
+        `${payslips} payslip(s) for ${final.employeeCount} employee(s), ` +
+        `net ${final.totalNet.toString()} THB`,
+    );
+  }
 }
 
 /**
@@ -501,6 +522,24 @@ async function seedPerformance(
 function dayFromToday(offset: number): string {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * The `count`-th working day after today (0 is today, or the next working day
+ * if today is not one), as YYYY-MM-DD: weekends and the given holidays skipped.
+ */
+function workingDayFromToday(count: number, holidays: Set<string>): string {
+  const date = new Date();
+  const working = (): boolean => {
+    const day = date.getUTCDay();
+    return day !== 0 && day !== 6 && !holidays.has(date.toISOString().slice(0, 10));
+  };
+  while (!working()) date.setUTCDate(date.getUTCDate() + 1);
+  for (let left = count; left > 0;) {
+    date.setUTCDate(date.getUTCDate() + 1);
+    if (working()) left -= 1;
+  }
   return date.toISOString().slice(0, 10);
 }
 

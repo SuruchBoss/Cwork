@@ -15,6 +15,17 @@ Built for Thai labour practice. Designed to be self-hosted.
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
+<a href="https://suruchboss.github.io/Cwork/en/#film"><img src="./landing/assets/film.en.webp" alt="Watch the film: six HR problems Thai businesses pay for every month, solved on screen in the real product" width="860"></a>
+
+<sub><b>The film, three and a half minutes</b> — September's payroll calculated
+and approved by two different people, a clock-in on a site with no signal,
+leave filed from a phone and approved from the console, PDPA in practice. Every
+field is typed and every button pressed on camera, against the seeded demo
+company, by <a href="./docs/film/film.mjs">a script in this repository</a>.
+<a href="https://suruchboss.github.io/Cwork/en/#film">Watch it on the overview page</a> ·
+<a href="./landing/assets/film.en.mp4">MP4</a> ·
+<a href="./landing/assets/film.th.mp4">the Thai version</a></sub>
+
 <img src="./docs/demo/walkthrough.gif" alt="Signing in with two-factor authentication on the English console, then the approvals inbox, employee directory, leave, attendance, a closed payroll run, candidates, KPIs and the activity log" width="860">
 
 <sub>Real console, real second factor, real payroll run — recorded against the

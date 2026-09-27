@@ -183,6 +183,21 @@ entry, tags it and publishes the notes.
   roster, benefits and a manager's approvals on the phone; the app's assistant
   screen goes, since a default install does not show that tab.
 
+- **A product film, in Thai and in English** — three and a half minutes on the
+  landing page's six problems, each told by people doing the work on camera: a
+  payroll officer opens September and calculates it and the HR manager
+  approves it, an employee clocks in on a site with no signal, files leave
+  from their phone and watches the weekend and a public holiday drop out of
+  the count, their manager approves it from the console, a certificate is
+  requested and issued, and the PDPA controls are shown by who may see a
+  national ID. Every field is typed and every button pressed against the
+  seeded demo, by [`docs/film/film.mjs`](./docs/film/film.mjs), recorded as one
+  take of a stage holding the real console for five people at once and the
+  real app in a phone — framed with a status bar and home strip, so the
+  camera island and rounded corners fall outside the app's screen rather than
+  over it (CW-055). It opens the overview page in each language, and both
+  READMEs link to it.
+
 ### Removed
 
 - **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`
@@ -227,6 +242,20 @@ entry, tags it and publishes the notes.
 - **The walkthrough's English take is recorded on the English console**, in the
   organisation's time zone; it had shown the Thai interface under English
   captions, ending on a line that the English locale was still on the backlog.
+
+### Fixed
+
+- **The demo company withheld almost no income tax.** Its only payroll run was
+  last month's, and withholding is the year's projected tax less what has
+  been withheld so far — so with nothing on record for January to July, a
+  ฿45,000 salary withheld ฿0 and every screenshot of a payslip showed it. The
+  seed now pays every month of the year so far through the real payroll code
+  (prepared by the payroll officer, approved by the HR manager), and the same
+  salary withholds ฿1,082 a month, as it should. The demo's leave requests are
+  also dated in working days now: counted in calendar days, one of them fell
+  on a weekend when the seed ran on a Monday and was refused, and the demo
+  lost the one request waiting on a decision. The screenshots and the
+  walkthrough are retaken on the corrected data.
 
 ## [0.3.1] — 2026-09-26
 

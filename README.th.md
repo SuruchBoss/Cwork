@@ -15,6 +15,16 @@
 [![Web](https://img.shields.io/badge/web-React%2019-61dafb.svg)](./web)
 [![Mobile](https://img.shields.io/badge/mobile-Flutter-02569b.svg)](./mobile)
 
+<a href="https://suruchboss.github.io/Cwork/#film"><img src="./landing/assets/film.th.webp" alt="ดูวิดีโอ: หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน แก้ให้ดูบนระบบจริง" width="860"></a>
+
+<sub><b>วิดีโอสามนาทีครึ่ง</b> — เงินเดือนกันยายนที่คนหนึ่งคำนวณ อีกคนอนุมัติ
+ลงเวลาที่ไซต์งานไม่มีสัญญาณ ขอลาจากมือถือแล้วหัวหน้าอนุมัติจากคอนโซล และ PDPA
+ในการใช้งานจริง ทุกช่องกรอกจริง ทุกปุ่มกดจริง บนบริษัทตัวอย่างที่ seed ไว้
+ด้วย<a href="./docs/film/film.mjs">สคริปต์ในรีโพนี้</a>
+· <a href="https://suruchboss.github.io/Cwork/#film">ดูบนหน้าเว็บ</a>
+· <a href="./landing/assets/film.th.mp4">ไฟล์ MP4</a>
+· <a href="./landing/assets/film.en.mp4">ฉบับภาษาอังกฤษ</a></sub>
+
 <img src="./docs/demo/walkthrough.th.gif" alt="เข้าสู่ระบบด้วยการยืนยันตัวตนสองขั้นตอนบนคอนโซลภาษาไทย แล้วดูรายการรออนุมัติ ทะเบียนพนักงาน การลา การลงเวลา รอบเงินเดือนที่ปิดแล้ว ผู้สมัครงาน KPI และบันทึกการใช้งาน" width="860">
 
 <sub>คอนโซลจริง ปัจจัยที่สองจริง รอบเงินเดือนจริง — อัดจากบริษัทที่

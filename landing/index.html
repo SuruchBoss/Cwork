@@ -246,7 +246,7 @@
   .spec dd { margin: 0; font: 600 1.02rem/1.3 var(--f-mono); text-align: end; }
   .spec dd.hot { color: var(--shu); }
 
-  /* The walkthrough, framed like a window, with a printer's crop marks. */
+  /* The film, framed like a window, with a printer's crop marks. */
   .reel { padding-bottom: clamp(44px, 6vw, 80px); }
   .window { position: relative; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); box-shadow: var(--shadow); }
   .window__bar {
@@ -535,15 +535,15 @@
       </aside>
     </div>
 
-    <div class="wrap reel">
+    <div class="wrap reel" id="film">
       <figure class="window marks" style="margin:0">
         <b></b><b></b><b></b><b></b>
-        <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>cwork · localhost:8080</span></div>
-        <video src="assets/walkthrough.th.mp4" autoplay muted loop playsinline
-               poster="assets/shots/dashboard.th.webp"
-               aria-label="วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน"></video>
+        <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>cwork · film</span></div>
+        <video src="assets/film.th.mp4" controls preload="none" playsinline
+               poster="assets/film.th.webp"
+               aria-label="วิดีโอสามนาทีครึ่ง: หกปัญหางาน HR ที่ Cwork แก้ให้ดูบนระบบจริง ตั้งแต่เงินเดือน ลงเวลาตอนไม่มีสัญญาณ ขอลาและอนุมัติจากมือถือ ไปจนถึงข้อมูลส่วนบุคคลตาม PDPA"></video>
       </figure>
-      <p class="caption"><span>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง</span><span class="mono">REC · demo company</span></p>
+      <p class="caption"><span>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง — ทุกช่องกรอกจริง ทุกปุ่มกดจริง</span><span class="mono">REC · demo company</span></p>
     </div>
   </section>
 
