@@ -97,7 +97,8 @@ describe('LoginPage — enrolling a second factor while signing in', () => {
     const user = userEvent.setup();
     renderLogin();
 
-    await user.type(screen.getByLabelText('Email'), 'admin@example.com');
+    // The form waits for the deployment to say it is not the public demo.
+    await user.type(await screen.findByLabelText('Email'), 'admin@example.com');
     await user.type(screen.getByLabelText('Password'), 'correct horse battery');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 

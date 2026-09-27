@@ -40,6 +40,25 @@ export class EnvironmentVariables {
   @IsString()
   CORS_ORIGINS: string = '';
 
+  /**
+   * A built console (`web/dist`) for the API to serve itself, beside the API.
+   * Empty — the default — serves nothing: a normal deployment puts the console
+   * behind nginx (web/Dockerfile). The public demo sets it, because one service
+   * is all the free tier it runs on can spare (CW-031, docs/demo.md).
+   */
+  @IsString()
+  CONSOLE_DIR: string = '';
+
+  /**
+   * The public demo (CW-031): one-click sign-in for three shared accounts, and
+   * the data put back to the demo seed every hour. Refuses to start on any
+   * database the demo did not create itself — see src/modules/demo — and needs
+   * the assistant, email and push off.
+   */
+  @toBool()
+  @IsBoolean()
+  DEMO_MODE: boolean = false;
+
   @IsString()
   @MinLength(1)
   DATABASE_URL!: string;
@@ -425,6 +444,7 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   // retries nobody is watching — reads nothing like its cause.
   assertDeliveryConfiguration(config);
   assertAssistantConfiguration(config);
+  assertDemoConfiguration(config);
 
   // A forgeable signing secret is not a production-only mistake. A dev server
   // binds 0.0.0.0 like any other, and a token signed with the placeholder from
@@ -520,6 +540,37 @@ function assertAssistantConfiguration(config: EnvironmentVariables): void {
     throw new Error(
       `The assistant is switched on but cannot answer:\n${problems.map((p) => `  - ${p}`).join('\n')}\n` +
         '  Set ASSISTANT_ENABLED=false to run without it; everything else works unchanged.',
+    );
+  }
+}
+
+/**
+ * The public demo runs with the assistant, email and push off.
+ *
+ * The assistant because there is no budget for strangers' LLM usage (decided
+ * 2026-09-25), and asking visitors for their own key was never an option.
+ * Email and push because the demo's addresses are fictional and its visitors
+ * are anonymous: a notification from the demo could only reach somebody who
+ * never asked for it. Refusing to start says so; switching them off quietly
+ * would leave an operator wondering why the variable they set does nothing.
+ */
+function assertDemoConfiguration(config: EnvironmentVariables): void {
+  if (!config.DEMO_MODE) return;
+
+  const on = (
+    [
+      ['ASSISTANT_ENABLED', config.ASSISTANT_ENABLED],
+      ['EMAIL_ENABLED', config.EMAIL_ENABLED],
+      ['PUSH_ENABLED', config.PUSH_ENABLED],
+    ] as const
+  )
+    .filter(([, enabled]) => enabled)
+    .map(([name]) => name);
+
+  if (on.length > 0) {
+    throw new Error(
+      `The public demo runs with the assistant, email and push off:\n` +
+        on.map((name) => `  - ${name} must be false when DEMO_MODE=true`).join('\n'),
     );
   }
 }

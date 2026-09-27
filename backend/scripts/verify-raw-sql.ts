@@ -93,6 +93,96 @@ const REVIEWED: { file: string; marker: string; scoping: Scoping; why: string }[
     scoping: 'not-tenant-data',
     why: 'counters are keyed by client and route, and rate limiting applies before sign-in',
   },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: "to_regnamespace('cwork_demo')",
+    scoping: 'not-tenant-data',
+    why: 'the demo guard asks whether two objects exist, by name, before any migration has run',
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'SELECT "code", "name" FROM "organizations"',
+    scoping: 'not-tenant-data',
+    why: "reads every organisation on purpose: the demo guard's question is whether any of them is not the demo's",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'CREATE SCHEMA IF NOT EXISTS cwork_demo',
+    scoping: 'not-tenant-data',
+    why: "the demo's marker schema, created only after the guard has found no foreign organisation",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'CREATE TABLE IF NOT EXISTS cwork_demo.state',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row, outside the application's schema",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'ADD COLUMN IF NOT EXISTS key_fingerprint',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'INSERT INTO cwork_demo.state',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'cwork_demo.forget_visitor() RETURNS trigger',
+    scoping: 'not-tenant-data',
+    why: 'a trigger function that blanks client address columns; it reads no rows',
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'CREATE OR REPLACE TRIGGER cwork_demo_forget_visitor',
+    scoping: 'not-tenant-data',
+    why: 'attaches that trigger to every table with an address column, found in information_schema',
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'SELECT seeded_at, dirty_since, key_fingerprint FROM cwork_demo.state',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row",
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'SELECT tablename FROM pg_tables',
+    scoping: 'not-tenant-data',
+    why: 'lists the tables the demo reset empties; catalogue data, no rows',
+  },
+  {
+    file: 'modules/demo/demo-database.ts',
+    marker: 'TRUNCATE TABLE',
+    scoping: 'not-tenant-data',
+    why: 'the demo reset empties everything, inside the transaction that re-ran the guard',
+  },
+  {
+    file: 'modules/demo/demo-main.ts',
+    marker: "._prisma_migrations', current_schema()",
+    scoping: 'not-tenant-data',
+    why: "asks whether Prisma's migration table exists yet",
+  },
+  {
+    file: 'modules/demo/demo-main.ts',
+    marker: 'SELECT migration_name FROM _prisma_migrations',
+    scoping: 'not-tenant-data',
+    why: 'compares applied migrations with the ones the image ships',
+  },
+  {
+    file: 'modules/demo/demo.service.ts',
+    marker: 'SET seeded_at = now(), dirty_since = NULL, key_fingerprint',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row",
+  },
+  {
+    file: 'modules/demo/demo.service.ts',
+    marker: 'SET dirty_since = now()',
+    scoping: 'not-tenant-data',
+    why: "the demo's own bookkeeping row",
+  },
 ];
 
 /** Raw-SQL calls, with the statement that follows each one. */

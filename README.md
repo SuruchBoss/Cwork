@@ -9,6 +9,12 @@ Built for Thai labour practice. Designed to be self-hosted.
 
 **English** · [ภาษาไทย](./README.th.md) · [Overview page](https://suruchboss.github.io/Cwork/en/)
 
+**[Try it now in your browser →](https://cwork-demo.onrender.com/login?as=hr&lang=en)**
+<br><sub>A shared demo company: sign in as an employee, a manager or HR in one
+click — no sign-up, no password. It goes back to the start every hour, and may
+take a minute to wake if nobody has used it lately. <a href="./docs/demo.md">How it
+is run</a>.</sub>
+
 [![CI](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuruchBoss/Cwork/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 [![Backend](https://img.shields.io/badge/backend-NestJS%2011-e0234e.svg)](./backend)
@@ -533,8 +539,8 @@ means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 373 backend unit
-tests, 46 web, 35 mobile, plus a 242-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 400 backend unit
+tests, 50 web, 35 mobile, plus a 262-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -593,8 +599,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 373 backend unit tests, 46 web,
-  35 mobile, 242 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 400 backend unit tests, 50 web,
+  35 mobile, 262 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the

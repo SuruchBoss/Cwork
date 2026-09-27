@@ -197,6 +197,24 @@ entry, tags it and publishes the notes.
   camera island and rounded corners fall outside the app's screen rather than
   over it (CW-055). It opens the overview page in each language, and both
   READMEs link to it.
+- **A public demo, one click from the landing page** (CW-031). “ลองใช้ทันที” /
+  “Try it now” is now the landing page's first button, in both languages: it
+  opens a hosted Cwork signed in as HR at the demo company, and “ติดตั้งเอง” /
+  “Install it yourself” leads IT to the install steps and GitHub. Employee,
+  manager and HR each sign in with one click — there is no password to know;
+  the demo's is generated at each reset and never shown. The data goes back
+  to the demo seed on the hour, and before the free instance sleeps; a banner
+  says when, and a visitor who arrives mid-reset sees a message and is signed
+  back in afterwards. Nothing a visitor does can keep the next one out:
+  password and code sign-in, credential changes and revoking other sessions
+  are refused, and deactivation, role changes and the lockout are undone at
+  the one-click door. Uploads, the assistant, email and push are off, and no
+  visitor's address is stored. `DEMO_MODE=true` refuses to start on any
+  database the demo did not create — it changes nothing and says why. It runs
+  as one Docker service on Render's free tier from [`render.yaml`](./render.yaml);
+  [`docs/demo.md`](./docs/demo.md) is the runbook, with what was found about the
+  free tier and the timings measured on a tenth of a CPU. `CONSOLE_DIR` lets
+  the API serve the built console itself, which is how one service is enough.
 
 ### Removed
 
@@ -245,6 +263,11 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The API's Docker image could not start.** The certificate renderer reads
+  the Thai font from `assets/fonts` when the API boots, and `backend/Dockerfile`
+  never copied `assets/` into the runtime image, so the container stopped with
+  `ENOENT` before it listened. It copies them now. Found while building the
+  public demo's image, which had the same gap.
 - **The demo company withheld almost no income tax.** Its only payroll run was
   last month's, and withholding is the year's projected tax less what has
   been withheld so far — so with nothing on record for January to July, a

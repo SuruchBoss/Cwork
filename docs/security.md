@@ -235,7 +235,11 @@ The API validates its entire environment on boot and refuses to start on:
 - `CORS_ORIGINS` empty or wildcarded, in production;
 - `FIELD_ENCRYPTION_KEY` that does not decode to exactly 32 bytes;
 - `ASSISTANT_ENABLED=true` with no provider, or a provider with no key — at
-  every tier, not only in production.
+  every tier, not only in production;
+- `DEMO_MODE=true` with the assistant, email or push switched on — and, at
+  boot, on any database the public demo did not create itself. The demo signs
+  people in without a password and empties its database every hour, so the
+  flag alone is not trusted: see [docs/demo.md](./demo.md).
 
 A misconfigured deploy fails loudly rather than running insecurely.
 

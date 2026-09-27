@@ -642,4 +642,24 @@ export const thMessages: Record<string, string> = {
   // Payroll export (CW-044)
   'Export CSV': 'ส่งออก CSV',
   'Could not export': 'ส่งออกไม่สำเร็จ',
+
+  // Public demo (CW-031)
+  Demo: 'เดโม',
+  'Everyone trying the demo sees what you enter. It all goes back to the start at {time} (in {minutes} min).':
+    'ทุกคนที่ลองเดโมเห็นสิ่งที่คุณกรอก ข้อมูลทั้งหมดจะกลับเป็นค่าเริ่มต้นเวลา {time} น. (อีก {minutes} นาที)',
+  'View as': 'ดูในบทบาท',
+  HR: 'HR',
+  'Request leave, ask for a document, open a payslip': 'ยื่นลา ขอเอกสาร เปิดสลิปเงินเดือน',
+  'A leave request is waiting for your approval': 'มีใบลารอคุณอนุมัติอยู่',
+  'The whole company: people, payroll, policy and the audit trail':
+    'ดูแลทั้งบริษัท: พนักงาน เงินเดือน นโยบาย และบันทึกการใช้งาน',
+  'The AI assistant is off in the demo — watch the walkthrough':
+    'ผู้ช่วย AI ปิดอยู่ในเดโม — ดูวิดีโอแนะนำระบบ',
+  'Try {app}': 'ลองใช้ {app}',
+  'Choose who to be. No password, no sign-up — every account is shared and fictional.':
+    'เลือกว่าจะเข้าในบทบาทไหน ไม่ต้องใช้รหัสผ่าน ไม่ต้องสมัคร — ทุกบัญชีใช้ร่วมกันและเป็นข้อมูลสมมติ',
+  'Signing in': 'กำลังเข้าสู่ระบบ',
+  'The demo is going back to the start': 'เดโมกำลังกลับเป็นค่าเริ่มต้น',
+  'Everything visitors changed in the last hour is being put back. It takes under a minute, and you will be signed back in.':
+    'ทุกอย่างที่ผู้เข้าชมเปลี่ยนไว้กำลังถูกคืนค่า ใช้เวลาไม่ถึงนาที แล้วระบบจะพาคุณกลับเข้าสู่ระบบให้เอง',
 };

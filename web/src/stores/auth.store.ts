@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '@/lib/api-client';
+import type { DemoRole } from '@/features/demo/demo';
 import type {
   AuthTokens,
   LoginResponse,
@@ -18,6 +19,11 @@ interface AuthState {
   user: SessionUser | null;
   /** True until the persisted session has been rehydrated and revalidated. */
   isBootstrapping: boolean;
+  /**
+   * On the public demo, which of its accounts this session is — so the banner
+   * can mark it, and a reset can sign the visitor straight back in as it.
+   */
+  demoRole: DemoRole | null;
 
   /**
    * Resolves to a challenge when the account owes a second factor, and to null
@@ -31,6 +37,8 @@ interface AuthState {
    * returned. Held back until then only so the recovery codes can be shown.
    */
   completeMfaEnrolment: (session: LoginSession) => void;
+  /** The public demo's one-click sign-in (CW-031): no password, no code. */
+  demoSignIn: (role: DemoRole) => Promise<void>;
   logout: () => Promise<void>;
   setTokens: (tokens: AuthTokens) => void;
   refreshUser: () => Promise<void>;
@@ -49,6 +57,7 @@ function adoptSession(
     refreshToken: session.refreshToken,
     user: session.user,
     isBootstrapping: false,
+    demoRole: null,
   });
 }
 
@@ -67,6 +76,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       user: null,
       isBootstrapping: true,
+      demoRole: null,
 
       async login(email, password) {
         const result = await api.post<LoginResponse>(
@@ -101,6 +111,12 @@ export const useAuthStore = create<AuthState>()(
         adoptSession(set, session);
       },
 
+      async demoSignIn(role) {
+        const result = await api.post<LoginSession>('/demo/sign-in', { as: role }, { anonymous: true });
+        adoptSession(set, result);
+        set({ demoRole: role });
+      },
+
       async logout() {
         const refreshToken = get().refreshToken;
         try {
@@ -108,7 +124,13 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Signing out locally must succeed even if the server is unreachable.
         }
-        set({ accessToken: null, refreshToken: null, user: null, isBootstrapping: false });
+        set({
+          accessToken: null,
+          refreshToken: null,
+          user: null,
+          isBootstrapping: false,
+          demoRole: null,
+        });
       },
 
       setTokens(tokens) {
@@ -154,6 +176,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         user: state.user,
+        demoRole: state.demoRole,
       }),
     },
   ),

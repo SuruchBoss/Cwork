@@ -1,0 +1,52 @@
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+#
+# The public demo (CW-031) as a Render Blueprint: one free web service and one
+# free Postgres, nothing else. docs/demo.md is the runbook — how to create it,
+# where its secrets live, and what to do when the free database expires.
+#
+# This file is only the demo. A real installation is docker-compose.yml.
+
+services:
+  - type: web
+    name: cwork-demo
+    runtime: docker
+    plan: free
+    # Closest Render region to the Thai visitors the demo is for.
+    region: singapore
+    dockerfilePath: ./deploy/demo/Dockerfile
+    dockerContext: .
+    # Liveness, not readiness: on a tenth of a CPU the database ping in
+    # /health/ready can miss its deadline while an hourly reset is running,
+    # and a failing health check gets a healthy instance restarted.
+    healthCheckPath: /health/live
+    # Deploys are started by hand (docs/demo.md). Every push to main would
+    # otherwise rebuild it, which the free build minutes cannot cover.
+    autoDeployTrigger: "off"
+    envVars:
+      # The flag the demo's entrypoint and module read. On its own it opens
+      # nothing: the demo refuses any database it did not create itself.
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cwork-demo-db
+          property: connectionString
+      # Generated once by Render, shown to nobody who visits the demo.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # 256 random bits, base64 — the 32-byte key the API expects.
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+
+databases:
+  - name: cwork-demo-db
+    plan: free
+    region: singapore
+    postgresMajorVersion: "16"
+    databaseName: cwork_demo
+    user: cwork_demo
+    # Reachable from the web service over Render's internal network only.
+    ipAllowList: []

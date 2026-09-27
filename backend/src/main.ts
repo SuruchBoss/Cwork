@@ -10,6 +10,7 @@ import { AppModule } from './app.module';
 import { APP_CONFIG } from './core/config/config.token';
 import type { RootConfig } from './core/config/configuration';
 import { PrismaService } from './core/prisma/prisma.service';
+import { serveConsole } from './core/http/serve-console';
 import { installTelemetry } from './core/telemetry/telemetry.module';
 import { GENERIC_EVENT, TelemetryLogger } from './core/telemetry/telemetry-logger';
 
@@ -35,6 +36,10 @@ async function bootstrap(): Promise<void> {
     }),
   );
   app.use(compression());
+
+  // Only when CONSOLE_DIR is set, which only the public demo does: one service
+  // serving the console and the API together (CW-031).
+  if (config.app.consoleDir) serveConsole(app, config.app.consoleDir, config.app.apiPrefix);
 
   app.enableCors({
     origin: config.app.corsOrigins.length > 0 ? config.app.corsOrigins : false,

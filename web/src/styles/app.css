@@ -597,6 +597,139 @@ table.table {
   color: var(--text-subtle);
 }
 
+/* ----------------------------------------------------------------- demo --- */
+
+/* The public demo's strip (CW-031): shared data, next reset, role switch. */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 20px;
+  font-size: 13px;
+  background: var(--warning-soft);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.demo-banner__tag {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warning);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+}
+.demo-banner__text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.demo-banner__roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.demo-banner__role {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.demo-banner__role[aria-pressed='true'] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--text-inverse);
+  cursor: default;
+}
+.demo-banner__role:disabled:not([aria-pressed='true']) {
+  opacity: 0.6;
+  cursor: progress;
+}
+.demo-banner__link {
+  color: var(--brand-text);
+  font-weight: 500;
+}
+.auth__hint .demo-banner {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius);
+}
+
+.auth__card--wide {
+  max-width: 560px;
+}
+.demo-roles {
+  display: grid;
+  gap: 10px;
+}
+.demo-role {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  font: inherit;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.demo-role:hover:not(:disabled),
+.demo-role:focus-visible {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.demo-role:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+.demo-role__title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.demo-role__what {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* While the demo puts its data back: one message over everything. */
+.demo-reset {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+.demo-reset__card {
+  max-width: 420px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+.demo-reset__card h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.demo-reset__card p {
+  margin: 0;
+}
+
 /* ------------------------------------------------------------- assistant -- */
 
 .chat {
@@ -742,6 +875,10 @@ table.table {
   }
   .page {
     padding: 16px 12px;
+  }
+  .demo-banner {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
 

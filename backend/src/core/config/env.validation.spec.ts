@@ -151,6 +151,36 @@ describe('assistant embeddings', () => {
 });
 
 /**
+ * The public demo (CW-031) runs with the assistant, email and push off, and
+ * says so at boot rather than leaving an operator's setting quietly ignored.
+ */
+describe('demo configuration', () => {
+  it('is off unless asked for', () => {
+    expect(validateEnv({ ...BASE }).DEMO_MODE).toBe(false);
+    expect(validateEnv({ ...BASE }).CONSOLE_DIR).toBe('');
+  });
+
+  it('boots the demo with the optional features at their defaults, which are off', () => {
+    expect(validateEnv({ ...BASE, DEMO_MODE: 'true' }).DEMO_MODE).toBe(true);
+  });
+
+  it('refuses the demo with the assistant, email or push on — naming each', () => {
+    expect(() =>
+      validateEnv({
+        ...BASE,
+        DEMO_MODE: 'true',
+        ASSISTANT_ENABLED: 'true',
+        ASSISTANT_PROVIDER: 'anthropic',
+        ANTHROPIC_API_KEY: 'sk-ant-not-a-real-key',
+        EMAIL_ENABLED: 'true',
+        SMTP_HOST: 'smtp.example.com',
+        SMTP_FROM_ADDRESS: 'hr@example.com',
+      }),
+    ).toThrow(/ASSISTANT_ENABLED must be false[\s\S]*EMAIL_ENABLED must be false/);
+  });
+});
+
+/**
  * The signing secrets, checked at every tier rather than only in production.
  *
  * A blind test forged an admin token with the `change-me` placeholder that used
