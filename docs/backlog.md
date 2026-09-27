@@ -373,6 +373,46 @@ not because there is a date.
 
 ## P2 — worth doing
 
+
+### CW-057 · SECURITY.md describes a system that no longer exists
+`P2` · docs · security · **S**
+
+Found by the PO on 2026-09-27 while reviewing the ERP's ADR-0022. Cwork's
+`SECURITY.md` is the first page a security reviewer reads, and three of its five
+"known gaps" were closed weeks ago:
+
+| It says | What is true |
+|---|---|
+| No MFA enforcement, "the flow is not built" | Required for privileged roles since CW-001, and hardened in 0.3.1 |
+| No malware scanning on uploads | ClamAV scanning since CW-002. It is off by default, which is the real gap |
+| Rate limiting is per-instance | A shared Postgres store since CW-003 (`THROTTLE_STORAGE=postgres`) |
+
+"Supported versions" still says a table will appear "once there is a tagged
+release". There have been four tagged releases, and one of them, 0.3.1, was a
+security fix.
+
+It also has nothing on the ecosystem. The ERP's ADR-0022 (proposed 2026-09-27)
+sets a rule: a vulnerability found in another project is reported privately to
+the project that owns the code, and another project's weakness is referenced
+only by its fixed version and advisory, once published. Cwork already worked
+this way for GHSA-3cgw-73cr-r8c6. **Decided 2026-09-27: Cwork adopts the same
+rule**, in its own words, once the ERP accepts the ADR.
+
+**Acceptance**
+- Every row under "Known gaps" is true of the current release, and each closed
+  gap is gone rather than struck through.
+- "Supported versions" says which versions receive security fixes during 0.x.
+- A section says that a problem found in another project of the ecosystem goes
+  to that project's private channel, and links the ERP's ADR-0022.
+- The same corrections reach `docs/security.md` wherever it repeats them.
+
+**Files** `SECURITY.md`, `docs/security.md`
+
+**Blocked by** the ERP accepting ADR-0022, for the last criterion only. The rest
+can start now.
+
+---
+
 ### CW-012 · Expense claims on mobile
 `P2` · mobile · **M**
 
