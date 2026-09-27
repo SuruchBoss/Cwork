@@ -589,6 +589,31 @@ and so does the same for web and mobile.
 ## P3 — nice to have
 
 
+### CW-055 · The phone frame covers the mobile app in the "เงินเดือน" slide
+`P3` · project · **S** · 🌱
+
+Reported by the owner on 2026-09-27, from a screenshot on a phone. Slide
+**02 / 06, "เงินเดือนที่ไม่ต้องลุ้น"**, shows the console beside the mobile app
+inside a phone frame. The frame's camera cut-out sits on top of the app's
+greeting, the employee's name, so the first line of the app cannot be read, and
+the right edge of the app runs under the frame's border.
+
+The slide's text is not in the repository's HTML, so it is baked into a video or
+image. The Thai walkthrough (`landing/assets/walkthrough.th.mp4`) is the likely
+source, but that is not confirmed. Finding it is part of the ticket.
+
+**Acceptance** In that slide, the whole of the mobile app's screen is visible
+inside the frame, with nothing covered by the cut-out or the border. The same
+holds for every other slide that uses the frame, in both languages. The asset
+is regenerated from its source rather than edited by hand, so the next
+re-recording does not bring the problem back.
+
+**Files** unknown until the source is found; likely `docs/demo/`,
+`landing/assets/`
+
+---
+
+
 ### CW-018 · Semantic knowledge search
 `P3` · assistant · **M**
 
