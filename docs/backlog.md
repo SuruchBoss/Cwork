@@ -396,20 +396,28 @@ sets a rule: a vulnerability found in another project is reported privately to
 the project that owns the code, and another project's weakness is referenced
 only by its fixed version and advisory, once published. Cwork already worked
 this way for GHSA-3cgw-73cr-r8c6. **Decided 2026-09-27: Cwork adopts the same
-rule**, in its own words, once the ERP accepts the ADR.
+rule**, in its own words. That includes decision 9: adapted code is fixed
+together, and no advisory is published until every project that adapted the
+code has a fixed release. The ERP accepted ADR-0022 the same day with the
+changes Cwork asked for. Its decision 8 records Cwork's adoption through this
+ticket.
 
 **Acceptance**
 - Every row under "Known gaps" is true of the current release, and each closed
   gap is gone rather than struck through.
 - "Supported versions" says which versions receive security fixes during 0.x.
 - A section says that a problem found in another project of the ecosystem goes
-  to that project's private channel, and links the ERP's ADR-0022.
+  to that project's private channel, and that code adapted between projects is
+  fixed together before any advisory is published. It links
+  [ADR-0022](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/adr/0022-vulnerability-disclosure-across-the-ecosystem.md)
+  rather than restating it.
 - The same corrections reach `docs/security.md` wherever it repeats them.
 
 **Files** `SECURITY.md`, `docs/security.md`
 
-**Blocked by** the ERP accepting ADR-0022, for the last criterion only. The rest
-can start now.
+**Blocked by** PaynEat-ERP PR #58 merging, for the ecosystem section only,
+because the link has nothing to point at until then. The PR waits on the owner
+enabling private vulnerability reporting on PaynEat-ERP. The rest can start now.
 
 ---
 
