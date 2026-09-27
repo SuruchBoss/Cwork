@@ -374,53 +374,6 @@ not because there is a date.
 ## P2 — worth doing
 
 
-### CW-057 · SECURITY.md describes a system that no longer exists
-`P2` · docs · security · **S**
-
-Found by the PO on 2026-09-27 while reviewing the ERP's ADR-0022. Cwork's
-`SECURITY.md` is the first page a security reviewer reads, and three of its five
-"known gaps" were closed weeks ago:
-
-| It says | What is true |
-|---|---|
-| No MFA enforcement, "the flow is not built" | Required for privileged roles since CW-001, and hardened in 0.3.1 |
-| No malware scanning on uploads | ClamAV scanning since CW-002. It is off by default, which is the real gap |
-| Rate limiting is per-instance | A shared Postgres store since CW-003 (`THROTTLE_STORAGE=postgres`) |
-
-"Supported versions" still says a table will appear "once there is a tagged
-release". There have been four tagged releases, and one of them, 0.3.1, was a
-security fix.
-
-It also has nothing on the ecosystem. The ERP's ADR-0022 (proposed 2026-09-27)
-sets a rule: a vulnerability found in another project is reported privately to
-the project that owns the code, and another project's weakness is referenced
-only by its fixed version and advisory, once published. Cwork already worked
-this way for GHSA-3cgw-73cr-r8c6. **Decided 2026-09-27: Cwork adopts the same
-rule**, in its own words. That includes decision 9: adapted code is fixed
-together, and no advisory is published until every project that adapted the
-code has a fixed release. The ERP accepted ADR-0022 the same day with the
-changes Cwork asked for. Its decision 8 records Cwork's adoption through this
-ticket.
-
-**Acceptance**
-- Every row under "Known gaps" is true of the current release, and each closed
-  gap is gone rather than struck through.
-- "Supported versions" says which versions receive security fixes during 0.x.
-- A section says that a problem found in another project of the ecosystem goes
-  to that project's private channel, and that code adapted between projects is
-  fixed together before any advisory is published. It links
-  [ADR-0022](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/adr/0022-vulnerability-disclosure-across-the-ecosystem.md)
-  rather than restating it.
-- The same corrections reach `docs/security.md` wherever it repeats them.
-
-**Files** `SECURITY.md`, `docs/security.md`
-
-**Unblocked 2026-09-27.** ADR-0022 merged on PaynEat-ERP (abfab19), and private
-vulnerability reporting is on for Cwork, PaynEat-ERP, PaynEat and ExcelToGo, so
-every channel the new section names works.
-
----
-
 ### CW-012 · Expense claims on mobile
 `P2` · mobile · **M**
 
@@ -751,3 +704,4 @@ Kept so the reasoning survives.
 | **CW-050** · Cwork could not be investigated from its logs | Conforms to telemetry contract **v1.2**, which moved on from the v1.1 the ticket named while the work was under way. String `severity`, a plain `labels` object, `app.log`, and five metrics on a port of their own so `/metrics` is never published with the API. Two acceptance criteria were added mid-ticket from notes written for other systems, and both have tests by their own names: the outbox gauges read from the database, so two instances agree and a restart does not reset them; and a request refused by the auth guard or the throttler still gets its log line. **The ticket's premise was wrong:** it said Cwork emitted a numeric pino `level`. The dependency was installed and never wired in; it was removed, with a `LOG_PRETTY` nothing read. 783171f. |
 | **CW-053** · Nothing proved the security headers were served | A fix to nginx's `add_header` inheritance had put CSP and `X-Frame-Options` back on `/assets/` and `index.html`; nothing stopped the next `location` from dropping them again. CI now runs the image as shipped and asserts the headers on the paths that broke. b160cbb. |
 | **CW-055** · The phone frame covered the app in the film | Reported by the owner from two screenshots of the film in progress: the frame's camera cut-out sat on the app's greeting and its border clipped the right edge. The phone is now drawn with a status bar and a home-indicator strip around the app's full 390×844 screen, so neither covers any of it. Both takes were re-recorded from `docs/film/stage.html`, not patched. The PO checked frames from every chapter of both takes before closing. 18624fe. |
+| **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. 5d14915, bc76d4c. |
