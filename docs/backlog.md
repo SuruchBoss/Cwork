@@ -415,9 +415,9 @@ ticket.
 
 **Files** `SECURITY.md`, `docs/security.md`
 
-**Blocked by** PaynEat-ERP PR #58 merging, for the ecosystem section only,
-because the link has nothing to point at until then. The PR waits on the owner
-enabling private vulnerability reporting on PaynEat-ERP. The rest can start now.
+**Unblocked 2026-09-27.** ADR-0022 merged on PaynEat-ERP (abfab19), and private
+vulnerability reporting is on for Cwork, PaynEat-ERP, PaynEat and ExcelToGo, so
+every channel the new section names works.
 
 ---
 
