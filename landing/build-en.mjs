@@ -58,7 +58,8 @@ const COPY = {
   'ภาษา ทั้งเว็บและแอป': 'Languages, web and app',
   'สัญญาอนุญาต': 'Licence terms',
   // ------------------------------------------------------- walkthrough
-  'ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง': 'The running product, not a mock-up',
+  'ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง — ทุกช่องกรอกจริง ทุกปุ่มกดจริง':
+    'The running product, not a mock-up — every field really typed, every button really pressed',
   // ---------------------------------------------------------- problems
   'ปัญหาและทางแก้': 'Problems and fixes',
   'หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน':
@@ -334,8 +335,8 @@ const COPY = {
   // ------------------------------------------------------------ labels
   'เมนูหลัก': 'Main menu',
   'สรุปข้อมูลสำคัญ': 'Key facts',
-  'วิดีโอสาธิตการใช้งาน Cwork ตั้งแต่เข้าระบบจนถึงรอบเงินเดือน':
-    'A walkthrough of Cwork, from signing in to a closed payroll run',
+  'วิดีโอสามนาทีครึ่ง: หกปัญหางาน HR ที่ Cwork แก้ให้ดูบนระบบจริง ตั้งแต่เงินเดือน ลงเวลาตอนไม่มีสัญญาณ ขอลาและอนุมัติจากมือถือ ไปจนถึงข้อมูลส่วนบุคคลตาม PDPA':
+    'A three-and-a-half-minute film: six HR problems Cwork solves on screen, in the real product — payroll, clocking in with no signal, leave filed and approved from a phone, and PDPA-protected personal data',
   'หกปัญหา': 'Six problems',
   // ------------------------------------------------ image descriptions
   'รอบเงินเดือนที่ปิดแล้ว แสดงจำนวนพนักงาน รายได้รวม รายการหัก ยอดสุทธิ และสลิปรายคน':
@@ -478,6 +479,9 @@ out = out.replace(/(src|href|poster)="assets\//g, '$1="../assets/');
 // (docs/demo/record.mjs, LANG_). The English page gets the English take —
 // without this it would inherit the Thai one along with the path.
 out = out.replace(/walkthrough\.th\.mp4/g, 'walkthrough.en.mp4');
+// So is the film (docs/film/film.mjs, FILM_LANG): English captions over the
+// English interface, for the English page.
+out = out.replace(/film\.th\.mp4/g, 'film.en.mp4');
 // The console screenshots likewise: the English page shows the English console.
 out = out.replace(/\.th\.webp/g, '.en.webp');
 
@@ -513,6 +517,12 @@ if (strays.length > 0) {
 if (/walkthrough\.th\.mp4/.test(out)) {
   console.error('The English page still points at the Thai-captioned walkthrough.');
   process.exit(1);
+}
+for (const file of ['assets/film.en.mp4', 'assets/film.en.webp']) {
+  if (out.includes(`../${file}`) && !existsSync(join(here, file))) {
+    console.error(`${file} is missing (run docs/film/film.mjs with FILM_LANG=en)`);
+    process.exit(1);
+  }
 }
 
 const takes = [...out.matchAll(/"\.\.\/(assets\/shots\/[\w-]+\.en\.webp)"/g)].map((m) => m[1]);

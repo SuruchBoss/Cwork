@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<!--
+  Copyright 2026 Suruch Chakrapeesirisuk
+  SPDX-License-Identifier: Apache-2.0
+
+  The stage the product film is recorded on — see film.mjs. It is one
+  1920×1080 page holding the real product in iframes: the console once per
+  role (each on its own origin, so each stays signed in as a different
+  person) and the employee app in a phone. film.mjs moves between them,
+  draws the cursor, and writes the captions through window.film; the whole
+  page is then recorded as it plays. Nothing on the screens is mocked.
+
+  Palette and type are the landing page's, so the film and the site it sits
+  on are recognisably one product.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&text=%E4%BA%BA%E4%BA%8B%E8%B2%BB%E7%B5%A6%E5%8B%A4%E6%89%BF%E5%AE%88%E5%BE%AA%E8%A7%A3%E6%B1%BA%E8%AA%B2%E9%A1%8C%E5%85%A8%E9%83%A8%E6%B8%88&display=swap">
+<style>
+  :root {
+    --paper: #f6f4ee;
+    --paper-2: #efece3;
+    --ink: #17181c;
+    --ink-2: #45474f;
+    --ink-3: #6d6f78;
+    --line: #d6d1c3;
+    --grid: rgb(23 24 28 / .05);
+    --shu: #cf3b24;
+    --ai: #1d3d6e;
+    --ease: cubic-bezier(.65, 0, .35, 1);
+    --out: cubic-bezier(.16, 1, .3, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    position: relative;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--ink);
+    font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "JetBrains Mono", monospace; letter-spacing: .06em; }
+  .jp { font-family: "Shippori Mincho B1", serif; font-weight: 800; }
+
+  /* ------------------------------------------------------------ the rail */
+  #rail {
+    position: absolute; left: 72px; top: 96px; width: 330px; height: 888px;
+    display: flex; flex-direction: column;
+    transition: opacity .6s var(--ease), transform .6s var(--ease);
+  }
+  #rail .chap { display: flex; align-items: baseline; gap: 14px; }
+  #rail .chap .jp {
+    font-size: 88px; line-height: 1; color: transparent;
+    -webkit-text-stroke: 1.6px var(--shu);
+  }
+  #rail .chap .mono { font-size: 17px; color: var(--ink-3); }
+  #rail h1 {
+    margin-top: 26px;
+    font-family: "Anuphan", sans-serif; font-weight: 700;
+    font-size: 40px; line-height: 1.22; letter-spacing: -.01em;
+  }
+  #rail h1 em { font-style: normal; color: var(--shu); }
+  #rail .rule { margin: 30px 0 26px; width: 56px; height: 3px; background: var(--shu); }
+  #beat {
+    position: relative; min-height: 220px;
+    font-size: 25px; line-height: 1.55; color: var(--ink-2);
+  }
+  /* The new line waits for the old one to clear, so the two never overlap. */
+  #beat > p { position: absolute; inset: 0 0 auto 0; transition: opacity .4s var(--ease) .22s, transform .45s var(--ease) .22s; }
+  #beat > p.out { opacity: 0; transform: translateY(-10px); transition-duration: .2s; transition-delay: 0s; }
+  #beat > p.in { opacity: 0; transform: translateY(14px); }
+  #beat b { color: var(--ink); font-weight: 600; }
+  #rail .foot { margin-top: auto; display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 15px; }
+  #rail .foot .hanko { width: 34px; height: 34px; font-size: 13px; }
+
+  .hanko {
+    display: inline-grid; place-items: center; border-radius: 6px;
+    background: var(--shu); color: #fff;
+    font-family: "JetBrains Mono", monospace; font-weight: 600;
+    box-shadow: inset 0 0 0 3px rgb(255 255 255 / .18);
+  }
+
+  /* ------------------------------------------------------------ devices */
+  .device {
+    position: absolute; transform-origin: 0 0;
+    transition: transform .65s var(--ease), opacity .5s var(--ease);
+  }
+  .device.gone { opacity: 0; pointer-events: none; }
+
+  #desk { left: 440px; top: 115px; width: 1440px; height: 850px; }
+  #desk .frame {
+    position: absolute; inset: 0; border-radius: 12px; overflow: hidden;
+    background: #fff; border: 1px solid var(--line);
+    box-shadow: 0 50px 100px -40px rgb(23 24 28 / .45), 0 14px 30px -18px rgb(23 24 28 / .3);
+  }
+  #desk .bar {
+    height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    background: var(--paper-2); border-bottom: 1px solid var(--line);
+  }
+  #desk .bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  #desk .bar .who {
+    margin-left: 14px; display: flex; align-items: center; gap: 10px;
+    font-size: 15px; color: var(--ink-2); transition: opacity .3s;
+  }
+  #desk .bar .who b { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .08em;
+    color: #fff; background: var(--ai); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+  #desk .bar .url { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-3); }
+  #desk .screen { position: absolute; left: 0; top: 40px; width: 1440px; height: 810px; overflow: hidden; }
+  #desk .zoom { position: absolute; inset: 0; transform-origin: 0 0; transition: transform .65s var(--ease); }
+  #desk iframe {
+    position: absolute; inset: 0; width: 1440px; height: 810px; border: 0;
+    opacity: 0; transition: opacity .45s var(--ease);
+  }
+  /* Only the screen in front takes the pointer: the others are stacked on top
+     of it, invisible, and would otherwise swallow every click. */
+  #desk iframe { pointer-events: none; }
+  #desk iframe.on { opacity: 1; pointer-events: auto; z-index: 1; }
+
+  #phone { left: 951px; top: 104px; width: 418px; height: 872px; }
+  #phone .body {
+    position: absolute; inset: 0; border-radius: 56px; background: var(--ink);
+    box-shadow: 0 50px 100px -40px rgb(23 24 28 / .55), inset 0 0 0 2px #2d2f36;
+  }
+  #phone iframe {
+    position: absolute; left: 14px; top: 14px; width: 390px; height: 844px;
+    border: 0; border-radius: 44px; background: #fff;
+  }
+  #phone .island {
+    position: absolute; left: 50%; top: 24px; width: 108px; height: 30px; margin-left: -54px;
+    border-radius: 20px; background: var(--ink); z-index: 2; pointer-events: none;
+  }
+
+  #phone .badge {
+    position: absolute; left: 50%; top: -54px; transform: translate(-50%, 8px);
+    display: flex; align-items: center; gap: 10px; white-space: nowrap;
+    padding: 8px 18px; border-radius: 999px; font-size: 20px; font-weight: 600;
+    background: var(--shu); color: #fff; opacity: 0;
+    transition: opacity .4s var(--out), transform .5s var(--out), background .4s;
+  }
+  #phone .badge.on { opacity: 1; transform: translate(-50%, 0); }
+  #phone .badge.ok { background: #2f7d4f; }
+  #phone .badge i { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+
+  /* ----------------------------------------------------- full-screen cards */
+  .card {
+    position: absolute; inset: 0; z-index: 20; pointer-events: none;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    transition: opacity .7s var(--ease);
+  }
+  .card.gone { opacity: 0; pointer-events: none; }
+  .card [data-a] { opacity: 0; transform: translateY(26px); transition: opacity .8s var(--out), transform .9s var(--out); }
+  .card.play [data-a] { opacity: 1; transform: none; }
+  .card.play [data-a="2"] { transition-delay: .18s; }
+  .card.play [data-a="3"] { transition-delay: .5s; }
+  .card.play [data-a="4"] { transition-delay: .85s; }
+  .card.play [data-a="5"] { transition-delay: 1.15s; }
+
+  #chapter .kanji {
+    position: absolute; right: 150px; top: 120px;
+    writing-mode: vertical-rl; font-size: 560px; line-height: 1;
+    color: transparent; -webkit-text-stroke: 3px var(--shu);
+  }
+  #chapter .inner { position: absolute; left: 150px; top: 250px; width: 1100px; }
+  #chapter .eyebrow { display: flex; align-items: center; gap: 18px; font-size: 22px; color: var(--ink-3); }
+  #chapter .eyebrow::after { content: ""; width: 120px; height: 1px; background: var(--line); }
+  #chapter h2 {
+    margin-top: 34px; font-family: "Anuphan", sans-serif; font-weight: 700;
+    font-size: 96px; line-height: 1.12; letter-spacing: -.025em;
+  }
+  #chapter .fix { margin-top: 56px; display: flex; gap: 22px; align-items: flex-start; }
+  #chapter .fix .jp { font-size: 30px; color: var(--shu); padding-top: 6px; }
+  #chapter .fix p { font-size: 38px; line-height: 1.45; color: var(--ink-2); max-width: 26ch; }
+
+  #title .inner { position: absolute; left: 150px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+  #title .brand { display: flex; align-items: center; gap: 28px; }
+  #title .brand .hanko { width: 104px; height: 104px; font-size: 36px; border-radius: 12px; }
+  #title .brand b { font-family: "Anuphan", sans-serif; font-weight: 700; font-size: 92px; letter-spacing: -.03em; }
+  #title h2 {
+    margin-top: 60px; font-family: "Anuphan", sans-serif; font-weight: 700;
+    font-size: 110px; line-height: 1.1; letter-spacing: -.03em;
+  }
+  #title h2 em { font-style: normal; color: var(--shu); }
+  #title .sub { margin-top: 36px; font-size: 38px; line-height: 1.5; color: var(--ink-2); max-width: 32ch; }
+  #title .kanji {
+    position: absolute; right: 170px; top: 50%; margin-top: -380px;
+    writing-mode: vertical-rl; font-size: 380px; line-height: 1; letter-spacing: .1em;
+    color: transparent; -webkit-text-stroke: 3px var(--shu);
+  }
+
+  #end .inner { position: absolute; left: 150px; right: 150px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+  #end h2 {
+    font-family: "Anuphan", sans-serif; font-weight: 700;
+    font-size: 100px; line-height: 1.12; letter-spacing: -.03em; max-width: 15ch;
+  }
+  #end h2 em { font-style: normal; color: var(--shu); }
+  #end .cmd {
+    margin-top: 64px; align-self: flex-start;
+    font-family: "JetBrains Mono", monospace; font-size: 34px;
+    background: var(--ink); color: var(--paper); padding: 24px 36px; border-radius: 10px;
+  }
+  #end .cmd span { color: #e8a598; }
+  #end .row { margin-top: 56px; display: flex; align-items: center; gap: 24px; font-size: 30px; color: var(--ink-2); }
+  #end .row .hanko { width: 64px; height: 64px; font-size: 22px; border-radius: 9px; }
+  #end .row b { font-family: "JetBrains Mono", monospace; font-weight: 600; color: var(--ink); }
+  #end .tags { margin-top: 30px; display: flex; gap: 14px; }
+  #end .tags span { font-family: "JetBrains Mono", monospace; font-size: 20px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink-2); background: #fff; }
+  #end .tags span:first-child { color: var(--shu); border-color: var(--shu); }
+
+  /* ------------------------------------------------------------ overlays */
+  #cursor {
+    position: absolute; left: 0; top: 0; z-index: 40; pointer-events: none;
+    width: 30px; height: 30px; transform: translate(960px, 1200px);
+    transition-property: transform; transition-timing-function: var(--ease);
+  }
+  #cursor svg { display: block; filter: drop-shadow(0 3px 5px rgb(0 0 0 / .3)); }
+  #cursor .touch {
+    display: none; position: absolute; left: -26px; top: -26px; width: 52px; height: 52px;
+    border-radius: 50%; background: rgb(23 24 28 / .18); border: 2px solid rgb(255 255 255 / .9);
+    box-shadow: 0 4px 14px rgb(0 0 0 / .25);
+  }
+  #cursor.touch svg { display: none; }
+  #cursor.touch .touch { display: block; }
+  #cursor.hidden { opacity: 0; }
+  .ripple {
+    position: absolute; z-index: 39; pointer-events: none;
+    width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+    border: 3px solid var(--shu); animation: ripple .6s var(--out) forwards;
+  }
+  @keyframes ripple { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.3); opacity: 0; } }
+
+  /* A seal stamped on the moment something is approved. */
+  #stamp {
+    position: absolute; z-index: 30; pointer-events: none;
+    width: 230px; height: 230px; margin: -115px 0 0 -115px; border-radius: 50%;
+    border: 9px solid var(--shu); color: var(--shu);
+    display: grid; place-items: center; text-align: center;
+    background: rgb(246 244 238 / .55);
+    opacity: 0; transform: scale(2.4) rotate(-14deg);
+  }
+  #stamp .jp { font-size: 76px; line-height: 1; }
+  #stamp .mono { display: block; margin-top: 8px; font-size: 18px; font-weight: 600; letter-spacing: .18em; }
+  #stamp.hit { animation: stamp 1.9s var(--out) forwards; }
+  @keyframes stamp {
+    0% { opacity: 0; transform: scale(2.4) rotate(-14deg); }
+    18% { opacity: .95; transform: scale(1) rotate(-14deg); }
+    78% { opacity: .95; transform: scale(1) rotate(-14deg); }
+    100% { opacity: 0; transform: scale(1) rotate(-14deg); }
+  }
+
+  /* A number that matters, called out beside the screen. */
+  #callout {
+    position: absolute; z-index: 25; left: 72px; bottom: 96px; width: 330px;
+    padding: 22px 24px; background: var(--ink); color: var(--paper); border-radius: 10px;
+    opacity: 0; transform: translateY(16px); transition: opacity .5s var(--out), transform .6s var(--out);
+  }
+  #callout.on { opacity: 1; transform: none; }
+  #callout .big { font-family: "Anuphan", sans-serif; font-weight: 700; font-size: 58px; line-height: 1.05; color: #fff; }
+  #callout .big em { font-style: normal; color: #f08a74; }
+  #callout .small { margin-top: 8px; font-size: 20px; line-height: 1.45; color: #cfccc3; }
+
+  /* The film's poster: the title card with a play button (see film.mjs). */
+  #play {
+    margin-top: 64px; align-self: flex-start; display: none;
+    align-items: center; gap: 26px;
+    padding: 26px 44px 26px 30px; border-radius: 999px;
+    background: var(--ink); color: var(--paper);
+    box-shadow: 0 30px 60px -20px rgb(23 24 28 / .5);
+    font-family: "Anuphan", sans-serif; font-weight: 700; font-size: 40px;
+  }
+  #title.poster #play { display: flex; }
+  #title.poster .sub { display: none; }
+  #play i { width: 92px; height: 92px; border-radius: 50%; background: var(--shu); display: grid; place-items: center; }
+  #play i::after { content: ""; margin-left: 10px; border-style: solid; border-width: 24px 0 24px 38px; border-color: transparent transparent transparent #fff; }
+  #play span { color: #e8a598; font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 500; }
+
+  #progress { position: absolute; left: 72px; top: 48px; display: flex; gap: 8px; z-index: 15; transition: opacity .5s; }
+  #progress i { width: 34px; height: 4px; background: var(--line); border-radius: 2px; transition: background .5s; }
+  #progress i.done { background: var(--ink-3); }
+  #progress i.now { background: var(--shu); }
+</style>
+</head>
+<body>
+  <div id="progress"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <aside id="rail">
+    <div class="chap"><span class="jp" id="rail-kanji">人</span><span class="mono" id="rail-num">01 / 06</span></div>
+    <h1 id="rail-title"></h1>
+    <div class="rule"></div>
+    <div id="beat"><p></p></div>
+    <div class="foot"><span class="hanko">CW</span><span>Cwork · <span id="rail-foot"></span></span></div>
+  </aside>
+
+  <div id="desk" class="device gone">
+    <div class="frame">
+      <div class="bar"><i></i><i></i><i></i><span class="who" id="who"></span><span class="url" id="url"></span></div>
+      <div class="screen"><div class="zoom" id="zoom"></div></div>
+    </div>
+  </div>
+
+  <div id="phone" class="device gone">
+    <div class="body"></div>
+    <div class="island"></div>
+    <div class="badge"><i></i><span></span></div>
+  </div>
+
+  <div id="callout"><div class="big"></div><div class="small"></div></div>
+
+  <section id="chapter" class="card gone">
+    <span class="kanji jp" data-a="1"></span>
+    <div class="inner">
+      <div class="eyebrow mono" data-a="1"></div>
+      <h2 data-a="2"></h2>
+      <div class="fix" data-a="3"><span class="jp">解決</span><p></p></div>
+    </div>
+  </section>
+
+  <section id="title" class="card">
+    <span class="kanji jp" data-a="3">人事</span>
+    <div class="inner">
+      <div class="brand" data-a="1"><span class="hanko">CW</span><b>Cwork</b></div>
+      <h2 data-a="2"></h2>
+      <p class="sub" data-a="3"></p>
+      <div id="play"><i></i><div><div id="play-label"></div><span id="play-time"></span></div></div>
+    </div>
+  </section>
+
+  <section id="end" class="card gone">
+    <div class="inner">
+      <h2 data-a="1"></h2>
+      <div class="cmd" data-a="2"></div>
+      <div class="row" data-a="3"><span class="hanko">CW</span><b>github.com/SuruchBoss/Cwork</b></div>
+      <div class="tags" data-a="4"><span>Apache-2.0</span><span>Self-hosted</span><span>PostgreSQL</span><span>TH · EN</span></div>
+    </div>
+  </section>
+
+  <div id="stamp"><div><span class="jp">承認</span><span class="mono"></span></div></div>
+  <div id="cursor" class="hidden">
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+      <path d="M4 2 L4 24 L10 18.5 L14.2 27.5 L18.3 25.6 L14.2 16.8 L22 16.8 Z" fill="#17181c" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+    <span class="touch"></span>
+  </div>
+
+<script>
+  // Everything film.mjs can do to the stage. Kept small and declarative: the
+  // script decides what happens, this only knows how it looks.
+  const $ = (s) => document.querySelector(s);
+  const cursor = $('#cursor');
+  let at = { x: 960, y: 1200 };
+
+  const frames = {};
+  const LAYOUTS = {
+    // The console alone, full size beside the rail.
+    desk: { desk: 'translate(0px,0px) scale(1)', phone: null },
+    // The phone alone, centred in the space the console would take.
+    phone: { desk: null, phone: 'translate(0px,0px) scale(1)' },
+    // Both at once: the console shrinks left, the phone stands right.
+    both: { desk: 'translate(-8px,120px) scale(.7)', phone: 'translate(520px,0px) scale(1)' },
+  };
+
+  function play(card) {
+    card.classList.remove('play', 'gone');
+    void card.offsetWidth;
+    card.classList.add('play');
+  }
+
+  window.film = {
+    /** Adds an iframe: kind is "desk" (a console role) or "phone". */
+    mount(id, kind, src) {
+      const f = document.createElement('iframe');
+      f.id = id; f.src = src;
+      f.setAttribute('allow', 'geolocation');
+      (kind === 'desk' ? $('#zoom') : $('#phone')).appendChild(f);
+      frames[id] = f;
+    },
+    title(h2, sub) {
+      $('#title h2').innerHTML = h2; $('#title .sub').textContent = sub;
+      play($('#title'));
+    },
+    chapter({ n, kanji, eyebrow, title, fix }) {
+      const c = $('#chapter');
+      c.querySelector('.kanji').textContent = kanji;
+      c.querySelector('.eyebrow').textContent = eyebrow;
+      c.querySelector('h2').innerHTML = title;
+      c.querySelector('.fix p').textContent = fix;
+      $('#title').classList.add('gone');
+      play(c);
+      document.querySelectorAll('#progress i').forEach((el, i) => {
+        el.className = i < n - 1 ? 'done' : i === n - 1 ? 'now' : '';
+      });
+    },
+    end(h2, cmd) {
+      $('#end h2').innerHTML = h2; $('#end .cmd').innerHTML = cmd;
+      $('#progress').style.opacity = 0;
+      play($('#end'));
+    },
+    /** Lifts the card off the stage, uncovering the rail and devices. */
+    reveal() {
+      document.querySelectorAll('.card').forEach((c) => c.classList.add('gone'));
+    },
+    rail({ n, kanji, title, foot }) {
+      $('#rail-kanji').textContent = kanji;
+      $('#rail-num').textContent = String(n).padStart(2, '0') + ' / 06';
+      $('#rail-title').innerHTML = title;
+      $('#rail-foot').textContent = foot;
+      $('#beat').innerHTML = '<p></p>';
+    },
+    beat(html) {
+      const box = $('#beat');
+      const old = box.querySelector('p:not(.out)');
+      if (old) { old.classList.add('out'); setTimeout(() => old.remove(), 500); }
+      const p = document.createElement('p');
+      p.className = 'in'; p.innerHTML = html; box.appendChild(p);
+      requestAnimationFrame(() => requestAnimationFrame(() => p.classList.remove('in')));
+    },
+    layout(name) {
+      const l = LAYOUTS[name];
+      for (const key of ['desk', 'phone']) {
+        const el = $('#' + key);
+        if (l[key]) { el.classList.remove('gone'); el.style.transform = l[key]; }
+        else el.classList.add('gone');
+      }
+    },
+    /** Shows one console role and names who is signed in. */
+    role(id, who, url) {
+      Object.entries(frames).forEach(([k, f]) => {
+        if (f.parentElement.id === 'zoom') f.classList.toggle('on', k === id);
+      });
+      $('#who').innerHTML = who; $('#url').textContent = url;
+    },
+    /** Magnifies the console around a point (in its own 1440×810 pixels), or resets with no argument. */
+    zoom(x, y, s) {
+      const z = $('#zoom');
+      if (x === undefined) { z.style.transform = ''; return; }
+      const tx = Math.min(0, Math.max(1440 - 1440 * s, 720 - x * s));
+      const ty = Math.min(0, Math.max(810 - 810 * s, 405 - y * s));
+      z.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+    },
+    cursorMode(mode) { cursor.className = mode; },
+    cursorTo(x, y, ms) {
+      cursor.style.transitionDuration = ms + 'ms';
+      cursor.style.transform = `translate(${x}px,${y}px)`;
+      at = { x, y };
+    },
+    click() {
+      const r = document.createElement('div');
+      r.className = 'ripple'; r.style.left = at.x + 'px'; r.style.top = at.y + 'px';
+      document.body.appendChild(r); setTimeout(() => r.remove(), 700);
+    },
+    stamp(x, y, label) {
+      const s = $('#stamp');
+      s.style.left = x + 'px'; s.style.top = y + 'px';
+      s.querySelector('.mono').textContent = label;
+      s.classList.remove('hit'); void s.offsetWidth; s.classList.add('hit');
+    },
+    /** The poster: a play button in place of the title card's subtitle, or none. */
+    poster(label, time) {
+      $('#title').classList.toggle('poster', !!label);
+      $('#play-label').textContent = label || '';
+      $('#play-time').textContent = time || '';
+    },
+    /** A pill above the phone saying what its signal is doing; no text hides it. */
+    badge(text, ok) {
+      const b = $('#phone .badge');
+      if (!text) { b.classList.remove('on'); return; }
+      b.querySelector('span').textContent = text;
+      b.classList.toggle('ok', !!ok);
+      b.classList.add('on');
+    },
+    callout(big, small) {
+      const c = $('#callout');
+      if (!big) { c.classList.remove('on'); return; }
+      c.querySelector('.big').innerHTML = big; c.querySelector('.small').textContent = small;
+      c.classList.add('on');
+    },
+  };
+</script>
+</body>
+</html>

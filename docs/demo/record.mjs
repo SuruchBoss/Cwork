@@ -51,6 +51,7 @@
  * which is the quickest way to find out whether it still works.
  */
 import { chromium } from 'playwright';
+import { apiOffset, followApiClock } from '../screenshots/clock.mjs';
 import { totp } from './totp.mjs';
 
 const RECORD = process.env.RECORD === '1';
@@ -76,6 +77,8 @@ const LANG = process.env.LANG_ === 'th' ? 'th' : 'en';
 const VIEWPORT = { width: 1280, height: 800 };
 const SECRET = 'CWORKDEMOMFASECRET234567';
 const BASE = 'http://localhost:5173';
+/** The API itself, for its clock: see docs/screenshots/clock.mjs. */
+const API = process.env.API_URL ?? 'http://localhost:3000/api/v1';
 
 /**
  * Every caption, in both languages, by key.
@@ -92,15 +95,19 @@ const BASE = 'http://localhost:5173';
  */
 const LINES = {
   en: {
-    intro: 'Cwork — open-source HR for Thai labour practice, in English or Thai. Signing in as an administrator.',
+    intro:
+      'Cwork — open-source HR for Thai labour practice, in English or Thai. Signing in as an administrator.',
     mfa: 'A password alone is not a session: this account can read national IDs and run payroll, so it owes a second factor.',
-    dashboard: 'Dashboard — two requests waiting, eight staff, last month\'s payroll closed at ฿640,978.',
+    dashboard:
+      "Dashboard — two requests waiting, eight staff, last month's payroll closed at ฿589,578.",
     approvals: 'Approvals — routed by policy to the line manager, or to a role, per request type.',
     employees: 'Employee register — national IDs and bank accounts are encrypted at rest.',
     leave: 'Leave — entitlement by years of service, holidays excluded from the count.',
-    attendance: 'Attendance — location is recorded only at the moment of a punch, never continuously.',
+    attendance:
+      'Attendance — location is recorded only at the moment of a punch, never continuously.',
     payroll: 'Payroll — one run per period; whoever prepared it may not approve it.',
-    payslip: 'Every payslip here was computed by the Thai tax, social-security and provident-fund code.',
+    payslip:
+      'Every payslip here was computed by the Thai tax, social-security and provident-fund code.',
     recruitment: 'Hiring — applications arrive from a public careers page, with PDPA consent.',
     performance: 'Performance — KPI weights must total 100, and HR calibrates the grade.',
     audit: 'Audit trail — append-only in the database; a trigger blocks UPDATE and DELETE.',
@@ -109,7 +116,7 @@ const LINES = {
   th: {
     intro: 'Cwork — ระบบ HR โอเพนซอร์สที่ทำตามกฎหมายแรงงานไทย กำลังเข้าสู่ระบบด้วยบัญชีผู้ดูแล',
     mfa: 'รหัสผ่านอย่างเดียวยังไม่นับว่าเข้าระบบ บัญชีนี้อ่านเลขบัตรประชาชนและทำเงินเดือนได้ จึงต้องยืนยันตัวตนอีกขั้น',
-    dashboard: 'แดชบอร์ด — รออนุมัติ 2 รายการ พนักงาน 8 คน รอบเงินเดือนล่าสุดปิดที่ ฿640,978',
+    dashboard: 'แดชบอร์ด — รออนุมัติ 2 รายการ พนักงาน 8 คน รอบเงินเดือนล่าสุดปิดที่ ฿589,578',
     approvals: 'การอนุมัติ — ระบบส่งต่อตามนโยบาย ไปที่หัวหน้าสายงานหรือตามบทบาท แล้วแต่ประเภทคำขอ',
     employees: 'ทะเบียนพนักงาน — เลขบัตรประชาชนและเลขบัญชีธนาคารถูกเข้ารหัสไว้ในฐานข้อมูล',
     leave: 'การลา — สิทธิวันลาคิดตามอายุงาน และไม่นับวันหยุดนักขัตฤกษ์รวมเข้าไปด้วย',
@@ -118,7 +125,8 @@ const LINES = {
     payslip: 'สลิปทุกใบในนี้คำนวณด้วยโค้ดภาษีไทย ประกันสังคม และกองทุนสำรองเลี้ยงชีพ',
     recruitment: 'สรรหา — ใบสมัครเข้ามาจากหน้าประกาศงานสาธารณะ พร้อมการขอความยินยอมตาม PDPA',
     performance: 'ประเมินผล — น้ำหนัก KPI ต้องรวมกันได้ 100 และ HR เป็นคนปรับเทียบเกรด',
-    audit: 'บันทึกการใช้งาน — เขียนเพิ่มได้อย่างเดียว มี trigger ในฐานข้อมูลกัน UPDATE และ DELETE ไว้',
+    audit:
+      'บันทึกการใช้งาน — เขียนเพิ่มได้อย่างเดียว มี trigger ในฐานข้อมูลกัน UPDATE และ DELETE ไว้',
     close: 'ธีมมืดมีมาให้ในตัว — และทั้งระบบเป็นภาษาไทยมาตั้งแต่ต้น ไม่ใช่ของแปลทับทีหลัง',
   },
 };
@@ -145,7 +153,9 @@ function line(key) {
 // A TOTP code cannot be spent twice even inside its own window, so wait for a
 // fresh 30-second step before the recorder starts — otherwise a retake burns a
 // code the previous take already used, and the wait ends up inside the video.
-const into = Date.now() % 30000;
+// Steps are counted on the API's clock, which is the one checking the code.
+const offset = await apiOffset(`${API}/config`);
+const into = (Date.now() + offset) % 30000;
 if (into > 3000) {
   const pause = 30000 - into + 400;
   console.log(`(waiting ${Math.round(pause / 1000)}s for a fresh TOTP step)`);
@@ -165,6 +175,7 @@ const context = await browser.newContext({
   locale: LANG === 'th' ? 'th-TH' : 'en-GB',
   ...(RECORD ? { recordVideo: { dir: OUT, size: VIEWPORT } } : {}),
 });
+await followApiClock(context, `${API}/config`);
 // The console's own language switch, set before the app first reads it.
 await context.addInitScript((language) => {
   localStorage.setItem(
@@ -249,7 +260,6 @@ const problems = [];
 page.on('console', (m) => {
   if (m.type() === 'error') problems.push(m.text());
 });
-
 
 /**
  * A caption burned into the recording, in this run's language.
@@ -361,7 +371,7 @@ await step('second factor', async () => {
   await field.waitFor({ timeout: 15000 });
   await caption(line('mfa'));
   await beat(1500);
-  await field.type(totp(SECRET), { delay: 110 });
+  await field.type(totp(SECRET, Date.now() + offset), { delay: 110 });
   await beat(500);
   await caption('');
   await page.getByRole('button', { name: ui('verify') }).click();
