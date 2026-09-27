@@ -122,6 +122,17 @@ authenticator app.
 - Recovery codes are 100-bit random, stored as SHA-256 digests, and removed as
   they are spent. A slow KDF would add nothing at that entropy and would only
   give a half-authenticated endpoint a way to burn CPU.
+- **A session answers a code, never a state.** It is issued only in reply to a
+  code verified in that same request — the sign-in, or the activation that
+  switches the factor on — and never because an account happens to be
+  enrolled. The failed-attempt count is cleared only when a sign-in completes,
+  so a correct password cannot wipe the wrong codes before it. Both were fixed
+  in 0.3.1 ([GHSA-3cgw-73cr-r8c6](https://github.com/SuruchBoss/Cwork/security/advisories/GHSA-3cgw-73cr-r8c6)).
+- **The one exception is the public demo.** Its one-click sign-in
+  (`AuthService.openDemoSession`) opens a session for its three shared
+  accounts with no credential at all. It throws unless `DEMO_MODE=true`, and
+  `DEMO_MODE` only starts on a database the demo created itself — see
+  [the public demo](./demo.md#it-will-not-open-a-real-database).
 - A wrong code counts towards the same lockout a wrong password does.
 - Turning it off requires a current code, and is refused outright for an account
   that is required to have one.
@@ -182,8 +193,9 @@ a later change to expose. See `MalwareScannerService`.
 The rule that matters: **a scanner that is not working is never a pass.**
 Unreachable, timed out, or a reply we cannot parse all land the file at
 `PENDING`, which is recorded but refused on download; an hourly sweep retries
-it. The only way a file is served unscanned is when scanning is deliberately
-switched off — and the API says so, at `WARN`, at every boot.
+it. The only way a file is served unscanned is when scanning is switched off —
+which is the default, because it needs a clamd: such files are recorded as
+`SKIPPED`, and the API says so, at `WARN`, at every boot. See the gaps below.
 
 A detection is refused at upload with the signature named, recorded in the audit
 trail, and notified to the uploader. Quarantine is destruction: the row and the
@@ -221,7 +233,9 @@ every such request into a 500. See `AllExceptionsFilter`.
 - `helmet` with HSTS in production.
 - CORS lists exact origins. The API **refuses to start** in production if
   `CORS_ORIGINS` is empty or contains a wildcard.
-- The web console ships a strict CSP (no third-party scripts) via nginx.
+- The web console ships a strict CSP (no third-party scripts) via nginx, or with
+  the same headers from the API itself where `CONSOLE_DIR` has it serve the
+  console, as the public demo does.
 - The mobile app disables cleartext traffic on Android.
 - `trust proxy` is set to one hop, so `req.ip` is the real client behind a load
   balancer without trusting arbitrary `X-Forwarded-For` chains.
@@ -324,4 +338,7 @@ did in fact change behaviour on the way in.
 ## Reporting a vulnerability
 
 See [SECURITY.md](../SECURITY.md). Please do not open a public issue for a
-security bug.
+security bug. It also says which versions receive security fixes, and how a
+problem in another project of the ecosystem is reported — privately, to that
+project, under the shared rule in
+[ADR-0022](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/adr/0022-vulnerability-disclosure-across-the-ecosystem.md).
