@@ -8,8 +8,10 @@ import { z } from 'zod';
 import { Button, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
+import { DemoSignIn } from '@/features/demo/DemoSignIn';
 import { fetchSetupStatus } from '@/features/setup/setup.api';
 import { env } from '@/lib/env';
+import { usePlatformConfigState } from '@/lib/platform';
 import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
 import type { LoginSession, MfaActivation, MfaChallenge, MfaEnrolment } from '@/types/api';
@@ -50,6 +52,7 @@ export default function LoginPage() {
   const location = useLocation();
   const t = useT();
 
+  const platform = usePlatformConfigState();
   const [step, setStep] = useState<Step>({ name: 'credentials' });
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -83,6 +86,12 @@ export default function LoginPage() {
   } = useForm<FormValues>({ defaultValues: { email: '', password: '' } });
 
   if (accessToken) return <Navigate to="/" replace />;
+
+  // The public demo has no password to type (CW-031). Until the deployment has
+  // said whether it is the demo, draw neither, so the password form does not
+  // flash up and vanish.
+  if (!platform.settled) return <main className="auth" aria-busy="true" />;
+  if (platform.config.demo) return <DemoSignIn />;
 
   const goHome = (): void => {
     const from = (location.state as { from?: string } | null)?.from;

@@ -20,6 +20,7 @@ import { INestApplication, Type, ValidationPipe, VersioningType } from '@nestjs/
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/app.module';
+import { DEMO_MFA_SECRET } from 'src/modules/demo/seed/demo-company';
 import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
 import { APP_CONFIG } from 'src/core/config/config.token';
 import type { RootConfig } from 'src/core/config/configuration';
@@ -208,10 +209,10 @@ export interface SessionResponse {
 }
 
 /**
- * The secret `prisma/seed.ts` enrols the privileged demo accounts on. Published
- * on purpose: it is demo data, and the tests need to produce real codes.
+ * The secret the demo seed enrols the privileged demo accounts on. Published on
+ * purpose: it is demo data, and the tests need to produce real codes.
  */
-export const DEMO_MFA_SECRET = 'CWORKDEMOMFASECRET234567';
+export { DEMO_MFA_SECRET };
 
 export function currentDemoCode(atMs = Date.now()): string {
   return generateTotpForStep(DEMO_MFA_SECRET, timeStepAt(atMs));
@@ -248,6 +249,11 @@ export interface CreateTestAppOptions {
   env?: Record<string, string>;
   /** Test-only controllers, for responses no production route gives (a 500). */
   controllers?: Type<unknown>[];
+  /**
+   * Modules AppModule leaves out unless the environment asks for them when it
+   * is first loaded — the public demo's, which the suite adds explicitly.
+   */
+  imports?: Type<unknown>[];
 }
 
 export async function createTestApp(options: CreateTestAppOptions = {}): Promise<TestContext> {
@@ -265,32 +271,42 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
   };
 
   const rawLogs: string[] = [];
-  const moduleRef = await Test.createTestingModule({
-    imports: [AppModule],
-    controllers: options.controllers ?? [],
-  })
-    .overrideProvider(LOG_SINK)
-    .useValue((line: string) => rawLogs.push(line))
-    .compile();
+  let app: INestApplication | undefined;
+  let config: RootConfig;
+  try {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule, ...(options.imports ?? [])],
+      controllers: options.controllers ?? [],
+    })
+      .overrideProvider(LOG_SINK)
+      .useValue((line: string) => rawLogs.push(line))
+      .compile();
 
-  const app = moduleRef.createNestApplication({ bufferLogs: true });
-  const config = app.get<RootConfig>(APP_CONFIG);
+    app = moduleRef.createNestApplication({ bufferLogs: true });
+    config = app.get<RootConfig>(APP_CONFIG);
 
-  await installTelemetry(app);
+    await installTelemetry(app);
 
-  app.setGlobalPrefix(config.app.apiPrefix, { exclude: ['health/live', 'health/ready'] });
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: false },
-      validationError: { target: false, value: false },
-    }),
-  );
+    app.setGlobalPrefix(config.app.apiPrefix, { exclude: ['health/live', 'health/ready'] });
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: false },
+        validationError: { target: false, value: false },
+      }),
+    );
 
-  await app.init();
+    await app.init();
+  } catch (error) {
+    // An app that refuses to start (the demo's guard does, on purpose) must
+    // not leave its environment behind for the next spec.
+    await app?.close().catch(() => undefined);
+    restoreEnv();
+    throw error;
+  }
 
   return {
     app,

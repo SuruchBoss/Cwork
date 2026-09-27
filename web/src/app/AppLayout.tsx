@@ -11,6 +11,7 @@ import { usePlatformConfig } from '@/lib/platform';
 import { useT } from '@/lib/i18n/useT';
 import { qk } from '@/app/query-client';
 import { visibleSectionsFor } from '@/app/navigation';
+import { DemoBanner } from '@/features/demo/DemoBanner';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUiStore } from '@/stores/ui.store';
 
@@ -119,6 +120,7 @@ export function AppLayout() {
       </aside>
 
       <div className="main">
+        <DemoBanner switcher />
         <header className="topbar">
           <Button
             variant="ghost"

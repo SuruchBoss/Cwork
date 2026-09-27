@@ -221,6 +221,37 @@ jobs:
       - name: The shipped web image serves its security headers
         run: web/scripts/verify-security-headers.sh
 
+  demo-image:
+    name: Demo image boots
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cwork
+          POSTGRES_PASSWORD: cwork
+          POSTGRES_DB: cwork_demo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cwork"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Builds deploy/demo/Dockerfile as Render does and boots it on an empty
+      # database (CW-031). Nothing else runs the pruned image: the e2e suite
+      # boots the application from source, so a file the image forgot to ship
+      # would only show up on Render.
+      - name: The demo image builds, seeds itself and signs in with one click
+        env:
+          DATABASE_URL: postgresql://cwork:cwork@localhost:5432/cwork_demo
+        run: deploy/demo/verify-image.sh
+
   mobile:
     name: Mobile app
     runs-on: ubuntu-latest

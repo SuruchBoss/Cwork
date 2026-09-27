@@ -6,6 +6,8 @@ import { api } from './api-client';
 
 export interface PlatformConfig {
   assistantEnabled: boolean;
+  /** The public demo (CW-031): one-click sign-in, and the data reset every hour. */
+  demo: boolean;
 }
 
 /**
@@ -17,12 +19,23 @@ export interface PlatformConfig {
  * as off, so a screen never shows an entry point and then takes it away.
  */
 export function usePlatformConfig(): PlatformConfig {
-  const { data } = useQuery({
+  return usePlatformConfigState().config;
+}
+
+/**
+ * The same answer, plus whether it has arrived — for the one screen that draws
+ * something different on the demo (the sign-in page), and would otherwise show
+ * a password form for a moment before swapping it for the demo's buttons. An
+ * API that cannot be reached counts as arrived: the ordinary form is the right
+ * thing to show, and the sign-in attempt will say what is wrong.
+ */
+export function usePlatformConfigState(): { config: PlatformConfig; settled: boolean } {
+  const { data, isPending } = useQuery({
     queryKey: ['platform-config'],
     queryFn: () => api.get<PlatformConfig>('/config', { anonymous: true }),
     staleTime: Infinity,
     gcTime: Infinity,
   });
 
-  return data ?? { assistantEnabled: false };
+  return { config: data ?? { assistantEnabled: false, demo: false }, settled: !isPending };
 }

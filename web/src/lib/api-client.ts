@@ -30,6 +30,7 @@ class ApiClient {
   private onTokensRefreshed: TokenSetter = () => {};
   private onSessionExpired: SessionExpiredHandler = () => {};
   private refreshInFlight: Promise<string | null> | null = null;
+  private onDemoResetting: () => void = () => {};
 
   configure(handlers: {
     getAccessToken: TokenGetter;
@@ -41,6 +42,15 @@ class ApiClient {
     this.getRefreshToken = handlers.getRefreshToken;
     this.onTokensRefreshed = handlers.onTokensRefreshed;
     this.onSessionExpired = handlers.onSessionExpired;
+  }
+
+  /**
+   * The public demo answers every request 503 `DEMO_RESETTING` while it puts
+   * its data back. The shell listens here to show one message for the whole
+   * screen, instead of every panel reporting its own failure.
+   */
+  onDemoReset(handler: () => void): void {
+    this.onDemoResetting = handler;
   }
 
   get<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -135,7 +145,9 @@ class ApiClient {
     if (response.status === 204) return undefined as T;
 
     if (!response.ok) {
-      throw ApiError.fromBody(response.status, await safeJson(response));
+      const error = ApiError.fromBody(response.status, await safeJson(response));
+      if (error.code === 'DEMO_RESETTING') this.onDemoResetting();
+      throw error;
     }
 
     const text = await response.text();

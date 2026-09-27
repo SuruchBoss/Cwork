@@ -37,7 +37,7 @@ const COPY = {
   'คิดค่าใช้จ่าย': 'What it costs',
   'หน้าตาระบบ': 'The screens',
   'สำหรับฝ่าย IT': 'For IT',
-  'ดาวน์โหลดฟรี': 'Download free',
+  'ลองใช้ทันที': 'Try it now',
   // -------------------------------------------------------------- hero
   'ใช้งานได้แล้ว · v0.3.1': 'Working today · v0.3.1',
   'งาน HR ทั้งบริษัท': 'All of HR, company-wide',
@@ -45,8 +45,9 @@ const COPY = {
   'รายหัว': 'per-seat fee',
   'เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA — ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว ไม่มีสัญญารายปี':
     'Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, no annual contract.',
-  'ดูว่าประหยัดได้เท่าไหร่': 'See what you would save',
-  'ดูปัญหาที่เราแก้': 'See the problems we solve',
+  'ติดตั้งเอง': 'Install it yourself',
+  'เข้าเป็น HR ของบริษัทตัวอย่างในเบราว์เซอร์ ไม่ต้องสมัคร ไม่ต้องใช้รหัสผ่าน · ข้อมูลกลับเป็นค่าเริ่มต้นทุกชั่วโมง · ถ้าไม่มีใครใช้มาสักพัก ครั้งแรกอาจรอเครื่องตื่นราวหนึ่งนาที':
+    'Opens in your browser as HR at a demo company — no sign-up, no password · Everything goes back to the start every hour · If nobody has used it for a while, the first visit may wait about a minute for it to wake',
   'ฝ่าย IT ติดตั้งเองได้ด้วย Docker สามคำสั่ง —':
     'Your IT team installs it with three Docker commands —',
   'ส่งขั้นตอนให้เขา': 'send them the steps',
@@ -320,11 +321,10 @@ const COPY = {
   'ไม่มีข้อมูลตัวอย่างให้ต้องตามลบ': 'no sample data to clean out',
   // ----------------------------------------------------------- closing
   'เริ่มต้น': 'Get started',
-  'ลองกับบริษัทตัวอย่าง ภายในห้านาที': 'Try it with a demo company in five minutes',
-  'ดาวน์โหลดฟรี ติดตั้งบนเครื่องของคุณ ทุกหน้ามีข้อมูลตัวอย่างให้กดลองจริง ตั้งแต่ใบลาจนถึงรอบเงินเดือนที่ปิดแล้ว':
-    'Download it free and install it on your own machine. Every page comes with sample data to click through — from a leave request to a closed payroll run.',
-  'ดาวน์โหลดฟรีบน GitHub': 'Download free on GitHub',
-  'ดูขั้นตอนติดตั้ง': 'See the install steps',
+  'ลองกับบริษัทตัวอย่าง ได้ทันที': 'Try it with a demo company, right now',
+  'เลือกเป็นพนักงาน หัวหน้า หรือ HR แล้วกดลองได้จริงทุกหน้า ตั้งแต่ใบลาจนถึงรอบเงินเดือนที่ปิดแล้ว ไม่ต้องสมัคร ไม่ต้องติดตั้ง — ถูกใจแล้วค่อยติดตั้งบนเครื่องของบริษัท ฟรี':
+    'Be an employee, a manager or HR, and try every page for real — from a leave request to a closed payroll run. No sign-up, nothing to install; when you like it, install it on your company\'s own server, free.',
+  'ติดตั้งเองจาก GitHub': 'Install it yourself from GitHub',
   // ------------------------------------------------------------ footer
   'ระบบบริหารทรัพยากรบุคคลแบบโอเพนซอร์ส · Apache-2.0':
     'Open-source HR information system · Apache-2.0',
@@ -484,6 +484,8 @@ out = out.replace(/walkthrough\.th\.mp4/g, 'walkthrough.en.mp4');
 out = out.replace(/film\.th\.mp4/g, 'film.en.mp4');
 // The console screenshots likewise: the English page shows the English console.
 out = out.replace(/\.th\.webp/g, '.en.webp');
+// And the demo opens in the page's language (CW-031): the console reads `lang`.
+out = out.replace(/(\/login\?as=hr&amp;lang=)th"/g, '$1en"');
 
 // ------------------------------------------------------ number formatting
 out = out
@@ -512,6 +514,10 @@ const strays = out
   .filter((t) => !t.startsWith('<') && THAI.test(t));
 if (strays.length > 0) {
   console.error('Thai left in the English page:', strays.map(norm));
+  process.exit(1);
+}
+if (/lang=th"/.test(out)) {
+  console.error('The English page still opens the demo in Thai.');
   process.exit(1);
 }
 if (/walkthrough\.th\.mp4/.test(out)) {

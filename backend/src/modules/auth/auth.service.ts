@@ -275,6 +275,32 @@ export class AuthService {
   }
 
   /**
+   * A session with no credential at all: the public demo's one-click sign-in
+   * (CW-031), and nothing else.
+   *
+   * Everything else in this service exists to make a session hard to get, so
+   * this refuses unless the deployment is the demo. The demo, in turn, only
+   * boots on a database it created itself (src/modules/demo), and only hands
+   * out its three shared accounts — so a stray call on a real installation
+   * throws, rather than signing anybody in.
+   *
+   * No request metadata is recorded: the demo's accounts are shared, and one
+   * visitor's address is nothing the next one should be able to read.
+   */
+  async openDemoSession(userId: string, organizationId: string): Promise<LoginResponseDto> {
+    if (!this.config.demo.enabled) {
+      throw new Error('openDemoSession is the public demo’s sign-in, and DEMO_MODE is off');
+    }
+    return this.completeLogin(
+      userId,
+      organizationId,
+      { platform: 'web' },
+      {},
+      ' with the demo’s one-click sign-in',
+    );
+  }
+
+  /**
    * Refresh-token rotation with reuse detection. Presenting a token that has
    * already been rotated means it leaked, so the whole family is revoked and the
    * user must sign in again.

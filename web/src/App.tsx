@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { queryClient } from './app/query-client';
 import { router } from './app/router';
+import { DemoResetOverlay } from './features/demo/DemoResetOverlay';
 import { useAuthStore } from './stores/auth.store';
 import { useUiStore } from './stores/ui.store';
 
@@ -30,9 +31,15 @@ export function App() {
     else document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  const afterDemoReset = useCallback(
+    (to: string) => void router.navigate(to, { replace: true }),
+    [],
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <DemoResetOverlay onDone={afterDemoReset} />
     </QueryClientProvider>
   );
 }

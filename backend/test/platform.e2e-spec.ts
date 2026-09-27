@@ -37,7 +37,7 @@ describe('Platform config (e2e)', () => {
       const res = await ctx.api.get('/config');
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ assistantEnabled: true });
+      expect(res.body).toEqual({ assistantEnabled: true, demo: false });
     });
   });
 
@@ -56,7 +56,7 @@ describe('Platform config (e2e)', () => {
       const res = await ctx.api.get('/config');
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ assistantEnabled: false });
+      expect(res.body).toEqual({ assistantEnabled: false, demo: false });
     });
 
     it('still refuses the assistant itself to anyone unauthenticated', async () => {

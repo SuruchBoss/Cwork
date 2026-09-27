@@ -146,6 +146,7 @@
   }
 
   /* ================================================================ buttons */
+  .cta-note { margin: 12px 0 0; font-size: var(--t-small); color: var(--ink-3); max-width: 60ch; }
   .btn {
     display: inline-flex; align-items: center; gap: 10px;
     min-height: 48px; padding: 0 22px;
@@ -484,7 +485,7 @@
       <a class="nav__link" href="#screens">The screens</a>
       <a class="nav__link" href="#install">For IT</a>
       <a class="lang" href="../" hreflang="th" lang="th">ภาษาไทย</a>
-      <a class="btn btn--shu" href="https://github.com/SuruchBoss/Cwork">Download free</a>
+      <a class="btn btn--shu" href="https://cwork-demo.onrender.com/login?as=hr&amp;lang=en" data-demo>Try it now</a>
     </nav>
   </div>
 </header>
@@ -504,12 +505,13 @@
         </p>
 
         <div class="cta-row">
-          <a class="btn btn--shu" href="#calc">
-            See what you would save
+          <a class="btn btn--shu" href="https://cwork-demo.onrender.com/login?as=hr&amp;lang=en" data-demo>
+            Try it now
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
-          <a class="btn btn--line" href="#pain">See the problems we solve</a>
+          <a class="btn btn--line" href="#install">Install it yourself</a>
         </div>
+        <p class="cta-note">Opens in your browser as HR at a demo company — no sign-up, no password · Everything goes back to the start every hour · If nobody has used it for a while, the first visit may wait about a minute for it to wake</p>
 
         <p class="handoff">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10M8 9l3 2.5L8 14"/></svg>
@@ -982,11 +984,11 @@
     <span class="band__kanji" aria-hidden="true">始</span>
     <div class="wrap">
       <span class="eyebrow"><span class="jp" aria-hidden="true">始</span><span class="label">Get started</span></span>
-      <h2>Try it with a demo company in five minutes</h2>
-      <p>Download it free and install it on your own machine. Every page comes with sample data to click through — from a leave request to a closed payroll run.</p>
+      <h2>Try it with a demo company, right now</h2>
+      <p>Be an employee, a manager or HR, and try every page for real — from a leave request to a closed payroll run. No sign-up, nothing to install; when you like it, install it on your company's own server, free.</p>
       <div class="cta-row">
-        <a class="btn btn--light" href="https://github.com/SuruchBoss/Cwork">Download free on GitHub</a>
-        <a class="btn btn--ghost-light" href="#install">See the install steps</a>
+        <a class="btn btn--light" href="https://cwork-demo.onrender.com/login?as=hr&amp;lang=en" data-demo>Try it now</a>
+        <a class="btn btn--ghost-light" href="https://github.com/SuruchBoss/Cwork">Install it yourself from GitHub</a>
       </div>
     </div>
   </section>
@@ -1010,6 +1012,23 @@
     </div>
   </div>
 </footer>
+
+<script>
+  /* The demo sleeps when nobody is using it — it runs on a free instance — and
+     takes about a minute to wake. Knock once as this page opens, so it is
+     likely awake by the time somebody decides to try it. One request per visit,
+     with no cookies and no referrer, and nothing if it fails: not a keep-alive,
+     and nothing that says who is visiting. */
+  (function () {
+    var demo = document.querySelector('a[data-demo]');
+    if (!demo || !window.fetch) return;
+    try {
+      fetch(new URL('/health/live', demo.href).href, {
+        mode: 'no-cors', cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+      }).catch(function () {});
+    } catch (e) { /* an old browser: the link still works, it just waits */ }
+  })();
+</script>
 
 <script>
   /* The calculator. Plain arithmetic the owner could do on paper — which is

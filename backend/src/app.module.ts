@@ -23,6 +23,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { ApprovalsModule } from './modules/approvals/approvals.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
+import { DemoModule } from './modules/demo/demo.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { FilesModule } from './modules/files/files.module';
@@ -103,6 +104,10 @@ import { SetupModule } from './modules/setup/setup.module';
     NotificationsModule,
     AssistantModule,
     JobsModule,
+
+    // The public demo only (CW-031). Absent from every other deployment, and it
+    // refuses to start on a database the demo did not create.
+    ...(DemoModule.enabledBy(process.env) ? [DemoModule] : []),
   ],
   providers: [
     SequenceService,

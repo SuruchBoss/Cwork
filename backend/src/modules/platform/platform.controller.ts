@@ -30,6 +30,6 @@ export class PlatformController {
   @Get()
   @ApiOperation({ summary: 'Feature flags this deployment exposes to its clients' })
   clientConfig(): PlatformConfigDto {
-    return { assistantEnabled: this.config.assistant.enabled };
+    return { assistantEnabled: this.config.assistant.enabled, demo: this.config.demo.enabled };
   }
 }

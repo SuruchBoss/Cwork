@@ -42,6 +42,9 @@ COPY --chown=cwork:cwork --from=prod-deps /app/node_modules ./node_modules
 COPY --chown=cwork:cwork --from=prod-deps /app/dist ./dist
 COPY --chown=cwork:cwork --from=prod-deps /app/prisma ./prisma
 COPY --chown=cwork:cwork prisma.config.ts package.json ./
+# The Thai font embedded in generated certificates (documents module), read
+# from the working directory when the API boots.
+COPY --chown=cwork:cwork assets ./assets
 
 EXPOSE 3000
 

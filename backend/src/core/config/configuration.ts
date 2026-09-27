@@ -11,6 +11,8 @@ export interface AppConfig {
   apiPrefix: string;
   corsOrigins: string[];
   defaults: { timezone: string; locale: string; currency: string };
+  /** A built console to serve beside the API, or null for none (the default). */
+  consoleDir: string | null;
 }
 
 export interface AuthConfig {
@@ -79,6 +81,8 @@ export interface RootConfig {
     throttleStorage: 'memory' | 'postgres';
   };
   malwareScan: MalwareScanConfig;
+  /** The public demo (CW-031). Off everywhere else. */
+  demo: { enabled: boolean };
   jobs: { lockTimeoutMs: number };
   outbox: {
     pollMs: number;
@@ -136,6 +140,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
         locale: env.DEFAULT_LOCALE,
         currency: env.DEFAULT_CURRENCY,
       },
+      consoleDir: env.CONSOLE_DIR.trim() || null,
     },
     auth: {
       accessSecret: env.JWT_ACCESS_SECRET,
@@ -186,6 +191,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       throttleLimit: env.THROTTLE_LIMIT,
       throttleStorage: env.THROTTLE_STORAGE as 'memory' | 'postgres',
     },
+    demo: { enabled: env.DEMO_MODE },
     jobs: { lockTimeoutMs: env.JOB_LOCK_TIMEOUT_MS },
     outbox: {
       pollMs: env.OUTBOX_POLL_MS,

@@ -1,0 +1,17 @@
+# Only the public demo builds from the repository root (deploy/demo/Dockerfile).
+# Everything is left out except the two applications it is built from, and
+# their local build output and dependencies are left out of those.
+**
+!backend
+!web
+backend/node_modules
+backend/dist
+backend/coverage
+backend/test
+backend/.env
+backend/.env.*
+web/node_modules
+web/dist
+web/coverage
+web/.env
+web/.env.*
