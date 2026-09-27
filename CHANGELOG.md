@@ -241,11 +241,15 @@ entry, tags it and publishes the notes.
   default. "Supported versions" now says which versions receive security fixes
   during 0.x: the latest release only, with no backports. A new section covers
   the other projects of the ecosystem: a problem found in one goes privately to
-  that project, code adapted between projects is fixed in all of them before
-  any advisory is published, and
+  that project; when code was adapted between projects, the owner of every
+  project that adapted it is told privately and checks their own copy, and no
+  advisory is published until each of those projects has a fixed release or its
+  owner has said it is not affected; and
   [ADR-0022](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/adr/0022-vulnerability-disclosure-across-the-ecosystem.md)
-  is linked as the rule rather than restated. `docs/security.md` carries the
-  same corrections, and names the public demo's one-click sign-in as the one
+  is linked as the rule rather than restated. "Scope" adds that a problem only
+  HR, payroll or an administrator can reach is still a security problem, rated
+  as needing a signed-in user (ADR-0022, decision 4). `docs/security.md` carries
+  the same corrections, and names the public demo's one-click sign-in as the one
   path that opens a session without a code.
 - **ADR-0004 is amended, not superseded** (CW-042): the rule is stated as its
   intended "no tool parameter may extend the caller's reach", rather than the
