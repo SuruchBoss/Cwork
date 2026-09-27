@@ -478,6 +478,16 @@ only the phone, and the recovery codes are shown once with a way to save them.
 ### CW-031 · A public demo instance, on Render
 `P2` · project · **M** · first in phase 3
 
+**Status 2026-09-27: built, waiting on the owner's deploy.** fdf2385 delivers
+the scope, and the e2e suite covers the refusals and every lock-out route. The
+runbook is [demo.md](./demo.md), and it answers the Render questions below.
+Two acceptance items can only be checked on the live service: the one-minute
+approval from a sleeping instance, and the reset happening on schedule. **The
+landing page and both READMEs already link to `cwork-demo.onrender.com`.** Until
+the service exists, the landing page's first button leads nowhere. Service names
+on `onrender.com` are global, so deploying soon also keeps someone else from
+taking the name the links point at.
+
 Evaluating Cwork means cloning it, writing an `.env`, running compose, migrating
 and seeding. The README's screenshots help, but nobody can try an approval flow
 from a picture. The landing page's only button is a download, and the people it
@@ -589,29 +599,26 @@ and so does the same for web and mobile.
 ## P3 — nice to have
 
 
-### CW-055 · The phone frame covers the mobile app in the walkthrough slides
-`P3` · project · **S** · 🌱
+### CW-056 · The Thai film's last scene turns the console English
+`P3` · project · **S**
 
-Reported by the owner on 2026-09-27, from a screenshot on a phone. Slide
-**02 / 06, "เงินเดือนที่ไม่ต้องลุ้น"**, shows the console beside the mobile app
-inside a phone frame. The frame's camera cut-out sits on top of the app's
-greeting, the employee's name, so the first line of the app cannot be read, and
-the right edge of the app runs under the frame's border.
+Found by the PO on 2026-09-27 while checking CW-055. The Thai take of the
+product film (`landing/assets/film.th.mp4`) ends in chapter 06 on the
+performance page with the caption "และ**ธีมมืด**สำหรับกะดึก". Before the theme
+changes, the console switches to English: "Cycle status", "KPI goals", "Score
+weighting". The dark theme is then shown in English too. The caption says
+nothing about language. A Thai viewer sees their language drop out in the
+film's last shot.
 
-A second screenshot the same day shows the same thing on slide **03 / 06,
-"ลงเวลาที่โกงยาก"**, so the fault is in the frame, not in one slide.
+The English take does this on purpose, with its own caption ("The whole system
+in Thai — one click"). The Thai take looks like the same click, carried over.
 
-The slides come from the video the dev session is producing now, which is not
-yet in the repository. The fix belongs in that work before the video lands,
-not as a follow-up after it.
+**Acceptance** The Thai take's last scene keeps the console in Thai while it
+shows the dark theme, or its caption says it switches language, whichever the
+film means. Re-recorded from `docs/film/`, not edited by hand, and the English
+take is unchanged.
 
-**Acceptance** In that slide, the whole of the mobile app's screen is visible
-inside the frame, with nothing covered by the cut-out or the border. The same
-holds for every other slide that uses the frame, in both languages. The asset
-is regenerated from its source rather than edited by hand, so the next
-re-recording does not bring the problem back.
-
-**Files** wherever that video's source lands
+**Files** `docs/film/`, `landing/assets/film.th.*`
 
 ---
 
@@ -695,3 +702,4 @@ Kept so the reasoning survives.
 | **CW-049** · A location's code was free text anyone could edit | The ecosystem's location code (ADR-0006): a fixed format, correctable until first use — a punch, a schedule, an export — and superseded rather than renamed afterwards, with the old location keeping its history. A breaking change for existing installs, with a migration that reports before it changes anything. 34cb1ae. |
 | **CW-050** · Cwork could not be investigated from its logs | Conforms to telemetry contract **v1.2**, which moved on from the v1.1 the ticket named while the work was under way. String `severity`, a plain `labels` object, `app.log`, and five metrics on a port of their own so `/metrics` is never published with the API. Two acceptance criteria were added mid-ticket from notes written for other systems, and both have tests by their own names: the outbox gauges read from the database, so two instances agree and a restart does not reset them; and a request refused by the auth guard or the throttler still gets its log line. **The ticket's premise was wrong:** it said Cwork emitted a numeric pino `level`. The dependency was installed and never wired in; it was removed, with a `LOG_PRETTY` nothing read. 783171f. |
 | **CW-053** · Nothing proved the security headers were served | A fix to nginx's `add_header` inheritance had put CSP and `X-Frame-Options` back on `/assets/` and `index.html`; nothing stopped the next `location` from dropping them again. CI now runs the image as shipped and asserts the headers on the paths that broke. b160cbb. |
+| **CW-055** · The phone frame covered the app in the film | Reported by the owner from two screenshots of the film in progress: the frame's camera cut-out sat on the app's greeting and its border clipped the right edge. The phone is now drawn with a status bar and a home-indicator strip around the app's full 390×844 screen, so neither covers any of it. Both takes were re-recorded from `docs/film/stage.html`, not patched. The PO checked frames from every chapter of both takes before closing. 18624fe. |
