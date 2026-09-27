@@ -233,6 +233,20 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **`SECURITY.md` describes the system as it is** (CW-057). Three of its five
+  known gaps had closed in 0.1.0 — second factors are required for privileged
+  roles, uploads are scanned by ClamAV when it is switched on, and rate-limit
+  counters can be shared across replicas — and are gone from the list; what
+  remains is true of the current release, including that scanning is off by
+  default. "Supported versions" now says which versions receive security fixes
+  during 0.x: the latest release only, with no backports. A new section covers
+  the other projects of the ecosystem: a problem found in one goes privately to
+  that project, code adapted between projects is fixed in all of them before
+  any advisory is published, and
+  [ADR-0022](https://github.com/SuruchBoss/PaynEat-ERP/blob/main/docs/adr/0022-vulnerability-disclosure-across-the-ecosystem.md)
+  is linked as the rule rather than restated. `docs/security.md` carries the
+  same corrections, and names the public demo's one-click sign-in as the one
+  path that opens a session without a code.
 - **ADR-0004 is amended, not superseded** (CW-042): the rule is stated as its
   intended "no tool parameter may extend the caller's reach", rather than the
   literal "no employee id" that read as forbidding every manager-facing tool.
