@@ -598,9 +598,9 @@ inside a phone frame. The frame's camera cut-out sits on top of the app's
 greeting, the employee's name, so the first line of the app cannot be read, and
 the right edge of the app runs under the frame's border.
 
-The slide's text is not in the repository's HTML, so it is baked into a video or
-image. The Thai walkthrough (`landing/assets/walkthrough.th.mp4`) is the likely
-source, but that is not confirmed. Finding it is part of the ticket.
+The slide comes from the video the dev session is producing now, which is not
+yet in the repository. The fix belongs in that work before the video lands,
+not as a follow-up after it.
 
 **Acceptance** In that slide, the whole of the mobile app's screen is visible
 inside the frame, with nothing covered by the cut-out or the border. The same
@@ -608,8 +608,7 @@ holds for every other slide that uses the frame, in both languages. The asset
 is regenerated from its source rather than edited by hand, so the next
 re-recording does not bring the problem back.
 
-**Files** unknown until the source is found; likely `docs/demo/`,
-`landing/assets/`
+**Files** wherever that video's source lands
 
 ---
 
