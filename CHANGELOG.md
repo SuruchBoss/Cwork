@@ -193,7 +193,9 @@ entry, tags it and publishes the notes.
   national ID. Every field is typed and every button pressed against the
   seeded demo, by [`docs/film/film.mjs`](./docs/film/film.mjs), recorded as one
   take of a stage holding the real console for five people at once and the
-  real app in a phone. It opens the overview page in each language, and both
+  real app in a phone — framed with a status bar and home strip, so the
+  camera island and rounded corners fall outside the app's screen rather than
+  over it (CW-055). It opens the overview page in each language, and both
   READMEs link to it.
 
 ### Removed
