@@ -45,6 +45,11 @@ In scope: the API, the admin console, the mobile app, the database schema, the
 default Docker configuration, and the public demo's code
 ([`backend/src/modules/demo`](./backend/src/modules/demo)).
 
+A problem that needs one of Cwork's own roles to reach — HR, payroll, an
+administrator — is still a security problem, not an ordinary bug: it is rated
+as needing a signed-in user, however senior the role (ADR-0022, decision 4).
+Cwork has exactly those roles.
+
 Out of scope: vulnerabilities in third-party dependencies (report those
 upstream), issues that require a compromised host or physical device access,
 anything that only affects a deliberately-documented gap below, and what the
@@ -72,13 +77,12 @@ kept in PaynEat-ERP; Cwork adopted it on 2026-09-27. What it means here:
   through its own channel above — never to a Cwork issue, commit or changelog.
 - **Cwork names another project's weakness only by its fixed version and its
   advisory, and only once that advisory is published.**
-- **Code adapted from one project into another is fixed together.** Every
-  project that adapted the code ships a fixed release before any advisory about
-  it is published, so an advisory never points at a hole that is still open
-  somewhere else.
+- **Code adapted from one project into another is checked in each of them.**
+  The owner of every project that adapted it is told privately and checks their
+  own copy. No advisory is published until each of those projects has a fixed
+  release, or its owner has said it is not affected.
 
-This is how GHSA-3cgw-73cr-r8c6 was handled. ADR-0022 is the rule itself; where
-this summary and it differ, the ADR is right.
+ADR-0022 is the rule itself; where this summary and it differ, the ADR is right.
 
 ## Known gaps
 
