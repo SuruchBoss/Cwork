@@ -190,6 +190,7 @@ Recorded because they are unanswered, not because they are unimportant.
 | How long may a punch sit offline before it needs confirming? | 12 hours is a placeholder. The pilot's flag rate decides it. |
 | Who reviews the Thai tax and social-security rules? | Nobody yet (CW-030). |
 | Keep or delete `AttendancePunch.selfieFileId`? | Proposed: delete it (CW-033). |
+| Is there a hosted Cwork, so a company without IT can use it? | The owner's decision. Today Cwork is self-hosted only, so small companies with no IT staff cannot adopt it, and per-head hosted services win that market by default (see backlog, 2026-09-28). Choosing not to compete there is a valid answer, if it is chosen on purpose. The ERP's ADR-0020 plans a PaynEat Cloud after its pilot. |
 
 ---
 

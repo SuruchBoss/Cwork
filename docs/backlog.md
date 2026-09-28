@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **3** | Payroll can file and pay · the app is complete | **CW-031 first** · CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **3** | Payroll can file and pay · the app is complete | **CW-031 first** · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -100,6 +100,15 @@ walkthrough were built alongside them with no tickets of their own, and the
 walkthrough covers the recording CW-034 asked for and did not get. Recorded
 here so the history is not misleading about where that work came from.
 
+**CW-058, CW-059 and CW-019 moved up on 2026-09-28**, after a look at
+PeopleFlow (peopleflowglobal.com), a Thai HR service sold per head. Its first
+claim is being "genuinely Thai": Buddhist-era years, a Sunday week, 24-hour
+time. It imports employees from Excel and exports the bank transfer file.
+Cwork has none of the three. Each is small next to the filings, and each is
+something an evaluator notices in the first ten minutes. CW-059 goes before
+CW-046 and CW-047 for a second reason: a company that starts mid-year cannot
+file a correct annual summary without the months it ran elsewhere.
+
 **`CW-031` moved to the front of phase 3 on 2026-09-26.** A hosted demo is the
 largest single thing that would help anyone evaluate this project. It waited only
 on who pays for the assistant, and that was settled on 2026-09-25: nobody does,
@@ -116,6 +125,52 @@ Nothing open.
 
 
 ## P1 — before payroll runs on real people
+
+
+### CW-059 · Start from a spreadsheet: import employees and opening balances
+`P1` · employees · leave · payroll · **L** · phase 3
+
+A company moving to Cwork has its people in Excel or in another system's
+export. Today each employee is typed in by hand, one form at a time. That is
+where an evaluation ends, and a competitor offers the import.
+
+It is P1 rather than a convenience because of payroll. Withholding projects the
+year from year-to-date figures (spec §6.3), and ภ.ง.ด.1ก and 50 ทวิ report the
+whole year. A company that starts in September has paid January to August
+somewhere else. Without those months, September's withholding is wrong and the
+annual filings are short. `priorEmployerIncome` does not cover this: those
+months were paid by **this** employer, and 50 ทวิ must count them as its own.
+
+**Scope**
+- A downloadable template, one file for employees and one for opening
+  balances.
+- Employees: the fields the employee form takes, sensitive ones included
+  (national ID, bank account, social security number), encrypted exactly as
+  when typed in.
+- Opening balances per employee: leave taken so far this year, and this year's
+  taxable income, tax withheld and social security paid before Cwork.
+- A preview that lists every problem by row and column before anything is
+  written. Nothing is written until the whole file is clean, and then all of
+  it is written in one step.
+- Importing needs the permission that creating employees needs, and each
+  import is audited as one event naming the file and the row count.
+
+**Acceptance**
+- A file saved from Thai Excel, as `.xlsx` or as Excel's default CSV (not
+  UTF-8), imports with Thai names intact.
+- A file with one bad row writes nothing and names the row and the problem.
+- Importing the same file twice creates no duplicates: the second run is
+  refused, row by row, naming the employee codes already present.
+- A company that imports January to August and runs September in Cwork
+  withholds the same September tax as if all nine months had run in Cwork.
+- Opening balances count as this employer's own in CW-046 and CW-047, not as a
+  previous employer's.
+- Leave balances after import equal entitlement minus the imported days taken.
+
+**Files** `backend/src/modules/employees/`, `backend/src/modules/leave/`,
+`backend/src/modules/payroll/`, `web/src/features/employees/`
+
+---
 
 ### CW-004 · ภ.ง.ด.1 withholding-tax filing export
 `P1` · payroll · **L**
@@ -262,6 +317,9 @@ different layout.
   test rather than by inspection.
 - An employee who joined or left mid-year appears with the months they were paid.
 - A year containing a month that does not reconcile is refused, naming it.
+- An employer that began using Cwork mid-year files the whole year: the months
+  before it come from the opening balances imported by CW-059, counted as this
+  employer's own and not as a previous employer's.
 
 **Files** `backend/src/modules/payroll/`
 
@@ -281,6 +339,8 @@ signature block, so this is a template over it.
 - An employee fetches their own and nobody else's; issuing for others needs the
   document-issuing permission.
 - Re-issuing supersedes rather than overwrites, and both are audited.
+- For an employer that began using Cwork mid-year, the certificate shows the
+  whole year's income and tax, including the opening balances from CW-059.
 
 **Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`
 
@@ -372,6 +432,41 @@ not because there is a date.
 
 
 ## P2 — worth doing
+
+
+### CW-058 · Thai dates in the Buddhist era, everywhere a year is shown
+`P2` · web · mobile · documents · **M** · phase 3
+
+In Thai, the console and the app write today as "28 ก.ย. 2026": Thai month,
+Gregorian year. Thai offices count years in พ.ศ., and a competitor opens its
+landing page with exactly this. Worse, some places are not localised at all:
+- **The employment certificate PDF** prints the hire date as `2024-01-15`
+  (`formatDateOnly` in `certificate-renderer.ts`). That is on a document an
+  employee hands to a bank.
+- **Date input fields** in the console are the browser's own (`type="date"`,
+  eleven of them), so they show whatever the browser's locale is. The product
+  film shows `09/01/2026`, month first.
+
+Only what is displayed changes. Stored values and the API stay ISO dates in the
+Gregorian calendar, and English stays Gregorian.
+
+**Acceptance**
+- In Thai, every year shown in the console, the app and generated PDFs is
+  Buddhist era: 28 ก.ย. 2569.
+- Date fields in Thai show and accept a Buddhist-era date, day first. Typing or
+  picking 1 ต.ค. 2569 stores 2026-10-01.
+- Certificates and payslips write dates in words the way Thai documents do:
+  "15 มกราคม 2567".
+- A test catches a Gregorian year on a Thai screen, so the next new screen
+  cannot bring it back.
+- English is unchanged.
+- The tax filing formats (CW-045 to CW-048) follow their own published layouts
+  and are out of scope here.
+
+**Files** `web/src/lib/format.ts`, `web/src/` date fields,
+`mobile/lib/core/utils/formatters.dart`, `backend/src/modules/documents/`
+
+---
 
 
 ### CW-012 · Expense claims on mobile
