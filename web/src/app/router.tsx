@@ -32,6 +32,8 @@ const AssistantPage = lazy(() => import('@/features/assistant/AssistantPage'));
 const OrganizationPage = lazy(() => import('@/features/settings/OrganizationPage'));
 const AuditPage = lazy(() => import('@/features/settings/AuditPage'));
 const NotFoundPage = lazy(() => import('@/features/settings/NotFoundPage'));
+const MobileAppPage = lazy(() => import('@/features/mobile-app/MobileAppPage'));
+const InstallPage = lazy(() => import('@/features/mobile-app/InstallPage'));
 
 function RouteFallback() {
   return (
@@ -69,6 +71,16 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // Public: HR's QR code opens it on a phone that has no account yet
+    // (CW-060). It holds nothing but links, and the server's own address.
+    path: '/app',
+    element: (
+      <Suspense fallback={<RouteFallback />}>
+        <InstallPage />
+      </Suspense>
+    ),
+  },
+  {
     path: '/login',
     element: (
       <Suspense fallback={<RouteFallback />}>
@@ -94,6 +106,11 @@ export const router = createBrowserRouter([
                   { index: true, element: <EmployeeListPage /> },
                   { path: ':id', element: <EmployeeDetailPage /> },
                 ],
+              },
+              {
+                path: 'mobile-app',
+                element: <RequirePermission any={[P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM]} />,
+                children: [{ index: true, element: <MobileAppPage /> }],
               },
               {
                 path: 'offboarding',

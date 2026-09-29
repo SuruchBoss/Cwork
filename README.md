@@ -235,7 +235,8 @@ npm run start:dev       # → http://localhost:3000
 cd ../web
 npm install && npm run dev    # → http://localhost:5173, proxies /api
 
-# Mobile
+# Mobile — the dart-define skips the connect screen; without it, a debug
+#          build lets you type http://10.0.2.2:3000 there
 cd ../mobile
 flutter pub get
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
@@ -286,6 +287,37 @@ enrol it yourself, once.
 Running `db:init` a second time on a database that already has an organisation
 refuses, and so does `db:seed`: the demo data will not install itself beside a
 real company by accident.
+
+### Putting the app on employees' phones
+
+There is one Android app, the same for every company. Each employee connects it
+to your server, and nobody builds anything for your company.
+
+1. **Serve Cwork over HTTPS**, with a certificate phones trust: a reverse proxy
+   such as Caddy or nginx in front of port 8080, with a Let's Encrypt
+   certificate, is enough. The app refuses plain HTTP, because passwords and
+   national IDs travel over it.
+2. **In the console, open Employees → Mobile app.** It shows a QR code and a
+   link to your server's install page, `https://<your server>/app`. Print it,
+   post it in the staff chat, or show it at the HR desk.
+3. **The employee scans it with the phone camera.** The install page offers the
+   APK from the release your server runs. Android asks once to allow installs
+   from the browser. Play Protect may also warn that the app is not from the Play
+   Store, which is true.
+4. **They open the app and connect.** They can scan the same code, tap *Open the
+   app* on the install page, or type your server's address. The app shows which
+   server it will connect to and asks first. It connects only if the server is
+   Cwork, over HTTPS. Then they sign in as usual.
+
+A later release installs over the app. The employee stays signed in, and any
+clock-in still queued offline is sent as before.
+
+**iPhone is not supported yet.** Publishing an iOS app needs an Apple Developer
+Program membership, and that decision is still open. Until then, iPhone users
+cannot install the app.
+
+The release workflow builds and signs the APK. For maintainers, the signing key
+and the release steps are in [docs/mobile-release.md](./docs/mobile-release.md).
 
 ---
 
@@ -524,6 +556,7 @@ landing/     The overview page, published to GitHub Pages
 | [Payroll: Thai rules](./docs/payroll-thailand.md) | Tax brackets, allowances, OT multipliers |
 | [The HR assistant](./docs/ai-assistant.md) | Tools, guardrails, data flow |
 | [Operations](./docs/operations.md) | Deploy, backup, scheduled jobs, the Prisma drift trap |
+| [Releasing the mobile app](./docs/mobile-release.md) | The signing key, the APK in each release, what an update keeps |
 | [ADRs](./docs/adr/) | Decisions that were not obvious |
 
 ## Localisation
@@ -540,7 +573,7 @@ means a new rule set and that translation pass, not a rewrite.
 ## Status
 
 Working and verified end to end — sign-in through payroll. 400 backend unit
-tests, 50 web, 81 mobile, plus a 262-check end-to-end suite that drives the real
+tests, 64 web, 81 mobile, plus a 262-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -599,7 +632,7 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 400 backend unit tests, 50 web,
+- Every suite passes, in CI, on every push — 400 backend unit tests, 64 web,
   81 mobile, 262 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
