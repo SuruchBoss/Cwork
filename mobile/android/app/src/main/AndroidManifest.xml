@@ -11,7 +11,13 @@
         android:label="Cwork"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="false">
+        android:usesCleartextTraffic="false"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
+        <!-- No backup, and no copy to a new phone: the server address, the
+             session and the offline punch queue are encrypted under a key that
+             never leaves this device, so a restored copy could not be read. A
+             new phone connects and signs in afresh (CW-060). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -33,6 +39,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- cwork://connect?server=… — the install page's "open the app"
+                 button. The app only ever offers to connect; the employee
+                 confirms (CW-060). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="cwork" android:host="connect"/>
+            </intent-filter>
+            <!-- The link is read by app_links; Flutter's own deep linking would
+                 also try to open it as a page and find none. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

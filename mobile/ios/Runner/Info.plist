@@ -49,5 +49,20 @@
 	<string>Cwork ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Cwork ใช้ตำแหน่งของคุณเฉพาะตอนลงเวลาเข้า-ออกงาน เพื่อยืนยันว่าคุณอยู่ในพื้นที่ทำงาน</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Cwork ใช้กล้องเฉพาะตอนสแกน QR code จาก HR เพื่อเชื่อมต่อกับบริษัทของคุณ</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.cwork.app.connect</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cwork</string>
+			</array>
+		</dict>
+	</array>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 </dict>
 </plist>

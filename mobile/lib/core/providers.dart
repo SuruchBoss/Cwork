@@ -3,6 +3,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'config/server.dart';
 import 'network/api_client.dart';
 import 'storage/token_storage.dart';
 
@@ -18,8 +19,12 @@ final Provider<TokenStorage> tokenStorageProvider =
 /// and sends the user back to sign-in.
 final StateProvider<bool> sessionExpiredProvider = StateProvider<bool>((Ref ref) => false);
 
+/// Rebuilt when the employee connects to a different server, and everything
+/// that talks to the API with it. Before a server is chosen nothing calls it:
+/// the app shows the connect screen instead.
 final Provider<ApiClient> apiClientProvider = Provider<ApiClient>((Ref ref) {
   return ApiClient(
+    baseUrl: ref.watch(serverProvider) ?? '',
     tokenStorage: ref.watch(tokenStorageProvider),
     onSessionExpired: () => ref.read(sessionExpiredProvider.notifier).state = true,
   );

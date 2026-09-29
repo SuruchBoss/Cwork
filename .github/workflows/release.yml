@@ -25,6 +25,8 @@ jobs:
   tag:
     name: Tag the top changelog entry
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.entry.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -102,3 +104,109 @@ jobs:
             --notes-file release-notes.md \
             --verify-tag \
             ${{ startsWith(steps.entry.outputs.version, '0.') && '--prerelease' || '' }}
+
+  android:
+    # The app employees install (CW-060): one APK for every company, attached
+    # to the release it was built from. The console's install page links to it
+    # by version, so a company's employees get the app that matches its server.
+    #
+    # Runs on every trigger, not only when a tag is created, and does nothing
+    # once the release has its APK — so if this job failed, running the
+    # workflow again by hand finishes the release rather than skipping it.
+    name: Android app
+    needs: tag
+    runs-on: ubuntu-latest
+
+    env:
+      TAG: v${{ needs.tag.outputs.version }}
+      VERSION: ${{ needs.tag.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.tag.outputs.version }}
+
+      - name: Decide whether there is anything to build
+        id: need
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f mobile/lib/core/config/server.dart ]; then
+            # Built before the app could be pointed at a company's server, so
+            # an APK of it would only ever reach the address it was built with.
+            echo "$TAG predates the installable app (CW-060) — nothing to build."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          elif gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx 'cwork-android.apk'; then
+            echo "$TAG already has its APK — nothing to do."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refuse to build without the release key
+        if: steps.need.outputs.build == 'true'
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # An APK signed with anything else cannot be updated by the next
+          # release: every employee would have to uninstall it — losing any
+          # punch still queued on the phone — and start again.
+          missing=''
+          [ -n "$KEYSTORE" ]       || missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -n "$STORE_PASSWORD" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ]      || missing="$missing ANDROID_KEY_ALIAS"
+          [ -n "$KEY_PASSWORD" ]   || missing="$missing ANDROID_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing. See docs/mobile-release.md."
+            exit 1
+          fi
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/cwork-release.jks"
+
+      - uses: actions/setup-java@v4
+        if: steps.need.outputs.build == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        if: steps.need.outputs.build == 'true'
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build the signed APK
+        if: steps.need.outputs.build == 'true'
+        working-directory: mobile
+        env:
+          CWORK_REQUIRE_RELEASE_SIGNING: 'true'
+          CWORK_KEYSTORE_PATH: ${{ runner.temp }}/cwork-release.jks
+          CWORK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CWORK_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CWORK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # x.y.z -> x*1000000 + y*1000 + z: always higher than the release
+          # before, which is what lets Android install it as an update.
+          IFS=. read -r major minor patch <<< "$VERSION"
+          code=$(( major * 1000000 + minor * 1000 + patch ))
+          flutter pub get
+          flutter build apk --release --build-name="$VERSION" --build-number="$code"
+
+      - name: Check what was built
+        if: steps.need.outputs.build == 'true'
+        run: bash mobile/tool/check-apk.sh mobile/build/app/outputs/flutter-apk/app-release.apk --release
+
+      - name: Attach it to the release
+        if: steps.need.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk cwork-android.apk
+          sha256sum cwork-android.apk > cwork-android.apk.sha256
+          gh release upload "$TAG" cwork-android.apk cwork-android.apk.sha256 --clobber
+
+      - name: Forget the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cwork-release.jks"

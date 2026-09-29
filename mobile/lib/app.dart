@@ -1,11 +1,16 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/app_config.dart';
+import 'core/config/server.dart';
+import 'core/config/server_address.dart';
 import 'core/i18n/i18n.dart';
 import 'core/platform/platform_config.dart';
 import 'core/providers.dart';
@@ -14,6 +19,12 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/application/auth_controller.dart';
 import 'features/auth/domain/session.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/server/presentation/connect_screen.dart';
+
+/// Links that open the app: the install page's "open the app" button, which
+/// carries the company's server (CW-060). A provider so tests can send one.
+final Provider<Stream<Uri>> incomingLinksProvider =
+    Provider<Stream<Uri>>((Ref ref) => AppLinks().uriLinkStream);
 
 class CworkApp extends ConsumerStatefulWidget {
   const CworkApp({super.key});
@@ -23,18 +34,57 @@ class CworkApp extends ConsumerStatefulWidget {
 }
 
 class _CworkAppState extends ConsumerState<CworkApp> {
+  StreamSubscription<Uri>? _links;
+
   @override
   void initState() {
     super.initState();
-    // Revalidate any stored session before showing the app.
+    // Revalidate any stored session before showing the app — once there is a
+    // server to ask. Until then the connect screen is showing, and connecting
+    // bootstraps (below).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authControllerProvider.notifier).bootstrap();
+      if (ref.read(serverProvider) != null) {
+        ref.read(authControllerProvider.notifier).bootstrap();
+      }
     });
+    _links = ref.read(incomingLinksProvider).listen(_onLink, onError: (Object _) {});
+  }
+
+  @override
+  void dispose() {
+    _links?.cancel();
+    super.dispose();
+  }
+
+  /// A `cwork://connect` link is only ever a suggestion: it is held for the
+  /// employee to confirm, never acted on, because anybody can send one. A
+  /// link to the server already in use is simply the app being opened.
+  void _onLink(Uri link) {
+    if (link.scheme != 'cwork') return;
+    final String? apiBaseUrl = parseServerAddress(
+      link.toString(),
+      allowInsecure: true,
+    ).apiBaseUrl;
+    if (apiBaseUrl == null || apiBaseUrl == ref.read(serverProvider)) return;
+    ref.read(pendingServerProvider.notifier).state = link.toString();
   }
 
   @override
   Widget build(BuildContext context) {
     final AuthState auth = ref.watch(authControllerProvider);
+    final String? server = ref.watch(serverProvider);
+    final bool linkWaiting = ref.watch(pendingServerProvider) != null;
+
+    // A new server means a new API client, and with it a new auth controller
+    // that has not asked anybody anything yet. Listened to by instance rather
+    // than on the server itself: the server changes first, and the controller
+    // is only rebuilt after.
+    ref.listen<AuthController>(authControllerProvider.notifier, (
+      AuthController? previous,
+      AuthController next,
+    ) {
+      if (previous != next && ref.read(serverProvider) != null) next.bootstrap();
+    });
 
     // The API client flips this when a refresh fails; drop to the sign-in screen.
     ref.listen<bool>(sessionExpiredProvider, (bool? _, bool expired) {
@@ -58,6 +108,7 @@ class _CworkAppState extends ConsumerState<CworkApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: switch (auth) {
+        _ when server == null || linkWaiting => const ConnectScreen(),
         AuthLoading() => const _SplashScreen(),
         AuthSignedOut(message: final String? message) => _LoginWithMessage(message: message),
         AuthSignedIn(user: final SessionUser user) => HomeShell(user: user),
