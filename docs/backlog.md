@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **3** | Payroll can file and pay · the app is complete | **CW-031 first** · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **3** | Payroll can file and pay · the app is complete | **CW-060 first (P0, blocks the pilot)** · CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -120,7 +120,49 @@ seeing any of it.
 
 ## P0 — blocks a real deployment
 
-Nothing open.
+
+### CW-060 · Employees have no way to install the app
+`P0` · mobile · project · **M** · blocks the pilot
+
+Found by the PO on 2026-09-29, preparing a real pilot. **Clocking in happens
+only in the app.** The console lists punches but cannot record one. Yet
+nothing in the repository gets the app onto an employee's phone:
+- No release build, no signed APK and no store listing.
+- The release workflow does not touch `mobile/`.
+- `mobile/README.md` covers an emulator and a simulator only.
+- The API address is fixed at build time (`--dart-define`), so every company
+  would need its own build from a developer.
+
+Phase 2, "the pilot can run", closed on 2026-09-26 with this still open. The
+gap is the PO's, and it is recorded here so the history does not suggest
+otherwise.
+
+**Direction.** One app for every installation. The server address is entered,
+or scanned as a QR code from the console, at first launch, the way self-hosted
+products usually do it. That keeps the app store option open and means a
+company never waits on a developer. The address must be HTTPS. If the dev
+finds a reason one build cannot serve every server, bring it back to the PO.
+
+**Needs the owner.** iPhones install outside the App Store only through
+Apple's developer programme, which has a yearly fee, and TestFlight. Android
+can install a signed APK directly. Whether to pay for iPhone depends on how
+many of the pilot's employees use one.
+
+**Acceptance**
+- An employee given only a link or a QR code by HR installs the app on Android,
+  connects to their company's server, and clocks in. No developer builds
+  anything for that company.
+- The same on iPhone, or, if the owner decides against the Apple programme for
+  now, the README says plainly that iPhone is not supported yet.
+- The console shows HR the QR code or link to hand out.
+- An update installs over the previous version without signing the employee
+  out or losing a punch queued offline.
+- The README's install section covers the app as well as the server.
+
+**Files** `mobile/`, `.github/workflows/release.yml`, `web/src/features/`,
+`README.md`, `README.th.md`
+
+---
 
 
 
