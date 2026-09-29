@@ -272,6 +272,35 @@ jobs:
       - run: flutter analyze --fatal-infos
       - run: flutter test
 
+  android:
+    # The APK employees install is only ever built in a release (CW-060), which
+    # is the worst moment to find out it no longer builds. This builds the same
+    # release APK on every commit — signed with a throwaway debug key, since
+    # the release key lives only in the release workflow — and checks what was
+    # built.
+    name: Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - run: bash tool/check-apk.sh build/app/outputs/flutter-apk/app-release.apk
+
   landing:
     name: Landing page
     runs-on: ubuntu-latest

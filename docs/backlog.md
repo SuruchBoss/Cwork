@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **3** | Payroll can file and pay · the app is complete | **CW-031 first** · CW-045 → CW-046 → CW-047 · CW-048 · CW-019 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **3** | Payroll can file and pay · the app is complete | **CW-060 first (P0, blocks the pilot)** · CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -100,6 +100,15 @@ walkthrough were built alongside them with no tickets of their own, and the
 walkthrough covers the recording CW-034 asked for and did not get. Recorded
 here so the history is not misleading about where that work came from.
 
+**CW-058, CW-059 and CW-019 moved up on 2026-09-28**, after a look at
+PeopleFlow (peopleflowglobal.com), a Thai HR service sold per head. Its first
+claim is being "genuinely Thai": Buddhist-era years, a Sunday week, 24-hour
+time. It imports employees from Excel and exports the bank transfer file.
+Cwork has none of the three. Each is small next to the filings, and each is
+something an evaluator notices in the first ten minutes. CW-059 goes before
+CW-046 and CW-047 for a second reason: a company that starts mid-year cannot
+file a correct annual summary without the months it ran elsewhere.
+
 **`CW-031` moved to the front of phase 3 on 2026-09-26.** A hosted demo is the
 largest single thing that would help anyone evaluate this project. It waited only
 on who pays for the assistant, and that was settled on 2026-09-25: nobody does,
@@ -111,11 +120,99 @@ seeing any of it.
 
 ## P0 — blocks a real deployment
 
-Nothing open.
+
+### CW-060 · Employees have no way to install the app
+`P0` · mobile · project · **M** · blocks the pilot
+
+Found by the PO on 2026-09-29, preparing a real pilot. **Clocking in happens
+only in the app.** The console lists punches but cannot record one. Yet
+nothing in the repository gets the app onto an employee's phone:
+- No release build, no signed APK and no store listing.
+- The release workflow does not touch `mobile/`.
+- `mobile/README.md` covers an emulator and a simulator only.
+- The API address is fixed at build time (`--dart-define`), so every company
+  would need its own build from a developer.
+
+Phase 2, "the pilot can run", closed on 2026-09-26 with this still open. The
+gap is the PO's, and it is recorded here so the history does not suggest
+otherwise.
+
+**Direction.** One app for every installation. The server address is entered,
+or scanned as a QR code from the console, at first launch, the way self-hosted
+products usually do it. That keeps the app store option open and means a
+company never waits on a developer. The address must be HTTPS. If the dev
+finds a reason one build cannot serve every server, bring it back to the PO.
+
+**Needs the owner.** iPhones install outside the App Store only through
+Apple's developer programme, which has a yearly fee, and TestFlight. Android
+can install a signed APK directly. Whether to pay for iPhone depends on how
+many of the pilot's employees use one.
+
+**Acceptance**
+- An employee given only a link or a QR code by HR installs the app on Android,
+  connects to their company's server, and clocks in. No developer builds
+  anything for that company.
+- The same on iPhone, or, if the owner decides against the Apple programme for
+  now, the README says plainly that iPhone is not supported yet.
+- The console shows HR the QR code or link to hand out.
+- An update installs over the previous version without signing the employee
+  out or losing a punch queued offline.
+- The README's install section covers the app as well as the server.
+
+**Files** `mobile/`, `.github/workflows/release.yml`, `web/src/features/`,
+`README.md`, `README.th.md`
+
+---
 
 
 
 ## P1 — before payroll runs on real people
+
+
+### CW-059 · Start from a spreadsheet: import employees and opening balances
+`P1` · employees · leave · payroll · **L** · phase 3
+
+A company moving to Cwork has its people in Excel or in another system's
+export. Today each employee is typed in by hand, one form at a time. That is
+where an evaluation ends, and a competitor offers the import.
+
+It is P1 rather than a convenience because of payroll. Withholding projects the
+year from year-to-date figures (spec §6.3), and ภ.ง.ด.1ก and 50 ทวิ report the
+whole year. A company that starts in September has paid January to August
+somewhere else. Without those months, September's withholding is wrong and the
+annual filings are short. `priorEmployerIncome` does not cover this: those
+months were paid by **this** employer, and 50 ทวิ must count them as its own.
+
+**Scope**
+- A downloadable template, one file for employees and one for opening
+  balances.
+- Employees: the fields the employee form takes, sensitive ones included
+  (national ID, bank account, social security number), encrypted exactly as
+  when typed in.
+- Opening balances per employee: leave taken so far this year, and this year's
+  taxable income, tax withheld and social security paid before Cwork.
+- A preview that lists every problem by row and column before anything is
+  written. Nothing is written until the whole file is clean, and then all of
+  it is written in one step.
+- Importing needs the permission that creating employees needs, and each
+  import is audited as one event naming the file and the row count.
+
+**Acceptance**
+- A file saved from Thai Excel, as `.xlsx` or as Excel's default CSV (not
+  UTF-8), imports with Thai names intact.
+- A file with one bad row writes nothing and names the row and the problem.
+- Importing the same file twice creates no duplicates: the second run is
+  refused, row by row, naming the employee codes already present.
+- A company that imports January to August and runs September in Cwork
+  withholds the same September tax as if all nine months had run in Cwork.
+- Opening balances count as this employer's own in CW-046 and CW-047, not as a
+  previous employer's.
+- Leave balances after import equal entitlement minus the imported days taken.
+
+**Files** `backend/src/modules/employees/`, `backend/src/modules/leave/`,
+`backend/src/modules/payroll/`, `web/src/features/employees/`
+
+---
 
 ### CW-004 · ภ.ง.ด.1 withholding-tax filing export
 `P1` · payroll · **L**
@@ -262,6 +359,9 @@ different layout.
   test rather than by inspection.
 - An employee who joined or left mid-year appears with the months they were paid.
 - A year containing a month that does not reconcile is refused, naming it.
+- An employer that began using Cwork mid-year files the whole year: the months
+  before it come from the opening balances imported by CW-059, counted as this
+  employer's own and not as a previous employer's.
 
 **Files** `backend/src/modules/payroll/`
 
@@ -281,6 +381,8 @@ signature block, so this is a template over it.
 - An employee fetches their own and nobody else's; issuing for others needs the
   document-issuing permission.
 - Re-issuing supersedes rather than overwrites, and both are audited.
+- For an employer that began using Cwork mid-year, the certificate shows the
+  whole year's income and tax, including the opening balances from CW-059.
 
 **Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`
 
@@ -372,6 +474,41 @@ not because there is a date.
 
 
 ## P2 — worth doing
+
+
+### CW-058 · Thai dates in the Buddhist era, everywhere a year is shown
+`P2` · web · mobile · documents · **M** · phase 3
+
+In Thai, the console and the app write today as "28 ก.ย. 2026": Thai month,
+Gregorian year. Thai offices count years in พ.ศ., and a competitor opens its
+landing page with exactly this. Worse, some places are not localised at all:
+- **The employment certificate PDF** prints the hire date as `2024-01-15`
+  (`formatDateOnly` in `certificate-renderer.ts`). That is on a document an
+  employee hands to a bank.
+- **Date input fields** in the console are the browser's own (`type="date"`,
+  eleven of them), so they show whatever the browser's locale is. The product
+  film shows `09/01/2026`, month first.
+
+Only what is displayed changes. Stored values and the API stay ISO dates in the
+Gregorian calendar, and English stays Gregorian.
+
+**Acceptance**
+- In Thai, every year shown in the console, the app and generated PDFs is
+  Buddhist era: 28 ก.ย. 2569.
+- Date fields in Thai show and accept a Buddhist-era date, day first. Typing or
+  picking 1 ต.ค. 2569 stores 2026-10-01.
+- Certificates and payslips write dates in words the way Thai documents do:
+  "15 มกราคม 2567".
+- A test catches a Gregorian year on a Thai screen, so the next new screen
+  cannot bring it back.
+- English is unchanged.
+- The tax filing formats (CW-045 to CW-048) follow their own published layouts
+  and are out of scope here.
+
+**Files** `web/src/lib/format.ts`, `web/src/` date fields,
+`mobile/lib/core/utils/formatters.dart`, `backend/src/modules/documents/`
+
+---
 
 
 ### CW-012 · Expense claims on mobile
@@ -704,4 +841,4 @@ Kept so the reasoning survives.
 | **CW-050** · Cwork could not be investigated from its logs | Conforms to telemetry contract **v1.2**, which moved on from the v1.1 the ticket named while the work was under way. String `severity`, a plain `labels` object, `app.log`, and five metrics on a port of their own so `/metrics` is never published with the API. Two acceptance criteria were added mid-ticket from notes written for other systems, and both have tests by their own names: the outbox gauges read from the database, so two instances agree and a restart does not reset them; and a request refused by the auth guard or the throttler still gets its log line. **The ticket's premise was wrong:** it said Cwork emitted a numeric pino `level`. The dependency was installed and never wired in; it was removed, with a `LOG_PRETTY` nothing read. 783171f. |
 | **CW-053** · Nothing proved the security headers were served | A fix to nginx's `add_header` inheritance had put CSP and `X-Frame-Options` back on `/assets/` and `index.html`; nothing stopped the next `location` from dropping them again. CI now runs the image as shipped and asserts the headers on the paths that broke. b160cbb. |
 | **CW-055** · The phone frame covered the app in the film | Reported by the owner from two screenshots of the film in progress: the frame's camera cut-out sat on the app's greeting and its border clipped the right edge. The phone is now drawn with a status bar and a home-indicator strip around the app's full 390×844 screen, so neither covers any of it. Both takes were re-recorded from `docs/film/stage.html`, not patched. The PO checked frames from every chapter of both takes before closing. 18624fe. |
-| **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. 5d14915, bc76d4c. |
+| **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. The changelog entry carried the same wording and was corrected after closing. 5d14915, bc76d4c, e675493. |

@@ -21,6 +21,7 @@ typedef SessionExpiredCallback = void Function();
 /// the server's reuse detection would revoke the whole session.
 class ApiClient {
   ApiClient({
+    required String baseUrl,
     required TokenStorage tokenStorage,
     required SessionExpiredCallback onSessionExpired,
     Dio? dio,
@@ -29,7 +30,7 @@ class ApiClient {
         _dio = dio ??
             Dio(
               BaseOptions(
-                baseUrl: AppConfig.apiBaseUrl,
+                baseUrl: baseUrl,
                 connectTimeout: AppConfig.connectTimeout,
                 receiveTimeout: AppConfig.receiveTimeout,
                 contentType: 'application/json',

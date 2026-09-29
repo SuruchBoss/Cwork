@@ -199,6 +199,42 @@ const Map<String, String> thMessages = <String, String>{
   'Request an employment certificate': 'ขอหนังสือรับรองการทำงาน',
   'How many times was I late this month?': 'เดือนนี้มาสายกี่ครั้ง',
 
+  // Connecting to the company's server (CW-060)
+  'Connect to your company': 'เชื่อมต่อกับบริษัทของคุณ',
+  'Enter the address HR gave you, or scan their QR code.':
+      'ใส่ที่อยู่ที่ HR ให้มา หรือสแกน QR code จาก HR',
+  'Company address': 'ที่อยู่ของบริษัท',
+  'Connect': 'เชื่อมต่อ',
+  'Scan QR code': 'สแกน QR code',
+  'Connect this app to': 'เชื่อมต่อแอปนี้กับ',
+  'You will be signed out of {host}.': 'แอปจะออกจากระบบของ {host}',
+  'Company: {host}': 'บริษัท: {host}',
+  'Change': 'เปลี่ยน',
+  'Enter the address HR gave you': 'กรุณาใส่ที่อยู่ที่ HR ให้มา',
+  'That is not a web address. Check it with HR.': 'ที่อยู่นี้ไม่ใช่ที่อยู่เว็บ กรุณาตรวจสอบกับ HR',
+  'The address must start with https://. Ask HR for the secure address.':
+      'ที่อยู่ต้องขึ้นต้นด้วย https:// กรุณาขอที่อยู่แบบปลอดภัยจาก HR',
+  '{n} punches have not been sent to {host} yet. Open the app with an internet '
+          'connection so they are sent, then change the server.':
+      'ยังมีเวลาเข้า-ออกงาน {n} รายการที่ยังไม่ได้ส่งไปที่ {host} '
+          'กรุณาเปิดแอปขณะต่ออินเทอร์เน็ตให้ส่งเสร็จก่อน แล้วจึงเปลี่ยนบริษัท',
+  'Could not reach {host}. Check the address and your internet connection.':
+      'ติดต่อ {host} ไม่ได้ กรุณาตรวจสอบที่อยู่และการเชื่อมต่ออินเทอร์เน็ต',
+  '{host} does not have a certificate this phone trusts. The company’s IT team '
+          'needs to fix the server’s HTTPS certificate.':
+      '{host} ใช้ใบรับรองที่โทรศัพท์เครื่องนี้ไม่เชื่อถือ '
+          'ฝ่ายไอทีของบริษัทต้องแก้ใบรับรอง HTTPS ของเซิร์ฟเวอร์',
+  '{host} answered, but it is not a Cwork server. Check the address with HR.':
+      '{host} ตอบกลับมา แต่ไม่ใช่เซิร์ฟเวอร์ Cwork กรุณาตรวจสอบที่อยู่กับ HR',
+  'Scan the QR code from HR': 'สแกน QR code จาก HR',
+  'Point the camera at the code on the poster or on HR’s screen':
+      'เล็งกล้องไปที่โค้ดบนโปสเตอร์หรือบนหน้าจอของ HR',
+  'The camera is not allowed. You can type the address instead.':
+      'ไม่ได้อนุญาตให้ใช้กล้อง พิมพ์ที่อยู่แทนได้',
+  'The camera could not start. You can type the address instead.':
+      'เปิดกล้องไม่สำเร็จ พิมพ์ที่อยู่แทนได้',
+  'Type the address': 'พิมพ์ที่อยู่',
+
   // Shared widgets
   'Could not load': 'โหลดข้อมูลไม่สำเร็จ',
   'Try again': 'ลองอีกครั้ง',

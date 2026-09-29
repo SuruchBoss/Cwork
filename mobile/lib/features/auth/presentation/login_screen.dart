@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/config/server.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../server/presentation/connect_screen.dart';
 import '../application/auth_controller.dart';
 import '../domain/session.dart';
 
@@ -236,13 +238,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 }),
                         child: Text(ref.tr('Back')),
                       ),
-                    ],
+                    ] else
+                      const _CompanyLine(),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Which company this phone signs in to, and the way to change it — for the
+/// employee who scanned the wrong poster, or moved to a sister company.
+class _CompanyLine extends ConsumerWidget {
+  const _CompanyLine();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final String? server = ref.watch(serverProvider);
+    if (server == null) return const SizedBox.shrink();
+    final ThemeData theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: <Widget>[
+          Text(
+            ref.tr('Company: {host}', <String, Object>{'host': Uri.parse(server).host}),
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(builder: (_) => const ConnectScreen()),
+            ),
+            child: Text(ref.tr('Change')),
+          ),
+        ],
       ),
     );
   }

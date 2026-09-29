@@ -190,6 +190,7 @@ Recorded because they are unanswered, not because they are unimportant.
 | How long may a punch sit offline before it needs confirming? | 12 hours is a placeholder. The pilot's flag rate decides it. |
 | Who reviews the Thai tax and social-security rules? | Nobody yet (CW-030). |
 | Keep or delete `AttendancePunch.selfieFileId`? | Proposed: delete it (CW-033). |
+| Is there a hosted Cwork, so a company without IT can use it? | The owner's decision. Today Cwork is self-hosted only, so small companies with no IT staff cannot adopt it, and per-head hosted services win that market by default (see backlog, 2026-09-28). Choosing not to compete there is a valid answer, if it is chosen on purpose. The ERP's ADR-0020 plans a PaynEat Cloud after its pilot. |
 
 ---
 
@@ -707,7 +708,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 400 backend, 50 web, 35 mobile. A 262-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 400 backend, 50 web, 81 mobile. A 262-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

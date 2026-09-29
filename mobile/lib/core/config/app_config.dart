@@ -3,8 +3,9 @@
 
 /// Build-time configuration.
 ///
-/// Values come from `--dart-define`, so a release build is pinned to the API it
-/// was built against and nothing sensitive is bundled in the source tree:
+/// The company's server is **not** here: one build serves every company, and
+/// the employee chooses the server at first launch (CW-060, `server.dart`).
+/// A developer can still preset one, which skips that screen:
 ///
 /// ```
 /// flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
@@ -12,11 +13,9 @@
 class AppConfig {
   const AppConfig._();
 
+  /// A preset server for development builds; empty in every build handed out.
   /// 10.0.2.2 is how the Android emulator reaches the host machine.
-  static const String apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000/api/v1',
-  );
+  static const String apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   static const String appName = String.fromEnvironment(
     'APP_NAME',
