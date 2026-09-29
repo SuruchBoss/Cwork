@@ -662,4 +662,48 @@ export const thMessages: Record<string, string> = {
   'The demo is going back to the start': 'เดโมกำลังกลับเป็นค่าเริ่มต้น',
   'Everything visitors changed in the last hour is being put back. It takes under a minute, and you will be signed back in.':
     'ทุกอย่างที่ผู้เข้าชมเปลี่ยนไว้กำลังถูกคืนค่า ใช้เวลาไม่ถึงนาที แล้วระบบจะพาคุณกลับเข้าสู่ระบบให้เอง',
+
+  // Mobile app (CW-060)
+  'Mobile app': 'แอปมือถือ',
+  'How employees install the app and connect it to this company':
+    'วิธีที่พนักงานติดตั้งแอปและเชื่อมต่อกับบริษัทนี้',
+  Print: 'พิมพ์',
+  'This console is open over HTTP. The app connects only over HTTPS, so employees cannot connect it to this address. Serve Cwork over HTTPS and open the console at its https:// address.':
+    'คอนโซลนี้เปิดผ่าน HTTP แต่แอปเชื่อมต่อได้เฉพาะ HTTPS พนักงานจึงเชื่อมต่อแอปกับที่อยู่นี้ไม่ได้ ให้เปิดใช้ Cwork ผ่าน HTTPS แล้วเปิดคอนโซลด้วยที่อยู่ https://',
+  'Show employees this QR code': 'ให้พนักงานสแกน QR code นี้',
+  'QR code for {url}': 'QR code ของ {url}',
+  Copied: 'คัดลอกแล้ว',
+  'Copy link': 'คัดลอกลิงก์',
+  'Open the install page': 'เปิดหน้าติดตั้ง',
+  'Could not copy. Select the link above and copy it.':
+    'คัดลอกไม่สำเร็จ กรุณาเลือกลิงก์ด้านบนแล้วคัดลอกเอง',
+  'What employees do': 'สิ่งที่พนักงานต้องทำ',
+  'Scan the code with the phone camera, or open the link. It opens the install page on this server.':
+    'สแกนโค้ดด้วยกล้องมือถือ หรือเปิดลิงก์ ระบบจะเปิดหน้าติดตั้งบนเซิร์ฟเวอร์นี้',
+  'Download and install the app. Android asks once to allow installs from the browser.':
+    'ดาวน์โหลดและติดตั้งแอป Android จะถามหนึ่งครั้งว่าอนุญาตให้ติดตั้งจากเบราว์เซอร์หรือไม่',
+  'Open the app and scan the same code, or type {address}.':
+    'เปิดแอปแล้วสแกนโค้ดเดิมอีกครั้ง หรือพิมพ์ {address}',
+  'Sign in with their employee account.': 'เข้าสู่ระบบด้วยบัญชีพนักงานของตัวเอง',
+  'Android only for now. The app is not available for iPhone yet.':
+    'ตอนนี้รองรับเฉพาะ Android แอปยังไม่มีบน iPhone',
+  'App version {version}, from the same release as this server.':
+    'แอปเวอร์ชัน {version} จาก release เดียวกับเซิร์ฟเวอร์นี้',
+  'Install the {name} app': 'ติดตั้งแอป {name}',
+  'This page was opened over HTTP. The app connects only over HTTPS, so it cannot connect to this address. Tell HR.':
+    'หน้านี้เปิดผ่าน HTTP แต่แอปเชื่อมต่อได้เฉพาะ HTTPS จึงเชื่อมต่อกับที่อยู่นี้ไม่ได้ กรุณาแจ้ง HR',
+  'The app is not available for iPhone yet. Ask HR how to clock in in the meantime.':
+    'แอปยังไม่มีบน iPhone ระหว่างนี้กรุณาสอบถาม HR ว่าจะลงเวลาอย่างไร',
+  'Install the app': 'ติดตั้งแอป',
+  'Download for Android': 'ดาวน์โหลดสำหรับ Android',
+  'Version {version}. Android asks once to allow installs from your browser: allow it, then open the downloaded file.':
+    'เวอร์ชัน {version} Android จะถามหนึ่งครั้งว่าอนุญาตให้ติดตั้งจากเบราว์เซอร์หรือไม่ ให้กดอนุญาต แล้วเปิดไฟล์ที่ดาวน์โหลดมา',
+  'Connect it to your company': 'เชื่อมต่อกับบริษัทของคุณ',
+  'Open the app': 'เปิดแอป',
+  'The app shows the company it will connect to and asks you first.':
+    'แอปจะแสดงที่อยู่ของบริษัทที่จะเชื่อมต่อ และถามคุณก่อนทุกครั้ง',
+  'Or scan the QR code again in the app, or type:': 'หรือสแกน QR code อีกครั้งในแอป หรือพิมพ์:',
+  'Use your employee account. If you do not know the password, ask HR.':
+    'ใช้บัญชีพนักงานของคุณ ถ้าไม่ทราบรหัสผ่าน กรุณาสอบถาม HR',
+  'All versions': 'ทุกเวอร์ชัน',
 };

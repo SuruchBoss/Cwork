@@ -215,6 +215,24 @@ entry, tags it and publishes the notes.
   [`docs/demo.md`](./docs/demo.md) is the runbook, with what was found about the
   free tier and the timings measured on a tenth of a CPU. `CONSOLE_DIR` lets
   the API serve the built console itself, which is how one service is enough.
+- **Employees can install the app** (CW-060). There was no release build, and
+  the API address was compiled into the app, so every company would have needed
+  its own. Now one Android app serves every company. Each GitHub release carries
+  `cwork-android.apk`, built from the tag by the release workflow and signed
+  with one release key. Its version code rises with every release, so a new
+  version installs over the old one. The employee stays signed in to the same
+  company, and a punch queued offline is still sent. The workflow refuses to
+  publish an APK without the release key, and CI builds and checks the same APK
+  on every commit. On first launch the app asks which company. The employee
+  scans the QR code on the console's new **Employees → Mobile app** page, types
+  the address, or taps *Open the app* on the public install page, `/app`, which
+  the QR code opens on a phone. The app accepts only an HTTPS server that
+  answers as Cwork. A link never connects on its own: the app shows where it
+  points and asks first. Changing company signs out of the old one, and is
+  refused while punches are still queued for it. iPhone is not supported yet,
+  pending the owner's decision on the Apple Developer Program, and both READMEs
+  say so. Maintainers set up the signing key once, as described in
+  [`docs/mobile-release.md`](./docs/mobile-release.md).
 
 ### Removed
 
@@ -232,6 +250,12 @@ entry, tags it and publishes the notes.
   `nestjs-pino`, `pino-http` and `pino-pretty` dependencies went with it.
 
 ### Changed
+
+- **The mobile app no longer has a built-in server address** (CW-060).
+  `API_BASE_URL` used to default to `http://10.0.2.2:3000/api/v1`. It now has no
+  default: a build without it opens on the connect screen, where a debug build
+  also accepts plain HTTP. Pass `--dart-define=API_BASE_URL=…` as before to skip
+  that screen during development.
 
 - **`SECURITY.md` describes the system as it is** (CW-057). Three of its five
   known gaps had closed in 0.1.0 — second factors are required for privileged

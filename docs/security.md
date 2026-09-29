@@ -236,7 +236,21 @@ every such request into a 500. See `AllExceptionsFilter`.
 - The web console ships a strict CSP (no third-party scripts) via nginx, or with
   the same headers from the API itself where `CONSOLE_DIR` has it serve the
   console, as the public demo does.
-- The mobile app disables cleartext traffic on Android.
+- The mobile app talks to its server over HTTPS only (CW-060). One build
+  serves every company, so the server is chosen at first launch, and a
+  release build refuses an `http://` address. Android refuses cleartext
+  traffic too, except in the debug build's manifest. Before an address is
+  saved, the app checks that it answers as Cwork, over a certificate the phone
+  trusts.
+- A `cwork://connect` link, from the install page or from anyone, never
+  switches the app's server on its own. The app shows the host the link points
+  to and waits for the employee to confirm. Switching deletes the old server's
+  tokens first, so a token issued by one company is never presented to
+  another. A switch is refused while punches are still queued for the old
+  server.
+- Android backup and device-to-device transfer are off for the app. Its
+  tokens, server address and punch queue are encrypted under a key that never
+  leaves the phone.
 - `trust proxy` is set to one hop, so `req.ip` is the real client behind a load
   balancer without trusting arbitrary `X-Forwarded-For` chains.
 

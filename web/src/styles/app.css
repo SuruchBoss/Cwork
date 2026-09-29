@@ -848,6 +848,86 @@ table.table {
   border-color: var(--brand);
 }
 
+/* ----------------------------------------------------------- mobile app -- */
+
+/* HR's "Mobile app" page and the public install page (CW-060). */
+.mobile-app {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.mobile-app__qr {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.mobile-app__qr img {
+  border-radius: var(--radius);
+}
+.mobile-app__url {
+  word-break: break-all;
+}
+.steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+.install__steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+}
+.install__steps > li {
+  counter-increment: step;
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding-left: 38px;
+}
+.install__steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--brand-soft);
+  color: var(--brand-text);
+}
+.install__steps h2 {
+  font-size: 15px;
+  margin: 3px 0 0;
+}
+.install__steps p {
+  margin: 0;
+}
+
+/* A poster: the code and the steps, without the console around them. */
+@media print {
+  .sidebar,
+  .topbar,
+  .demo-banner,
+  .page__actions,
+  .no-print {
+    display: none !important;
+  }
+  .app-shell {
+    display: block;
+  }
+}
+
 /* ------------------------------------------------------------ responsive -- */
 
 @media (max-width: 960px) {

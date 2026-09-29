@@ -57,6 +57,12 @@ export const NAV: NavSection[] = [
       },
       { to: '/offboarding', label: 'Offboarding', icon: '↪', permissions: [P.OFFBOARDING_READ] },
       {
+        to: '/mobile-app',
+        label: 'Mobile app',
+        icon: '▯',
+        permissions: [P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM],
+      },
+      {
         to: '/performance',
         label: 'Performance / KPI',
         icon: '◈',
