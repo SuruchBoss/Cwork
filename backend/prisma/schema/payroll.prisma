@@ -274,6 +274,36 @@ model EmployeeTaxProfile {
   @@map("employee_tax_profiles")
 }
 
+/// Pay this employer gave an employee earlier in the tax year, before the
+/// company moved to Cwork (CW-059). One row per employee and year, set by the
+/// opening-balance import rather than added to, so importing twice is harmless.
+///
+/// These months are **this employer's own**: they count in the year-to-date
+/// figures withholding projects from, and in the annual filings (ภ.ง.ด.1ก,
+/// 50 ทวิ). That is what separates them from `EmployeeTaxProfile.priorEmployerIncome`,
+/// which is another employer's pay and is reported as such.
+model PayrollOpeningBalance {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  taxYear        Int
+  /// The last month (1–12) paid outside Cwork. Cwork pays from the month after,
+  /// and refuses to calculate a month the figures already cover.
+  throughMonth   Int
+  taxableIncome  Decimal  @db.Decimal(18, 4)
+  withholdingTax Decimal  @db.Decimal(18, 4)
+  /// The employee's social security contributions (มาตรา 33), not the employer's.
+  ssoEmployee    Decimal  @db.Decimal(18, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([employeeId, taxYear])
+  @@index([organizationId, taxYear])
+  @@map("payroll_opening_balances")
+}
+
 enum BenefitCategory {
   HEALTH_INSURANCE
   LIFE_INSURANCE

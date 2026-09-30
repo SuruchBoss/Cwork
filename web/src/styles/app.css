@@ -366,6 +366,16 @@ table.table {
 .table tbody tr:hover {
   background: var(--surface-hover);
 }
+/* A totals row reads as one line: shaded across, and not stuck to the top. */
+.table tfoot th,
+.table tfoot td {
+  position: static;
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+}
 .table td.num,
 .table th.num {
   text-align: right;

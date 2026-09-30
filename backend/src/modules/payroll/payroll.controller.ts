@@ -15,15 +15,31 @@ import {
   Post,
   Query,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuditAction, ExpenseClaimStatus } from '@prisma/client';
 import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
 import { requireEmployeeId } from '../../core/security/employee-access';
+import {
+  IMPORT_BODY,
+  IMPORT_LIMITS,
+  requireUpload,
+  XLSX_CONTENT_TYPE,
+} from '../../core/spreadsheet/upload';
 import { BenefitsService } from './benefits.service';
 import { CompensationService } from './compensation.service';
 import {
@@ -39,6 +55,7 @@ import {
   UpsertTaxProfileDto,
 } from './dto/payroll.dto';
 import { ExpensesService } from './expenses.service';
+import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { PayrollService } from './payroll.service';
 
 @ApiTags('Payroll')
@@ -48,6 +65,7 @@ export class PayrollController {
   constructor(
     private readonly payroll: PayrollService,
     private readonly compensation: CompensationService,
+    private readonly openingBalances: OpeningBalanceImportService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -257,6 +275,86 @@ export class PayrollController {
       ? dto.employeeId
       : requireEmployeeId(user);
     return this.compensation.upsertTaxProfile(user.organizationId, { ...dto, employeeId });
+  }
+
+  // ------------------------------------------------------- pay before Cwork
+  // This year's pay before the company moved to Cwork (CW-059): January to
+  // `month` of `year`. Set, not added, so an import can be run again with
+  // corrected figures.
+
+  @Get('opening-balances/import/template')
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @ApiQuery({ name: 'month', required: true, description: 'The last month paid before Cwork' })
+  @ApiQuery({ name: 'year', required: false, description: 'This year (default) or last year' })
+  @ApiQuery({ name: 'lang', required: false, enum: ['th', 'en'] })
+  @ApiOperation({
+    summary: 'The template for pay before Cwork (CW-059)',
+    description:
+      'An .xlsx listing everyone employed from January to that month, with any figures already imported.',
+  })
+  async openingBalanceTemplate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
+    @Query('lang') lang?: string,
+  ): Promise<void> {
+    const file = await this.openingBalances.template(
+      user.organizationId,
+      { year, throughMonth: month },
+      lang === 'en' ? 'en' : 'th',
+    );
+    res.setHeader('Content-Type', XLSX_CONTENT_TYPE);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.send(file.content);
+  }
+
+  @Post('opening-balances/import/preview')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiQuery({ name: 'month', required: true, description: 'The last month paid before Cwork' })
+  @ApiQuery({ name: 'year', required: false, description: 'This year (default) or last year' })
+  @ApiOperation({
+    summary: 'Check a pay-before-Cwork spreadsheet without importing it',
+    description:
+      "Returns each employee's figures and the file's totals, or every problem by row and column. Writes nothing.",
+  })
+  openingBalancePreview(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
+  ) {
+    return this.openingBalances.preview(user, { year, throughMonth: month }, requireUpload(file));
+  }
+
+  @Post('opening-balances/import')
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiQuery({ name: 'month', required: true, description: 'The last month paid before Cwork' })
+  @ApiQuery({ name: 'year', required: false, description: 'This year (default) or last year' })
+  @ApiOperation({
+    summary: 'Import pay before Cwork (CW-059)',
+    description:
+      "Checks the file again, then sets every employee's figures in one transaction, or none: a file with any problem is refused with 422. Audited as one event.",
+  })
+  openingBalanceImport(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
+  ) {
+    return this.openingBalances.commit(user, { year, throughMonth: month }, requireUpload(file));
   }
 }
 

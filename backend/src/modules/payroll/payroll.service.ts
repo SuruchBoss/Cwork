@@ -28,6 +28,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
 import { DEFAULT_OT_MULTIPLIERS } from '../attendance/overtime.service';
 import { buildPayslip, type OvertimeLine, type PayslipInput } from './domain/payroll-calculator';
+import { yearToDate } from './domain/year-to-date';
 import {
   EXPORT_FORMATS,
   PayrollReconciliationError,
@@ -166,6 +167,7 @@ export class PayrollService {
         'An approved or paid run cannot be recalculated — create an off-cycle run instead',
       );
     }
+    await this.refusePaidBeforeCwork(user.organizationId, run.period);
 
     await this.prisma.payrollRun.update({
       where: { id: runId },
@@ -224,6 +226,38 @@ export class PayrollService {
       });
       throw error;
     }
+  }
+
+  /**
+   * A month the opening balances already cover was paid before Cwork (CW-059).
+   * Paying it again here would pay people twice and count the month twice in
+   * the year-to-date figures, so the run is refused and says from when Cwork
+   * pays instead.
+   */
+  private async refusePaidBeforeCwork(
+    organizationId: string,
+    period: { year: number; month: number; code: string },
+  ) {
+    const covered = await this.prisma.payrollOpeningBalance.findMany({
+      where: {
+        organizationId,
+        taxYear: period.year,
+        throughMonth: { gte: period.month },
+        employee: { deletedAt: null },
+      },
+      select: { throughMonth: true, employee: { select: { employeeCode: true } } },
+      orderBy: { employee: { employeeCode: 'asc' } },
+    });
+    if (covered.length === 0) return;
+
+    const through = Math.max(...covered.map((c) => c.throughMonth));
+    throw new BusinessRuleError(
+      'PAID_BEFORE_CWORK',
+      `${period.code} was paid before Cwork: the opening balances of ${covered.length} ` +
+        `employee(s) run to ${period.year}-${String(through).padStart(2, '0')}. ` +
+        'Run payroll from the month after.',
+      { throughMonth: through, employees: covered.map((c) => c.employee.employeeCode) },
+    );
   }
 
   /**
@@ -655,61 +689,94 @@ export class PayrollService {
     // silently paid as zero.
     if (!compensation) return null;
 
-    const [attendance, overtimeRequests, recurringItems, claims, enrollments, taxProfile, ytd] =
-      await Promise.all([
-        this.prisma.attendanceRecord.findMany({
-          where: { employeeId, workDate: { gte: period.periodStart, lte: period.periodEnd } },
-          select: { status: true, approvedOvertimeMinutes: true },
-        }),
-        this.prisma.overtimeRequest.findMany({
-          where: {
-            employeeId,
-            status: OvertimeStatus.APPROVED,
-            isPaid: false,
-            workDate: { gte: period.periodStart, lte: period.periodEnd },
+    const [
+      attendance,
+      overtimeRequests,
+      recurringItems,
+      claims,
+      enrollments,
+      taxProfile,
+      ytd,
+      openingBalance,
+    ] = await Promise.all([
+      this.prisma.attendanceRecord.findMany({
+        where: { employeeId, workDate: { gte: period.periodStart, lte: period.periodEnd } },
+        select: { status: true, approvedOvertimeMinutes: true },
+      }),
+      this.prisma.overtimeRequest.findMany({
+        where: {
+          employeeId,
+          status: OvertimeStatus.APPROVED,
+          isPaid: false,
+          workDate: { gte: period.periodStart, lte: period.periodEnd },
+        },
+        select: { type: true, approvedHours: true, requestedHours: true, rateMultiplier: true },
+      }),
+      this.prisma.employeeRecurringItem.findMany({
+        where: {
+          employeeId,
+          effectiveFrom: { lte: period.periodEnd },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: period.periodStart } }],
+        },
+        include: { component: true },
+      }),
+      this.prisma.expenseClaim.findMany({
+        where: {
+          employeeId,
+          status: ExpenseClaimStatus.APPROVED,
+          paymentMethod: 'PAYROLL',
+          decidedAt: { lte: period.cutoffDate },
+        },
+        select: { id: true, claimNo: true, title: true, approvedAmount: true, totalAmount: true },
+      }),
+      this.prisma.benefitEnrollment.findMany({
+        where: {
+          employeeId,
+          status: 'ACTIVE',
+          effectiveFrom: { lte: period.periodEnd },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: period.periodStart } }],
+        },
+        include: { plan: true },
+      }),
+      this.prisma.employeeTaxProfile.findUnique({
+        where: { employeeId_taxYear: { employeeId, taxYear: period.year } },
+      }),
+      this.prisma.payslip.aggregate({
+        where: {
+          employeeId,
+          run: {
+            period: { year: period.year },
+            status: { in: [PayrollRunStatus.APPROVED, PayrollRunStatus.PAID] },
           },
-          select: { type: true, approvedHours: true, requestedHours: true, rateMultiplier: true },
-        }),
-        this.prisma.employeeRecurringItem.findMany({
-          where: {
-            employeeId,
-            effectiveFrom: { lte: period.periodEnd },
-            OR: [{ effectiveTo: null }, { effectiveTo: { gte: period.periodStart } }],
-          },
-          include: { component: true },
-        }),
-        this.prisma.expenseClaim.findMany({
-          where: {
-            employeeId,
-            status: ExpenseClaimStatus.APPROVED,
-            paymentMethod: 'PAYROLL',
-            decidedAt: { lte: period.cutoffDate },
-          },
-          select: { id: true, claimNo: true, title: true, approvedAmount: true, totalAmount: true },
-        }),
-        this.prisma.benefitEnrollment.findMany({
-          where: {
-            employeeId,
-            status: 'ACTIVE',
-            effectiveFrom: { lte: period.periodEnd },
-            OR: [{ effectiveTo: null }, { effectiveTo: { gte: period.periodStart } }],
-          },
-          include: { plan: true },
-        }),
-        this.prisma.employeeTaxProfile.findUnique({
-          where: { employeeId_taxYear: { employeeId, taxYear: period.year } },
-        }),
-        this.prisma.payslip.aggregate({
-          where: {
-            employeeId,
-            run: {
-              period: { year: period.year },
-              status: { in: [PayrollRunStatus.APPROVED, PayrollRunStatus.PAID] },
-            },
-          },
-          _sum: { taxableIncome: true, withholdingTax: true, ssoEmployee: true },
-        }),
-      ]);
+        },
+        _sum: { taxableIncome: true, withholdingTax: true, ssoEmployee: true },
+      }),
+      this.prisma.payrollOpeningBalance.findUnique({
+        where: { employeeId_taxYear: { employeeId, taxYear: period.year } },
+      }),
+    ]);
+
+    // The year so far, and whose pay it was: Cwork's months, this employer's
+    // months before Cwork (CW-059), and a previous employer's. Without the
+    // earlier months the first run of a mid-year deployment under-projects the
+    // annual salary and withholds far too little tax, which lands on the
+    // employee as a bill in March.
+    const yearSoFar = yearToDate({
+      inCwork: {
+        taxableIncome: Number(ytd._sum.taxableIncome ?? 0),
+        withholdingTax: Number(ytd._sum.withholdingTax ?? 0),
+        ssoEmployee: Number(ytd._sum.ssoEmployee ?? 0),
+      },
+      beforeCwork: openingBalance && {
+        taxableIncome: Number(openingBalance.taxableIncome),
+        withholdingTax: Number(openingBalance.withholdingTax),
+        ssoEmployee: Number(openingBalance.ssoEmployee),
+      },
+      previousEmployer: taxProfile && {
+        taxableIncome: Number(taxProfile.priorEmployerIncome),
+        withholdingTax: Number(taxProfile.priorEmployerTax),
+      },
+    });
 
     const unpaidLeaveDays = await this.countUnpaidLeaveDays(
       employeeId,
@@ -777,15 +844,9 @@ export class PayrollService {
       pvdEmployeeRate: Number(compensation.pvdEmployeeRate),
       pvdEmployerRate: Number(compensation.pvdEmployerRate),
       monthNumber: period.month,
-      // Year-to-date must include income earned before this system went live,
-      // otherwise the first run of a mid-year deployment under-projects the
-      // annual salary and withholds far too little tax — which lands on the
-      // employee as a bill in March. HR enters these on the tax profile.
-      ytdTaxableIncome:
-        Number(ytd._sum.taxableIncome ?? 0) + Number(taxProfile?.priorEmployerIncome ?? 0),
-      ytdWithheldTax:
-        Number(ytd._sum.withholdingTax ?? 0) + Number(taxProfile?.priorEmployerTax ?? 0),
-      ytdSsoEmployee: Number(ytd._sum.ssoEmployee ?? 0),
+      ytdTaxableIncome: yearSoFar.forThisMonth.taxableIncome,
+      ytdWithheldTax: yearSoFar.forThisMonth.withholdingTax,
+      ytdSsoEmployee: yearSoFar.forThisMonth.ssoEmployee,
       taxAllowances: taxProfile
         ? {
             hasSpouseAllowance: taxProfile.spouseAllowance,
@@ -835,6 +896,7 @@ export class PayrollService {
           absentDays,
           payableDays: effectivePayableDays,
           taxAllowances: input.taxAllowances,
+          yearToDate: yearSoFar,
           overtime,
           calculatedAt: new Date().toISOString(),
         } as unknown as Prisma.InputJsonValue,
