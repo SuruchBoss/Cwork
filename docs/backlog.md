@@ -47,7 +47,8 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **3** | Payroll can file and pay · the app is complete | **CW-060 first (P0, blocks the pilot)** · CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-062 · CW-061 · CW-059 (employees and leave balances first) |
+| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -100,6 +101,17 @@ walkthrough were built alongside them with no tickets of their own, and the
 walkthrough covers the recording CW-034 asked for and did not get. Recorded
 here so the history is not misleading about where that work came from.
 
+**The pilot got a company and a date on 2026-09-30:** go-live by
+31 October 2026 ([spec.md § Before real people use it](./spec.md#before-real-people-use-it)).
+It runs Odoo in a container on a NAS and clocks in with a fingerprint scanner
+that exports to Excel. The pilot row comes before phase 3 because it has a
+date and phase 3 does not. It needs four things:
+- the app installed (CW-060);
+- Cwork running on that NAS (CW-062);
+- the scanner's punches imported (CW-061);
+- employees and leave balances brought across (CW-059, whose payroll half can
+  follow, since payroll is not in the pilot).
+
 **CW-058, CW-059 and CW-019 moved up on 2026-09-28**, after a look at
 PeopleFlow (peopleflowglobal.com), a Thai HR service sold per head. Its first
 claim is being "genuinely Thai": Buddhist-era years, a Sunday week, 24-hour
@@ -119,6 +131,87 @@ seeing any of it.
 ---
 
 ## P0 — blocks a real deployment
+
+
+### CW-061 · Import punches from a fingerprint scanner's export
+`P0` · attendance · **M** · pilot, by 31 October 2026
+
+The pilot company clocks in on a fingerprint scanner and gets the punches out
+as an Excel file. Cwork has no way to take them in. `PunchMethod` already has
+`BIOMETRIC` and `IMPORT`, but nothing writes either. Without this the pilot has
+no attendance at all, because nobody there clocks in on the app.
+
+**Needs from the pilot before building:** the scanner's make and model, and one
+real export covering a month. Names can be replaced before it is shared, but
+IDs, times and the layout must be as the scanner writes them. Scanners differ
+in layout: some write one row per punch, others one row per day with in and
+out columns. Build against the real file, not a guess.
+
+**Scope**
+- A scanner ID on each employee, mapping the scanner's user number to the
+  employee. It is set by hand or by CW-059's import.
+- Upload the export, preview it, then commit. As in CW-059, nothing is written
+  until the file is clean.
+- Imported punches are ordinary punches, method `BIOMETRIC`. They are
+  append-only like every other punch, and late, absent and overtime are derived
+  from them exactly as from app punches.
+- Times in the file carry no time zone and are read in the organisation's.
+
+**Acceptance**
+- The pilot's real export imports, and the day-by-day attendance matches what
+  HR reads off the file for five employees chosen at random.
+- Importing an overlapping export (scanners export cumulative ranges) adds only
+  the punches not already present, with no duplicates.
+- A scanner ID with no employee is listed by ID and row, not silently dropped.
+- Imported punches are not flagged for having no location.
+- Each import is audited as one event naming the file, its date range and the
+  number of punches added.
+- No fingerprint template or image is accepted or stored. The file carries
+  times, and a test asserts nothing else is kept.
+
+**Files** `backend/src/modules/attendance/`, `web/src/features/attendance/`,
+`backend/prisma/schema/`
+
+---
+
+
+### CW-062 · Run on the pilot's NAS, beside Odoo
+`P0` · platform · docs · **S–M** · pilot, by 31 October 2026
+
+The pilot company already runs Odoo in a container on a NAS, and Cwork goes
+next to it. `docker-compose.yml` is written for a Linux host. A NAS adds the
+questions below, and each one can stop a go-live on the day.
+
+**Needs from the pilot before building:** the NAS make and model, its CPU
+(x86 or ARM), its memory and what else it runs, and how the office reaches
+the internet.
+
+**Scope**
+- Cwork's images build and run on that NAS's CPU. ARM is the usual trap.
+- Cwork and Odoo run side by side with no port clash and enough memory for
+  both.
+- Phones reach Cwork over HTTPS from outside the office, for leave requests
+  and approvals, **without exposing the NAS's own admin page or Odoo** to the
+  internet. The method (router port forward and a certificate, or a tunnel) is
+  the dev's to choose and document.
+- A nightly database backup to somewhere other than the disk it backs up,
+  and `FIELD_ENCRYPTION_KEY` kept apart from it
+  ([operations.md](./operations.md)).
+
+**Acceptance**
+- Cwork runs on the pilot's NAS alongside Odoo, and Odoo is unaffected.
+- An employee's phone on mobile data files a leave request, and the manager
+  approves it from theirs.
+- A port scan from outside finds Cwork's HTTPS port and nothing else of the
+  NAS.
+- A restore from last night's backup onto a fresh container brings back that
+  day's data.
+- `docs/operations.md` gains a NAS section that another company with a NAS
+  could follow.
+
+**Files** `docs/operations.md`, `docker-compose.yml`, deployment configuration
+
+---
 
 
 ### CW-060 · Employees have no way to install the app
@@ -208,6 +301,11 @@ months were paid by **this** employer, and 50 ทวิ must count them as its o
 - Opening balances count as this employer's own in CW-046 and CW-047, not as a
   previous employer's.
 - Leave balances after import equal entitlement minus the imported days taken.
+
+**The pilot needs half of this by 31 October 2026:** employees, including
+their scanner IDs for CW-061, and opening leave balances. The file will come
+out of Odoo. The payroll opening balances can follow in a second delivery,
+because payroll is not in the pilot.
 
 **Files** `backend/src/modules/employees/`, `backend/src/modules/leave/`,
 `backend/src/modules/payroll/`, `web/src/features/employees/`
