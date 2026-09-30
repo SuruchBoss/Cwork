@@ -16,8 +16,10 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const ApprovalsPage = lazy(() => import('@/features/approvals/ApprovalsPage'));
 const EmployeeListPage = lazy(() => import('@/features/employees/EmployeeListPage'));
 const EmployeeDetailPage = lazy(() => import('@/features/employees/EmployeeDetailPage'));
+const EmployeeImportPage = lazy(() => import('@/features/employees/EmployeeImportPage'));
 const OffboardingPage = lazy(() => import('@/features/employees/OffboardingPage'));
 const LeavePage = lazy(() => import('@/features/leave/LeavePage'));
+const LeaveImportPage = lazy(() => import('@/features/leave/LeaveImportPage'));
 const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage'));
 const RosterPage = lazy(() => import('@/features/attendance/RosterPage'));
 const PayrollPage = lazy(() => import('@/features/payroll/PayrollPage'));
@@ -104,6 +106,11 @@ export const router = createBrowserRouter([
                 element: <RequirePermission any={[P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM]} />,
                 children: [
                   { index: true, element: <EmployeeListPage /> },
+                  {
+                    path: 'import',
+                    element: <RequirePermission any={[P.EMPLOYEE_CREATE]} />,
+                    children: [{ index: true, element: <EmployeeImportPage /> }],
+                  },
                   { path: ':id', element: <EmployeeDetailPage /> },
                 ],
               },
@@ -120,7 +127,14 @@ export const router = createBrowserRouter([
               {
                 path: 'leave',
                 element: <RequirePermission any={[P.LEAVE_READ, P.LEAVE_READ_TEAM]} />,
-                children: [{ index: true, element: <LeavePage /> }],
+                children: [
+                  { index: true, element: <LeavePage /> },
+                  {
+                    path: 'import',
+                    element: <RequirePermission any={[P.LEAVE_BALANCE_ADJUST]} />,
+                    children: [{ index: true, element: <LeaveImportPage /> }],
+                  },
+                ],
               },
               {
                 path: 'attendance',

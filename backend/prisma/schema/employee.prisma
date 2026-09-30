@@ -44,6 +44,10 @@ model Employee {
   /// Null until the person is invited to the app (or after their login is removed).
   userId         String?  @unique @db.Uuid
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// The person's user number on the fingerprint scanner, as the scanner writes
+  /// it, so imported punches find their employee (CW-059, CW-061). Kept as text:
+  /// "007" and "7" are different numbers to a scanner that zero-pads.
+  scannerId      String?
 
   titleTh        String?
   firstNameTh    String
@@ -140,6 +144,7 @@ model Employee {
   hiredFrom          Application[]
 
   @@unique([organizationId, employeeCode])
+  @@unique([organizationId, scannerId])
   @@index([organizationId, status])
   @@index([organizationId, departmentId])
   @@index([organizationId, managerId])

@@ -319,7 +319,9 @@ export class LeaveBalanceDto {
   @ApiProperty() granted!: number;
   @ApiProperty() carriedOver!: number;
   @ApiProperty() adjusted!: number;
-  @ApiProperty() used!: number;
+  @ApiProperty({ description: 'Taken this year, in Cwork and before it' }) used!: number;
+  @ApiProperty({ description: 'Of `used`, what was taken before Cwork (CW-059)' })
+  usedBeforeCwork!: number;
   @ApiProperty() pending!: number;
   @ApiProperty() available!: number;
   @ApiProperty() isPaid!: boolean;

@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import {
   Badge,
@@ -21,10 +22,13 @@ import { api } from '@/lib/api-client';
 import { formatDate, formatNumber, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { leaveStatusLabels, statusTone } from '@/lib/labels';
+import { P } from '@/lib/permissions';
+import { useAuthStore } from '@/stores/auth.store';
 import type { LeaveRequest, LeaveType, Page } from '@/types/api';
 
 export default function LeavePage() {
   const t = useT();
+  const canImport = useAuthStore((s) => s.canAny(P.LEAVE_BALANCE_ADJUST));
   const [status, setStatus] = useState('PENDING');
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [page, setPage] = useState(1);
@@ -56,7 +60,17 @@ export default function LeavePage() {
 
   return (
     <div className="page">
-      <PageHeader title={t('Leave')} description={t('All leave requests you can access')} />
+      <PageHeader
+        title={t('Leave')}
+        description={t('All leave requests you can access')}
+        actions={
+          canImport ? (
+            <Link to="/leave/import" className="btn btn--secondary">
+              {t('Import leave taken')}
+            </Link>
+          ) : undefined
+        }
+      />
 
       <div className="grid grid--4">
         <Stat label={t('Matching the filter')} value={counts} />

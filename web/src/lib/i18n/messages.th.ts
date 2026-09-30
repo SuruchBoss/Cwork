@@ -781,4 +781,97 @@ export const thMessages: Record<string, string> = {
     'ลงเวลาเข้า-ออกงาน ยื่นลา และดูสลิปเงินเดือนได้ในแอป Cwork',
   'How to install the app': 'วิธีติดตั้งแอป',
   Menu: 'เมนู',
+
+  // Employee import (CW-059)
+  'Import from a spreadsheet': 'นำเข้าจากไฟล์ Excel',
+  'Import employees': 'นำเข้าพนักงาน',
+  'From a spreadsheet: a template filled in by hand, or an export pasted into it':
+    'จากไฟล์ Excel: กรอกลงแบบฟอร์มเอง หรือวางข้อมูลที่ส่งออกจากระบบเดิมลงไป',
+  'Back to the directory': 'กลับไปที่ทะเบียนพนักงาน',
+  '{count} employees imported': 'นำเข้าพนักงานแล้ว {count} คน',
+  'Open the directory': 'เปิดทะเบียนพนักงาน',
+  'Import another file': 'นำเข้าไฟล์อื่น',
+  '1. Download the template': '1. ดาวน์โหลดแบบฟอร์ม',
+  'One person per row. The second sheet says what goes in each column. Columns you do not need can be deleted.':
+    'กรอกหนึ่งคนต่อหนึ่งแถว ชีตที่สองบอกว่าแต่ละคอลัมน์กรอกอะไร คอลัมน์ที่ไม่ใช้ลบทิ้งได้',
+  'Template in Thai': 'แบบฟอร์มภาษาไทย',
+  'Template in English': 'แบบฟอร์มภาษาอังกฤษ',
+  '2. Upload the file': '2. อัปโหลดไฟล์',
+  'Save it as .xlsx or CSV, either from Thai Excel is fine. It is checked first; nothing is saved yet.':
+    'บันทึกเป็น .xlsx หรือ CSV ก็ได้ จาก Excel ภาษาไทยก็ใช้ได้ ระบบจะตรวจก่อน ยังไม่บันทึกอะไร',
+  'Checking…': 'กำลังตรวจ…',
+  'Choose a file': 'เลือกไฟล์',
+  '3. Fix these in the file': '3. แก้ไขรายการเหล่านี้ในไฟล์',
+  '{count} problems. Nothing has been imported: fix them in the file and upload it again.':
+    'พบ {count} จุดที่ต้องแก้ ยังไม่มีการนำเข้าใด ๆ แก้ในไฟล์แล้วอัปโหลดใหม่',
+  Row: 'แถว',
+  Column: 'คอลัมน์',
+  Problem: 'ปัญหา',
+  File: 'ทั้งไฟล์',
+  '3. Import': '3. นำเข้า',
+  'Import {count} employees': 'นำเข้าพนักงาน {count} คน',
+  'The file is clean. These employees will be created, all together:':
+    'ไฟล์ถูกต้องครบถ้วน ระบบจะสร้างพนักงานต่อไปนี้พร้อมกันทั้งหมด:',
+  Name: 'ชื่อ',
+  'Hire date': 'วันเริ่มงาน',
+  'Scanner ID': 'รหัสเครื่องสแกนนิ้ว',
+  'This is not a file this import reads. Save it as .xlsx or CSV and upload that':
+    'ไฟล์นี้ไม่ใช่ไฟล์ที่นำเข้าได้ กรุณาบันทึกเป็น .xlsx หรือ CSV แล้วอัปโหลดใหม่',
+  'The file could not be read. Open it in Excel, save it again as .xlsx and upload that':
+    'อ่านไฟล์ไม่ได้ กรุณาเปิดใน Excel บันทึกเป็น .xlsx ใหม่ แล้วอัปโหลดอีกครั้ง',
+  'The file is empty': 'ไฟล์ว่างเปล่า',
+  'Column "{header}" is not one this import knows': 'ไม่รู้จักคอลัมน์ "{header}"',
+  'Column "{header}" appears more than once': 'คอลัมน์ "{header}" มีมากกว่าหนึ่งคอลัมน์',
+  'The file has no "{column}" column, which is required': 'ไฟล์ไม่มีคอลัมน์ "{column}" ซึ่งต้องมี',
+  'The file has a header row but no employees under it':
+    'ไฟล์มีแถวหัวคอลัมน์ แต่ไม่มีรายชื่อพนักงาน',
+  'The file has {rows} rows; one import takes at most {max}':
+    'ไฟล์มี {rows} แถว นำเข้าได้ครั้งละไม่เกิน {max} แถว',
+  'This is required': 'ต้องกรอก',
+  '"{value}" is not a date this import can read': '"{value}" ไม่ใช่วันที่ที่ระบบอ่านได้',
+  '"{value}" is not one of: {allowed}': '"{value}" ไม่ตรงกับค่าที่ใช้ได้: {allowed}',
+  'A national ID is 13 digits': 'เลขบัตรประชาชนต้องมี 13 หลัก',
+  'Excel shortened this number to "{value}". Format the column as Text and type it again':
+    'Excel ย่อตัวเลขนี้เป็น "{value}" ไปแล้ว กรุณาตั้งรูปแบบคอลัมน์เป็นข้อความ (Text) แล้วพิมพ์ใหม่',
+  '"{value}" is not valid here': '"{value}" ใช้ในช่องนี้ไม่ได้',
+  '"{value}" is not an email address': '"{value}" ไม่ใช่อีเมล',
+  '"{value}" is not a Thai phone number': '"{value}" ไม่ใช่เบอร์โทรศัพท์ไทย',
+  'At most {max} characters': 'ยาวได้ไม่เกิน {max} ตัวอักษร',
+  '"{value}" is also on row {other}': '"{value}" ซ้ำกับแถว {other}',
+  'Employee code {value} already exists': 'มีรหัสพนักงาน {value} อยู่ในระบบแล้ว',
+  'Scanner ID {value} already belongs to employee {owner}':
+    'รหัสเครื่องสแกนนิ้ว {value} เป็นของพนักงาน {owner} อยู่แล้ว',
+  'No {what} "{value}"': 'ไม่พบ{what} "{value}"',
+  'More than one {what} is called "{value}"; use its code':
+    'มี{what}ชื่อ "{value}" มากกว่าหนึ่งรายการ กรุณาใช้รหัสแทน',
+  'An employee cannot be their own manager': 'พนักงานเป็นหัวหน้าของตัวเองไม่ได้',
+  'Managers form a loop: {chain}': 'สายบังคับบัญชาวนกลับมาที่เดิม: {chain}',
+  'Probation cannot end before the hire date': 'วันครบทดลองงานต้องไม่ก่อนวันเริ่มงาน',
+  'A bank account needs the bank code, bank name and account number together':
+    'บัญชีธนาคารต้องมีรหัสธนาคาร ชื่อธนาคาร และเลขที่บัญชีครบทั้งสามช่อง',
+  department: 'แผนก',
+  position: 'ตำแหน่ง',
+  'work location': 'สถานที่ทำงาน',
+  employee: 'รหัสพนักงาน',
+  'Import leave taken': 'นำเข้าวันลาที่ใช้ไปแล้ว',
+  'Leave employees took this year before the company started using Cwork, so their balances start right':
+    'วันลาที่พนักงานใช้ไปในปีนี้ก่อนบริษัทเริ่มใช้ Cwork เพื่อให้วันลาคงเหลือตั้งต้นถูกต้อง',
+  'Back to leave': 'กลับไปหน้าการลา',
+  'Everyone and every leave type is listed already: type the days each person has taken. A blank cell changes nothing, and importing again replaces the figures rather than adding to them.':
+    'แบบฟอร์มมีรายชื่อพนักงานและประเภทการลาครบแล้ว กรอกจำนวนวันที่แต่ละคนใช้ไป ช่องว่างคือไม่เปลี่ยนแปลง และถ้านำเข้าซ้ำ ระบบจะใช้ตัวเลขใหม่แทน ไม่บวกเพิ่ม',
+  'The file is clean. Leave taken in {year}, and the balance each person is left with:':
+    'ไฟล์ถูกต้องครบถ้วน วันลาที่ใช้ไปในปี {year} และวันลาคงเหลือของแต่ละคน:',
+  'Import leave for {count} employees': 'นำเข้าวันลาของพนักงาน {count} คน',
+  '{days} taken': 'ใช้ไป {days} วัน',
+  '{days} left': 'เหลือ {days} วัน',
+  'Leave taken in {year} imported for {count} employees':
+    'นำเข้าวันลาที่ใช้ไปในปี {year} ของพนักงาน {count} คนแล้ว',
+  'If they took leave this year before Cwork, import that next so their balances are right.':
+    'ถ้าพนักงานลาไปแล้วในปีนี้ก่อนเริ่มใช้ Cwork ให้นำเข้าวันลาที่ใช้ไปต่อ เพื่อให้วันลาคงเหลือถูกต้อง',
+  '"{value}" is not a number of days from 0 to 366': '"{value}" ไม่ใช่จำนวนวันระหว่าง 0 ถึง 366',
+  '{leaveType} is taken in whole days, not "{value}"':
+    '{leaveType} ลาได้เป็นวันเต็มเท่านั้น ไม่ใช่ "{value}"',
+  '{leaveType} does not apply to {employee}': '{employee} ไม่มีสิทธิ์{leaveType}',
+  '{employee} is entitled to {available} days of {leaveType} this year, not {value}':
+    '{employee} มีสิทธิ์{leaveType}ในปีนี้ {available} วัน ไม่ใช่ {value} วัน',
 };

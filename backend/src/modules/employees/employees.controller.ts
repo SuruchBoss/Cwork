@@ -13,8 +13,20 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { Response } from 'express';
 import { AuditAction, ResignationStatus } from '@prisma/client';
 import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
@@ -30,6 +42,13 @@ import {
   UpdateEmployeeDto,
   UpdateOwnProfileDto,
 } from './dto/employee.dto';
+import {
+  IMPORT_BODY,
+  IMPORT_LIMITS,
+  requireUpload,
+  XLSX_CONTENT_TYPE,
+} from '../../core/spreadsheet/upload';
+import { EmployeeImportService } from './employee-import.service';
 import { EmployeesService } from './employees.service';
 import { OffboardingService } from './offboarding.service';
 import { EmployeeRetentionService } from './retention.service';
@@ -41,6 +60,7 @@ export class EmployeesController {
   constructor(
     private readonly employees: EmployeesService,
     private readonly retention: EmployeeRetentionService,
+    private readonly imports: EmployeeImportService,
   ) {}
 
   @Get()
@@ -54,7 +74,62 @@ export class EmployeesController {
     return this.employees.list(user, query);
   }
 
-  // Retention routes are declared before ':id' so the static segment wins.
+  // Import and retention routes are declared before ':id' so the static segment wins.
+
+  @Get('import/template')
+  @RequirePermissions(Permission.EMPLOYEE_CREATE)
+  @ApiQuery({ name: 'lang', required: false, enum: ['th', 'en'] })
+  @ApiOperation({
+    summary: 'The spreadsheet template for importing employees (CW-059)',
+    description:
+      'An .xlsx with the columns on the first sheet and what goes in each on the second.',
+  })
+  importTemplate(@Res() res: Response, @Query('lang') lang?: string): void {
+    const file = this.imports.template(lang === 'en' ? 'en' : 'th');
+    res.setHeader('Content-Type', XLSX_CONTENT_TYPE);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.send(file.content);
+  }
+
+  @Post('import/preview')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.EMPLOYEE_CREATE)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiOperation({
+    summary: 'Check an employee spreadsheet without importing it',
+    description:
+      "Reads .xlsx or CSV (UTF-8 or Thai Excel's Windows-874) and returns either the employees it would create or every problem, by row and column. Writes nothing.",
+  })
+  importPreview(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.imports.preview(user, requireUpload(file));
+  }
+
+  @Post('import')
+  @RequirePermissions(Permission.EMPLOYEE_CREATE)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiOperation({
+    summary: 'Import employees from a spreadsheet (CW-059)',
+    description:
+      'Checks the file again, then creates every employee in one transaction, or none: a file with any problem is refused with 422 and the same list the preview gives. Audited as one event.',
+  })
+  importEmployees(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.imports.commit(user, requireUpload(file));
+  }
 
   @Get('retention/preview')
   @RequirePermissions(Permission.EMPLOYEE_DELETE)

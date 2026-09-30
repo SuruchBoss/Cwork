@@ -233,6 +233,34 @@ entry, tags it and publishes the notes.
   pending the owner's decision on the Apple Developer Program, and both READMEs
   say so. Maintainers set up the signing key once, as described in
   [`docs/mobile-release.md`](./docs/mobile-release.md).
+- **Employees, and the leave they took before Cwork, come in from a
+  spreadsheet** (CW-059, the employee and leave half). A company moving to
+  Cwork had to enter each person through the API; the console could not add
+  anyone at all. HR now downloads a template from **Employees → Import from a
+  spreadsheet**, fills it in or pastes an export into it, and uploads it. The
+  upload can be `.xlsx`, or CSV as Thai Excel saves it (Windows-874), and Thai
+  names come through intact. Every problem is listed by row and column before
+  anything is written. Nothing is written until the whole file is clean, and then
+  every employee is created in one step, through the same validation and
+  encryption as the API's create. Importing the same file again adds nobody,
+  and names each code already present. Dates may be Buddhist-era or Excel day
+  numbers. A long number that Excel has shortened to `1.23457E+12` is caught
+  rather than stored. Managers may be further down the same file. Employees
+  gain `scannerId`, their user number on the fingerprint scanner, for CW-061. It
+  is unique in the organisation, and it can also be set by hand through
+  `PATCH /employees/:id`.
+
+  Then **Leave → Import leave taken** records the days each person took this
+  year before Cwork. Its template already lists every current employee and
+  every leave type, and the preview shows the balance each person is left with.
+  The figure is set, not added, so importing the same file twice changes
+  nothing. A figure more than the entitlement, unless the leave type allows it,
+  is refused. It is stored apart from what Cwork itself approved, as
+  `LeaveEntitlement.priorUsed`, and every balance counts it: HR's view, the
+  employee's own in the app, the check a new request is held to, adjustments
+  and the year-end rollover. The balance API's `used` now includes it, and
+  `usedBeforeCwork` says how much of it came from before. Each import is
+  audited as one event naming the file.
 
 ### Removed
 
