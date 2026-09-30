@@ -878,4 +878,40 @@ export const thMessages: Record<string, string> = {
   '{leaveType} does not apply to {employee}': '{employee} ไม่มีสิทธิ์{leaveType}',
   '{employee} is entitled to {available} days of {leaveType} this year, not {value}':
     '{employee} มีสิทธิ์{leaveType}ในปีนี้ {available} วัน ไม่ใช่ {value} วัน',
+
+  // Pay before Cwork (CW-059)
+  'Import pay before Cwork': 'นำเข้ายอดเงินเดือนก่อนใช้ Cwork',
+  'Pay, tax and social security from earlier this year, so withholding and the year-end filings count the whole year':
+    'เงินได้ ภาษี และประกันสังคมที่จ่ายไปแล้วในปีนี้ เพื่อให้การหักภาษีและแบบยื่นสิ้นปีนับครบทั้งปี',
+  'Back to payroll': 'กลับไปหน้าเงินเดือน',
+  'Which months were paid before Cwork': 'เดือนที่จ่ายเงินเดือนก่อนใช้ Cwork',
+  'From January to the last month the old system paid. Cwork pays from the month after.':
+    'ตั้งแต่มกราคมถึงเดือนสุดท้ายที่ระบบเดิมจ่าย Cwork จะจ่ายตั้งแต่เดือนถัดไป',
+  'Up to and including': 'ถึงเดือน',
+  'January to {month} {year}': 'มกราคม–{month} {year}',
+  "Everyone employed from {months} is listed, with any figures imported before. Type each person's totals for those months; importing again replaces the figures rather than adding to them.":
+    'แบบฟอร์มมีรายชื่อพนักงานทุกคนที่ทำงานในช่วง {months} พร้อมตัวเลขที่เคยนำเข้าไว้ กรอกยอดรวมของช่วงนั้นของแต่ละคน ถ้านำเข้าซ้ำ ระบบจะใช้ตัวเลขใหม่แทน ไม่บวกเพิ่ม',
+  "The file is clean. Pay for {months}, counted as this company's own:":
+    'ไฟล์ถูกต้องครบถ้วน ยอดของช่วง {months} ซึ่งนับเป็นเงินที่บริษัทนี้จ่ายเอง:',
+  'Import pay for {count} employees': 'นำเข้ายอดของพนักงาน {count} คน',
+  'Taxable income': 'เงินได้ที่ต้องเสียภาษี',
+  'Tax withheld': 'ภาษีหัก ณ ที่จ่าย',
+  'Social security': 'ประกันสังคม',
+  'Replaces the figures on file': 'แทนตัวเลขเดิม',
+  New: 'ใหม่',
+  Total: 'รวม',
+  'Pay for {months} imported for {count} employees':
+    'นำเข้ายอดช่วง {months} ของพนักงาน {count} คนแล้ว',
+  'Run payroll in Cwork from {month} {year}.': 'เริ่มคำนวณเงินเดือนใน Cwork ตั้งแต่เดือน{month} {year}',
+  'Already calculated without these figures, so its tax is too low. Calculate it again before it is approved:':
+    'รอบนี้คำนวณไปก่อนมีตัวเลขเหล่านี้ ภาษีที่หักจึงต่ำเกินไป ให้คำนวณใหม่ก่อนอนุมัติ:',
+  'No row has any figures in it': 'ไม่มีแถวใดกรอกตัวเลขไว้เลย',
+  '"{value}" is not an amount in baht: 0 or more, with at most two decimals':
+    '"{value}" ไม่ใช่จำนวนเงินที่ใช้ได้ ต้องไม่ติดลบและมีทศนิยมไม่เกิน 2 ตำแหน่ง',
+  'Tax withheld ({value}) cannot be more than the taxable income ({income})':
+    'ภาษีหัก ณ ที่จ่าย ({value}) ต้องไม่มากกว่าเงินได้ที่ต้องเสียภาษี ({income})',
+  'Social security for {months} months is at most {max}, not {value}':
+    'ประกันสังคม {months} เดือนสูงสุดไม่เกิน {max} ไม่ใช่ {value}',
+  '{employee} was already paid for {period} in Cwork; these figures can only cover the months before it':
+    '{employee} ได้รับเงินเดือนงวด {period} ใน Cwork แล้ว ตัวเลขในไฟล์ต้องเป็นของเดือนก่อนหน้านั้นเท่านั้น',
 };

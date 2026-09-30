@@ -77,11 +77,24 @@ wildly too much.
 
 ### Mid-year go-live
 
-If you start using this system partway through a tax year, enter each employee's
-prior income and tax withheld into their tax profile
-(`priorEmployerIncome` / `priorEmployerTax`). Without them the projection only
-sees income from this system, under-projects the annual salary, and withholds
-too little — which lands on the employee as a bill the following March.
+If you start using this system partway through a tax year, import what the old
+system paid this year before your first run: **Payroll → Import pay before
+Cwork** (CW-059). One row per employee: taxable income, tax withheld and the
+employee's social security from January to the last month paid elsewhere.
+Without them the projection only sees income from this system, under-projects
+the annual salary, and withholds too little — which lands on the employee as a
+bill the following March. With them, September withholds exactly what it would
+have if January to August had run here; a test holds that to the baht.
+
+Those months are **your own**: the annual filings (ภ.ง.ด.1ก, 50 ทวิ) report
+them as this employer's income and tax. That is the difference from the tax
+profile's `priorEmployerIncome` / `priorEmployerTax`, which are for pay from an
+employee's *previous* employer earlier in the year. Both feed the projection;
+only yours are yours to file. Each payslip records the split in
+`snapshot.yearToDate`.
+
+Once imported, a month the figures cover cannot be calculated again in Cwork
+(`PAID_BEFORE_CWORK`), and a file cannot cover a month Cwork has already paid.
 
 ## Social security (มาตรา 33)
 

@@ -7,6 +7,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { BenefitsService } from './benefits.service';
 import { CompensationService } from './compensation.service';
 import { ExpensesService } from './expenses.service';
+import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { BenefitsController, ExpensesController, PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
 
@@ -18,6 +19,7 @@ import { PayrollService } from './payroll.service';
     CompensationService,
     BenefitsService,
     ExpensesService,
+    OpeningBalanceImportService,
     SequenceService,
   ],
   exports: [PayrollService, CompensationService, BenefitsService, ExpensesService],

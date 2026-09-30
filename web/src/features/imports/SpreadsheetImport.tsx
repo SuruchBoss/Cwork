@@ -24,6 +24,13 @@ export interface SpreadsheetImportProps<P extends { problems: ImportProblem[] },
   back: { to: string; label: string };
   /** The API's three routes for this import: template, preview, commit. */
   paths: { template: string; preview: string; commit: string };
+  /**
+   * Sent with all three. A file checked under one set of these says nothing
+   * about another, so changing them starts the import over.
+   */
+  query?: Record<string, string | number>;
+  /** Above the steps: what the page needs to know before the template. */
+  intro?: ReactNode;
   /** What the template holds, above its download buttons. */
   templateNote: string;
   /** How many records the file would write. */
@@ -51,11 +58,20 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
   const language = useUiStore((s) => s.language);
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<Step<P, R>>({ name: 'choose' });
+  const scope = JSON.stringify(props.query ?? {});
+  const [current, setCurrent] = useState<{ scope: string; step: Step<P, R> }>({
+    scope,
+    step: { name: 'choose' },
+  });
+  const step: Step<P, R> = current.scope === scope ? current.step : { name: 'choose' };
+  const setStep = (next: Step<P, R>) => setCurrent({ scope, step: next });
   const [error, setError] = useState<string | null>(null);
 
   const reason = (caught: unknown) =>
     caught instanceof ApiError ? caught.message : t('Something went wrong');
+
+  // Only when there is one, so an import without a query calls exactly as before.
+  const options = props.query ? ([{ query: props.query }] as const) : ([] as const);
 
   const form = (file: File) => {
     const body = new FormData();
@@ -66,7 +82,9 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
   async function downloadTemplate(lang: 'th' | 'en') {
     setError(null);
     try {
-      const { blob, filename } = await api.download(props.paths.template, { query: { lang } });
+      const { blob, filename } = await api.download(props.paths.template, {
+        query: { ...props.query, lang },
+      });
       saveBlob(blob, filename);
     } catch (caught) {
       setError(reason(caught));
@@ -77,7 +95,7 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
     setError(null);
     setStep({ name: 'checking', file });
     try {
-      const preview = await api.post<P>(props.paths.preview, form(file));
+      const preview = await api.post<P>(props.paths.preview, form(file), ...options);
       setStep({ name: 'checked', file, preview });
     } catch (caught) {
       setStep({ name: 'choose' });
@@ -89,7 +107,7 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
     setError(null);
     setStep({ name: 'importing', file, preview });
     try {
-      const result = await api.post<R>(props.paths.commit, form(file));
+      const result = await api.post<R>(props.paths.commit, form(file), ...options);
       await Promise.all(
         props.invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       );
@@ -139,6 +157,7 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
         </Card>
       ) : (
         <>
+          {props.intro}
           <Card title={t('1. Download the template')}>
             <div className="stack">
               <p className="muted" style={{ margin: 0 }}>
@@ -171,6 +190,7 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
               <label className="btn btn--secondary file-button">
                 {step.name === 'checking' ? t('Checking…') : t('Choose a file')}
                 <input
+                  key={scope}
                   ref={input}
                   type="file"
                   accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"

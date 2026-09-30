@@ -219,7 +219,8 @@ function unescapeXml(value: string): string {
 
 export interface SheetSpec {
   name: string;
-  rows: string[][];
+  /** Text, or a number written as a number so Excel can add it up. */
+  rows: (string | number)[][];
   /** Column widths in characters. */
   widths?: number[];
   /**
@@ -228,6 +229,11 @@ export interface SheetSpec {
    * leading zero typed into it stays exactly as typed.
    */
   header?: boolean;
+  /**
+   * Columns (from 0) that hold amounts: formatted as #,##0.00 rather than as
+   * text, so a figure typed or pasted into them stays a number.
+   */
+  amountColumns?: number[];
 }
 
 const NS_MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -238,8 +244,9 @@ const XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 /** Style indexes in STYLES below. */
 const STYLE_TEXT = 1;
 const STYLE_HEADER = 2;
+const STYLE_AMOUNT = 3;
 
-const STYLES = `${XML_HEAD}<styleSheet xmlns="${NS_MAIN}"><fonts count="2"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const STYLES = `${XML_HEAD}<styleSheet xmlns="${NS_MAIN}"><fonts count="2"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 
 /** A workbook of plain text sheets, which Excel, LibreOffice and Google Sheets open. */
 export function writeXlsx(sheets: SheetSpec[]): Uint8Array {
@@ -286,17 +293,27 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
   const pane = sheet.header
     ? '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
     : '';
+  const amounts = new Set(sheet.amountColumns ?? []);
+  const columnStyle = (c: number) =>
+    amounts.has(c) ? STYLE_AMOUNT : sheet.header ? STYLE_TEXT : undefined;
   const cols = Array.from({ length: columns }, (_, i) => {
     const width = sheet.widths?.[i] ?? 16;
-    const style = sheet.header ? ` style="${STYLE_TEXT}"` : '';
+    const style = columnStyle(i) === undefined ? '' : ` style="${columnStyle(i)}"`;
     return `<col min="${i + 1}" max="${i + 1}" width="${width}"${style} customWidth="1"/>`;
   }).join('');
   const rows = sheet.rows
     .map((row, r) => {
       const cells = row
         .map((value, c) => {
-          const style = sheet.header ? ` s="${r === 0 ? STYLE_HEADER : STYLE_TEXT}"` : '';
-          return `<c r="${columnLetter(c)}${r + 1}" t="inlineStr"${style}><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`;
+          const ref = `${columnLetter(c)}${r + 1}`;
+          const styleIndex = sheet.header && r === 0 ? STYLE_HEADER : columnStyle(c);
+          const style = styleIndex === undefined ? '' : ` s="${styleIndex}"`;
+          // Left out rather than written empty: the column's format still applies.
+          if (value === '') return '';
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            return `<c r="${ref}"${style}><v>${value}</v></c>`;
+          }
+          return `<c r="${ref}" t="inlineStr"${style}><is><t xml:space="preserve">${escapeXml(String(value))}</t></is></c>`;
         })
         .join('');
       return `<row r="${r + 1}">${cells}</row>`;

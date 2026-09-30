@@ -380,6 +380,11 @@ expense reimbursement — and payslips you can still explain a year later.
 **Whoever calculates a run cannot approve it**, enforced by the API rather than
 by policy.
 
+**Starting in September withholds the right tax in September.** A company that
+moves to Cwork mid-year imports what it paid each person from January, and the
+first run withholds exactly what it would have if the whole year had run here.
+Those months stay the company's own for the year-end filings.
+
 <img src="./docs/screenshots/en/07-payroll.png" alt="Payroll periods and runs" width="49%"> <img src="./docs/screenshots/en/19-payroll-run.png" alt="Payroll run" width="49%">
 
 ### Approvals
@@ -461,7 +466,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 360 domain tests run in under ten
+no database, no framework and no I/O. That is why 388 domain tests run in under ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -577,8 +582,8 @@ means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 457 backend unit
-tests, 88 web, 86 mobile, plus a 290-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 486 backend unit
+tests, 94 web, 86 mobile, plus a 303-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -637,8 +642,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 457 backend unit tests, 88 web,
-  86 mobile, 290 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 486 backend unit tests, 94 web,
+  86 mobile, 303 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the

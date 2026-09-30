@@ -1,6 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
+import { formatNumber } from '@/lib/format';
 import type { translate } from '@/lib/i18n';
 
 /**
@@ -58,6 +59,18 @@ const TEMPLATES: Record<string, string> = {
   NOT_ELIGIBLE: '{leaveType} does not apply to {employee}',
   OVER_ENTITLEMENT:
     '{employee} is entitled to {available} days of {leaveType} this year, not {value}',
+  NO_FIGURES: 'No row has any figures in it',
+  INVALID_AMOUNT: '"{value}" is not an amount in baht: 0 or more, with at most two decimals',
+  TAX_OVER_INCOME: 'Tax withheld ({value}) cannot be more than the taxable income ({income})',
+  SSO_OVER_LIMIT: 'Social security for {months} months is at most {max}, not {value}',
+  PAID_IN_CWORK:
+    '{employee} was already paid for {period} in Cwork; these figures can only cover the months before it',
+};
+
+/** Parameters that are sums of money, shown as the reader writes them. */
+const AMOUNTS: Record<string, string[]> = {
+  TAX_OVER_INCOME: ['value', 'income'],
+  SSO_OVER_LIMIT: ['value', 'max'],
 };
 
 type Translate = (key: string, params?: Parameters<typeof translate>[2]) => string;
@@ -69,5 +82,8 @@ export function describeProblem(problem: ImportProblem, t: Translate): string {
   const params = { ...problem.params };
   // "department", "position", … are words in a sentence, so they translate too.
   if (typeof params.what === 'string') params.what = t(params.what);
+  for (const name of AMOUNTS[problem.code] ?? []) {
+    if (typeof params[name] === 'number') params[name] = formatNumber(params[name], 2);
+  }
   return t(template, params);
 }

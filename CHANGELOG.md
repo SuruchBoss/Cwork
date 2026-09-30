@@ -262,6 +262,28 @@ entry, tags it and publishes the notes.
   `usedBeforeCwork` says how much of it came from before. Each import is
   audited as one event naming the file.
 
+- **The pay a company gave before Cwork counts in its withholding** (CW-059,
+  the payroll half). A company that starts in September paid January to August
+  elsewhere, and withholding projects the year from the year so far, so its
+  first run withheld far too little and the employee got a bill the next
+  March. **Payroll → Import pay before Cwork** now takes each employee's
+  taxable income, tax withheld and social security from January to the last
+  month paid elsewhere, from the same kinds of file as the employee import. The
+  template lists everyone employed in those months with any figures already on
+  file, the preview totals the file to check against the old system's report,
+  and figures are set rather than added, so importing twice changes nothing.
+  September then withholds exactly what it would have if all nine months had
+  run in Cwork: an end-to-end test runs nine months in one year, imports the
+  same eight months into another, and compares September to the baht. The
+  months are stored as this employer's own (`PayrollOpeningBalance`), not as
+  the tax profile's previous-employer income, so the annual filings can count
+  them as such, and each payslip's `snapshot.yearToDate` records the split.
+  A month the figures cover cannot then be calculated in Cwork
+  (`PAID_BEFORE_CWORK`), and a file cannot cover a month Cwork has already paid.
+  A run already calculated without the figures is named, to be calculated
+  again before it is approved. Amount columns in the templates stay numbers, so
+  Excel can add them up.
+
 ### Removed
 
 - **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`

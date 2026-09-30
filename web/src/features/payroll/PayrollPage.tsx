@@ -84,9 +84,14 @@ export default function PayrollPage() {
         description={t('Pay periods, runs and payslips')}
         actions={
           canRun && (
-            <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-              + {t('New pay period')}
-            </Button>
+            <>
+              <Link to="/payroll/import" className="btn btn--secondary">
+                {t('Import pay before Cwork')}
+              </Link>
+              <Button variant="primary" onClick={() => setCreating((v) => !v)}>
+                + {t('New pay period')}
+              </Button>
+            </>
           )
         }
       />

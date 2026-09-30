@@ -102,7 +102,7 @@ setting one that another employee holds is `409 DUPLICATE_SCANNER_ID`.
 
 ### Importing employees (CW-059)
 
-Both import routes, like the leave-taken import below, take one multipart part named `file`, up to 5 MB: `.xlsx`, or
+Both import routes, like the leave-taken and pay-before-Cwork imports below, take one multipart part named `file`, up to 5 MB: `.xlsx`, or
 CSV in UTF-8 (with or without a byte-order mark), UTF-16 ("Unicode Text") or
 Windows-874, which is what Thai Excel's plain "CSV" is. The format is read from
 the file's bytes, not its name. The first sheet's first row is the header, in
@@ -233,6 +233,9 @@ Error codes: `ALREADY_CLOCKED_IN`, `NOT_CLOCKED_IN`, `DUPLICATE_PUNCH`,
 | GET | `/payroll/payslips/me` · `/:id` | |
 | POST | `/payroll/compensation` | `compensation:manage` |
 | POST | `/payroll/tax-profile` | own, or `compensation:manage` |
+| GET | `/payroll/opening-balances/import/template?month=&year=&lang=` | `payroll:run` — everyone employed in those months |
+| POST | `/payroll/opening-balances/import/preview?month=&year=` | `payroll:run` — checks a file, writes nothing |
+| POST | `/payroll/opening-balances/import?month=&year=` | `payroll:run` — sets pay before Cwork; audited as one event |
 
 **Separation of duties:** the account that calculated a run cannot approve it —
 `SELF_APPROVAL_NOT_ALLOWED`.
@@ -240,6 +243,39 @@ Error codes: `ALREADY_CLOCKED_IN`, `NOT_CLOCKED_IN`, `DUPLICATE_PUNCH`,
 Lifecycle: `DRAFT → CALCULATED → APPROVED → PAID`. Marking a run paid publishes
 its payslips, consumes the overtime and expense claims it paid, and locks the
 attendance days it was based on.
+
+### Pay before Cwork (CW-059)
+
+A company that moves to Cwork in September paid January to August elsewhere.
+Withholding projects the year from the year so far, so those months have to be
+in it, and the annual filings report them as **this employer's own**. That is
+why they are not the tax profile's `priorEmployerIncome`, which is another
+employer's.
+
+The import takes the same kinds of file as the employee import: one row per
+employee code, with taxable income, tax withheld and the employee's social
+security for January to `month` of `year` (this year, the default, or last
+year; `month` no later than the current one). Amounts are baht with at most two
+decimals, as numbers or as text like `"360,000.00"`. A row with all three blank
+changes nothing; a row with any of them needs all three. Each figure is
+**set**, so importing a file twice changes nothing.
+
+`preview` answers `{ fileName, year, throughMonth, rows, totals, recalculate, problems }`,
+where each row says whether it `replaces` figures already on file and
+`totals` can be checked against the old system's report. `recalculate` names
+any later run of the year already calculated for these employees and not yet
+approved: its withholding was worked out without the figures, so it needs
+calculating again. The import's `201` names them too. Problems specific to
+this import: `INVALID_AMOUNT`, `TAX_OVER_INCOME`, `SSO_OVER_LIMIT` (more than
+the largest contribution for that many months, usually the employer's share
+added in), `PAID_IN_CWORK` (Cwork already paid that employee within those
+months) and `NO_FIGURES`. A bad `year` or `month` is `422 INVALID_OPENING_PERIOD`.
+
+Once imported, calculating a run for a month the figures cover is refused with
+`422 PAID_BEFORE_CWORK`, naming the employees in `details.employees`: that
+month was paid before Cwork. Every payslip's `snapshot.yearToDate` records the
+year so far it was calculated from, split into `thisEmployer.inCwork`,
+`thisEmployer.beforeCwork` and `previousEmployer`.
 
 ## Approvals
 
