@@ -87,13 +87,19 @@ what the pilot needs:
 | Today | What it means for the pilot |
 |---|---|
 | Odoo, in a container on the company's NAS | Cwork runs on the same NAS beside it (CW-062). Employee records come out of Odoo as a spreadsheet (CW-059). |
-| A fingerprint scanner for clocking in, exported to Excel | Attendance comes from the scanner, not the app's GPS punch (CW-061). Fingerprints stay in the scanner: Cwork receives times, never biometrics. |
+| ~~A fingerprint scanner for clocking in, exported to Excel~~ | Corrected 2026-09-30, below. |
 
-The app is still needed, for leave requests: the console cannot file one. The
-scope above is unchanged unless the owner changes it, so payroll stays where it
-is for the pilot. Because punches come from the scanner, measure 2 becomes the
-share of imported days HR has to correct, and the geofence is not tested by
-this pilot.
+**Corrected on 2026-09-30.** The owner's fuller description replaces the
+scanner:
+- Staff **sign a paper sheet** in and out, and the scanner will not be used.
+- The company has **about 20 people**, most of them labourers.
+- **Most staff do not have smartphones** that could run the app.
+
+So the people who would use Cwork are the owner or whoever does HR and pay,
+not the staff. Neither the app nor the GPS or scanner punch is exercised by
+this pilot. What that does to the pilot's scope, and to CW-060, CW-061, CW-064
+and CW-066, is **waiting on the owner's decision**. It is proposed in the
+backlog's pilot notes.
 
 Three measures, agreed before it starts:
 
