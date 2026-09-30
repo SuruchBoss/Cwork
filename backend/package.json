@@ -1,6 +1,6 @@
 {
   "name": "@cwork/backend",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Cwork — API server (NestJS + Prisma + PostgreSQL)",
   "license": "Apache-2.0",
   "private": true,

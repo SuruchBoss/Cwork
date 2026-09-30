@@ -19,6 +19,20 @@ entry, tags it and publishes the notes.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-30
+
+The release employees can install. From this release on, each one carries
+`cwork-android.apk`: one Android app for every company, which the employee
+connects to their company's server by scanning the QR code on the console's
+**Employees → Mobile app** page (CW-060). iPhone is not supported yet. The
+console and the app also work in English, benefits, shifts and issued
+documents are managed in the console, and a public demo runs from the landing
+page.
+
+Upgrading from 0.3.1 means running the migrations, as every release does. No
+`.env` needs to change. One migration drops the unused `selfieFileId` column,
+so an API client that still sends that field should stop sending it.
+
 ### Added
 
 - **Both clients speak English as well as Thai** (CW-016). The web console and
@@ -677,7 +691,8 @@ this yet:
 - This code has never had a penetration test, and no independent human has read
   every line — see [How this was built](./README.md#how-this-was-built).
 
-[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/SuruchBoss/Cwork/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.3.1
 [0.3.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SuruchBoss/Cwork/releases/tag/v0.2.0
