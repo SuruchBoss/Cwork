@@ -270,6 +270,11 @@ entry, tags it and publishes the notes.
   phone app, is shown how to install it; the no-access page has a way home;
   closing a benefit plan asks first; and the roster keeps one line per day with
   the names pinned while the fortnight scrolls.
+- **Leave and approvals are cards on a phone** (CW-063). Below 640px each
+  leave request and each approval is a card headed by the person, with every
+  other field on a labelled line and Approve / Reject full width at the foot,
+  instead of a table row scrolled sideways. The desktop table is unchanged.
+  Any table can take it with a class and a `data-label` per cell.
 - **The mobile app's colours mean something.** Approved, present and paid were
   pink, because the chips took the theme's third colour; they are green now,
   pending is amber and rejected red, in both themes. Clocking out is orange
@@ -328,6 +333,10 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Approvals said `ANNUAL` instead of the leave type's name.** A leave request
+  waiting for a decision was described by the code its approval keeps, in the
+  console and in the app. Both now show the name HR gave the type (ลาพักร้อน),
+  and the console names overtime and document request kinds too.
 - **The API's Docker image could not start.** The certificate renderer reads
   the Thai font from `assets/fonts` when the API boots, and `backend/Dockerfile`
   never copied `assets/` into the runtime image, so the container stopped with

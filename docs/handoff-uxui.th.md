@@ -55,10 +55,9 @@
 **ยังไม่ได้ตรวจ**
 - **ภาพหน้าจอแอปมือถือจริง** — เดโม (`DEMO_MODE=true`) ปฏิเสธการเข้าสู่ระบบด้วยรหัสผ่าน
   จึงยังไม่ได้เปิดแอปดูสีใหม่ ตรวจในข้อ 1 ของ CW-063 บนเครื่องจริง ทั้งธีมสว่างและธีมมืด
-- **ภาพหน้าจอใน README และหน้า landing ยังเป็นของเดิม** — ข้อ 2 ของ CW-063 ต้องรัน
-  `docs/screenshots/capture.mjs` และ `capture-mobile.mjs` ใหม่
-- ฟอนต์ IBM Plex Sans Thai โหลดจาก Google Fonts ซึ่งเครื่องทดสอบเข้าไม่ได้
-  ภาพที่ถ่ายจึงใช้ฟอนต์สำรอง ขนาดตัวอักษรที่ปรับไว้ควรดูอีกครั้งด้วยฟอนต์จริง
+- ~~ภาพหน้าจอใน README และหน้า landing~~ — ถ่ายใหม่แล้ว (CW-063 ข้อ 2) ด้วยฟอนต์จริง
+  วิธีถ่ายดูหัวข้อ "ถ่ายภาพหน้าจอใหม่" ด้านล่าง ภาพ social preview ของ GitHub
+  สร้างใหม่แล้วแต่ต้องอัปโหลดเองใน Settings
 - ยังไม่ได้ทดสอบกับผู้ใช้จริงที่ไม่ใช่สาย IT
 
 ## วิธีเปิดดูในเครื่อง (แบบที่ใช้ในรอบนี้)
@@ -79,6 +78,21 @@ npm run build && node dist/main.js     # เดโมสร้างข้อม
 cd ../web && npm ci && npx vite --port 5173
 # http://localhost:5173/login?as=hr&lang=th   (as=employee | manager | hr)
 ```
+
+## ถ่ายภาพหน้าจอใหม่
+
+ใช้สคริปต์ของ repo เท่านั้น (`docs/screenshots/capture.mjs`, `capture-mobile.mjs`,
+`docs/social-preview/build.mjs`) กับฐานข้อมูล `db:seed` ใหม่ ไม่ใช่เดโม
+เพราะต้องเข้าสู่ระบบด้วยรหัสผ่านและ 2FA
+
+- ปักนาฬิกาเป็นเช้าวันทำงาน (เช่น 08:37 น.) ตามวิธีใน `docs/film/film.mjs`
+  ทั้ง Postgres, seed และ API ใช้ offset เดียวกัน และรัน `docs/film/pin-clock.sql`
+  ก่อน seed ถ้าไม่ปัก ภาพหน้าแรกของแอปจะขึ้นว่าพนักงานมาสาย
+- Node ต้องมี `NODE_USE_ENV_PROXY=1` และ `NODE_EXTRA_CA_CERTS` ถึงจะโหลดฟอนต์ผ่าน proxy ได้
+  (`capture.mjs` ไม่ยอมถ่ายถ้าฟอนต์ IBM Plex Sans Thai ไม่โหลด)
+- ต้องมี `ffmpeg` ที่มี libwebp และ Flutter สำหรับภาพแอป
+- สคริปต์ import `playwright` จากตำแหน่งของไฟล์ ถ้าไม่ได้ติดตั้งในโปรเจกต์
+  ให้ทำ symlink `node_modules/playwright` ชั่วคราวที่ root แล้วลบทิ้งหลังถ่าย
 
 ## งานต่อไป: CW-063
 
