@@ -93,40 +93,65 @@ class AppTheme {
   }
 }
 
-/// Semantic colours for status chips, resolved against the active scheme so
-/// they stay legible in both themes.
+/// Semantic colours for status chips: green for done, amber for waiting, red
+/// for refused, blue for information — the same meanings as the web console.
+///
+/// These are fixed rather than taken from the seeded scheme. The scheme's
+/// tertiary colour is what "success" used to borrow, and from this seed it is
+/// pink, so an approved leave request and a day at work read as a warning.
 class StatusColors {
   const StatusColors._();
 
   static Color background(BuildContext context, String status) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
     return switch (_tone(status)) {
-      _Tone.success => scheme.tertiaryContainer,
-      _Tone.warning => scheme.secondaryContainer,
-      _Tone.danger => scheme.errorContainer,
-      _Tone.info => scheme.primaryContainer,
-      _Tone.neutral => scheme.surfaceContainerHighest,
+      _Tone.success => dark ? const Color(0xFF142B20) : const Color(0xFFE3F5EC),
+      _Tone.warning => dark ? const Color(0xFF2E2314) : const Color(0xFFFDF1DF),
+      _Tone.danger => dark ? const Color(0xFF331A1A) : const Color(0xFFFDEAEA),
+      _Tone.info => dark ? const Color(0xFF14282F) : const Color(0xFFE2F3F8),
+      _Tone.neutral => Theme.of(context).colorScheme.surfaceContainerHighest,
     };
   }
 
   static Color foreground(BuildContext context, String status) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
     return switch (_tone(status)) {
-      _Tone.success => scheme.onTertiaryContainer,
-      _Tone.warning => scheme.onSecondaryContainer,
-      _Tone.danger => scheme.onErrorContainer,
-      _Tone.info => scheme.onPrimaryContainer,
-      _Tone.neutral => scheme.onSurfaceVariant,
+      _Tone.success => dark ? const Color(0xFF4EC98D) : const Color(0xFF16794A),
+      _Tone.warning => dark ? const Color(0xFFE0A04A) : const Color(0xFFA35A00),
+      _Tone.danger => dark ? const Color(0xFFF3736F) : const Color(0xFFC02626),
+      _Tone.info => dark ? const Color(0xFF57BCD8) : const Color(0xFF0E6F8A),
+      _Tone.neutral => Theme.of(context).colorScheme.onSurfaceVariant,
     };
   }
 
   static _Tone _tone(String status) => switch (status) {
-        'APPROVED' || 'PRESENT' || 'ACTIVE' || 'PAID' || 'ISSUED' => _Tone.success,
-        'PENDING' || 'LATE' || 'PROBATION' || 'INCOMPLETE' => _Tone.warning,
+        'APPROVED' || 'PRESENT' || 'ACTIVE' || 'PAID' || 'ISSUED' || 'DONE' => _Tone.success,
+        'PENDING' ||
+        'PENDING_APPROVAL' ||
+        'LATE' ||
+        'EARLY_LEAVE' ||
+        'PROBATION' ||
+        'INCOMPLETE' =>
+          _Tone.warning,
         'REJECTED' || 'ABSENT' || 'FAILED' || 'CANCELLED_AFTER_APPROVAL' => _Tone.danger,
         'ON_LEAVE' || 'CALCULATED' => _Tone.info,
         _ => _Tone.neutral,
       };
+}
+
+/// The clock-out button. Clocking in is the primary colour; clocking out is a
+/// different, warm colour so the two are told apart at a glance, and not red,
+/// which would read as an error.
+class ClockOutColors {
+  const ClockOutColors._();
+
+  static Color background(BuildContext context) => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFF0A05A)
+      : const Color(0xFFC2410C);
+
+  static Color foreground(BuildContext context) => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF1F1206)
+      : const Color(0xFFFFFFFF);
 }
 
 enum _Tone { success, warning, danger, info, neutral }

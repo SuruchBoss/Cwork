@@ -61,7 +61,14 @@ class PayslipScreen extends ConsumerWidget {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     title: Row(
                       children: <Widget>[
-                        Text(ref.tr('Period {code}', <String, Object>{'code': slip.periodCode})),
+                        Flexible(
+                          child: Text(
+                            ref.tr(
+                              'Period {code}',
+                              <String, Object>{'code': Fmt.period(slip.periodCode)},
+                            ),
+                          ),
+                        ),
                         if (slip.isUnread) ...<Widget>[
                           const SizedBox(width: 8),
                           StatusChip(label: ref.tr('New'), status: 'PENDING'),
@@ -129,7 +136,7 @@ class PayslipDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Text(
-                    ref.tr('Period {code}', <String, Object>{'code': slip.periodCode}),
+                    ref.tr('Period {code}', <String, Object>{'code': Fmt.period(slip.periodCode)}),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(

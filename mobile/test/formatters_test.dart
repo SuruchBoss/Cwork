@@ -53,6 +53,38 @@ void main() {
     });
   });
 
+  group('Fmt.days', () {
+    test('drops a trailing .0 from a whole number of days', () {
+      expect(Fmt.days('6.00'), '6');
+      expect(Fmt.days(30), '30');
+    });
+
+    test('keeps a half day', () {
+      expect(Fmt.days('0.5'), '0.5');
+      expect(Fmt.days(1.5), '1.5');
+    });
+
+    test('renders an em dash when the value is missing', () {
+      expect(Fmt.days(null), '—');
+    });
+  });
+
+  group('Fmt.period', () {
+    tearDown(() => Fmt.locale = 'th');
+
+    test('names the month of a year-month code', () {
+      expect(Fmt.period('2026-08'), 'สิงหาคม 2026');
+      Fmt.locale = 'en';
+      expect(Fmt.period('2026-08'), 'August 2026');
+    });
+
+    test('leaves any other code as HR wrote it', () {
+      expect(Fmt.period('2026-H1'), '2026-H1');
+      expect(Fmt.period('2026-13'), '2026-13');
+      expect(Fmt.period('—'), '—');
+    });
+  });
+
   group('Fmt.initials', () {
     test('takes the first letter of each of the first two words', () {
       expect(Fmt.initials('สมชาย ใจดี'), 'สใ');
