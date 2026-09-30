@@ -19,7 +19,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { statusTone } from '@/lib/labels';
+import { knowledgeStatusLabels, statusTone } from '@/lib/labels';
 import type { KnowledgeDocumentSummary } from '@/types/api';
 
 export default function KnowledgePage() {
@@ -146,7 +146,9 @@ export default function KnowledgePage() {
                     <td className="num">v{doc.version}</td>
                     <td className="num">{doc._count.chunks}</td>
                     <td>
-                      <Badge tone={statusTone(doc.status)}>{doc.status}</Badge>
+                      <Badge tone={statusTone(doc.status)}>
+                        {t(knowledgeStatusLabels[doc.status] ?? doc.status)}
+                      </Badge>
                     </td>
                     <td className="subtle">{formatDateTime(doc.updatedAt)}</td>
                     <td>

@@ -251,6 +251,29 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **The console reads as words, not system codes.** Pay periods, review cycles,
+  expense claims, resignations, offboarding tasks, document requests and
+  knowledge documents showed their status as the raw code (`CLOSED`, `DRAFT`),
+  the activity log showed `LOGIN` about a `User`, and the sidebar named the
+  person's role `HR_ADMIN`. Each is now a translated label, and the activity log
+  filters by a list of record kinds instead of asking for a type name such as
+  `PayrollRun`. A test fails if any status label has no Thai translation.
+- **Easier to tap and to read.** The menu's Unicode symbols, which rendered as a
+  dot or a sliver on computers without the right fonts, are drawn icons; text,
+  fields and buttons are a size larger; on a touch screen every button and field
+  is at least 44px tall, and fields no longer make iPhone Safari zoom in. The
+  phone menu button says “เมนู” / “Menu”, the desktop no longer repeats the page
+  title in a bar above it, and sidebar headings drop the letter-spacing that
+  pulled Thai marks apart. Motion stops for people who ask their system for less.
+- **Numbers lead to their lists.** The dashboard's tiles open the approvals,
+  employees, leave or payroll behind them; an employee, whose work is in the
+  phone app, is shown how to install it; the no-access page has a way home;
+  closing a benefit plan asks first; and the roster keeps one line per day with
+  the names pinned while the fortnight scrolls.
+- **The mobile app's colours mean something.** Approved, present and paid were
+  pink, because the chips took the theme's third colour; they are green now,
+  pending is amber and rejected red, in both themes. Clocking out is orange
+  rather than purple, and both clock buttons are taller.
 - **The mobile app no longer has a built-in server address** (CW-060).
   `API_BASE_URL` used to default to `http://10.0.2.2:3000/api/v1`. It now has no
   default: a build without it opens on the connect screen, where a debug build

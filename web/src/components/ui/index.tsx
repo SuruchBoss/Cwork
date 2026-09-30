@@ -11,6 +11,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError } from '@/lib/api-error';
 import { useT } from '@/lib/i18n/useT';
 
@@ -74,21 +75,38 @@ export function Card({
   );
 }
 
+/**
+ * A headline number. With `to` the whole tile is a link to the list behind the
+ * number: people tap the figure they are curious about, not a "View all" in the
+ * corner of another card.
+ */
 export function Stat({
   label,
   value,
   hint,
+  to,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
+  to?: string;
 }) {
-  return (
-    <div className="stat">
+  const content = (
+    <>
       <span className="stat__label">{label}</span>
       <span className="stat__value">{value}</span>
       {hint && <span className="stat__hint">{hint}</span>}
-    </div>
+    </>
+  );
+  return to ? (
+    <Link to={to} className="stat stat--link">
+      {content}
+      <span className="stat__go" aria-hidden>
+        →
+      </span>
+    </Link>
+  ) : (
+    <div className="stat">{content}</div>
   );
 }
 

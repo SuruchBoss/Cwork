@@ -262,16 +262,26 @@ function PlansTab({ canManage }: { canManage: boolean }) {
                     {canManage && (
                       <td>
                         <div className="row" style={{ gap: 4 }}>
-                          <Button size="sm" variant="ghost" onClick={() => startEdit(plan)}>
+                          <Button size="sm" variant="secondary" onClick={() => startEdit(plan)}>
                             {t('Edit')}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             loading={deactivate.isPending && deactivate.variables === plan.id}
-                            onClick={() => deactivate.mutate(plan.id)}
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  t('Close the plan "{name}"? It will no longer be offered.', {
+                                    name: plan.name,
+                                  }),
+                                )
+                              ) {
+                                deactivate.mutate(plan.id);
+                              }
+                            }}
                           >
-                            {t('Close')}
+                            {t('Close plan')}
                           </Button>
                         </div>
                       </td>

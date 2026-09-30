@@ -296,16 +296,16 @@ class _PreviewCard extends ConsumerWidget {
         children: <Widget>[
           LabeledValue(
             label: ref.tr('Days charged'),
-            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.totalDays)}),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.days(preview.totalDays)}),
             emphasize: true,
           ),
           LabeledValue(
             label: ref.tr('Balance before'),
-            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.balanceBefore)}),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.days(preview.balanceBefore)}),
           ),
           LabeledValue(
             label: ref.tr('Balance after'),
-            value: ref.tr('{n} days', <String, Object>{'n': Fmt.number(preview.balanceAfter)}),
+            value: ref.tr('{n} days', <String, Object>{'n': Fmt.days(preview.balanceAfter)}),
           ),
           if (preview.chargedDates.isNotEmpty) ...<Widget>[
             const Divider(height: 20),

@@ -1,12 +1,13 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
+import type { IconName } from '@/components/ui/icons';
 import { P } from '@/lib/permissions';
 
 export interface NavItem {
   to: string;
   label: string;
-  icon: string;
+  icon: IconName;
   /** Shown when the user holds ANY of these. Omit for "everyone". */
   permissions?: string[];
   /**
@@ -35,12 +36,12 @@ export const NAV: NavSection[] = [
   {
     heading: 'Overview',
     items: [
-      { to: '/', label: 'Dashboard', icon: '◎' },
-      { to: '/approvals', label: 'Approvals', icon: '✓', badge: 'approvals' },
+      { to: '/', label: 'Dashboard', icon: 'home' },
+      { to: '/approvals', label: 'Approvals', icon: 'inbox', badge: 'approvals' },
       {
         to: '/assistant',
         label: 'HR assistant',
-        icon: '✦',
+        icon: 'sparkles',
         permissions: [P.ASSISTANT_USE],
         feature: 'assistantEnabled',
       },
@@ -52,20 +53,20 @@ export const NAV: NavSection[] = [
       {
         to: '/employees',
         label: 'Employee directory',
-        icon: '☰',
+        icon: 'users',
         permissions: [P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM],
       },
-      { to: '/offboarding', label: 'Offboarding', icon: '↪', permissions: [P.OFFBOARDING_READ] },
+      { to: '/offboarding', label: 'Offboarding', icon: 'door', permissions: [P.OFFBOARDING_READ] },
       {
         to: '/mobile-app',
         label: 'Mobile app',
-        icon: '▯',
+        icon: 'phone',
         permissions: [P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM],
       },
       {
         to: '/performance',
         label: 'Performance / KPI',
-        icon: '◈',
+        icon: 'target',
         permissions: [P.PERFORMANCE_READ, P.KPI_MANAGE_TEAM],
       },
     ],
@@ -73,17 +74,22 @@ export const NAV: NavSection[] = [
   {
     heading: 'Time & leave',
     items: [
-      { to: '/leave', label: 'Leave', icon: '⏸', permissions: [P.LEAVE_READ, P.LEAVE_READ_TEAM] },
+      {
+        to: '/leave',
+        label: 'Leave',
+        icon: 'umbrella',
+        permissions: [P.LEAVE_READ, P.LEAVE_READ_TEAM],
+      },
       {
         to: '/attendance',
         label: 'Attendance',
-        icon: '◔',
+        icon: 'clock',
         permissions: [P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
       {
         to: '/roster',
         label: 'Shifts & roster',
-        icon: '◷',
+        icon: 'calendar',
         permissions: [P.SHIFT_MANAGE, P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
     ],
@@ -91,29 +97,44 @@ export const NAV: NavSection[] = [
   {
     heading: 'Compensation',
     items: [
-      { to: '/payroll', label: 'Payroll', icon: '฿', permissions: [P.PAYROLL_READ] },
-      { to: '/expenses', label: 'Expenses', icon: '▤', permissions: [P.EXPENSE_READ] },
-      { to: '/benefits', label: 'Benefits', icon: '❑', permissions: [P.BENEFIT_MANAGE] },
+      { to: '/payroll', label: 'Payroll', icon: 'wallet', permissions: [P.PAYROLL_READ] },
+      { to: '/expenses', label: 'Expenses', icon: 'receipt', permissions: [P.EXPENSE_READ] },
+      { to: '/benefits', label: 'Benefits', icon: 'gift', permissions: [P.BENEFIT_MANAGE] },
     ],
   },
   {
     heading: 'Recruitment',
     items: [
-      { to: '/recruitment', label: 'Candidates', icon: '⚑', permissions: [P.RECRUITMENT_READ] },
+      {
+        to: '/recruitment',
+        label: 'Candidates',
+        icon: 'userPlus',
+        permissions: [P.RECRUITMENT_READ],
+      },
     ],
   },
   {
     heading: 'Administration',
     items: [
-      { to: '/documents', label: 'Document requests', icon: '▣', permissions: [P.DOCUMENT_ISSUE] },
+      {
+        to: '/documents',
+        label: 'Document requests',
+        icon: 'file',
+        permissions: [P.DOCUMENT_ISSUE],
+      },
       {
         to: '/knowledge',
         label: 'HR knowledge base',
-        icon: '◫',
+        icon: 'book',
         permissions: [P.ASSISTANT_KNOWLEDGE_MANAGE],
       },
-      { to: '/organization', label: 'Organisation structure', icon: '⌗', permissions: [P.ORG_READ] },
-      { to: '/audit', label: 'Activity log', icon: '⎙', permissions: [P.AUDIT_READ] },
+      {
+        to: '/organization',
+        label: 'Organisation structure',
+        icon: 'sitemap',
+        permissions: [P.ORG_READ],
+      },
+      { to: '/audit', label: 'Activity log', icon: 'history', permissions: [P.AUDIT_READ] },
     ],
   },
 ];

@@ -64,6 +64,23 @@ class Fmt {
     return amount.toStringAsFixed(digits);
   }
 
+  /// A count of days: "6", "0.5", "1.5" — never "6.0", which reads as a
+  /// measurement rather than a number of days off.
+  static String days(Object? value) {
+    final String fixed = number(value);
+    return fixed.endsWith('.0') ? fixed.substring(0, fixed.length - 2) : fixed;
+  }
+
+  /// A pay period's code as the month it is, when it is one: "2026-08" reads
+  /// "สิงหาคม 2026" / "August 2026". Any other code is shown as HR wrote it.
+  static String period(String code) {
+    final RegExpMatch? match = RegExp(r'^(\d{4})-(\d{2})$').firstMatch(code);
+    if (match == null) return code;
+    final int month = int.parse(match.group(2)!);
+    if (month < 1 || month > 12) return code;
+    return DateFormat('MMMM yyyy', _intlLocale).format(DateTime(int.parse(match.group(1)!), month));
+  }
+
   /// Minutes as "8 ชม. 5 นาที" (Thai) or "8 hr 5 min" (English). Zero renders
   /// explicitly, not as an em dash.
   static String minutes(int? value) {

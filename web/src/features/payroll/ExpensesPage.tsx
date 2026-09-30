@@ -19,7 +19,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { statusTone } from '@/lib/labels';
+import { expenseClaimStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -131,7 +131,9 @@ export default function ExpensesPage() {
                     </td>
                     <td className="subtle">{formatDate(claim.submittedAt)}</td>
                     <td>
-                      <Badge tone={statusTone(claim.status)}>{claim.status}</Badge>
+                      <Badge tone={statusTone(claim.status)}>
+                        {t(expenseClaimStatusLabels[claim.status] ?? claim.status)}
+                      </Badge>
                     </td>
                     {can(P.EXPENSE_MANAGE) && (
                       <td>

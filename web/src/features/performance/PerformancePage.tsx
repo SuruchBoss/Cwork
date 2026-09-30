@@ -20,7 +20,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { statusTone } from '@/lib/labels';
+import { reviewCycleStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -106,7 +106,11 @@ export default function PerformancePage() {
               />
               <Stat
                 label={t('Cycle status')}
-                value={<Badge tone={statusTone(cycle.status)}>{cycle.status}</Badge>}
+                value={
+                  <Badge tone={statusTone(cycle.status)}>
+                    {t(reviewCycleStatusLabels[cycle.status] ?? cycle.status)}
+                  </Badge>
+                }
               />
               <Stat label={t('KPI goals')} value={cycle._count.goals} />
               <Stat

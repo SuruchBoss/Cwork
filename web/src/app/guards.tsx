@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { EmptyState } from '@/components/ui';
 import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
@@ -45,6 +45,11 @@ export function RequirePermission({ any }: { any: string[] }) {
           icon="⊘"
           title={t('You do not have access to this page')}
           description={t('If you think this is a mistake, contact your administrator')}
+          action={
+            <Link to="/" className="btn btn--primary">
+              {t('Back to home')}
+            </Link>
+          }
         />
       </div>
     );

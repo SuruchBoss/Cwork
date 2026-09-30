@@ -125,11 +125,11 @@ class _BalanceStrip extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Text(
-                  Fmt.number(balance.available),
+                  Fmt.days(balance.available),
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  ref.tr('from {n} days', <String, Object>{'n': Fmt.number(balance.granted)}),
+                  ref.tr('from {n} days', <String, Object>{'n': Fmt.days(balance.granted)}),
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.outline,
@@ -186,7 +186,7 @@ class _LeaveRequestTile extends ConsumerWidget {
                   : '${Fmt.date(request.startDate)} – ${Fmt.date(request.endDate)}',
             ),
             Text(
-              '${ref.tr('{n} days', <String, Object>{'n': Fmt.number(request.totalDays)})}'
+              '${ref.tr('{n} days', <String, Object>{'n': Fmt.days(request.totalDays)})}'
               ' · ${request.requestNo}',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
             ),

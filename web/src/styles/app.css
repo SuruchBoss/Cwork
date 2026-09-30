@@ -20,8 +20,10 @@ body,
 body {
   margin: 0;
   font-family: var(--font);
-  font-size: 14px;
-  line-height: 1.55;
+  /* 15px, not 14: Thai stacks marks above and below the line, and the people
+     reading this console all day are HR staff, not developers. */
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -119,11 +121,18 @@ p { margin: 0 0 8px; }
   text-transform: uppercase;
   color: var(--text-subtle);
 }
+/* Thai has no capitals, and letter-spacing pulls its marks away from their
+   consonants; the heading reads better as plain small text. */
+:lang(th) .sidebar__section {
+  font-size: 12px;
+  letter-spacing: 0;
+}
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 40px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
@@ -141,10 +150,14 @@ p { margin: 0 0 8px; }
   font-weight: 600;
 }
 .nav-link__icon {
-  width: 18px;
-  text-align: center;
+  display: grid;
+  place-items: center;
+  width: 20px;
   flex-shrink: 0;
-  font-size: 15px;
+}
+.icon {
+  display: block;
+  flex-shrink: 0;
 }
 .nav-link__badge {
   margin-left: auto;
@@ -161,6 +174,18 @@ p { margin: 0 0 8px; }
 .sidebar__footer {
   border-top: 1px solid var(--border);
   padding: 10px;
+}
+.sidebar__controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sidebar__control {
+  min-height: 40px;
+  padding: 6px 10px;
+}
+.sidebar__control--wide {
+  flex: 1;
 }
 
 .main {
@@ -184,7 +209,7 @@ p { margin: 0 0 8px; }
 
 .topbar__title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .topbar__spacer {
@@ -270,8 +295,29 @@ p { margin: 0 0 8px; }
   flex-direction: column;
   gap: 4px;
 }
+.stat--link {
+  position: relative;
+  color: inherit;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.stat--link:hover {
+  text-decoration: none;
+  border-color: var(--brand);
+  box-shadow: var(--shadow);
+}
+.stat__go {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  color: var(--text-subtle);
+}
+.stat--link:hover .stat__go {
+  color: var(--brand);
+}
 .stat__label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -282,7 +328,7 @@ p { margin: 0 0 8px; }
   font-variant-numeric: tabular-nums;
 }
 .stat__hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-subtle);
 }
 
@@ -295,12 +341,12 @@ p { margin: 0 0 8px; }
 table.table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 .table th {
   text-align: left;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
@@ -326,6 +372,32 @@ table.table {
   font-variant-numeric: tabular-nums;
 }
 
+/* The roster: one line per cell, so a fortnight reads across as a row, and the
+   names column stays put while the days scroll under it. */
+.table--roster th,
+.table--roster td {
+  white-space: nowrap;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.table--roster th:first-child,
+.table--roster td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 170px;
+  white-space: normal;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--border);
+}
+.table--roster th:first-child {
+  z-index: 2;
+  background: var(--surface-2);
+}
+.table--roster tbody tr:hover td:first-child {
+  background: var(--surface-hover);
+}
+
 .empty {
   padding: 40px 20px;
   text-align: center;
@@ -345,13 +417,18 @@ table.table {
   gap: 6px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 7px 13px;
+  min-height: 38px;
+  padding: 7px 14px;
   font: inherit;
   font-weight: 500;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.4;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s, opacity 0.12s;
   white-space: nowrap;
+}
+.btn:hover {
+  text-decoration: none;
 }
 .btn:disabled {
   opacity: 0.55;
@@ -384,9 +461,13 @@ table.table {
   background: var(--danger);
   color: #fff;
 }
+.btn--danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
 .btn--sm {
-  padding: 4px 9px;
-  font-size: 12px;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 13px;
 }
 
 .field {
@@ -395,16 +476,16 @@ table.table {
   gap: 5px;
 }
 .field__label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
 }
 .field__hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-subtle);
 }
 .field__error {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--danger);
 }
 
@@ -412,13 +493,14 @@ table.table {
 .select,
 .textarea {
   width: 100%;
+  min-height: 38px;
   padding: 8px 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
 }
 .input:focus,
 .select:focus,
@@ -512,7 +594,7 @@ table.table {
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .row--between { justify-content: space-between; }
 .muted { color: var(--text-muted); }
-.subtle { color: var(--text-subtle); font-size: 12px; }
+.subtle { color: var(--text-subtle); font-size: 13px; }
 .num { font-variant-numeric: tabular-nums; }
 .mono { font-family: var(--font-mono); font-size: 12px; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -520,7 +602,7 @@ table.table {
 .alert {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 14px;
   border: 1px solid transparent;
 }
 .alert--danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
@@ -960,11 +1042,64 @@ table.table {
     padding: 8px 12px;
     font-size: 12px;
   }
+  .topbar {
+    padding: 0 12px;
+  }
+  .nav-link {
+    min-height: 44px;
+  }
+  /* Below 16px, iPhone Safari zooms the page in when a field is focused. */
+  .input,
+  .select,
+  .textarea {
+    font-size: 16px;
+  }
+}
+
+/* Phones: rows stay one line each and the table scrolls sideways inside its
+   card, rather than squeezing every column until codes break mid-word. */
+@media (max-width: 640px) {
+  .table th,
+  .table td {
+    white-space: nowrap;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Touch screens: every control a finger can hit (44px, WCAG 2.5.5). */
+@media (pointer: coarse) {
+  .btn,
+  .input,
+  .select {
+    min-height: 44px;
+  }
+  .btn--sm {
+    min-height: 40px;
+  }
+  .sidebar__control {
+    min-height: 44px;
+  }
 }
 
 @media (min-width: 961px) {
   .sidebar-toggle,
   .sidebar-scrim {
     display: none;
+  }
+  /* On a desktop the sidebar is always there and every page opens with its own
+     heading, so a bar repeating that heading is only a strip of lost space. */
+  .topbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
