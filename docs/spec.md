@@ -98,8 +98,8 @@ scanner:
 So the people who would use Cwork are the owner or whoever does HR and pay,
 not the staff. Neither the app nor the GPS or scanner punch is exercised by
 this pilot. What that does to the pilot's scope, and to CW-060, CW-061, CW-064
-and CW-066, is **waiting on the owner's decision**. It is proposed in the
-backlog's pilot notes.
+and CW-066, is **waiting on the owner's decision**. The PO put a proposal to the owner
+on 2026-09-30, and the backlog changes once it is answered.
 
 Three measures, agreed before it starts:
 
