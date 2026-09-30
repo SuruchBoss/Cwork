@@ -111,7 +111,7 @@ export default function LeavePage() {
         ) : requests.data && requests.data.data.length > 0 ? (
           <>
             <div className="table-wrap">
-              <table className="table">
+              <table className="table table--cards">
                 <thead>
                   <tr>
                     <th>{t('No.')}</th>
@@ -125,7 +125,7 @@ export default function LeavePage() {
                 <tbody>
                   {requests.data.data.map((request) => (
                     <tr key={request.id}>
-                      <td className="mono">
+                      <td className="mono" data-label={t('No.')}>
                         {request.requestNo}
                         {request.createdViaAssistant && (
                           <div>
@@ -133,13 +133,13 @@ export default function LeavePage() {
                           </div>
                         )}
                       </td>
-                      <td>
+                      <td className="cell--lead">
                         <Person
                           name={`${request.employee.firstNameTh} ${request.employee.lastNameTh}`}
                           meta={request.employee.department?.name}
                         />
                       </td>
-                      <td>
+                      <td data-label={t('Type')}>
                         <span className="row" style={{ gap: 6 }}>
                           <span
                             className="dot"
@@ -152,12 +152,14 @@ export default function LeavePage() {
                           )}
                         </span>
                       </td>
-                      <td>
+                      <td data-label={t('Date range')}>
                         {formatDate(request.startDate)}
                         {request.startDate !== request.endDate && ` – ${formatDate(request.endDate)}`}
                       </td>
-                      <td className="num">{formatNumber(request.totalDays, 1)}</td>
-                      <td>
+                      <td className="num" data-label={t('Days')}>
+                        {formatNumber(request.totalDays, 1)}
+                      </td>
+                      <td data-label={t('Status')}>
                         <Badge tone={statusTone(request.status)}>
                           {t(leaveStatusLabels[request.status] ?? request.status)}
                         </Badge>

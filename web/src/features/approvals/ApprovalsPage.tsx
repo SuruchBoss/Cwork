@@ -67,7 +67,7 @@ export default function ApprovalsPage() {
           <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
         ) : tasks.data && tasks.data.length > 0 ? (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table--cards">
               <thead>
                 <tr>
                   <th>{t('Submitter')}</th>
@@ -85,7 +85,7 @@ export default function ApprovalsPage() {
 
                   return (
                     <tr key={task.id}>
-                      <td>
+                      <td className="cell--lead">
                         <Person
                           name={
                             submitter
@@ -95,21 +95,25 @@ export default function ApprovalsPage() {
                           meta={submitter?.employeeCode}
                         />
                       </td>
-                      <td>
+                      <td data-label={t('Type')}>
                         <Badge tone="warning">
                           {t(approvalEntityLabels[task.instance.entityType] ?? task.instance.entityType)}
                         </Badge>
                       </td>
-                      <td className="subtle">{describeSnapshot(task.instance.snapshot, t)}</td>
-                      <td className="subtle">
-                        {formatRelative(task.instance.submittedAt)}
-                        {task.dueAt && (
-                          <div className="subtle">
-                            {t('Due {date}', { date: formatDate(task.dueAt) })}
-                          </div>
-                        )}
+                      <td className="subtle" data-label={t('Details')}>
+                        {describeSnapshot(task.instance.snapshot, t)}
                       </td>
-                      <td>
+                      <td className="subtle" data-label={t('Submitted')}>
+                        <div>
+                          {formatRelative(task.instance.submittedAt)}
+                          {task.dueAt && (
+                            <div className="subtle">
+                              {t('Due {date}', { date: formatDate(task.dueAt) })}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="cell--actions">
                         {isRejecting ? (
                           <div className="stack stack--sm">
                             <Field label={t('Reason for rejection')}>
