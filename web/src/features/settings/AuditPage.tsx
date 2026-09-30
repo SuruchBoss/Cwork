@@ -11,7 +11,6 @@ import {
   EmptyState,
   ErrorState,
   Field,
-  Input,
   PageHeader,
   Select,
   TableSkeleton,
@@ -19,6 +18,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDateTime, formatNumber } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
+import { auditActionLabels, auditEntityLabels } from '@/lib/labels';
 import type { AuditLogEntry, Page } from '@/types/api';
 
 const ACTION_TONES: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'brand'> = {
@@ -60,7 +60,7 @@ export default function AuditPage() {
     <div className="page">
       <PageHeader
         title={t('Activity log')}
-        description={t('Append-only — the database refuses edits and deletes')}
+        description={t('Who did what, and when. Entries cannot be edited or deleted by anyone')}
       />
 
       <Card>
@@ -76,20 +76,26 @@ export default function AuditPage() {
               <option value="">{t('All')}</option>
               {Object.keys(ACTION_TONES).map((key) => (
                 <option key={key} value={key}>
-                  {key}
+                  {t(auditActionLabels[key] ?? key)}
                 </option>
               ))}
             </Select>
           </Field>
-          <Field label={t('Entity type')}>
-            <Input
+          <Field label={t('About')}>
+            <Select
               value={entityType}
               onChange={(e) => {
                 setEntityType(e.target.value);
                 setPage(1);
               }}
-              placeholder={t('e.g. Employee, PayrollRun')}
-            />
+            >
+              <option value="">{t('Everything')}</option>
+              {Object.entries(auditEntityLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {t(label)}
+                </option>
+              ))}
+            </Select>
           </Field>
         </div>
       </Card>
@@ -108,9 +114,9 @@ export default function AuditPage() {
                     <th>{t('Time')}</th>
                     <th>{t('User')}</th>
                     <th>{t('Action')}</th>
-                    <th>{t('Entity')}</th>
+                    <th>{t('About')}</th>
                     <th>{t('Details')}</th>
-                    <th>IP</th>
+                    <th>{t('IP address')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -121,9 +127,11 @@ export default function AuditPage() {
                       </td>
                       <td>{entry.actor?.email ?? t('System')}</td>
                       <td>
-                        <Badge tone={ACTION_TONES[entry.action] ?? 'neutral'}>{entry.action}</Badge>
+                        <Badge tone={ACTION_TONES[entry.action] ?? 'neutral'}>
+                          {t(auditActionLabels[entry.action] ?? entry.action)}
+                        </Badge>
                       </td>
-                      <td className="mono">{entry.entityType}</td>
+                      <td>{t(auditEntityLabels[entry.entityType] ?? entry.entityType)}</td>
                       <td className="subtle">{entry.summary ?? '—'}</td>
                       <td className="mono subtle">{entry.ipAddress ?? '—'}</td>
                     </tr>
