@@ -21,6 +21,9 @@ export default function DashboardPage() {
   const canSeePeople = canAny(P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM);
   const canSeeLeave = canAny(P.LEAVE_READ, P.LEAVE_READ_TEAM);
   const canSeePayroll = canAny(P.PAYROLL_READ);
+  // Someone who sees none of the HR lists is an employee: their day-to-day is
+  // in the phone app, so the console points them at it instead of looking empty.
+  const employeeOnly = !canSeePeople && !canSeeLeave && !canSeePayroll;
 
   const approvals = useQuery({
     queryKey: qk.approvalTasks('PENDING'),
@@ -53,7 +56,7 @@ export default function DashboardPage() {
     <div className="page">
       <PageHeader
         title={t('Hi {name}', { name: user?.displayName ?? '' })}
-        description={t('Your HR tasks for today')}
+        description={t('What is waiting for you today')}
       />
 
       <div className="grid grid--4">
@@ -61,12 +64,14 @@ export default function DashboardPage() {
           label={t('Your approvals')}
           value={approvals.data?.length ?? '—'}
           hint={approvals.data?.length ? t('Tap to act') : t('Nothing pending')}
+          to="/approvals"
         />
         {canSeePeople && (
           <Stat
             label={t('Active employees')}
             value={headcount.data?.meta.total ?? '—'}
             hint={t('Including those on probation')}
+            to="/employees"
           />
         )}
         {canSeeLeave && (
@@ -74,6 +79,7 @@ export default function DashboardPage() {
             label={t('Leave requests pending')}
             value={pendingLeave.data?.meta.total ?? '—'}
             hint={t('Across the organisation you can see')}
+            to="/leave"
           />
         )}
         {canSeePayroll && (
@@ -81,6 +87,7 @@ export default function DashboardPage() {
             label={t('Latest payroll run')}
             value={run ? run.period?.code ?? run.runNo : '—'}
             hint={run ? formatMoney(run.totalNet, run.currency) : t('No runs yet')}
+            to="/payroll"
           />
         )}
       </div>
@@ -164,7 +171,7 @@ export default function DashboardPage() {
                           />
                         </td>
                         <td>
-                          <span className="row" style={{ gap: 6 }}>
+                          <span className="row" style={{ gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
                             <span
                               className="dot"
                               style={{ background: request.leaveType.colorHex }}
@@ -173,7 +180,7 @@ export default function DashboardPage() {
                             {request.leaveType.name}
                           </span>
                         </td>
-                        <td className="subtle">
+                        <td className="subtle" style={{ whiteSpace: 'nowrap' }}>
                           {formatDate(request.startDate)} · {Number(request.totalDays)} {t('days')}
                         </td>
                         <td>
@@ -189,6 +196,21 @@ export default function DashboardPage() {
             ) : (
               <EmptyState icon="⏸" title={t('No leave requests pending')} />
             )}
+          </Card>
+        )}
+
+        {employeeOnly && (
+          <Card title={t('Use Cwork on your phone')}>
+            <div className="stack">
+              <p className="muted" style={{ margin: 0 }}>
+                {t('Clock in and out, request leave and see your payslips in the Cwork app.')}
+              </p>
+              <div>
+                <Link to="/app" className="btn btn--primary">
+                  {t('How to install the app')}
+                </Link>
+              </div>
+            </div>
           </Card>
         )}
       </div>
