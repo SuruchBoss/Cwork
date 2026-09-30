@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-064 · CW-062 · CW-061 · CW-059 (employee half done 2026-09-30; payroll half after) |
+| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-064 · CW-062 · CW-061 · CW-059 (employee half done 2026-09-30; payroll half after) · UX alongside: CW-066 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -342,6 +342,54 @@ many of the pilot's employees use one.
 
 
 ## P1 — before payroll runs on real people
+
+
+### CW-066 · The pilot's daily tasks, as a first-time user does them
+`P1` · UX · web · mobile · **M** · pilot, by 31 October 2026
+
+CW-063 polishes screens in general. This ticket is narrower and comes first:
+the few things people at the pilot company will actually do, done by
+someone who has never seen Cwork, in Thai, on a phone. The pilot's staff clock
+in on a fingerprint scanner and are not technical. If they cannot finish a
+task alone, the pilot measures confusion rather than the product.
+
+**The tasks**
+1. **Employee:** open the app for the first time, connect to the company
+   (CW-060), activate the account with HR's code (CW-064), file a leave
+   request, and see it approved.
+2. **Manager:** approve or reject that request on a phone.
+3. **HR:**
+   - import employees and leave already taken from Excel (CW-059);
+   - hand out activation codes (CW-064);
+   - import the scanner's file (CW-061);
+   - read the result.
+
+**How**
+- Screens that exist now (the app's leave flow, the approvals tab, and CW-059's
+  two import pages): walk each task in Thai at phone width, then fix the copy,
+  order and error messages where a non-technical person would stop. The CW-059
+  import pages are the dev's latest work. Agree changes with the dev before
+  editing files they are still in.
+- Screens not built yet (CW-064's activation flow and code sheet, CW-061's
+  import): before the dev builds them, give the dev the Thai wording and a
+  layout sketch, as a comment on the ticket. Review them once built.
+- Error messages from the imports count as UI. "Row 12, national ID: must be
+  13 digits" is fine, and a validator's name is not.
+
+**Acceptance**
+- Each task is written down step by step in Thai (a short page in `docs/`
+  that HR at the pilot company can also use), with a screenshot per step.
+- Before 31 October someone non-technical, not a developer, does tasks 1 and
+  2 on a real phone with no help. Where they got stuck, and what changed
+  because of it, is recorded in the ticket.
+- CW-064 and CW-061 each have Thai wording from this ticket before they are
+  built, and a UX review after.
+
+**Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
+`mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
+`web/src/features/leave/LeaveImportPage.tsx`, `docs/`
+
+---
 
 
 ### CW-059 · Start from a spreadsheet: import employees and opening balances
