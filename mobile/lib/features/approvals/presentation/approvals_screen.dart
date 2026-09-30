@@ -8,6 +8,8 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
+import '../../leave/application/leave_controller.dart';
+import '../../leave/domain/leave_models.dart';
 
 /// Approval inbox for managers.
 ///
@@ -64,7 +66,19 @@ class ApprovalTask {
 
   String summaryFor(WidgetRef ref) {
     final List<String> parts = <String>[];
-    if (snapshot['leaveTypeCode'] != null) parts.add(snapshot['leaveTypeCode'].toString());
+    final Object? leaveTypeCode = snapshot['leaveTypeCode'];
+    if (leaveTypeCode != null) {
+      // The snapshot keeps the type's code (ANNUAL); show the name HR gave it.
+      final List<LeaveType> types = ref.watch(leaveTypesProvider).valueOrNull ?? <LeaveType>[];
+      final String code = leaveTypeCode.toString();
+      parts.add(
+        types
+                .where((LeaveType type) => type.code == code)
+                .map((LeaveType t) => t.name)
+                .firstOrNull ??
+            code,
+      );
+    }
     if (snapshot['totalDays'] != null) {
       parts.add(ref.tr('{n} days', <String, Object>{'n': snapshot['totalDays'] as Object}));
     }

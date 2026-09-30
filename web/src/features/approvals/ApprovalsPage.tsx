@@ -19,8 +19,8 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber, formatRelative } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { approvalEntityLabels } from '@/lib/labels';
-import type { ApprovalTask } from '@/types/api';
+import { approvalEntityLabels, documentTypeLabels, overtimeTypeLabels } from '@/lib/labels';
+import type { ApprovalTask, LeaveType } from '@/types/api';
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -34,6 +34,14 @@ export default function ApprovalsPage() {
     queryKey: qk.approvalTasks('PENDING'),
     queryFn: () => api.get<ApprovalTask[]>('/approvals/tasks', { query: { status: 'PENDING' } }),
   });
+
+  // A leave request's snapshot carries the type's code (ANNUAL); the reviewer
+  // should read the name HR gave it (ลาพักร้อน).
+  const leaveTypes = useQuery({
+    queryKey: qk.leaveTypes,
+    queryFn: () => api.get<LeaveType[]>('/leave/types'),
+  });
+  const leaveTypeNames = new Map(leaveTypes.data?.map((type) => [type.code, type.name]));
 
   const decide = useMutation({
     mutationFn: (input: { taskId: string; decision: 'APPROVE' | 'REJECT'; comment?: string }) =>
@@ -67,7 +75,7 @@ export default function ApprovalsPage() {
           <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
         ) : tasks.data && tasks.data.length > 0 ? (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table--cards">
               <thead>
                 <tr>
                   <th>{t('Submitter')}</th>
@@ -85,7 +93,7 @@ export default function ApprovalsPage() {
 
                   return (
                     <tr key={task.id}>
-                      <td>
+                      <td className="cell--lead">
                         <Person
                           name={
                             submitter
@@ -95,21 +103,25 @@ export default function ApprovalsPage() {
                           meta={submitter?.employeeCode}
                         />
                       </td>
-                      <td>
+                      <td data-label={t('Type')}>
                         <Badge tone="warning">
                           {t(approvalEntityLabels[task.instance.entityType] ?? task.instance.entityType)}
                         </Badge>
                       </td>
-                      <td className="subtle">{describeSnapshot(task.instance.snapshot, t)}</td>
-                      <td className="subtle">
-                        {formatRelative(task.instance.submittedAt)}
-                        {task.dueAt && (
-                          <div className="subtle">
-                            {t('Due {date}', { date: formatDate(task.dueAt) })}
-                          </div>
-                        )}
+                      <td className="subtle" data-label={t('Details')}>
+                        {describeSnapshot(task.instance.snapshot, t, leaveTypeNames)}
                       </td>
-                      <td>
+                      <td className="subtle" data-label={t('Submitted')}>
+                        <div>
+                          {formatRelative(task.instance.submittedAt)}
+                          {task.dueAt && (
+                            <div className="subtle">
+                              {t('Due {date}', { date: formatDate(task.dueAt) })}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="cell--actions">
                         {isRejecting ? (
                           <div className="stack stack--sm">
                             <Field label={t('Reason for rejection')}>
@@ -197,10 +209,16 @@ export default function ApprovalsPage() {
  * entity type, surface the handful of fields that are meaningful across all of
  * them — the detail lives one click away on the entity itself.
  */
-function describeSnapshot(snapshot: Record<string, unknown>, t: Translate): string {
+function describeSnapshot(
+  snapshot: Record<string, unknown>,
+  t: Translate,
+  leaveTypeNames: Map<string, string>,
+): string {
   const parts: string[] = [];
 
-  if (typeof snapshot.leaveTypeCode === 'string') parts.push(String(snapshot.leaveTypeCode));
+  if (typeof snapshot.leaveTypeCode === 'string') {
+    parts.push(leaveTypeNames.get(snapshot.leaveTypeCode) ?? snapshot.leaveTypeCode);
+  }
   if (typeof snapshot.totalDays === 'number') parts.push(`${snapshot.totalDays} ${t('days')}`);
   if (typeof snapshot.hours === 'number') parts.push(`${snapshot.hours} ${t('hr')}`);
   if (typeof snapshot.totalAmount === 'number') {
@@ -211,7 +229,11 @@ function describeSnapshot(snapshot: Record<string, unknown>, t: Translate): stri
   if (typeof snapshot.lastWorkingDate === 'string') {
     parts.push(t('Last day {date}', { date: formatDate(snapshot.lastWorkingDate) }));
   }
-  if (typeof snapshot.type === 'string' && !snapshot.leaveTypeCode) parts.push(String(snapshot.type));
+  if (typeof snapshot.type === 'string' && !snapshot.leaveTypeCode) {
+    // Overtime and document requests both call their kind `type`.
+    const label = overtimeTypeLabels[snapshot.type] ?? documentTypeLabels[snapshot.type];
+    parts.push(label ? t(label) : snapshot.type);
+  }
 
   return parts.join(' · ') || '—';
 }

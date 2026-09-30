@@ -366,6 +366,16 @@ table.table {
 .table tbody tr:hover {
   background: var(--surface-hover);
 }
+/* A totals row reads as one line: shaded across, and not stuck to the top. */
+.table tfoot th,
+.table tfoot td {
+  position: static;
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+}
 .table td.num,
 .table th.num {
   text-align: right;
@@ -1087,6 +1097,79 @@ table.table {
     white-space: nowrap;
     padding-left: 12px;
     padding-right: 12px;
+  }
+}
+
+/* Tables that become cards on a phone (CW-063). A list someone works through
+   on a phone reads better as one card per record than as a table scrolled
+   sideways. The page marks the table `table--cards`, gives each cell a
+   `data-label` naming its column, and marks the cell that identifies the
+   record `cell--lead` (it heads the card, unlabelled) and a cell of buttons
+   `cell--actions` (full width at the foot). The markup stays a table, so a
+   desktop and a screen reader get the same rows and headers as before. */
+@media (max-width: 640px) {
+  .table--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table--cards,
+  .table--cards tbody {
+    display: block;
+  }
+  .table--cards tbody {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+  .table--cards tr {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 14px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .table--cards tbody tr:hover {
+    background: var(--surface);
+  }
+  .table--cards td,
+  .table--cards td.num {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border: 0;
+    white-space: normal;
+    text-align: right;
+  }
+  .table--cards td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: var(--font);
+    text-align: left;
+  }
+  .table--cards td.cell--lead {
+    order: -1;
+    display: block;
+    padding: 10px 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .table--cards td.cell--actions {
+    display: block;
+    padding-top: 10px;
+    text-align: left;
+  }
+  .table--cards td.cell--actions .row > .btn {
+    flex: 1;
   }
 }
 

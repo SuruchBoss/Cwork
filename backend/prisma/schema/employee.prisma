@@ -129,6 +129,7 @@ model Employee {
   recurringItems    EmployeeRecurringItem[]
   payslips          Payslip[]
   taxProfiles       EmployeeTaxProfile[]
+  payrollOpeningBalances PayrollOpeningBalance[]
   benefitEnrollments BenefitEnrollment[]
   expenseClaims     ExpenseClaim[]
 

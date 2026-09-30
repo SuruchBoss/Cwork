@@ -25,8 +25,9 @@ The release employees can install. From this release on, each one carries
 `cwork-android.apk`: one Android app for every company, which the employee
 connects to their company's server by scanning the QR code on the console's
 **Employees → Mobile app** page (CW-060). iPhone is not supported yet. HR
-brings employees, and the leave they have already taken this year, in from a
-spreadsheet (CW-059). The console and the app also work in English; benefits,
+brings employees in from a spreadsheet, with the leave they have already taken
+this year and, for a company that starts mid-year, what payroll paid them
+before Cwork, so the first run withholds the right tax (CW-059). The console and the app also work in English; benefits,
 shifts and issued documents are managed in the console; statuses read as words
 rather than codes; and a public demo runs from the landing page.
 
@@ -279,6 +280,28 @@ someone imports it.
   `usedBeforeCwork` says how much of it came from before. Each import is
   audited as one event naming the file.
 
+- **The pay a company gave before Cwork counts in its withholding** (CW-059,
+  the payroll half). A company that starts in September paid January to August
+  elsewhere, and withholding projects the year from the year so far, so its
+  first run withheld far too little and the employee got a bill the next
+  March. **Payroll → Import pay before Cwork** now takes each employee's
+  taxable income, tax withheld and social security from January to the last
+  month paid elsewhere, from the same kinds of file as the employee import. The
+  template lists everyone employed in those months with any figures already on
+  file, the preview totals the file to check against the old system's report,
+  and figures are set rather than added, so importing twice changes nothing.
+  September then withholds exactly what it would have if all nine months had
+  run in Cwork: an end-to-end test runs nine months in one year, imports the
+  same eight months into another, and compares September to the baht. The
+  months are stored as this employer's own (`PayrollOpeningBalance`), not as
+  the tax profile's previous-employer income, so the annual filings can count
+  them as such, and each payslip's `snapshot.yearToDate` records the split.
+  A month the figures cover cannot then be calculated in Cwork
+  (`PAID_BEFORE_CWORK`), and a file cannot cover a month Cwork has already paid.
+  A run already calculated without the figures is named, to be calculated
+  again before it is approved. Amount columns in the templates stay numbers, so
+  Excel can add them up.
+
 ### Removed
 
 - **The unused `selfieFileId` column** (CW-033). `AttendancePunch.selfieFileId`
@@ -315,6 +338,12 @@ someone imports it.
   phone app, is shown how to install it; the no-access page has a way home;
   closing a benefit plan asks first; and the roster keeps one line per day with
   the names pinned while the fortnight scrolls.
+- **Leave, approvals and the employee directory are cards on a phone**
+  (CW-063). Below 640px each leave request, approval and employee is a card
+  headed by the person, with every
+  other field on a labelled line and Approve / Reject full width at the foot,
+  instead of a table row scrolled sideways. The desktop table is unchanged.
+  Any table can take it with a class and a `data-label` per cell.
 - **The mobile app's colours mean something.** Approved, present and paid were
   pink, because the chips took the theme's third colour; they are green now,
   pending is amber and rejected red, in both themes. Clocking out is orange
@@ -373,6 +402,10 @@ someone imports it.
 
 ### Fixed
 
+- **Approvals said `ANNUAL` instead of the leave type's name.** A leave request
+  waiting for a decision was described by the code its approval keeps, in the
+  console and in the app. Both now show the name HR gave the type (ลาพักร้อน),
+  and the console names overtime and document request kinds too.
 - **The API's Docker image could not start.** The certificate renderer reads
   the Thai font from `assets/fonts` when the API boots, and `backend/Dockerfile`
   never copied `assets/` into the runtime image, so the container stopped with

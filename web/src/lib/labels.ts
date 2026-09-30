@@ -98,6 +98,13 @@ export const anomalyFlagLabels: Record<string, string> = {
   IMPOSSIBLE_TRAVEL: 'Impossible travel',
 };
 
+export const overtimeTypeLabels: Record<string, string> = {
+  NORMAL_DAY: 'Overtime on a working day',
+  DAY_OFF: 'Work on a day off',
+  HOLIDAY: 'Work on a public holiday',
+  HOLIDAY_OVERTIME: 'Overtime on a holiday',
+};
+
 export const payrollPeriodStatusLabels: Record<string, string> = {
   OPEN: 'Period open',
   LOCKED: 'Period locked',

@@ -3,7 +3,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { strToU8, zipSync } from 'fflate';
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { decodeText, detectDelimiter, parseCsv } from './csv';
 import { readTable, TableError } from './table';
 import { columnLetter, readXlsx, writeXlsx } from './xlsx';
@@ -175,6 +175,32 @@ describe('writeXlsx', () => {
       ['E001', 'สมชาย <& "ใจดี">'],
       ['0012', '  spaced  '],
     ]);
+  });
+
+  it('keeps amounts as numbers, in columns Excel formats as amounts', () => {
+    const bytes = writeXlsx([
+      {
+        name: 'ยอดยกมา',
+        header: true,
+        amountColumns: [1],
+        rows: [
+          ['รหัสพนักงาน', 'เงินได้'],
+          ['E001', 360000.5],
+          ['E002', ''],
+        ],
+      },
+    ]);
+
+    expect(readXlsx(bytes).rows).toEqual([
+      ['รหัสพนักงาน', 'เงินได้'],
+      ['E001', 360000.5],
+      ['E002'],
+    ]);
+    const sheet = strFromU8(unzipSync(bytes)['xl/worksheets/sheet1.xml']);
+    // The code column stays text; the amount column is #,##0.00 (style 3), even where blank.
+    expect(sheet).toContain('<col min="1" max="1" width="16" style="1" customWidth="1"/>');
+    expect(sheet).toContain('<col min="2" max="2" width="16" style="3" customWidth="1"/>');
+    expect(sheet).toContain('<c r="B2" s="3"><v>360000.5</v></c>');
   });
 });
 

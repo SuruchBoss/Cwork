@@ -47,7 +47,8 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-062 · CW-061 · CW-059 (employees and leave balances first) |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-067 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 · CW-059 (payroll half, if anyone is taxed) |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -112,6 +113,26 @@ date and phase 3 does not. It needs four things:
 - employees and leave balances brought across (CW-059, whose payroll half can
   follow, since payroll is not in the pilot).
 
+**The pilot was re-scoped on 2026-09-30, with the owner's agreement: "back
+office first", then a shadow payroll.** The company is about 20 people, mostly
+labourers with no smartphones. Its HR copies the fingerprint scanner's times
+onto paper, and it pays daily-wage staff every 15 days and monthly staff
+monthly, in cash, from Excel. Some of the staff are foreign workers. The
+people who use Cwork are therefore HR and the owner, not the staff:
+
+- **Pilot A (by 31 October)** puts the records in. Cwork runs on the NAS in
+  the office only. The scanner's file is imported instead of copied onto paper.
+  HR records leave for staff who cannot, and foreign workers' documents are
+  held.
+- **Pilot B (November)** runs payroll alongside their Excel. It pays nobody:
+  they keep paying cash as now, and every difference between the two is
+  explained. It is the first evidence anyone has that Cwork's Thai payroll is
+  right, which #36 has lacked from the start.
+- **Dropped from the pilot:**
+  - CW-064 and CW-060 (no one at the pilot company uses the app);
+  - CW-019 (they pay in cash);
+  - CW-031, which is unaffected and waits on the owner as before.
+
 **CW-058, CW-059 and CW-019 moved up on 2026-09-28**, after a look at
 PeopleFlow (peopleflowglobal.com), a Thai HR service sold per head. Its first
 claim is being "genuinely Thai": Buddhist-era years, a Sunday week, 24-hour
@@ -133,8 +154,203 @@ seeing any of it.
 ## P0 — blocks a real deployment
 
 
+### CW-067 · HR records leave for an employee
+`P0` · leave · web · **S–M** · Pilot A, by 31 October 2026
+
+Leave can be requested only by the employee it is for
+(`leave:request:self`), in the app or through the API as themselves. HR can
+adjust a balance, but cannot record "Somchai was on sick leave on Tuesday".
+At the pilot company nobody but HR uses Cwork, so leave cannot enter it at all.
+
+**Scope**
+- HR files a leave request on an employee's behalf from the console, under
+  a permission of its own. The employee's own route is unchanged.
+- It goes through the same rules as a request the employee files: balance,
+  overlap, half days, working days and holidays.
+- HR chooses whether it still needs approval or is recorded as approved, as
+  when a manager is told in person. Either way, the record says who entered it.
+- Sick leave of three or more working days can carry a scanned medical
+  certificate, as the law allows the employer to ask for one.
+
+**Acceptance**
+- HR records a leave for an employee who has no account, and the balance, the
+  attendance for those days and the payroll period all reflect it.
+- A request HR files that breaks a rule is refused with the same message the
+  employee would get.
+- The audit trail names HR as the person who entered it, and the employee as
+  the person on leave.
+- Someone without the permission cannot file leave for anyone but themselves.
+
+**Files** `backend/src/modules/leave/`, `web/src/features/leave/`
+
+---
+
+
+### CW-069 · Daily wages, and paying every 15 days
+`P0` · payroll · **L** · Pilot B, November 2026
+
+`payFrequency` (with `SEMI_MONTHLY` and `DAILY`) and `dailyRate` are in the
+schema and **used nowhere in the code**, so payroll can only pay a monthly
+salary. The pilot pays its labourers a daily wage every 15 days and its office
+staff monthly. That is the most common arrangement in Thai small business,
+and Cwork cannot compute it. A schema field that no code reads is also the
+thing this project said it would not keep.
+
+**Scope**
+- A daily-wage employee is paid days worked × daily rate. Paid leave and
+  public holidays are paid, and absence is not, as the Labour Protection Act
+  sets out.
+- Two pay groups in one organisation: daily staff on 1–15 and 16–end of
+  month, and monthly staff on the calendar month. Each has its own periods and
+  runs.
+- Social security for the 15-day groups is computed on the month's wages, with
+  the monthly ceiling applied once across both periods rather than once in
+  each.
+- Overtime at the legal multiples of the hourly rate derived from the daily
+  wage.
+
+**Acceptance**
+- For the pilot's November, each employee's pay from Cwork matches their
+  Excel, or every difference is explained and either Cwork or the Excel is
+  corrected. The comparison is recorded here.
+- A daily employee who works both halves of a month pays social security on
+  the whole month's wages, never above the monthly ceiling. Tested at the
+  boundary.
+- The minimum-wage floor is checked: a daily rate below the province's
+  minimum is flagged when it is entered, not discovered at payday.
+- The rules are written in `docs/payroll-thailand.md` next to the existing
+  ones, for #36's reviewer.
+
+**Files** `backend/src/modules/payroll/`, `docs/payroll-thailand.md`
+
+---
+
+
+### CW-070 · Cash advances, deducted when they fall due
+`P0` · payroll · **S–M** · Pilot B, November 2026
+
+Advances (เบิกล่วงหน้า) are how many labourers get through a pay period, and
+the pilot gives them. Payroll has standing deductions such as loan repayment,
+but nothing records "500 baht paid out on the 8th, to come off this
+period's pay".
+
+**Scope**
+- HR records an advance: who, how much, on what date, and paid in cash.
+- It is deducted from the next pay run that includes that date, and shown as
+  its own line on the payslip.
+- An advance larger than the period's pay is not allowed to push net pay
+  below zero. What remains carries to the next period, and HR sees it.
+
+**Acceptance**
+- Two advances in one period both appear on the payslip and both come off net
+  pay.
+- An advance bigger than the period's pay leaves net pay at zero and carries
+  the rest, visibly, to the next period.
+- Advances are audited, and a closed period's advances cannot be edited.
+
+**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
+
+---
+
+
+### CW-071 · Payslips and a wage receipt on paper
+`P0` · payroll · documents · **M** · Pilot B, November 2026
+
+The pilot pays in cash to staff without smartphones, so a payslip on a
+screen reaches nobody. The Labour Protection Act also expects the employer to
+keep a record of wages paid. The PO understands a receipt the employee signs
+to be the usual way; an accountant should confirm (#36).
+
+**Scope**
+- One printable payslip per employee per run, in Thai, sized so two or four
+  fit on an A4 sheet to be cut. It is built on the certificate renderer from
+  CW-008.
+- A wage receipt sheet for the run: one row per employee with net pay and a
+  space to sign. It is printed on A4, and HR files it.
+- Dates in พ.ศ. (CW-058).
+
+**Acceptance**
+- Every line on the printed payslip matches the payslip on screen, tested,
+  not inspected.
+- Thai renders with no missing glyphs, and the documents print correctly on
+  A4 from Chrome and from the NAS's PDF.
+- A foreign worker's slip shows their name as HR entered it.
+- Printing is audited, and only people who may see pay can print.
+
+**Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`,
+`web/src/features/payroll/`
+
+---
+
+
+### CW-064 · An employee's first sign-in
+`P2` · auth · mobile · **M** · not needed by the pilot
+
+**Re-prioritised 2026-09-30: P0 → P2.** The pilot's staff do not use the app;
+HR records for them (CW-067). The decisions below stand for when a company's
+staff do.
+
+Found by the dev while building CW-059, on 2026-09-30. **No employee can set
+their first password.**
+- An account can be created as `INVITED`, but nothing takes it further. There
+  is no invitation to accept and no way for HR to set a starting password.
+- CW-059's import creates employees without accounts at all.
+
+The pilot's employees file leave in the app, so without this nobody at the
+pilot company except HR can use Cwork.
+
+A second gap sits behind it: **sign-in needs an email address**
+(`LoginDto.email` is `@IsEmail`). The pilot clocks in on a fingerprint scanner,
+and staff like that often have no work email. Cwork must not require one.
+
+**Decided 2026-09-30:**
+- **HR hands each employee a one-time activation code** (a code and a QR code)
+  from the console. The employee opens the app, enters or scans it, and sets
+  their own password. HR never knows it. Email can carry the same code where
+  the company has SMTP, but the process must not depend on email.
+- **An employee without an email address can have an account** and signs in
+  with their employee code. Email stays accepted wherever there is one.
+
+**Scope**
+- Create accounts for many employees at once: every imported employee without
+  an account, in one action.
+- A printable sheet of activation codes, one per employee, for HR to hand out.
+- Activation codes are credentials:
+  - single use;
+  - expire after a set time;
+  - stored hashed and shown once;
+  - reissuing one voids the last;
+  - each issue and use is audited;
+  - attempts are rate-limited like sign-in.
+- Roles that require a second factor still enrol one at first sign-in, as today.
+
+**Acceptance**
+- An imported employee with no email address receives a code from HR, and
+  activates and signs in on the app with no help. HR never sees their password.
+- A used, expired or reissued code is refused, and so is a guessed one, within
+  the sign-in rate limit.
+- Signing in with an employee code works, and existing email sign-in is
+  unchanged, lockout and second factor included.
+- The code sheet prints on A4 with names in Thai.
+- Tests cover each refusal. Because this touches authentication, the sign-in
+  paths that GHSA-3cgw-73cr-r8c6 hardened get tests showing they did not
+  regress.
+
+**Files** `backend/src/modules/auth/`, `backend/src/modules/employees/`,
+`backend/prisma/schema/`, `web/src/features/employees/`, `mobile/lib/features/auth/`
+
+---
+
+
 ### CW-061 · Import punches from a fingerprint scanner's export
-`P0` · attendance · **M** · pilot, by 31 October 2026
+`P0` · attendance · **M** · Pilot A, by 31 October 2026
+
+**Confirmed 2026-09-30:** the pilot's scanner is a TA-001EX. Staff do scan,
+and HR copies the times onto paper because they do not use the scanner's
+software. Importing the scanner's file is the first thing the pilot will
+*see* Cwork save them. The PO could not find the model's documentation;
+devices of this kind usually export to a USB flash drive, which is the file
+to ask for.
 
 The pilot company clocks in on a fingerprint scanner and gets the punches out
 as an Excel file. Cwork has no way to take them in. `PunchMethod` already has
@@ -190,23 +406,24 @@ the internet.
 - Cwork's images build and run on that NAS's CPU. ARM is the usual trap.
 - Cwork and Odoo run side by side with no port clash and enough memory for
   both.
-- Phones reach Cwork over HTTPS from outside the office, for leave requests
-  and approvals, **without exposing the NAS's own admin page or Odoo** to the
-  internet. The method (router port forward and a certificate, or a tunnel) is
-  the dev's to choose and document.
-- The certificate must be one phones already trust, not a self-signed one
-  from the NAS. Since CW-060 the app refuses any server whose certificate the
-  phone does not trust.
+- **For this pilot, the office network only** (decided 2026-09-30). HR and
+  the owner use the console in the office, and nobody uses the app, so
+  nothing of the NAS is opened to the internet. HTTPS still applies inside
+  the office. How the office browsers come to trust the certificate is the
+  dev's to choose and document.
+- Reaching Cwork from outside, for a company whose staff do use the app, is
+  documented as an option and not set up here. When it is, the certificate
+  must be one phones already trust, because the app refuses any other
+  (CW-060).
 - A nightly database backup to somewhere other than the disk it backs up,
   and `FIELD_ENCRYPTION_KEY` kept apart from it
   ([operations.md](./operations.md)).
 
 **Acceptance**
 - Cwork runs on the pilot's NAS alongside Odoo, and Odoo is unaffected.
-- An employee's phone on mobile data files a leave request, and the manager
-  approves it from theirs.
-- A port scan from outside finds Cwork's HTTPS port and nothing else of the
-  NAS.
+- HR signs in to the console from an office PC over HTTPS.
+- A port scan from outside the office finds nothing of the NAS: not Cwork,
+  not Odoo, not the NAS's admin page.
 - A restore from last night's backup onto a fresh container brings back that
   day's data.
 - `docs/operations.md` gains a NAS section that another company with a NAS
@@ -218,7 +435,11 @@ the internet.
 
 
 ### CW-060 · Employees have no way to install the app
-`P0` · mobile · project · **M** · blocks the pilot
+`P1` · mobile · project · **M** · built; not needed by the pilot
+
+**Re-prioritised 2026-09-30: P0 → P1.** Nobody at the pilot company uses the
+app, so it no longer blocks the pilot. It is still built, and it still closes
+when an APK installs on a real phone.
 
 **Status 2026-09-30: built, waiting on the owner.** The dev delivered it in
 3999b86 and 9df919e, and CI is green. The PO checked it against the acceptance:
@@ -236,7 +457,10 @@ an APK yet: 0.3.1 predates this, so the install page's link has no file behind
 it. Two owner steps come first ([mobile-release.md](./mobile-release.md)):
 1. Create the release signing key and add its four repository secrets. **If
    the key is ever lost, no later version installs as an update.**
-2. Cut 0.4.0.
+2. Cut 0.4.0. The dev has prepared it on `claude/hris-system-setup-kfl3rq`
+   (32c64ca: changelog section, versions, landing). It merges into `main` once
+   the secrets exist, since a `## [0.4.0]` section on `main` publishes the
+   release.
 
 Then install it on a real Android phone against a real HTTPS server, which is
 the pilot's (CW-062). That closes it.
@@ -286,6 +510,99 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
+### CW-068 · Foreign workers' documents
+`P1` · employees · **M** · fields in Pilot A, alerts after
+
+The pilot employs foreign workers. A work permit, visa or passport that
+lapses unnoticed carries heavy penalties for the employer. Cwork stores
+`passportNoEnc` and an `expiresAt` on employee documents, but CW-059's import
+has no column for either, and nothing ever looks at the dates.
+
+**Scope, Pilot A (by 31 October)**
+- The employee record and CW-059's import take a passport number, a work
+  permit number and the expiry date of each. Numbers are encrypted like the
+  national ID.
+- The import accepts a foreign worker with no Thai national ID and with names
+  in English only.
+
+**Scope, after the pilot**
+- A list of documents expiring within 30, 60 and 90 days, and a notification
+  to HR as each window opens.
+
+**Acceptance**
+- The pilot's foreign workers import with their passport and work permit
+  details, and nothing is required of them that they do not have.
+- (After the pilot) a work permit expiring in 29 days appears on the list and
+  HR is notified once, not daily.
+
+**Files** `backend/src/modules/employees/`, `backend/prisma/schema/`,
+`web/src/features/employees/`
+
+---
+
+
+### CW-066 · The pilot's daily tasks, as a first-time user does them
+`P1` · UX · web · mobile · **M** · Pilot A and B
+
+**Re-aimed 2026-09-30.** The pilot's users are HR and the owner, at a PC in
+the office. The staff do not use Cwork. The tasks that count are now:
+1. import the scanner's file (CW-061) and correct a day;
+2. record leave for an employee (CW-067);
+3. keep a foreign worker's documents (CW-068);
+4. run the shadow payroll for a 15-day period and a month (CW-069, CW-070);
+5. print the payslips and the receipt sheet (CW-071);
+6. download the social security file (CW-048).
+
+The tasks listed below were written for an app-using workforce, and they
+apply to the next company that has one. For this pilot, the acceptance's
+"someone non-technical" is the pilot's own HR person, doing tasks 1, 2, 4 and
+5 unaided before the November shadow run.
+
+CW-063 polishes screens in general. This ticket is narrower and comes first:
+the few things people at the pilot company will actually do, done by
+someone who has never seen Cwork, in Thai, on a phone. The pilot's staff clock
+in on a fingerprint scanner and are not technical. If they cannot finish a
+task alone, the pilot measures confusion rather than the product.
+
+**The tasks**
+1. **Employee:** open the app for the first time, connect to the company
+   (CW-060), activate the account with HR's code (CW-064), file a leave
+   request, and see it approved.
+2. **Manager:** approve or reject that request on a phone.
+3. **HR:**
+   - import employees and leave already taken from Excel (CW-059);
+   - hand out activation codes (CW-064);
+   - import the scanner's file (CW-061);
+   - read the result.
+
+**How**
+- Screens that exist now (the app's leave flow, the approvals tab, and CW-059's
+  two import pages): walk each task in Thai at phone width, then fix the copy,
+  order and error messages where a non-technical person would stop. The CW-059
+  import pages are the dev's latest work. Agree changes with the dev before
+  editing files they are still in.
+- Screens not built yet (CW-064's activation flow and code sheet, CW-061's
+  import): before the dev builds them, give the dev the Thai wording and a
+  layout sketch, as a comment on the ticket. Review them once built.
+- Error messages from the imports count as UI. "Row 12, national ID: must be
+  13 digits" is fine, and a validator's name is not.
+
+**Acceptance**
+- Each task is written down step by step in Thai (a short page in `docs/`
+  that HR at the pilot company can also use), with a screenshot per step.
+- Before 31 October someone non-technical, not a developer, does tasks 1 and
+  2 on a real phone with no help. Where they got stuck, and what changed
+  because of it, is recorded in the ticket.
+- CW-064 and CW-061 each have Thai wording from this ticket before they are
+  built, and a UX review after.
+
+**Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
+`mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
+`web/src/features/leave/LeaveImportPage.tsx`, `docs/`
+
+---
+
+
 ### CW-059 · Start from a spreadsheet: import employees and opening balances
 `P1` · employees · leave · payroll · **L** · phase 3
 
@@ -325,6 +642,20 @@ months were paid by **this** employer, and 50 ทวิ must count them as its o
 - Opening balances count as this employer's own in CW-046 and CW-047, not as a
   previous employer's.
 - Leave balances after import equal entitlement minus the imported days taken.
+
+**Status 2026-09-30: the employee half is done** (0b44fd3, df09d81). The PO
+checked it against the acceptance. The e2e suites `employee-import` and
+`prior-leave-import` cover:
+- Thai intact from `.xlsx` and from Excel's default CSV;
+- one bad row writing nothing, and every problem listed at once;
+- the same file refused row by row;
+- balances equal to entitlement minus the days imported;
+- one audit event per import.
+
+Scanner IDs are unique per organisation and kept exactly as typed. The payroll
+half (year-to-date income, tax and social security) is still open, and so are
+the last two acceptance items. The import creates employees but no sign-in
+accounts; that is CW-064.
 
 **The pilot needs half of this by 31 October 2026:** employees, including
 their scanner IDs for CW-061, and opening leave balances. The file will come
@@ -511,7 +842,11 @@ signature block, so this is a template over it.
 ---
 
 ### CW-048 · ประกันสังคม monthly filing (สปส. 1-10)
-`P1` · payroll · **M** · blocked by CW-044
+`P1` · payroll · **M** · Pilot B
+
+**Moved into the pilot on 2026-09-30.** The pilot company files this every
+month, by hand from Excel, and some of its insured staff are foreign workers.
+Its export is compared with the file they actually submit for November.
 
 Payroll computes both halves of the มาตรา 33 contribution and stores them on
 every payslip. There is no way to get them out.
@@ -526,6 +861,10 @@ and nothing else.
   boundary.
 - An employee with no social security number is reported as an error naming
   them, not silently omitted or exported blank.
+- Foreign workers insured under มาตรา 33 appear with the identifier the
+  Social Security Office expects for them.
+- The pilot's November export matches the file they submit, or every
+  difference is explained.
 
 **Files** `backend/src/modules/payroll/`
 
@@ -596,6 +935,24 @@ not because there is a date.
 
 
 ## P2 — worth doing
+
+
+### CW-065 · Add one employee from the console
+`P2` · employees · web · **S**
+
+Found by the dev on 2026-09-30. The console has no form for adding one
+employee. CW-059's spreadsheet import is the only way in, and a single new
+hire means filling in a one-row template. The pilot can live with that for
+four weeks, but a product cannot.
+
+**Acceptance** HR adds one employee, with the same fields and checks as the
+import, and sensitive fields encrypted the same way, from a form on the
+employee directory. When CW-064 has landed, the same form offers to create
+their account.
+
+**Files** `web/src/features/employees/`
+
+---
 
 
 ### CW-058 · Thai dates in the Buddhist era, everywhere a year is shown
@@ -863,6 +1220,15 @@ and so does the same for web and mobile.
 
 ### CW-063 · UX follow-ups from the 30 September pass
 `P3` · web · mobile · **M** · after the pilot items
+
+**Status 2026-09-30:**
+- **Item 2 is done** (PR #65). It needs one more retake once CW-058 lands.
+- **Item 3 is done:** leave and approvals in PR #65, and the employee
+  directory in PR #66.
+- **Item 1 is still open.** Chromium at phone size shows the light theme right,
+  but a real device and the dark theme are still unchecked.
+- **Fixed along the way:** approvals showed `ANNUAL` instead of the leave
+  type's name, in both clients. The issue's checklist is authoritative.
 
 PR #63 was a presentation-only pass over the console and the app, made for HR
 staff and employees who are not technical. It shipped without a ticket, so it

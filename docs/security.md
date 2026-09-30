@@ -214,7 +214,7 @@ Multer errors are mapped to HTTP status by *code*, not by message — Nest's own
 mapping matches message text, and a multer release that reworded one turned
 every such request into a 500. See `AllExceptionsFilter`.
 
-**Spreadsheet imports are not uploads** (CW-059). The employee and leave-taken
+**Spreadsheet imports are not uploads** (CW-059). The employee, leave-taken and pay-before-Cwork
 imports read their file in memory and keep nothing but the rows they write. The file never reaches
 storage, so it is not scanned, and there is nothing for a later change to expose.
 The same parser limits apply at 5 MB: one part, named `file`, and no text fields.

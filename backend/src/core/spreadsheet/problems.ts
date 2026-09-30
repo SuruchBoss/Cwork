@@ -3,7 +3,8 @@
 
 /**
  * What can be wrong with an imported spreadsheet, said the same way by every
- * import (CW-059): the employees file and the leave-taken file.
+ * import (CW-059): the employees file, the leave-taken file and the file of
+ * pay before Cwork.
  *
  * `code` and `params` are the contract. The console words each code in the
  * reader's language (web/src/features/imports/import-problems.ts), and
@@ -43,7 +44,13 @@ export type ImportProblemCode =
   | 'INVALID_DAYS'
   | 'WHOLE_DAYS_ONLY'
   | 'NOT_ELIGIBLE'
-  | 'OVER_ENTITLEMENT';
+  | 'OVER_ENTITLEMENT'
+  // Pay before Cwork.
+  | 'NO_FIGURES'
+  | 'INVALID_AMOUNT'
+  | 'TAX_OVER_INCOME'
+  | 'SSO_OVER_LIMIT'
+  | 'PAID_IN_CWORK';
 
 /** One thing wrong with the file, where it is, and why. */
 export interface ImportProblem {
@@ -94,6 +101,12 @@ const MESSAGES: Record<ImportProblemCode, string> = {
   NOT_ELIGIBLE: '{leaveType} does not apply to {employee}',
   OVER_ENTITLEMENT:
     '{employee} is entitled to {available} days of {leaveType} this year, not {value}',
+  NO_FIGURES: 'No row has any figures in it',
+  INVALID_AMOUNT: '"{value}" is not an amount in baht: 0 or more, with at most two decimals',
+  TAX_OVER_INCOME: 'Tax withheld ({value}) cannot be more than the taxable income ({income})',
+  SSO_OVER_LIMIT: 'Social security for {months} months is at most {max}, not {value}',
+  PAID_IN_CWORK:
+    '{employee} was already paid for {period} in Cwork; these figures can only cover the months before it',
 };
 
 export function importProblem(
