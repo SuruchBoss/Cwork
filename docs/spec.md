@@ -78,7 +78,8 @@ what it does not do without reading the source.
 ### Before real people use it
 
 There is no production user. The first is a **pilot: one organisation, 5–20
-employees, four weeks, leave and attendance only — no payroll.**
+employees, four weeks, leave and attendance only — no payroll.** *Re-scoped on
+2026-09-30, below: payroll is now computed in the pilot, but pays nobody.*
 
 **The pilot organisation, recorded 2026-09-30.** A company known to the owner,
 with a go-live target of **31 October 2026**. What it runs today decides
@@ -87,13 +88,52 @@ what the pilot needs:
 | Today | What it means for the pilot |
 |---|---|
 | Odoo, in a container on the company's NAS | Cwork runs on the same NAS beside it (CW-062). Employee records come out of Odoo as a spreadsheet (CW-059). |
-| A fingerprint scanner for clocking in, exported to Excel | Attendance comes from the scanner, not the app's GPS punch (CW-061). Fingerprints stay in the scanner: Cwork receives times, never biometrics. |
+| ~~A fingerprint scanner for clocking in, exported to Excel~~ | Corrected 2026-09-30, below. |
 
-The app is still needed, for leave requests: the console cannot file one. The
-scope above is unchanged unless the owner changes it, so payroll stays where it
-is for the pilot. Because punches come from the scanner, measure 2 becomes the
-share of imported days HR has to correct, and the geofence is not tested by
+**Corrected on 2026-09-30.** The owner's fuller description replaces the
+scanner:
+- Staff **sign a paper sheet** in and out, and the scanner will not be used.
+- The company has **about 20 people**, most of them labourers.
+- **Most staff do not have smartphones** that could run the app.
+
+The owner's answers the same day:
+
+| | |
+|---|---|
+| Clocking in | Staff do scan fingers on a scanner (TA-001EX). HR does not use the software that came with it and copies the times onto paper instead. The scanner can likely export a file; a sample is awaited. |
+| Pay | Daily-wage staff are paid every 15 days, and monthly staff once a month. Everyone is paid in **cash**. |
+| Deductions | Cash advances (เบิกล่วงหน้า) are common. Overtime happens, but not often. |
+| Payroll and social security | Done in-house, **in Excel**. |
+| Staff | Foreign workers are among them. |
+| Odoo | Used for accounting and stock, not HR. |
+
+So the people who would use Cwork are the owner or whoever does HR and pay,
+not the staff. Neither the app nor the GPS or scanner punch is exercised by
 this pilot.
+
+**Decided with the owner on 2026-09-30: back office first, then a shadow
+payroll.**
+- **Pilot A, by 31 October: the records go in.** Cwork runs on the NAS,
+  reachable in the office only. The scanner's file is imported instead of
+  copied onto paper. HR records leave for staff who cannot, and foreign
+  workers' documents are held.
+- **Pilot B, November: a shadow payroll.** Cwork computes the 15-day and
+  monthly payrolls, the payslips and the social security file from the same
+  records their Excel uses. The company keeps paying cash from its Excel, so
+  Cwork pays nobody and a mistake in it costs nothing. Every difference
+  between the two is explained, and whichever side is wrong is corrected.
+  This is the first real check of the Thai payroll rules (#36). The
+  "no payroll" line above was written to keep an unreviewed engine away from
+  real pay, and a shadow run keeps that promise.
+
+The three measures become:
+1. How often HR corrects imported attendance by hand.
+2. How many minutes HR spends from the scanner file to a finished period,
+   against the paper-and-Excel way.
+3. The differences between Cwork's November payroll and their Excel: each one
+   explained, and where Cwork was wrong, fixed.
+
+The tickets are in the backlog's pilot rows.
 
 Three measures, agreed before it starts:
 
