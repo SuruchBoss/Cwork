@@ -80,6 +80,21 @@ what it does not do without reading the source.
 There is no production user. The first is a **pilot: one organisation, 5–20
 employees, four weeks, leave and attendance only — no payroll.**
 
+**The pilot organisation, recorded 2026-09-30.** A company known to the owner,
+with a go-live target of **31 October 2026**. What it runs today decides
+what the pilot needs:
+
+| Today | What it means for the pilot |
+|---|---|
+| Odoo, in a container on the company's NAS | Cwork runs on the same NAS beside it (CW-062). Employee records come out of Odoo as a spreadsheet (CW-059). |
+| A fingerprint scanner for clocking in, exported to Excel | Attendance comes from the scanner, not the app's GPS punch (CW-061). Fingerprints stay in the scanner: Cwork receives times, never biometrics. |
+
+The app is still needed, for leave requests: the console cannot file one. The
+scope above is unchanged unless the owner changes it, so payroll stays where it
+is for the pilot. Because punches come from the scanner, measure 2 becomes the
+share of imported days HR has to correct, and the geofence is not tested by
+this pilot.
+
 Three measures, agreed before it starts:
 
 1. **How often HR corrects data by hand.** This is the readiness signal. If it

@@ -21,6 +21,8 @@
  *   SEED_PASSWORD=… node docs/screenshots/capture-mobile.mjs
  *
  * MOBILE_WEB_BUILD=path/to/build/web skips the build and serves that one.
+ * SHOTS=01-login retakes only the shots named (comma-separated) and leaves the
+ * others as they are; the sign-in screen alone needs no seeded password.
  *
  * What it writes:
  *
@@ -42,8 +44,12 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { followApiClock } from './clock.mjs';
 
+/** SHOTS=01-login,06-approvals: only these are written. Null means all of them. */
+const wanted = process.env.SHOTS ? new Set(process.env.SHOTS.split(',')) : null;
+const loginOnly = wanted !== null && [...wanted].every((name) => name === '01-login');
+
 const seedPassword = process.env.SEED_PASSWORD;
-if (!seedPassword) {
+if (!seedPassword && !loginOnly) {
   console.error('Set SEED_PASSWORD to the password `npm run db:seed` was given.');
   process.exit(1);
 }
@@ -51,6 +57,13 @@ if (!seedPassword) {
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '..', '..');
 const API = process.env.API_URL ?? 'http://localhost:3000/api/v1';
+/**
+ * The same API under the kind of name a company gives its server, which the
+ * sign-in screen shows as "Company: …" (CW-060). The browser resolves it to
+ * this machine; this script's own requests keep using API.
+ */
+const APP_HOST = process.env.APP_HOST ?? 'hr.cwork.example';
+const APP_API = API.replace(/\/\/(localhost|127\.0\.0\.1)(?=[:/])/, `//${APP_HOST}`);
 const APP_PORT = Number(process.env.APP_PORT ?? 8080);
 const APP = `http://localhost:${APP_PORT}`;
 const EMPLOYEE = 'dev2@cwork.example';
@@ -109,7 +122,7 @@ function buildApp() {
   });
   const flutter = (...args) => execFileSync('flutter', args, { cwd: work, stdio: 'inherit' });
   flutter('create', '--platforms=web', '.');
-  flutter('build', 'web', `--dart-define=API_BASE_URL=${API}`);
+  flutter('build', 'web', `--dart-define=API_BASE_URL=${APP_API}`);
   return join(work, 'build', 'web');
 }
 
@@ -144,9 +157,10 @@ await new Promise((resolve) => server.listen(APP_PORT, '127.0.0.1', resolve));
 // ---------------------------------------------------------------- browser
 mkdirSync(join(DOCS, 'en'), { recursive: true });
 mkdirSync(LANDING, { recursive: true });
-const browser = await chromium.launch(
-  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-);
+const browser = await chromium.launch({
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
+  args: [`--host-resolver-rules=MAP ${APP_HOST} 127.0.0.1`],
+});
 
 /**
  * What the app fetches from Google, answered without the browser going there.
@@ -263,6 +277,7 @@ async function settle(page, ms = 2500) {
 }
 
 async function shoot(page, language, name) {
+  if (wanted && !wanted.has(name)) return;
   const file = language === 'th' ? join(DOCS, `${name}.png`) : join(DOCS, 'en', `${name}.png`);
   await page.screenshot({ path: file });
   if (LANDING_SHOTS[name]) {
@@ -311,6 +326,11 @@ try {
     await page.locator('body').tap({ position: { x: 8, y: 8 } });
     await settle(page, 800);
     await shoot(page, language, '01-login');
+    if (loginOnly) {
+      reportErrors(errors, EMPLOYEE);
+      await context.close();
+      continue;
+    }
     await signIn(page, ui, EMPLOYEE);
 
     // The clock card arrives after the shell does.
