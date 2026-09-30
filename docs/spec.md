@@ -95,6 +95,17 @@ scanner:
 - The company has **about 20 people**, most of them labourers.
 - **Most staff do not have smartphones** that could run the app.
 
+The owner's answers the same day:
+
+| | |
+|---|---|
+| Clocking in | Staff do scan fingers on a scanner (TA-001EX). HR does not use the software that came with it and copies the times onto paper instead. The scanner can likely export a file; a sample is awaited. |
+| Pay | Daily-wage staff are paid every 15 days, and monthly staff once a month. Everyone is paid in **cash**. |
+| Deductions | Cash advances (เบิกล่วงหน้า) are common. Overtime happens, but not often. |
+| Payroll and social security | Done in-house, **in Excel**. |
+| Staff | Foreign workers are among them. |
+| Odoo | Used for accounting and stock, not HR. |
+
 So the people who would use Cwork are the owner or whoever does HR and pay,
 not the staff. Neither the app nor the GPS or scanner punch is exercised by
 this pilot. What that does to the pilot's scope, and to CW-060, CW-061, CW-064
