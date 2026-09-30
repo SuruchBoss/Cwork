@@ -930,6 +930,29 @@ table.table {
   border-color: var(--brand);
 }
 
+/* Hidden from sight, not from keyboards or screen readers. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A file input dressed as a button: the label is what shows, the input what focuses. */
+.file-button {
+  align-self: flex-start;
+  cursor: pointer;
+}
+.file-button:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 /* ----------------------------------------------------------- mobile app -- */
 
 /* HR's "Mobile app" page and the public install page (CW-060). */

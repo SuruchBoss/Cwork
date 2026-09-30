@@ -26,7 +26,7 @@ import { ApprovalService } from '../approvals/approval.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
-import { computeLeaveDays } from './domain/leave-calculator';
+import { availableBalance, computeLeaveDays, type BalanceInput } from './domain/leave-calculator';
 import type {
   CreateLeaveRequestDto,
   CreateLeaveTypeDto,
@@ -636,27 +636,15 @@ export class LeaveService implements OnModuleInit {
   }
 
   private async assertSufficientBalance(
-    entitlement: {
-      openingBalance: Prisma.Decimal;
-      granted: Prisma.Decimal;
-      carriedOver: Prisma.Decimal;
-      adjusted: Prisma.Decimal;
-      used: Prisma.Decimal;
-      pending: Prisma.Decimal;
-      expired: Prisma.Decimal;
-    },
+    entitlement: BalanceInput,
     leaveType: { allowNegativeBalance: boolean; name: string },
     requested: Decimal,
   ): Promise<void> {
     if (leaveType.allowNegativeBalance) return;
 
-    const available = new Decimal(entitlement.openingBalance.toString())
-      .plus(entitlement.granted.toString())
-      .plus(entitlement.carriedOver.toString())
-      .plus(entitlement.adjusted.toString())
-      .minus(entitlement.used.toString())
-      .minus(entitlement.pending.toString())
-      .minus(entitlement.expired.toString());
+    // The same sum as the balance screen, so what an employee is shown is what
+    // they can request: leave taken before Cwork counts here too (CW-059).
+    const available = availableBalance(entitlement);
 
     if (requested.greaterThan(available)) {
       throw new BusinessRuleError(

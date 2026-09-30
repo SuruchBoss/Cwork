@@ -89,9 +89,42 @@ Error codes: `MFA_ENROLMENT_REQUIRED`, `MFA_CODE_INVALID`, `MFA_MANDATORY`,
 | POST | `/employees` | `employee:create` |
 | PATCH | `/employees/:id` | `employee:update` |
 | DELETE | `/employees/:id` | `employee:delete` (soft, disables login) |
+| GET | `/employees/import/template?lang=th\|en` | `employee:create` — the .xlsx to fill in |
+| POST | `/employees/import/preview` | `employee:create` — checks a file, writes nothing |
+| POST | `/employees/import` | `employee:create` — all rows or none; audited as one event |
 
 Decrypted national ID and bank details require `employee:read:sensitive`, and
 that read is audited. Without it you get `nationalIdMasked`.
+
+`scannerId` is the employee's user number on the fingerprint scanner, as the
+scanner writes it (so `"007"` and `"7"` differ). It is unique in the organisation:
+setting one that another employee holds is `409 DUPLICATE_SCANNER_ID`.
+
+### Importing employees (CW-059)
+
+Both import routes, like the leave-taken import below, take one multipart part named `file`, up to 5 MB: `.xlsx`, or
+CSV in UTF-8 (with or without a byte-order mark), UTF-16 ("Unicode Text") or
+Windows-874, which is what Thai Excel's plain "CSV" is. The format is read from
+the file's bytes, not its name. The first sheet's first row is the header, in
+Thai, English or the column keys; the template's second sheet describes every
+column.
+
+`preview` answers `200` with `{ fileName, employees, problems }`. Either the
+employees the file would create are listed, or `employees` is empty and every
+problem is:
+
+```json
+{ "row": 3, "column": "E", "header": "อีเมลงาน", "code": "INVALID_EMAIL",
+  "params": { "value": "not-an-email" }, "message": "\"not-an-email\" is not an email address" }
+```
+
+`row` is the spreadsheet's own row number, and `0` means the file as a whole.
+`code` and `params` are stable; `message` is English. The import checks the
+file again and answers `201 { created }`. A file with any problem is refused with
+`422 IMPORT_HAS_PROBLEMS`, and `details.problems` holds the same list. An
+employee code that already exists is a problem, so importing a file twice
+creates nobody the second time. Each employee goes through the same validation
+and encryption as `POST /employees`, and gets a `HIRE` employment event.
 
 ## Leave
 
@@ -103,6 +136,9 @@ that read is audited. Without it you get `nationalIdMasked`.
 | GET | `/leave/balances/:employeeId` | `leave:read` / `:team` |
 | POST | `/leave/balances/adjust` | `leave:balance:adjust`, requires a reason |
 | POST | `/leave/balances/rollover/:year` | year-end carry-over |
+| GET | `/leave/balances/import/template?lang=th\|en` | `leave:balance:adjust` — everyone × every leave type |
+| POST | `/leave/balances/import/preview` | `leave:balance:adjust` — checks a file, writes nothing |
+| POST | `/leave/balances/import` | `leave:balance:adjust` — sets leave taken before Cwork |
 | **POST** | **`/leave/requests/preview`** | cost before submitting — see below |
 | POST | `/leave/requests` | |
 | GET | `/leave/requests` | scoped |
@@ -126,6 +162,16 @@ does, so the employee sees exactly which days are charged before committing:
 
 Error codes: `INSUFFICIENT_LEAVE_BALANCE`, `OVERLAPPING_LEAVE`,
 `LEAVE_NOTICE_TOO_SHORT`, `LEAVE_ATTACHMENT_REQUIRED`, `NO_WORKING_DAYS_SELECTED`.
+
+A balance's `used` is everything taken in the leave year. `usedBeforeCwork` is
+the part of it taken before the organisation moved to Cwork, set by the
+leave-taken import (CW-059). That import takes the same kinds of file as the
+employee import, with one row per employee code and one column per leave type
+(code, Thai name or English name), and days in the cells. It **sets** each
+figure rather than adding to it, so importing a file twice changes nothing. A
+blank cell leaves a figure alone, and `0` clears it. The preview gives each
+`availableAfter`, and a figure over the entitlement is refused as
+`OVER_ENTITLEMENT` unless the leave type allows a negative balance.
 
 ## Attendance
 

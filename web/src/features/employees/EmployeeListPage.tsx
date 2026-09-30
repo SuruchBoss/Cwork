@@ -19,6 +19,8 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
+import { P } from '@/lib/permissions';
+import { useAuthStore } from '@/stores/auth.store';
 import { formatDate, yearsOfService } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { employeeStatusLabels, statusTone } from '@/lib/labels';
@@ -33,6 +35,7 @@ interface Filters {
 
 export default function EmployeeListPage() {
   const t = useT();
+  const canImport = useAuthStore((s) => s.canAny(P.EMPLOYEE_CREATE));
   const [filters, setFilters] = useState<Filters>({
     search: '',
     status: 'ACTIVE,PROBATION',
@@ -73,6 +76,13 @@ export default function EmployeeListPage() {
           employees.data
             ? t('{count} people you can access', { count: employees.data.meta.total })
             : undefined
+        }
+        actions={
+          canImport ? (
+            <Link to="/employees/import" className="btn btn--secondary">
+              {t('Import from a spreadsheet')}
+            </Link>
+          ) : undefined
         }
       />
 

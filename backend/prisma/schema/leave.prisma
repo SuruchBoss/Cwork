@@ -96,6 +96,10 @@ model LeaveEntitlement {
   carryOverExpiresOn DateTime? @db.Date
   adjusted       Decimal  @default(0) @db.Decimal(8, 2)
   used           Decimal  @default(0) @db.Decimal(8, 2)
+  /// Taken this year before the organisation moved to Cwork, from the
+  /// opening-balance import (CW-059). Set, not accumulated: importing the same
+  /// figures again changes nothing.
+  priorUsed      Decimal  @default(0) @db.Decimal(8, 2)
   /// Reserved by submitted-but-not-yet-approved requests.
   pending        Decimal  @default(0) @db.Decimal(8, 2)
   expired        Decimal  @default(0) @db.Decimal(8, 2)

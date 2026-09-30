@@ -7,11 +7,12 @@ import { OrganizationModule } from '../organization/organization.module';
 import { LeaveBalanceService } from './leave-balance.service';
 import { LeaveController } from './leave.controller';
 import { LeaveService } from './leave.service';
+import { PriorLeaveImportService } from './prior-leave-import.service';
 
 @Module({
   imports: [OrganizationModule],
   controllers: [LeaveController],
-  providers: [LeaveService, LeaveBalanceService, SequenceService],
+  providers: [LeaveService, LeaveBalanceService, PriorLeaveImportService, SequenceService],
   exports: [LeaveService, LeaveBalanceService],
 })
 export class LeaveModule {}

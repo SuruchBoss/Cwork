@@ -5,15 +5,29 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuditAction } from '@prisma/client';
+import type { Response } from 'express';
 import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
@@ -27,8 +41,15 @@ import {
   LeaveRequestQueryDto,
   UpdateLeaveTypeDto,
 } from './dto/leave.dto';
+import {
+  IMPORT_BODY,
+  IMPORT_LIMITS,
+  requireUpload,
+  XLSX_CONTENT_TYPE,
+} from '../../core/spreadsheet/upload';
 import { LeaveBalanceService } from './leave-balance.service';
 import { LeaveService } from './leave.service';
+import { PriorLeaveImportService } from './prior-leave-import.service';
 
 @ApiTags('Leave')
 @ApiBearerAuth()
@@ -37,6 +58,7 @@ export class LeaveController {
   constructor(
     private readonly leave: LeaveService,
     private readonly balances: LeaveBalanceService,
+    private readonly priorLeave: PriorLeaveImportService,
   ) {}
 
   // ------------------------------------------------------------------- types
@@ -118,6 +140,68 @@ export class LeaveController {
     @Param('year', ParseIntPipe) year: number,
   ) {
     return { processed: await this.balances.rolloverYear(user.organizationId, year) };
+  }
+
+  // Leave taken before Cwork (CW-059). Set, not added, so an import can be
+  // run again with corrected figures.
+
+  @Get('balances/import/template')
+  @RequirePermissions(Permission.LEAVE_BALANCE_ADJUST)
+  @ApiQuery({ name: 'lang', required: false, enum: ['th', 'en'] })
+  @ApiOperation({
+    summary: 'The template for leave taken this year before Cwork (CW-059)',
+    description:
+      'An .xlsx listing every current employee on a row and every active leave type in a column.',
+  })
+  async priorLeaveTemplate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+    @Query('lang') lang?: string,
+  ): Promise<void> {
+    const file = await this.priorLeave.template(user.organizationId, lang === 'en' ? 'en' : 'th');
+    res.setHeader('Content-Type', XLSX_CONTENT_TYPE);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.send(file.content);
+  }
+
+  @Post('balances/import/preview')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.LEAVE_BALANCE_ADJUST)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiOperation({
+    summary: 'Check a leave-taken spreadsheet without importing it',
+    description:
+      'Returns each balance as it would be after the import, or every problem by row and column. Writes nothing.',
+  })
+  priorLeavePreview(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.priorLeave.preview(user, requireUpload(file));
+  }
+
+  @Post('balances/import')
+  @RequirePermissions(Permission.LEAVE_BALANCE_ADJUST)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiOperation({
+    summary: 'Import leave taken this year before Cwork (CW-059)',
+    description:
+      'Checks the file again, then sets every figure in one transaction, or none: a file with any problem is refused with 422. Audited as one event.',
+  })
+  priorLeaveImport(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.priorLeave.commit(user, requireUpload(file));
   }
 
   // ---------------------------------------------------------------- requests

@@ -106,9 +106,12 @@ export class LeaveBalanceService {
         carriedOver: entitlement?.carriedOver ?? 0,
         adjusted: entitlement?.adjusted ?? 0,
         used: entitlement?.used ?? 0,
+        priorUsed: entitlement?.priorUsed ?? 0,
         pending: entitlement?.pending ?? 0,
         expired: entitlement?.expired ?? 0,
       });
+      const usedInCwork = Number(entitlement?.used ?? 0);
+      const usedBeforeCwork = Number(entitlement?.priorUsed ?? 0);
 
       return {
         leaveTypeId: type.id,
@@ -120,7 +123,10 @@ export class LeaveBalanceService {
         granted: granted.toNumber(),
         carriedOver: Number(entitlement?.carriedOver ?? 0),
         adjusted: Number(entitlement?.adjusted ?? 0),
-        used: Number(entitlement?.used ?? 0),
+        // Everything taken this year, wherever it was recorded: what the
+        // employee means by "used", and what the balance is reduced by.
+        used: usedInCwork + usedBeforeCwork,
+        usedBeforeCwork,
         pending: Number(entitlement?.pending ?? 0),
         available: available.toNumber(),
         isPaid: type.isPaid,
@@ -168,6 +174,7 @@ export class LeaveBalanceService {
         carriedOver: entitlement.carriedOver,
         adjusted: new Decimal(entitlement.adjusted.toString()).plus(amount),
         used: entitlement.used,
+        priorUsed: entitlement.priorUsed,
         pending: entitlement.pending,
         expired: entitlement.expired,
       });
