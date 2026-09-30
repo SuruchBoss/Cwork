@@ -5,10 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Avatar, Button } from '@/components/ui';
+import { Icon } from '@/components/ui/icons';
 import { api } from '@/lib/api-client';
 import { env } from '@/lib/env';
 import { usePlatformConfig } from '@/lib/platform';
 import { useT } from '@/lib/i18n/useT';
+import { roleLabels } from '@/lib/labels';
 import { qk } from '@/app/query-client';
 import { visibleSectionsFor } from '@/app/navigation';
 import { DemoBanner } from '@/features/demo/DemoBanner';
@@ -71,7 +73,7 @@ export function AppLayout() {
                   className={({ isActive }) => clsx('nav-link', isActive && 'nav-link--active')}
                 >
                   <span className="nav-link__icon" aria-hidden>
-                    {item.icon}
+                    <Icon name={item.icon} />
                   </span>
                   <span>{t(item.label)}</span>
                   {item.badge && badgeCounts[item.badge] > 0 && (
@@ -90,29 +92,37 @@ export function AppLayout() {
               <div className="truncate" style={{ fontWeight: 500, fontSize: 13 }}>
                 {user?.displayName ?? user?.email}
               </div>
-              <div className="subtle truncate">{user?.roles.join(', ')}</div>
+              <div className="subtle truncate">
+                {user?.roles.map((role) => t(roleLabels[role] ?? role)).join(', ')}
+              </div>
             </div>
           </div>
-          <div className="row" style={{ marginTop: 8, gap: 6 }}>
+          <div className="sidebar__controls">
             <Button
               variant="ghost"
-              size="sm"
+              className="sidebar__control"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title={t('Toggle light/dark theme')}
               aria-label={theme === 'dark' ? t('Switch to light theme') : t('Switch to dark theme')}
             >
-              <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
+              <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              className="sidebar__control"
               onClick={() => setLanguage(language === 'th' ? 'en' : 'th')}
               title={t('Language')}
-              aria-label={t('Language')}
+              aria-label={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+              lang={language === 'th' ? 'en' : 'th'}
             >
               {language === 'th' ? 'EN' : 'ไทย'}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => void logout()} style={{ flex: 1 }}>
+            <Button
+              variant="ghost"
+              className="sidebar__control sidebar__control--wide"
+              onClick={() => void logout()}
+            >
+              <Icon name="signOut" />
               {t('Sign out')}
             </Button>
           </div>
@@ -124,13 +134,13 @@ export function AppLayout() {
         <header className="topbar">
           <Button
             variant="ghost"
-            size="sm"
             className="sidebar-toggle"
             onClick={toggleSidebar}
             aria-label={t('Open or close menu')}
             aria-expanded={sidebarOpen}
           >
-            <span aria-hidden="true">☰</span>
+            <Icon name="menu" size={20} />
+            <span aria-hidden="true">{t('Menu')}</span>
           </Button>
           <span className="topbar__title">{currentLabel}</span>
           <span className="topbar__spacer" />
