@@ -194,6 +194,9 @@ the internet.
   and approvals, **without exposing the NAS's own admin page or Odoo** to the
   internet. The method (router port forward and a certificate, or a tunnel) is
   the dev's to choose and document.
+- The certificate must be one phones already trust, not a self-signed one
+  from the NAS. Since CW-060 the app refuses any server whose certificate the
+  phone does not trust.
 - A nightly database backup to somewhere other than the disk it backs up,
   and `FIELD_ENCRYPTION_KEY` kept apart from it
   ([operations.md](./operations.md)).
@@ -216,6 +219,27 @@ the internet.
 
 ### CW-060 · Employees have no way to install the app
 `P0` · mobile · project · **M** · blocks the pilot
+
+**Status 2026-09-30: built, waiting on the owner.** The dev delivered it in
+3999b86 and 9df919e, and CI is green. The PO checked it against the acceptance:
+- One app for every company. The employee connects it by QR code, typed
+  address or `cwork://connect` link, and the app refuses anything but HTTPS.
+- The console's **Mobile app** page gives HR the QR code and link, pointing to
+  a public install page on the company's own server.
+- Both READMEs say plainly that iPhone is not supported yet.
+- Tests cover an update keeping the company, the session and the queued
+  punches, and switching company while punches are queued is refused.
+  `check-apk.sh` refuses an APK a later release could not update.
+
+**Not yet possible: an employee actually installing it.** No release carries
+an APK yet: 0.3.1 predates this, so the install page's link has no file behind
+it. Two owner steps come first ([mobile-release.md](./mobile-release.md)):
+1. Create the release signing key and add its four repository secrets. **If
+   the key is ever lost, no later version installs as an update.**
+2. Cut 0.4.0.
+
+Then install it on a real Android phone against a real HTTPS server, which is
+the pilot's (CW-062). That closes it.
 
 Found by the PO on 2026-09-29, preparing a real pilot. **Clocking in happens
 only in the app.** The console lists punches but cannot record one. Yet
