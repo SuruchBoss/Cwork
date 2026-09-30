@@ -622,7 +622,9 @@ Gregorian calendar, and English stays Gregorian.
 - Certificates and payslips write dates in words the way Thai documents do:
   "15 มกราคม 2567".
 - A test catches a Gregorian year on a Thai screen, so the next new screen
-  cannot bring it back.
+  cannot bring it back. That includes the app's pay-period label, `Fmt.period`,
+  which PR #63 added as "สิงหาคม 2026", and any period label the console gains
+  after it.
 - English is unchanged.
 - The tax filing formats (CW-045 to CW-048) follow their own published layouts
   and are out of scope here.
@@ -857,6 +859,42 @@ and so does the same for web and mobile.
 ---
 
 ## P3 — nice to have
+
+
+### CW-063 · UX follow-ups from the 30 September pass
+`P3` · web · mobile · **M** · after the pilot items
+
+PR #63 was a presentation-only pass over the console and the app, made for HR
+staff and employees who are not technical. It shipped without a ticket, so it
+is recorded here. The pass:
+- replaced raw codes (`CLOSED`, `HR_ADMIN`) with words;
+- replaced menu icons that did not render on some machines;
+- made touch targets 44px;
+- gave status colours a meaning in the app.
+
+Its handoff (`docs/handoff-uxui.th.md`) lists what should come next. This
+ticket is that list, and the backlog is where it is tracked:
+
+1. **Look at the app on a real phone, in light and dark themes.** The new
+   status and clock-out colours have only been checked by tests, because the
+   demo refuses password sign-in. Do it when CW-060's first APK is installed.
+2. Retake the README and landing screenshots, which still show the old codes.
+3. Show tables as cards below 640px, starting with the three the pilot will
+   use most: employees, leave and approvals.
+4. An empty state on the performance page that says what to do next.
+5. In the roster, tint days off and highlight today's column.
+6. Whole table rows that open their record, and still work by keyboard and
+   screen reader.
+7. On the payroll page, drop the system term "รอบคำนวณ" and show periods as
+   months. Do it through CW-058's formatter, not a new one.
+8. Hide the benefit plan code under the plan's details.
+
+**Acceptance** Item 1 is done before the pilot goes live. The rest are done
+in any order, each with before and after screenshots in Thai at phone width.
+
+**Files** `web/src/`, `mobile/lib/`, `docs/screenshots/`
+
+---
 
 
 ### CW-056 · The Thai film's last scene turns the console English
