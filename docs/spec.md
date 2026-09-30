@@ -78,7 +78,8 @@ what it does not do without reading the source.
 ### Before real people use it
 
 There is no production user. The first is a **pilot: one organisation, 5–20
-employees, four weeks, leave and attendance only — no payroll.**
+employees, four weeks, leave and attendance only — no payroll.** *Re-scoped on
+2026-09-30, below: payroll is now computed in the pilot, but pays nobody.*
 
 **The pilot organisation, recorded 2026-09-30.** A company known to the owner,
 with a go-live target of **31 October 2026**. What it runs today decides
@@ -108,9 +109,31 @@ The owner's answers the same day:
 
 So the people who would use Cwork are the owner or whoever does HR and pay,
 not the staff. Neither the app nor the GPS or scanner punch is exercised by
-this pilot. What that does to the pilot's scope, and to CW-060, CW-061, CW-064
-and CW-066, is **waiting on the owner's decision**. The PO put a proposal to the owner
-on 2026-09-30, and the backlog changes once it is answered.
+this pilot.
+
+**Decided with the owner on 2026-09-30: back office first, then a shadow
+payroll.**
+- **Pilot A, by 31 October: the records go in.** Cwork runs on the NAS,
+  reachable in the office only. The scanner's file is imported instead of
+  copied onto paper. HR records leave for staff who cannot, and foreign
+  workers' documents are held.
+- **Pilot B, November: a shadow payroll.** Cwork computes the 15-day and
+  monthly payrolls, the payslips and the social security file from the same
+  records their Excel uses. The company keeps paying cash from its Excel, so
+  Cwork pays nobody and a mistake in it costs nothing. Every difference
+  between the two is explained, and whichever side is wrong is corrected.
+  This is the first real check of the Thai payroll rules (#36). The
+  "no payroll" line above was written to keep an unreviewed engine away from
+  real pay, and a shadow run keeps that promise.
+
+The three measures become:
+1. How often HR corrects imported attendance by hand.
+2. How many minutes HR spends from the scanner file to a finished period,
+   against the paper-and-Excel way.
+3. The differences between Cwork's November payroll and their Excel: each one
+   explained, and where Cwork was wrong, fixed.
+
+The tickets are in the backlog's pilot rows.
 
 Three measures, agreed before it starts:
 
