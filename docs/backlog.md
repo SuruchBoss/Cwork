@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-062 · CW-061 · CW-059 (employees and leave balances first) |
+| **Pilot** | A real company by 31 October 2026 | CW-060 · CW-064 · CW-062 · CW-061 · CW-059 (employee half done 2026-09-30; payroll half after) |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -131,6 +131,61 @@ seeing any of it.
 ---
 
 ## P0 — blocks a real deployment
+
+
+### CW-064 · An employee's first sign-in
+`P0` · auth · mobile · **M** · pilot, by 31 October 2026
+
+Found by the dev while building CW-059, on 2026-09-30. **No employee can set
+their first password.**
+- An account can be created as `INVITED`, but nothing takes it further. There
+  is no invitation to accept and no way for HR to set a starting password.
+- CW-059's import creates employees without accounts at all.
+
+The pilot's employees file leave in the app, so without this nobody at the
+pilot company except HR can use Cwork.
+
+A second gap sits behind it: **sign-in needs an email address**
+(`LoginDto.email` is `@IsEmail`). The pilot clocks in on a fingerprint scanner,
+and staff like that often have no work email. Cwork must not require one.
+
+**Decided 2026-09-30:**
+- **HR hands each employee a one-time activation code** (a code and a QR code)
+  from the console. The employee opens the app, enters or scans it, and sets
+  their own password. HR never knows it. Email can carry the same code where
+  the company has SMTP, but the process must not depend on email.
+- **An employee without an email address can have an account** and signs in
+  with their employee code. Email stays accepted wherever there is one.
+
+**Scope**
+- Create accounts for many employees at once: every imported employee without
+  an account, in one action.
+- A printable sheet of activation codes, one per employee, for HR to hand out.
+- Activation codes are credentials:
+  - single use;
+  - expire after a set time;
+  - stored hashed and shown once;
+  - reissuing one voids the last;
+  - each issue and use is audited;
+  - attempts are rate-limited like sign-in.
+- Roles that require a second factor still enrol one at first sign-in, as today.
+
+**Acceptance**
+- An imported employee with no email address receives a code from HR, and
+  activates and signs in on the app with no help. HR never sees their password.
+- A used, expired or reissued code is refused, and so is a guessed one, within
+  the sign-in rate limit.
+- Signing in with an employee code works, and existing email sign-in is
+  unchanged, lockout and second factor included.
+- The code sheet prints on A4 with names in Thai.
+- Tests cover each refusal. Because this touches authentication, the sign-in
+  paths that GHSA-3cgw-73cr-r8c6 hardened get tests showing they did not
+  regress.
+
+**Files** `backend/src/modules/auth/`, `backend/src/modules/employees/`,
+`backend/prisma/schema/`, `web/src/features/employees/`, `mobile/lib/features/auth/`
+
+---
 
 
 ### CW-061 · Import punches from a fingerprint scanner's export
@@ -236,7 +291,10 @@ an APK yet: 0.3.1 predates this, so the install page's link has no file behind
 it. Two owner steps come first ([mobile-release.md](./mobile-release.md)):
 1. Create the release signing key and add its four repository secrets. **If
    the key is ever lost, no later version installs as an update.**
-2. Cut 0.4.0.
+2. Cut 0.4.0. The dev has prepared it on `claude/hris-system-setup-kfl3rq`
+   (32c64ca: changelog section, versions, landing). It merges into `main` once
+   the secrets exist, since a `## [0.4.0]` section on `main` publishes the
+   release.
 
 Then install it on a real Android phone against a real HTTPS server, which is
 the pilot's (CW-062). That closes it.
@@ -325,6 +383,20 @@ months were paid by **this** employer, and 50 ทวิ must count them as its o
 - Opening balances count as this employer's own in CW-046 and CW-047, not as a
   previous employer's.
 - Leave balances after import equal entitlement minus the imported days taken.
+
+**Status 2026-09-30: the employee half is done** (0b44fd3, df09d81). The PO
+checked it against the acceptance. The e2e suites `employee-import` and
+`prior-leave-import` cover:
+- Thai intact from `.xlsx` and from Excel's default CSV;
+- one bad row writing nothing, and every problem listed at once;
+- the same file refused row by row;
+- balances equal to entitlement minus the days imported;
+- one audit event per import.
+
+Scanner IDs are unique per organisation and kept exactly as typed. The payroll
+half (year-to-date income, tax and social security) is still open, and so are
+the last two acceptance items. The import creates employees but no sign-in
+accounts; that is CW-064.
 
 **The pilot needs half of this by 31 October 2026:** employees, including
 their scanner IDs for CW-061, and opening leave balances. The file will come
@@ -598,6 +670,24 @@ not because there is a date.
 ## P2 — worth doing
 
 
+### CW-065 · Add one employee from the console
+`P2` · employees · web · **S**
+
+Found by the dev on 2026-09-30. The console has no form for adding one
+employee. CW-059's spreadsheet import is the only way in, and a single new
+hire means filling in a one-row template. The pilot can live with that for
+four weeks, but a product cannot.
+
+**Acceptance** HR adds one employee, with the same fields and checks as the
+import, and sensitive fields encrypted the same way, from a form on the
+employee directory. When CW-064 has landed, the same form offers to create
+their account.
+
+**Files** `web/src/features/employees/`
+
+---
+
+
 ### CW-058 · Thai dates in the Buddhist era, everywhere a year is shown
 `P2` · web · mobile · documents · **M** · phase 3
 
@@ -866,8 +956,8 @@ and so does the same for web and mobile.
 
 **Status 2026-09-30:**
 - **Item 2 is done** (PR #65). It needs one more retake once CW-058 lands.
-- **Item 3 is done for leave and approvals.** The employee directory follows,
-  agreed with the dev.
+- **Item 3 is done:** leave and approvals in PR #65, and the employee
+  directory in PR #66.
 - **Item 1 is still open.** Chromium at phone size shows the light theme right,
   but a real device and the dark theme are still unchecked.
 - **Fixed along the way:** approvals showed `ANNUAL` instead of the leave
