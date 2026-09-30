@@ -298,8 +298,9 @@ entry, tags it and publishes the notes.
   phone app, is shown how to install it; the no-access page has a way home;
   closing a benefit plan asks first; and the roster keeps one line per day with
   the names pinned while the fortnight scrolls.
-- **Leave and approvals are cards on a phone** (CW-063). Below 640px each
-  leave request and each approval is a card headed by the person, with every
+- **Leave, approvals and the employee directory are cards on a phone**
+  (CW-063). Below 640px each leave request, approval and employee is a card
+  headed by the person, with every
   other field on a labelled line and Approve / Reject full width at the foot,
   instead of a table row scrolled sideways. The desktop table is unchanged.
   Any table can take it with a class and a `data-label` per cell.

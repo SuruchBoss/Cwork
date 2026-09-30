@@ -127,7 +127,7 @@ export default function EmployeeListPage() {
         ) : employees.data && employees.data.data.length > 0 ? (
           <>
             <div className="table-wrap">
-              <table className="table">
+              <table className="table table--cards">
                 <thead>
                   <tr>
                     <th>{t('Employee')}</th>
@@ -141,7 +141,7 @@ export default function EmployeeListPage() {
                 <tbody>
                   {employees.data.data.map((employee) => (
                     <tr key={employee.id}>
-                      <td>
+                      <td className="cell--lead">
                         <Link to={`/employees/${employee.id}`} style={{ color: 'inherit' }}>
                           <Person
                             name={`${employee.firstNameTh} ${employee.lastNameTh}`}
@@ -149,16 +149,20 @@ export default function EmployeeListPage() {
                           />
                         </Link>
                       </td>
-                      <td className="mono">{employee.employeeCode}</td>
-                      <td>{employee.position?.title ?? '—'}</td>
-                      <td>{employee.department?.name ?? '—'}</td>
-                      <td className="subtle">
-                        {yearsOfService(employee.hireDate)}
-                        <div className="subtle">
-                          {t('Started {date}', { date: formatDate(employee.hireDate) })}
+                      <td className="mono" data-label={t('Code')}>
+                        {employee.employeeCode}
+                      </td>
+                      <td data-label={t('Position')}>{employee.position?.title ?? '—'}</td>
+                      <td data-label={t('Department')}>{employee.department?.name ?? '—'}</td>
+                      <td className="subtle" data-label={t('Tenure')}>
+                        <div>
+                          {yearsOfService(employee.hireDate)}
+                          <div className="subtle">
+                            {t('Started {date}', { date: formatDate(employee.hireDate) })}
+                          </div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label={t('Status')}>
                         <Badge tone={statusTone(employee.status)}>
                           {t(employeeStatusLabels[employee.status] ?? employee.status)}
                         </Badge>
