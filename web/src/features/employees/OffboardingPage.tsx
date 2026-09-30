@@ -19,7 +19,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { statusTone } from '@/lib/labels';
+import { offboardingTaskStatusLabels, resignationStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -45,7 +45,13 @@ interface Resignation {
 }
 
 interface ResignationDetail extends Resignation {
-  tasks: Array<{ id: string; title: string; category: string; status: string; dueDate: string | null }>;
+  tasks: Array<{
+    id: string;
+    title: string;
+    category: string;
+    status: string;
+    dueDate: string | null;
+  }>;
 }
 
 export default function OffboardingPage() {
@@ -144,7 +150,9 @@ export default function OffboardingPage() {
                       {resignation.noticeDays ?? '—'} {t('days')}
                     </td>
                     <td>
-                      <Badge tone={statusTone(resignation.status)}>{resignation.status}</Badge>
+                      <Badge tone={statusTone(resignation.status)}>
+                        {t(resignationStatusLabels[resignation.status] ?? resignation.status)}
+                      </Badge>
                     </td>
                     <td>
                       <div className="row" style={{ gap: 6 }}>
@@ -213,7 +221,7 @@ export default function OffboardingPage() {
                       <td className="subtle">{formatDate(task.dueDate)}</td>
                       <td>
                         <Badge tone={task.status === 'DONE' ? 'success' : 'warning'}>
-                          {task.status}
+                          {t(offboardingTaskStatusLabels[task.status] ?? task.status)}
                         </Badge>
                       </td>
                       <td>

@@ -19,7 +19,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { documentTypeLabels, statusTone } from '@/lib/labels';
+import { documentRequestStatusLabels, documentTypeLabels, statusTone } from '@/lib/labels';
 import type { DocumentRequest } from '@/types/api';
 
 export default function DocumentsPage() {
@@ -106,7 +106,9 @@ export default function DocumentsPage() {
                     <td className="subtle">{request.purpose ?? '—'}</td>
                     <td className="subtle">{formatDate(request.requestedAt)}</td>
                     <td>
-                      <Badge tone={statusTone(request.status)}>{request.status}</Badge>
+                      <Badge tone={statusTone(request.status)}>
+                        {t(documentRequestStatusLabels[request.status] ?? request.status)}
+                      </Badge>
                     </td>
                     <td>
                       {request.status === 'APPROVED' && (

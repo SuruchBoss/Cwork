@@ -21,7 +21,7 @@ import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, formatMoney } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { payrollStatusLabels, statusTone } from '@/lib/labels';
+import { payrollPeriodStatusLabels, payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { PayrollPeriod, PayrollRun } from '@/types/api';
@@ -190,7 +190,9 @@ export default function PayrollPage() {
                     </td>
                     <td>{formatDate(period.payDate)}</td>
                     <td>
-                      <Badge tone={statusTone(period.status)}>{period.status}</Badge>
+                      <Badge tone={statusTone(period.status)}>
+                        {t(payrollPeriodStatusLabels[period.status] ?? period.status)}
+                      </Badge>
                     </td>
                     <td>{period._count?.runs ?? 0}</td>
                     <td>

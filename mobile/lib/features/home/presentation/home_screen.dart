@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../../attendance/application/attendance_controller.dart';
@@ -180,7 +181,7 @@ class ClockCard extends ConsumerWidget {
               if (data.shift != null) ...<Widget>[
                 const SizedBox(height: 6),
                 Text(
-                  '${data.shift!.name} · ${data.shift!.startTime}–${data.shift!.endTime}',
+                  _shiftLine(data.shift!.name, data.shift!.startTime, data.shift!.endTime),
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
                 ),
               ],
@@ -228,9 +229,12 @@ class ClockCard extends ConsumerWidget {
                           ? ref.tr('Clock out')
                           : ref.tr('Clock in'),
                 ),
-                style: clockedIn
-                    ? FilledButton.styleFrom(backgroundColor: theme.colorScheme.tertiary)
-                    : null,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  backgroundColor: clockedIn ? ClockOutColors.background(context) : null,
+                  foregroundColor: clockedIn ? ClockOutColors.foreground(context) : null,
+                ),
               ),
               if (record != null && record.lateMinutes > 0) ...<Widget>[
                 const SizedBox(height: 10),
@@ -245,6 +249,15 @@ class ClockCard extends ConsumerWidget {
         );
       },
     );
+  }
+
+  /// "Normal shift · 09:00–18:00", without saying the times twice when the
+  /// shift's name already carries them ("กะปกติ 09:00-18:00").
+  static String _shiftLine(String name, String start, String end) {
+    final String digits = name.replaceAll(RegExp(r'[^0-9]'), '');
+    final String startDigits = start.replaceAll(RegExp(r'[^0-9]'), '');
+    if (startDigits.isNotEmpty && digits.contains(startDigits)) return name;
+    return '$name · $start–$end';
   }
 
   static String _statusLabel(String status) => switch (status) {
@@ -329,7 +342,7 @@ class _LeaveBalanceCard extends ConsumerWidget {
                             child: Text(
                               ref.tr(
                                 'Pending {n}',
-                                <String, Object>{'n': Fmt.number(balance.pending)},
+                                <String, Object>{'n': Fmt.days(balance.pending)},
                               ),
                               style: TextStyle(
                                 fontSize: 12,
@@ -338,7 +351,7 @@ class _LeaveBalanceCard extends ConsumerWidget {
                             ),
                           ),
                         Text(
-                          ref.tr('{n} days', <String, Object>{'n': Fmt.number(balance.available)}),
+                          ref.tr('{n} days', <String, Object>{'n': Fmt.days(balance.available)}),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ],

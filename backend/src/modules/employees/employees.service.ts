@@ -150,50 +150,10 @@ export class EmployeesService {
       throw new ConflictError('DUPLICATE_EMPLOYEE_CODE', `Employee code ${employeeCode} is taken`);
 
     if (dto.managerId) await this.assertEmployeeInOrg(user.organizationId, dto.managerId);
+    await this.assertScannerIdFree(user.organizationId, dto.scannerId);
 
     const employee = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.employee.create({
-        data: {
-          organizationId: user.organizationId,
-          employeeCode,
-          firstNameTh: dto.firstNameTh,
-          lastNameTh: dto.lastNameTh,
-          firstNameEn: dto.firstNameEn,
-          lastNameEn: dto.lastNameEn,
-          nickname: dto.nickname,
-          dateOfBirth: dto.dateOfBirth ? toDateOnly(dto.dateOfBirth) : null,
-          gender: dto.gender,
-          maritalStatus: dto.maritalStatus,
-          nationalIdEnc: this.crypto.encrypt(dto.nationalId),
-          nationalIdLast4: dto.nationalId ? CryptoService.lastChars(dto.nationalId) : null,
-          taxIdEnc: this.crypto.encrypt(dto.taxId),
-          socialSecurityNoEnc: this.crypto.encrypt(dto.socialSecurityNo),
-          personalEmail: dto.personalEmail,
-          workEmail: dto.workEmail,
-          phone: dto.phone,
-          addressLine: dto.addressLine,
-          province: dto.province,
-          postalCode: dto.postalCode,
-          departmentId: dto.departmentId,
-          positionId: dto.positionId,
-          workLocationId: dto.workLocationId,
-          managerId: dto.managerId,
-          employmentType: dto.employmentType,
-          hireDate: toDateOnly(dto.hireDate),
-          probationEndDate: dto.probationEndDate ? toDateOnly(dto.probationEndDate) : null,
-          status: dto.probationEndDate ? EmployeeStatus.PROBATION : EmployeeStatus.ACTIVE,
-        },
-      });
-
-      await tx.employmentEvent.create({
-        data: {
-          employeeId: created.id,
-          type: EmploymentEventType.HIRE,
-          effectiveDate: created.hireDate,
-          newValue: { employeeCode, hireDate: dto.hireDate } as Prisma.InputJsonValue,
-          recordedById: user.userId,
-        },
-      });
+      const created = await this.createInTransaction(tx, user, employeeCode, dto);
 
       if (dto.createUserAccount) {
         const email = dto.workEmail ?? dto.personalEmail;
@@ -227,6 +187,69 @@ export class EmployeesService {
     return this.findOne(user, employee.id);
   }
 
+  /**
+   * Writes one new employee inside the caller's transaction: the record, with
+   * its identifiers encrypted, and the hire event. The form and the
+   * spreadsheet import (CW-059) both come through here, so an imported
+   * national ID is stored exactly as a typed one is.
+   */
+  async createInTransaction(
+    tx: Prisma.TransactionClient,
+    actor: Pick<AuthenticatedUser, 'organizationId' | 'userId'>,
+    employeeCode: string,
+    dto: CreateEmployeeDto,
+    status: EmployeeStatus = dto.probationEndDate
+      ? EmployeeStatus.PROBATION
+      : EmployeeStatus.ACTIVE,
+  ) {
+    const created = await tx.employee.create({
+      data: {
+        organizationId: actor.organizationId,
+        employeeCode,
+        titleTh: dto.titleTh,
+        firstNameTh: dto.firstNameTh,
+        lastNameTh: dto.lastNameTh,
+        firstNameEn: dto.firstNameEn,
+        lastNameEn: dto.lastNameEn,
+        nickname: dto.nickname,
+        dateOfBirth: dto.dateOfBirth ? toDateOnly(dto.dateOfBirth) : null,
+        gender: dto.gender,
+        maritalStatus: dto.maritalStatus,
+        nationalIdEnc: this.crypto.encrypt(dto.nationalId),
+        nationalIdLast4: dto.nationalId ? CryptoService.lastChars(dto.nationalId) : null,
+        taxIdEnc: this.crypto.encrypt(dto.taxId),
+        socialSecurityNoEnc: this.crypto.encrypt(dto.socialSecurityNo),
+        personalEmail: dto.personalEmail,
+        workEmail: dto.workEmail,
+        phone: dto.phone,
+        addressLine: dto.addressLine,
+        province: dto.province,
+        postalCode: dto.postalCode,
+        departmentId: dto.departmentId,
+        positionId: dto.positionId,
+        workLocationId: dto.workLocationId,
+        managerId: dto.managerId,
+        employmentType: dto.employmentType,
+        hireDate: toDateOnly(dto.hireDate),
+        probationEndDate: dto.probationEndDate ? toDateOnly(dto.probationEndDate) : null,
+        scannerId: dto.scannerId,
+        status,
+      },
+    });
+
+    await tx.employmentEvent.create({
+      data: {
+        employeeId: created.id,
+        type: EmploymentEventType.HIRE,
+        effectiveDate: created.hireDate,
+        newValue: { employeeCode, hireDate: dto.hireDate } as Prisma.InputJsonValue,
+        recordedById: actor.userId,
+      },
+    });
+
+    return created;
+  }
+
   async update(user: AuthenticatedUser, id: string, dto: UpdateEmployeeDto) {
     const before = await this.prisma.employee.findFirst({
       where: { id, organizationId: user.organizationId, deletedAt: null },
@@ -240,6 +263,7 @@ export class EmployeesService {
       await this.assertEmployeeInOrg(user.organizationId, dto.managerId);
       await this.assertNoReportingCycle(id, dto.managerId);
     }
+    await this.assertScannerIdFree(user.organizationId, dto.scannerId, id);
 
     const {
       nationalId,
@@ -337,6 +361,32 @@ export class EmployeesService {
   }
 
   // ------------------------------------------------------------------ helpers
+
+  /**
+   * One scanner number, one person: two employees behind the same number would
+   * put one's punches on the other's record (CW-061).
+   */
+  private async assertScannerIdFree(
+    organizationId: string,
+    scannerId: string | null | undefined,
+    exceptEmployeeId?: string,
+  ): Promise<void> {
+    if (!scannerId) return;
+    const holder = await this.prisma.employee.findFirst({
+      where: {
+        organizationId,
+        scannerId,
+        ...(exceptEmployeeId ? { id: { not: exceptEmployeeId } } : {}),
+      },
+      select: { employeeCode: true },
+    });
+    if (holder) {
+      throw new ConflictError(
+        'DUPLICATE_SCANNER_ID',
+        `Scanner ID ${scannerId} already belongs to employee ${holder.employeeCode}`,
+      );
+    }
+  }
 
   private async assertEmployeeInOrg(organizationId: string, employeeId: string): Promise<void> {
     const found = await this.prisma.employee.findFirst({

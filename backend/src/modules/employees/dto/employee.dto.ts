@@ -34,6 +34,12 @@ export class CreateEmployeeDto {
   @MaxLength(32)
   employeeCode?: string;
 
+  @ApiPropertyOptional({ example: 'นาย' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  titleTh?: string;
+
   @ApiProperty({ example: 'สมชาย' })
   @IsString()
   @IsNotEmpty()
@@ -167,6 +173,17 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsDateString()
   probationEndDate?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "The employee's user number on the fingerprint scanner, exactly as the scanner writes it (CW-061)",
+    example: '007',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  @Matches(/^\S+$/, { message: 'scannerId must not contain spaces' })
+  scannerId?: string;
 
   @ApiPropertyOptional({ description: 'Create a login and send an invitation' })
   @IsOptional()

@@ -24,14 +24,17 @@ entry, tags it and publishes the notes.
 The release employees can install. From this release on, each one carries
 `cwork-android.apk`: one Android app for every company, which the employee
 connects to their company's server by scanning the QR code on the console's
-**Employees → Mobile app** page (CW-060). iPhone is not supported yet. The
-console and the app also work in English, benefits, shifts and issued
-documents are managed in the console, and a public demo runs from the landing
-page.
+**Employees → Mobile app** page (CW-060). iPhone is not supported yet. HR
+brings employees, and the leave they have already taken this year, in from a
+spreadsheet (CW-059). The console and the app also work in English; benefits,
+shifts and issued documents are managed in the console; statuses read as words
+rather than codes; and a public demo runs from the landing page.
 
 Upgrading from 0.3.1 means running the migrations, as every release does. No
 `.env` needs to change. One migration drops the unused `selfieFileId` column,
-so an API client that still sends that field should stop sending it.
+so an API client that still sends that field should stop sending it. A leave
+balance's `used` now includes leave taken before Cwork, which is 0 until
+someone imports it.
 
 ### Added
 
@@ -247,6 +250,34 @@ so an API client that still sends that field should stop sending it.
   pending the owner's decision on the Apple Developer Program, and both READMEs
   say so. Maintainers set up the signing key once, as described in
   [`docs/mobile-release.md`](./docs/mobile-release.md).
+- **Employees, and the leave they took before Cwork, come in from a
+  spreadsheet** (CW-059, the employee and leave half). A company moving to
+  Cwork had to enter each person through the API; the console could not add
+  anyone at all. HR now downloads a template from **Employees → Import from a
+  spreadsheet**, fills it in or pastes an export into it, and uploads it. The
+  upload can be `.xlsx`, or CSV as Thai Excel saves it (Windows-874), and Thai
+  names come through intact. Every problem is listed by row and column before
+  anything is written. Nothing is written until the whole file is clean, and then
+  every employee is created in one step, through the same validation and
+  encryption as the API's create. Importing the same file again adds nobody,
+  and names each code already present. Dates may be Buddhist-era or Excel day
+  numbers. A long number that Excel has shortened to `1.23457E+12` is caught
+  rather than stored. Managers may be further down the same file. Employees
+  gain `scannerId`, their user number on the fingerprint scanner, for CW-061. It
+  is unique in the organisation, and it can also be set by hand through
+  `PATCH /employees/:id`.
+
+  Then **Leave → Import leave taken** records the days each person took this
+  year before Cwork. Its template already lists every current employee and
+  every leave type, and the preview shows the balance each person is left with.
+  The figure is set, not added, so importing the same file twice changes
+  nothing. A figure more than the entitlement, unless the leave type allows it,
+  is refused. It is stored apart from what Cwork itself approved, as
+  `LeaveEntitlement.priorUsed`, and every balance counts it: HR's view, the
+  employee's own in the app, the check a new request is held to, adjustments
+  and the year-end rollover. The balance API's `used` now includes it, and
+  `usedBeforeCwork` says how much of it came from before. Each import is
+  audited as one event naming the file.
 
 ### Removed
 
@@ -265,6 +296,29 @@ so an API client that still sends that field should stop sending it.
 
 ### Changed
 
+- **The console reads as words, not system codes.** Pay periods, review cycles,
+  expense claims, resignations, offboarding tasks, document requests and
+  knowledge documents showed their status as the raw code (`CLOSED`, `DRAFT`),
+  the activity log showed `LOGIN` about a `User`, and the sidebar named the
+  person's role `HR_ADMIN`. Each is now a translated label, and the activity log
+  filters by a list of record kinds instead of asking for a type name such as
+  `PayrollRun`. A test fails if any status label has no Thai translation.
+- **Easier to tap and to read.** The menu's Unicode symbols, which rendered as a
+  dot or a sliver on computers without the right fonts, are drawn icons; text,
+  fields and buttons are a size larger; on a touch screen every button and field
+  is at least 44px tall, and fields no longer make iPhone Safari zoom in. The
+  phone menu button says “เมนู” / “Menu”, the desktop no longer repeats the page
+  title in a bar above it, and sidebar headings drop the letter-spacing that
+  pulled Thai marks apart. Motion stops for people who ask their system for less.
+- **Numbers lead to their lists.** The dashboard's tiles open the approvals,
+  employees, leave or payroll behind them; an employee, whose work is in the
+  phone app, is shown how to install it; the no-access page has a way home;
+  closing a benefit plan asks first; and the roster keeps one line per day with
+  the names pinned while the fortnight scrolls.
+- **The mobile app's colours mean something.** Approved, present and paid were
+  pink, because the chips took the theme's third colour; they are green now,
+  pending is amber and rejected red, in both themes. Clocking out is orange
+  rather than purple, and both clock buttons are taller.
 - **The mobile app no longer has a built-in server address** (CW-060).
   `API_BASE_URL` used to default to `http://10.0.2.2:3000/api/v1`. It now has no
   default: a build without it opens on the connect screen, where a debug build

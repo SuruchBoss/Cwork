@@ -14,7 +14,7 @@ export default function NotFoundPage() {
         title={t('Page not found')}
         description={t('The link may have changed, or you may not have access to this section')}
         action={
-          <Link to="/" className="btn btn--primary btn--sm">
+          <Link to="/" className="btn btn--primary">
             {t('Back to home')}
           </Link>
         }

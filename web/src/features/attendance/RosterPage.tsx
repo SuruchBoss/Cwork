@@ -600,10 +600,10 @@ function RosterTab({ canManage }: { canManage: boolean }) {
           <ErrorState error={roster.error} onRetry={() => void roster.refetch()} />
         ) : rows.length > 0 ? (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table--roster">
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', left: 0 }}>{t('Employee')}</th>
+                  <th>{t('Employee')}</th>
                   {dates.map((date) => (
                     <th key={date} className="num" title={date}>
                       {Number(date.slice(8, 10))}
@@ -617,7 +617,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.employeeId}>
-                    <td style={{ position: 'sticky', left: 0, fontWeight: 500 }}>
+                    <td style={{ fontWeight: 500 }}>
                       {row.name}
                       {row.department && <div className="subtle">{row.department}</div>}
                     </td>

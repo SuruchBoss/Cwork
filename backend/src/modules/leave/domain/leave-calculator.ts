@@ -186,6 +186,8 @@ export interface BalanceInput {
   carriedOver: Decimal | number | string;
   adjusted: Decimal | number | string;
   used: Decimal | number | string;
+  /** Taken this year before Cwork, from the opening-balance import (CW-059). */
+  priorUsed: Decimal | number | string;
   pending: Decimal | number | string;
   expired: Decimal | number | string;
 }
@@ -200,6 +202,7 @@ export function availableBalance(input: BalanceInput): Decimal {
     .plus(input.carriedOver.toString())
     .plus(input.adjusted.toString())
     .minus(input.used.toString())
+    .minus(input.priorUsed.toString())
     .minus(input.pending.toString())
     .minus(input.expired.toString())
     .toDecimalPlaces(2);

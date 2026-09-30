@@ -220,11 +220,27 @@ describe('availableBalance', () => {
       carriedOver: 2,
       adjusted: 1,
       used: 3,
+      priorUsed: 0,
       pending: 1.5,
       expired: 0,
     });
 
     expect(balance.toNumber()).toBe(8.5);
+  });
+
+  it('subtracts leave taken before Cwork as well as leave taken in it (CW-059)', () => {
+    const balance = availableBalance({
+      openingBalance: 0,
+      granted: 10,
+      carriedOver: 0,
+      adjusted: 0,
+      used: 1,
+      priorUsed: 4.5,
+      pending: 0,
+      expired: 0,
+    });
+
+    expect(balance.toNumber()).toBe(4.5);
   });
 });
 
