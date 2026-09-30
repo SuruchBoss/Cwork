@@ -279,6 +279,18 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Filing and approving leave in the app, done by someone who has never seen
+  it** (CW-066). One day off was a trap: the range picker keeps "Save" disabled
+  until an end date is tapped, so tapping the one day left a dead button. The
+  form now asks for the first day, and "until" starts as the same day, so one
+  day off is one tap. Half days are offered only for one day of a type that
+  allows them. The submit button, any error, and a line saying what is still
+  missing ("เลือกประเภทการลาก่อน") stay at the foot of the sheet instead of
+  below the fold. Errors the leave and approval flows can meet (not enough
+  leave, overlapping dates, too little notice, a document required, already
+  decided) are worded in Thai from the error code instead of showing the
+  server's English. Rejecting keeps its button disabled until a reason is
+  typed, where it used to do nothing when tapped with the field empty.
 - **The console reads as words, not system codes.** Pay periods, review cycles,
   expense claims, resignations, offboarding tasks, document requests and
   knowledge documents showed their status as the raw code (`CLOSED`, `DRAFT`),
