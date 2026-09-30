@@ -864,6 +864,15 @@ and so does the same for web and mobile.
 ### CW-063 · UX follow-ups from the 30 September pass
 `P3` · web · mobile · **M** · after the pilot items
 
+**Status 2026-09-30:**
+- **Item 2 is done** (PR #65). It needs one more retake once CW-058 lands.
+- **Item 3 is done for leave and approvals.** The employee directory follows,
+  agreed with the dev.
+- **Item 1 is still open.** Chromium at phone size shows the light theme right,
+  but a real device and the dark theme are still unchecked.
+- **Fixed along the way:** approvals showed `ANNUAL` instead of the leave
+  type's name, in both clients. The issue's checklist is authoritative.
+
 PR #63 was a presentation-only pass over the console and the app, made for HR
 staff and employees who are not technical. It shipped without a ticket, so it
 is recorded here. The pass:
