@@ -781,4 +781,8 @@ export const thMessages: Record<string, string> = {
     'ลงเวลาเข้า-ออกงาน ยื่นลา และดูสลิปเงินเดือนได้ในแอป Cwork',
   'How to install the app': 'วิธีติดตั้งแอป',
   Menu: 'เมนู',
+  'Overtime on a working day': 'โอทีวันทำงาน',
+  'Work on a day off': 'ทำงานวันหยุดประจำสัปดาห์',
+  'Work on a public holiday': 'ทำงานวันหยุดนักขัตฤกษ์',
+  'Overtime on a holiday': 'โอทีในวันหยุด',
 };
