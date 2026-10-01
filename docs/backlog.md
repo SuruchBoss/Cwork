@@ -1097,6 +1097,13 @@ only the phone, and the recovery codes are shown once with a way to save them.
 ### CW-031 · A public demo instance, on Render
 `P2` · project · **M** · first in phase 3
 
+**2026-10-01: a real visitor hit the dead link.** The pilot company's owner
+pressed "ลองใช้ทันที" and got Render's "Not Found": the service has still not
+been created, so every visitor who takes the landing page's main button gets
+the same. Either the owner deploys it (docs/demo.md, three steps), or the
+button goes back to GitHub until they do. The PO asked for the first and keeps
+the second ready.
+
 **Status 2026-09-27: built, waiting on the owner's deploy.** fdf2385 delivers
 the scope, and the e2e suite covers the refusals and every lock-out route. The
 runbook is [demo.md](./demo.md), and it answers the Render questions below.
