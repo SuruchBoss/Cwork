@@ -256,4 +256,39 @@ const Map<String, String> thMessages = <String, String>{
       'บันทึกเวลาไว้ในเครื่องแล้ว จะส่งให้ระบบอัตโนมัติเมื่อกลับมาออนไลน์',
   'GPS is imprecise (±{m} m); the record is saved for HR to review':
       'สัญญาณ GPS ไม่แม่นยำ (±{m} ม.) ระบบจะบันทึกไว้ให้ HR ตรวจสอบ',
+
+  // CW-066: the leave form, its errors, and the reject dialog
+  'No internet connection. Check your signal and try again':
+      'ไม่มีอินเทอร์เน็ต ตรวจสอบสัญญาณแล้วลองอีกครั้ง',
+  'Not enough leave left: you have {available} days, and this request needs {requested}':
+      'วันลาไม่พอ คุณเหลือ {available} วัน แต่คำขอนี้ใช้ {requested} วัน',
+  'You already have leave on some of these days ({from} – {to}). Pick other dates, or cancel that request first':
+      'คุณมีคำขอลาบางวันในช่วงนี้อยู่แล้ว ({from} – {to}) เลือกวันอื่น หรือยกเลิกคำขอเดิมก่อน',
+  'This leave type must be requested at least {days} days ahead. Pick a later date, or ask HR':
+      'ลาประเภทนี้ต้องยื่นล่วงหน้าอย่างน้อย {days} วัน เลือกวันที่ช้ากว่านี้ หรือสอบถาม HR',
+  'This leave type needs a supporting document, such as a medical certificate, which cannot be attached in the app yet. Contact HR with the document':
+      'ลาประเภทนี้ต้องมีเอกสารประกอบ เช่น ใบรับรองแพทย์ ซึ่งยังแนบในแอปไม่ได้ ติดต่อ HR พร้อมเอกสาร',
+  'The days you picked are all days off. Pick at least one working day':
+      'วันที่เลือกเป็นวันหยุดทั้งหมด เลือกอย่างน้อยหนึ่งวันทำงาน',
+  'This leave type is taken in full days only. Choose "Full day"':
+      'ลาประเภทนี้ลาได้เต็มวันเท่านั้น เลือก "เต็มวัน"',
+  'That is more days in a row than this leave type allows. Split it into shorter requests':
+      'ลาติดกันเกินกว่าที่ลาประเภทนี้อนุญาต แบ่งเป็นคำขอที่สั้นลง',
+  'You have not worked here long enough for this leave type yet. Ask HR if you are unsure':
+      'อายุงานยังไม่ถึงเกณฑ์ของลาประเภทนี้ ถ้าไม่แน่ใจ สอบถาม HR',
+  'This leave type is not available to you. Ask HR': 'คุณใช้ลาประเภทนี้ไม่ได้ สอบถาม HR',
+  'This leave has already started, so it cannot be cancelled here. Ask HR to cancel it':
+      'การลานี้เริ่มไปแล้ว ยกเลิกในแอปไม่ได้ ติดต่อ HR ให้ยกเลิกให้',
+  'This request can no longer be cancelled': 'คำขอนี้ยกเลิกไม่ได้แล้ว',
+  'Someone has already decided this request. Pull down to refresh the list':
+      'คำขอนี้มีผู้พิจารณาไปแล้ว ดึงหน้าจอลงเพื่อโหลดรายการใหม่',
+  'First day of leave': 'วันแรกที่ลา',
+  'Last day of leave': 'วันสุดท้ายที่ลา',
+  'Until': 'ถึงวันที่',
+  '{date} (one day)': '{date} (ลาวันเดียว)',
+  'Choose a leave type': 'เลือกประเภทการลาก่อน',
+  'Choose the day your leave starts': 'เลือกวันแรกที่ลา',
+  'Keep it': 'ไม่ยกเลิก',
+  'The requester sees this reason': 'ผู้ยื่นจะเห็นเหตุผลนี้',
+  'Reject request': 'ยืนยันไม่อนุมัติ',
 };
