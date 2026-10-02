@@ -264,10 +264,10 @@ const Map<String, String> thMessages = <String, String>{
       'วันลาไม่พอ คุณเหลือ {available} วัน แต่คำขอนี้ใช้ {requested} วัน',
   'You already have leave on some of these days ({from} – {to}). Pick other dates, or cancel that request first':
       'คุณมีคำขอลาบางวันในช่วงนี้อยู่แล้ว ({from} – {to}) เลือกวันอื่น หรือยกเลิกคำขอเดิมก่อน',
-  'This leave type must be requested at least {days} days ahead. Pick a later date, or ask your manager':
-      'ลาประเภทนี้ต้องยื่นล่วงหน้าอย่างน้อย {days} วัน เลือกวันที่ช้ากว่านี้ หรือคุยกับหัวหน้า',
-  'This leave type needs a supporting document, such as a medical certificate. Send it to HR, who will file the request for you':
-      'ลาประเภทนี้ต้องมีเอกสารประกอบ เช่น ใบรับรองแพทย์ ส่งเอกสารให้ HR แล้ว HR จะยื่นคำขอให้',
+  'This leave type must be requested at least {days} days ahead. Pick a later date, or ask HR':
+      'ลาประเภทนี้ต้องยื่นล่วงหน้าอย่างน้อย {days} วัน เลือกวันที่ช้ากว่านี้ หรือสอบถาม HR',
+  'This leave type needs a supporting document, such as a medical certificate, which cannot be attached in the app yet. Contact HR with the document':
+      'ลาประเภทนี้ต้องมีเอกสารประกอบ เช่น ใบรับรองแพทย์ ซึ่งยังแนบในแอปไม่ได้ ติดต่อ HR พร้อมเอกสาร',
   'The days you picked are all days off. Pick at least one working day':
       'วันที่เลือกเป็นวันหยุดทั้งหมด เลือกอย่างน้อยหนึ่งวันทำงาน',
   'This leave type is taken in full days only. Choose "Full day"':
@@ -277,8 +277,8 @@ const Map<String, String> thMessages = <String, String>{
   'You have not worked here long enough for this leave type yet. Ask HR if you are unsure':
       'อายุงานยังไม่ถึงเกณฑ์ของลาประเภทนี้ ถ้าไม่แน่ใจ สอบถาม HR',
   'This leave type is not available to you. Ask HR': 'คุณใช้ลาประเภทนี้ไม่ได้ สอบถาม HR',
-  'This leave has already started, so it cannot be cancelled here. Ask your manager':
-      'การลานี้เริ่มไปแล้ว ยกเลิกในแอปไม่ได้ กรุณาคุยกับหัวหน้า',
+  'This leave has already started, so it cannot be cancelled here. Ask HR to cancel it':
+      'การลานี้เริ่มไปแล้ว ยกเลิกในแอปไม่ได้ ติดต่อ HR ให้ยกเลิกให้',
   'This request can no longer be cancelled': 'คำขอนี้ยกเลิกไม่ได้แล้ว',
   'Someone has already decided this request. Pull down to refresh the list':
       'คำขอนี้มีผู้พิจารณาไปแล้ว ดึงหน้าจอลงเพื่อโหลดรายการใหม่',

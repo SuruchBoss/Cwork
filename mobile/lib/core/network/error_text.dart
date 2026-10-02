@@ -35,11 +35,11 @@ String errorText(Object error) {
         },
       ),
     'LEAVE_NOTICE_TOO_SHORT' => tr0(
-        'This leave type must be requested at least {days} days ahead. Pick a later date, or ask your manager',
+        'This leave type must be requested at least {days} days ahead. Pick a later date, or ask HR',
         <String, Object>{'days': n('requiredDays')},
       ),
     'LEAVE_ATTACHMENT_REQUIRED' => tr0(
-        'This leave type needs a supporting document, such as a medical certificate. Send it to HR, who will file the request for you',
+        'This leave type needs a supporting document, such as a medical certificate, which cannot be attached in the app yet. Contact HR with the document',
       ),
     'NO_WORKING_DAYS_SELECTED' =>
       tr0('The days you picked are all days off. Pick at least one working day'),
@@ -51,7 +51,7 @@ String errorText(Object error) {
       ),
     'LEAVE_TYPE_NOT_ELIGIBLE' => tr0('This leave type is not available to you. Ask HR'),
     'LEAVE_ALREADY_STARTED' =>
-      tr0('This leave has already started, so it cannot be cancelled here. Ask your manager'),
+      tr0('This leave has already started, so it cannot be cancelled here. Ask HR to cancel it'),
     'NOT_CANCELLABLE' => tr0('This request can no longer be cancelled'),
     'APPROVAL_NOT_PENDING' =>
       tr0('Someone has already decided this request. Pull down to refresh the list'),
