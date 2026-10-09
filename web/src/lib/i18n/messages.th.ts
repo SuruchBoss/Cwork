@@ -201,7 +201,6 @@ export const thMessages: Record<string, string> = {
   'No attendance records in this range': 'ไม่มีข้อมูลการลงเวลาในช่วงนี้',
 
   // Organisation structure
-  'Company details, departments and public holidays': 'ข้อมูลบริษัท แผนก และวันหยุดประจำปี',
   Company: 'บริษัท',
   'Tax ID': 'เลขประจำตัวผู้เสียภาษี',
   Timezone: 'เขตเวลา',
@@ -914,4 +913,40 @@ export const thMessages: Record<string, string> = {
     'ประกันสังคม {months} เดือนสูงสุดไม่เกิน {max} ไม่ใช่ {value}',
   '{employee} was already paid for {period} in Cwork; these figures can only cover the months before it':
     '{employee} ได้รับเงินเดือนงวด {period} ใน Cwork แล้ว ตัวเลขในไฟล์ต้องเป็นของเดือนก่อนหน้านั้นเท่านั้น',
+  // Organisation: adding departments, positions and work locations (CW-072)
+  Save: 'บันทึก',
+  'Company details, departments, positions, work locations and public holidays':
+    'ข้อมูลบริษัท แผนก ตำแหน่ง สถานที่ทำงาน และวันหยุดนักขัตฤกษ์',
+  'Add a department': 'เพิ่มแผนก',
+  'Add a position': 'เพิ่มตำแหน่ง',
+  'Add a work location': 'เพิ่มสถานที่ทำงาน',
+  'Rename a department': 'แก้ชื่อแผนก',
+  'Rename a position': 'แก้ชื่อตำแหน่ง',
+  Rename: 'แก้ชื่อ',
+  'Rename {name}': 'แก้ชื่อ {name}',
+  Positions: 'ตำแหน่ง',
+  'Work locations': 'สถานที่ทำงาน',
+  'No positions yet': 'ยังไม่มีตำแหน่ง',
+  'No work locations yet': 'ยังไม่มีสถานที่ทำงาน',
+  Replaced: 'ถูกแทนที่แล้ว',
+  'Department name': 'ชื่อแผนก',
+  'Position title': 'ชื่อตำแหน่ง',
+  'Work location name': 'ชื่อสถานที่ทำงาน',
+  'English name (optional)': 'ชื่อภาษาอังกฤษ (ไม่บังคับ)',
+  'Parent department (optional)': 'สังกัดแผนก (ไม่บังคับ)',
+  'Department (optional)': 'แผนก (ไม่บังคับ)',
+  'A code is not changed once it is set up.': 'รหัสแก้ไม่ได้หลังจากตั้งไว้แล้ว',
+  'For example HR or SALES-01': 'เช่น HR หรือ SALES-01',
+  'For example HQ or BKK-01': 'เช่น HQ หรือ BKK-01',
+  'Use capital English letters, digits, - or _, starting with a letter or digit, up to 32 characters. For example HR or SALES-01.':
+    'ใช้ตัวอักษรภาษาอังกฤษพิมพ์ใหญ่ ตัวเลข ขีด (-) หรือขีดล่าง (_) ขึ้นต้นด้วยตัวอักษรหรือตัวเลข ไม่เกิน 32 ตัว เช่น HR หรือ SALES-01',
+  'Use capital English letters, digits and -, starting with a letter or digit, 2 to 32 characters. For example HQ or BKK-01.':
+    'ใช้ตัวอักษรภาษาอังกฤษพิมพ์ใหญ่ ตัวเลข และขีด (-) ขึ้นต้นด้วยตัวอักษรหรือตัวเลข 2 ถึง 32 ตัว เช่น HQ หรือ BKK-01',
+  'The code is fixed once anyone clocks in there or is based there. A wrong code after that is replaced, not edited.':
+    'เมื่อมีคนลงเวลาหรือประจำอยู่ที่สถานที่นี้แล้ว รหัสจะแก้ไม่ได้อีก ถ้ารหัสผิดหลังจากนั้นต้องสร้างสถานที่ใหม่มาแทน',
+  'Enter a code.': 'กรอกรหัสก่อน',
+  'Enter a name.': 'กรอกชื่อก่อน',
+  'The code "{code}" is already used. Choose another code.': 'รหัส "{code}" มีอยู่แล้ว ใช้รหัสอื่น',
+  '"{name}" is already used. Choose another name, so an import can tell them apart.':
+    'ชื่อ "{name}" มีอยู่แล้ว ใช้ชื่ออื่น เพื่อให้ไฟล์นำเข้าแยกออกว่าหมายถึงอันไหน',
 };
