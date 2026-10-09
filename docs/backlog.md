@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-067 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-067 · CW-072 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -182,6 +182,45 @@ At the pilot company nobody but HR uses Cwork, so leave cannot enter it at all.
 - Someone without the permission cannot file leave for anyone but themselves.
 
 **Files** `backend/src/modules/leave/`, `web/src/features/leave/`
+
+---
+
+### CW-072 · Add departments, positions and work locations from the console
+`P0` · organisation · web · **S** · Pilot A, by 31 October 2026
+
+A fresh install has no departments, positions or work locations, and the
+console cannot add any. `OrganizationPage` only reads, although the API has
+create and update endpoints for all three behind `org:manage`, and
+`setup.cli.ts` tells a new install to add them from Organisation. The employee
+import (CW-059) needs these names to exist already, so an Odoo export that keeps
+those columns fails with one `NOT_FOUND` per row, and HR's only way through is
+to blank the cells and lose the data. Found by UX on 2026-10-02 and checked in
+the code by the PO.
+
+**Decided 2026-10-09, PO with the owner:** a form in the console, not the
+import creating the names it does not find. A company adds a department again
+later, one at a time, and an import that creates names would turn one typo into
+a duplicate department.
+
+**Scope**
+- On Organisation, someone with `org:manage` adds and renames departments and
+  positions, and adds work locations, through the existing endpoints. No new
+  rules.
+- A work location's code follows ADR-0006 as the API enforces it (CW-049):
+  the form shows the format and the API's own message, and does not offer to
+  rename a code once it is in use.
+- `setup.cli.ts`, and the import guide's advice to leave the cell blank, say
+  what is true once this lands.
+
+**Acceptance**
+- On a fresh `db:init` install, an HR admin adds one of each from the console,
+  then imports an employee file that names them, with no `NOT_FOUND`.
+- Without `org:manage` the lists show with no add or edit controls, and the
+  API refuses, as it does today.
+- A duplicate name or an invalid work-location code is refused with a Thai
+  message that says what to change.
+
+**Files** `web/src/features/settings/`, `backend/src/modules/setup/` (message only)
 
 ---
 
@@ -595,6 +634,15 @@ task alone, the pilot measures confusion rather than the product.
   because of it, is recorded in the ticket.
 - CW-064 and CW-061 each have Thai wording from this ticket before they are
   built, and a UX review after.
+
+**Status 2026-10-09: the app half is merged** (#75). Leave and approvals in
+the app, as a first-time user meets them: one day off is one tap, Thai error
+messages from the error code, and a reject that cannot be sent without a reason.
+The PO checked that each message names someone who can actually help: leave
+that has started, and a missing document, go to HR, since only `leave:manage`
+can cancel started leave and HR cannot file leave for anyone until CW-067. Open:
+the import pages from the UX review on #59, and a Thai guide for them merged as
+#76. It tells HR to leave an unknown department blank until CW-072 lands.
 
 **Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
 `mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
