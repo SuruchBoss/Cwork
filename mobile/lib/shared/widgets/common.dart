@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/network/error_text.dart';
 import '../../core/theme/app_theme.dart';
 
 /// Small shared widgets. Kept deliberately plain: the value of this app is in
@@ -134,14 +135,10 @@ class ErrorView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String raw = error.toString();
-    final int separator = raw.indexOf(': ');
-    final String message = separator >= 0 ? raw.substring(separator + 2) : raw;
-
     return EmptyState(
       icon: Icons.error_outline,
       title: ref.tr('Could not load'),
-      description: message,
+      description: errorText(error),
       action: onRetry == null
           ? null
           : OutlinedButton.icon(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/network/error_text.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/leave_controller.dart';
@@ -233,7 +234,7 @@ class _LeaveRequestTile extends ConsumerWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(ref.tr('No')),
+            child: Text(ref.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -256,11 +257,9 @@ class _LeaveRequestTile extends ConsumerWidget {
       }
     } on Object catch (error) {
       if (context.mounted) {
-        final String raw = error.toString();
-        final int separator = raw.indexOf(': ');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(separator >= 0 ? raw.substring(separator + 2) : raw),
+            content: Text(errorText(error)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
