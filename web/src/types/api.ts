@@ -135,6 +135,14 @@ export interface EmployeeDetail extends EmployeeSummary {
   lastWorkingDate: string | null;
   nationalId?: string | null;
   nationalIdMasked?: string | null;
+  /** A foreign worker's documents (CW-068). The numbers come only to someone who may read them. */
+  passportNo?: string | null;
+  workPermitNo?: string | null;
+  /** Instead of the numbers, for someone who may not read them: whether one is on file. */
+  passportNoRecorded?: boolean;
+  workPermitNoRecorded?: boolean;
+  passportExpiresOn: string | null;
+  workPermitExpiresOn: string | null;
   directReports: Array<{ id: string; firstNameTh: string; lastNameTh: string; employeeCode: string }>;
   contacts: Array<{ id: string; name: string; relation: string; phone: string; isPrimary: boolean }>;
   user: { id: string; email: string; status: string; lastLoginAt: string | null } | null;

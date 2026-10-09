@@ -36,6 +36,7 @@ const TEMPLATES: Record<string, string> = {
   NO_ROWS: 'The file has a header row but no employees under it',
   TOO_MANY_ROWS: 'The file has {rows} rows; one import takes at most {max}',
   REQUIRED: 'This is required',
+  NAME_REQUIRED: 'A name is needed, in Thai or in English',
   INVALID_DATE: '"{value}" is not a date this import can read',
   INVALID_CHOICE: '"{value}" is not one of: {allowed}',
   INVALID_NATIONAL_ID: 'A national ID is 13 digits',

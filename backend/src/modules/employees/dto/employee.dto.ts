@@ -93,6 +93,31 @@ export class CreateEmployeeDto {
   @Matches(/^\d{13}$/, { message: 'nationalId must be 13 digits' })
   nationalId?: string;
 
+  @ApiPropertyOptional({ description: "A foreign worker's passport number; stored encrypted" })
+  @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/[\s-]/g, '').toUpperCase() : value,
+  )
+  @Matches(/^[A-Z0-9]{5,20}$/, { message: 'passportNo must be 5 to 20 letters and digits' })
+  passportNo?: string;
+
+  @ApiPropertyOptional({ example: '2030-06-30' })
+  @IsOptional()
+  @IsDateString()
+  passportExpiresOn?: string;
+
+  @ApiPropertyOptional({ description: 'Thai work permit number; stored encrypted' })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(32)
+  workPermitNo?: string;
+
+  @ApiPropertyOptional({ example: '2027-03-31' })
+  @IsOptional()
+  @IsDateString()
+  workPermitExpiresOn?: string;
+
   @ApiPropertyOptional({ description: 'Stored encrypted' })
   @IsOptional()
   @IsString()

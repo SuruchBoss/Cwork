@@ -57,6 +57,10 @@ const FIELD_COLUMN: Record<string, EmployeeColumn> = {
   nationalId: 'national_id',
   taxId: 'tax_id',
   socialSecurityNo: 'social_security_no',
+  passportNo: 'passport_no',
+  passportExpiresOn: 'passport_expires_on',
+  workPermitNo: 'work_permit_no',
+  workPermitExpiresOn: 'work_permit_expires_on',
   workEmail: 'work_email',
   personalEmail: 'personal_email',
   phone: 'phone',
@@ -94,7 +98,11 @@ export class EmployeeImportService {
       language === 'th'
         ? [
             ['คอลัมน์', 'ต้องกรอก', 'กรอกอะไร'],
-            ...EMPLOYEE_COLUMNS.map((c) => [c.th, c.required ? 'ต้องกรอก' : '', c.hint.th]),
+            ...EMPLOYEE_COLUMNS.map((c) => [
+              c.th,
+              c.required ? (c.alternative ? 'ต้องกรอก ถ้าไม่มีภาษาอังกฤษ' : 'ต้องกรอก') : '',
+              c.hint.th,
+            ]),
             [],
             ['กรอกหนึ่งคนต่อหนึ่งแถวในชีตแรก ลบคอลัมน์ที่ไม่ใช้ได้ แต่ห้ามเปลี่ยนชื่อหัวคอลัมน์'],
             [
@@ -103,7 +111,15 @@ export class EmployeeImportService {
           ]
         : [
             ['Column', 'Required', 'What goes in it'],
-            ...EMPLOYEE_COLUMNS.map((c) => [c.en, c.required ? 'Required' : '', c.hint.en]),
+            ...EMPLOYEE_COLUMNS.map((c) => [
+              c.en,
+              c.required
+                ? c.alternative
+                  ? 'Required unless the English one is given'
+                  : 'Required'
+                : '',
+              c.hint.en,
+            ]),
             [],
             [
               "One person per row on the first sheet. Columns you do not use can be deleted; don't rename the headings.",
@@ -305,6 +321,10 @@ function toDto(employee: ImportedEmployee): CreateEmployeeDto {
     nationalId: employee.nationalId,
     taxId: employee.taxId,
     socialSecurityNo: employee.socialSecurityNo,
+    passportNo: employee.passportNo,
+    passportExpiresOn: employee.passportExpiresOn,
+    workPermitNo: employee.workPermitNo,
+    workPermitExpiresOn: employee.workPermitExpiresOn,
     workEmail: employee.workEmail,
     personalEmail: employee.personalEmail,
     phone: employee.phone,

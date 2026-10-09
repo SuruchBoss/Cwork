@@ -50,6 +50,8 @@ model Employee {
   scannerId      String?
 
   titleTh        String?
+  /// The name Cwork shows. Thai when the person has a Thai name; a foreign
+  /// worker with none carries their English name here as well (CW-068).
   firstNameTh    String
   lastNameTh     String
   firstNameEn    String?
@@ -66,6 +68,11 @@ model Employee {
   /// Last 4 digits, for search/verification without decrypting.
   nationalIdLast4 String?
   passportNoEnc  String?
+  /// A foreign worker's documents (CW-068). The numbers are encrypted like the
+  /// national ID; the expiry dates are not secret and are what HR watches.
+  passportExpiresOn   DateTime? @db.Date
+  workPermitNoEnc     String?
+  workPermitExpiresOn DateTime? @db.Date
   taxIdEnc       String?
   socialSecurityNoEnc String?
 

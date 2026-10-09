@@ -54,9 +54,9 @@ const counts: Record<string, number> = {
 
   // Measured by the `web`, `mobile` and `backend` jobs in ci.yml respectively.
   // Update here, not in the prose: that is the whole point of this file.
-  web: 111,
+  web: 115,
   mobile: 92,
-  e2e: 320,
+  e2e: 324,
 };
 
 /**

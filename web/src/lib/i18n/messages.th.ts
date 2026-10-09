@@ -1004,4 +1004,18 @@ export const thMessages: Record<string, string> = {
     'อายุงานของ {name} ยังไม่ถึงเกณฑ์ของลาประเภทนี้',
   'Your own leave goes to your manager. Choose "Send to the manager to approve"':
     'การลาของคุณเองต้องให้หัวหน้าอนุมัติ ให้เลือก "ส่งให้หัวหน้าอนุมัติ"',
+  // A foreign worker's documents (CW-068)
+  'A name is needed, in Thai or in English': 'ต้องมีชื่อ เป็นภาษาไทยหรือภาษาอังกฤษก็ได้',
+  'Passport and work permit': 'พาสปอร์ตและใบอนุญาตทำงาน',
+  Add: 'เพิ่ม',
+  'Passport no.': 'เลขพาสปอร์ต',
+  'Passport expiry': 'วันหมดอายุพาสปอร์ต',
+  'Work permit no.': 'เลขใบอนุญาตทำงาน',
+  'Work permit expiry': 'วันหมดอายุใบอนุญาตทำงาน',
+  'Recorded; not permitted to view': 'บันทึกไว้แล้ว ไม่มีสิทธิ์ดู',
+  'None recorded. For a foreign worker.': 'ยังไม่มีข้อมูล ใช้สำหรับแรงงานต่างด้าว',
+  Expired: 'หมดอายุแล้ว',
+  'A passport number is 5 to 20 English letters and digits.':
+    'เลขพาสปอร์ตใช้ตัวอักษรภาษาอังกฤษและตัวเลข 5 ถึง 20 ตัว',
+  'A number is on file. Leave blank to keep it.': 'มีเลขบันทึกไว้แล้ว เว้นว่างไว้ถ้าไม่เปลี่ยน',
 };

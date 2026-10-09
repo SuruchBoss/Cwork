@@ -111,12 +111,22 @@ export class EmployeesService {
     const canSeeSensitive =
       user.permissions.includes(Permission.EMPLOYEE_READ_SENSITIVE) || user.employeeId === id;
 
-    const { nationalIdEnc, passportNoEnc, taxIdEnc, socialSecurityNoEnc, ...rest } = employee;
+    const {
+      nationalIdEnc,
+      passportNoEnc,
+      workPermitNoEnc,
+      taxIdEnc,
+      socialSecurityNoEnc,
+      ...rest
+    } = employee;
 
     if (!canSeeSensitive) {
       return {
         ...rest,
         nationalIdMasked: employee.nationalIdLast4 ? `•••• ${employee.nationalIdLast4}` : null,
+        // Whether a number is on file, so HR without access to it is not told there is none.
+        passportNoRecorded: passportNoEnc !== null,
+        workPermitNoRecorded: workPermitNoEnc !== null,
       };
     }
 
@@ -133,6 +143,7 @@ export class EmployeesService {
       ...rest,
       nationalId: this.crypto.decrypt(nationalIdEnc),
       passportNo: this.crypto.decrypt(passportNoEnc),
+      workPermitNo: this.crypto.decrypt(workPermitNoEnc),
       taxId: this.crypto.decrypt(taxIdEnc),
       socialSecurityNo: this.crypto.decrypt(socialSecurityNoEnc),
     };
@@ -217,6 +228,10 @@ export class EmployeesService {
         maritalStatus: dto.maritalStatus,
         nationalIdEnc: this.crypto.encrypt(dto.nationalId),
         nationalIdLast4: dto.nationalId ? CryptoService.lastChars(dto.nationalId) : null,
+        passportNoEnc: this.crypto.encrypt(dto.passportNo),
+        passportExpiresOn: dto.passportExpiresOn ? toDateOnly(dto.passportExpiresOn) : null,
+        workPermitNoEnc: this.crypto.encrypt(dto.workPermitNo),
+        workPermitExpiresOn: dto.workPermitExpiresOn ? toDateOnly(dto.workPermitExpiresOn) : null,
         taxIdEnc: this.crypto.encrypt(dto.taxId),
         socialSecurityNoEnc: this.crypto.encrypt(dto.socialSecurityNo),
         personalEmail: dto.personalEmail,
@@ -267,6 +282,10 @@ export class EmployeesService {
 
     const {
       nationalId,
+      passportNo,
+      passportExpiresOn,
+      workPermitNo,
+      workPermitExpiresOn,
       taxId,
       socialSecurityNo,
       hireDate,
@@ -287,6 +306,17 @@ export class EmployeesService {
               nationalIdEnc: this.crypto.encrypt(nationalId),
               nationalIdLast4: nationalId ? CryptoService.lastChars(nationalId) : null,
             }
+          : {}),
+        // A foreign worker's documents (CW-068); null clears a number or a date.
+        ...(passportNo !== undefined ? { passportNoEnc: this.crypto.encrypt(passportNo) } : {}),
+        ...(workPermitNo !== undefined
+          ? { workPermitNoEnc: this.crypto.encrypt(workPermitNo) }
+          : {}),
+        ...(passportExpiresOn !== undefined
+          ? { passportExpiresOn: passportExpiresOn ? toDateOnly(passportExpiresOn) : null }
+          : {}),
+        ...(workPermitExpiresOn !== undefined
+          ? { workPermitExpiresOn: workPermitExpiresOn ? toDateOnly(workPermitExpiresOn) : null }
           : {}),
         ...(taxId !== undefined ? { taxIdEnc: this.crypto.encrypt(taxId) } : {}),
         ...(socialSecurityNo !== undefined
