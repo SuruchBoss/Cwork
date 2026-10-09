@@ -27,9 +27,13 @@ connects to their company's server by scanning the QR code on the console's
 **Employees → Mobile app** page (CW-060). iPhone is not supported yet. HR
 brings employees in from a spreadsheet, with the leave they have already taken
 this year and, for a company that starts mid-year, what payroll paid them
-before Cwork, so the first run withholds the right tax (CW-059). The console and the app also work in English; benefits,
-shifts and issued documents are managed in the console; statuses read as words
-rather than codes; and a public demo runs from the landing page.
+before Cwork, so the first run withholds the right tax (CW-059). A Thai guide
+walks HR through those imports, and filing and approving leave in the app has
+been reworked for someone using it for the first time (CW-066). The console and
+the app also work in English; benefits, shifts and issued documents are managed
+in the console; statuses read as words rather than codes; dates in the Thai
+console's tables show the Buddhist-era year (the first part of CW-058); and a
+public demo runs from the landing page.
 
 Upgrading from 0.3.1 means running the migrations, as every release does. No
 `.env` needs to change. One migration drops the unused `selfieFileId` column,
