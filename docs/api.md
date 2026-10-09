@@ -141,6 +141,8 @@ and encryption as `POST /employees`, and gets a `HIRE` employment event.
 | POST | `/leave/balances/import` | `leave:balance:adjust` — sets leave taken before Cwork |
 | **POST** | **`/leave/requests/preview`** | cost before submitting — see below |
 | POST | `/leave/requests` | |
+| POST | `/leave/requests/record/preview` | `leave:record` — the cost of leave HR records for an employee (CW-067) |
+| POST | `/leave/requests/record` | `leave:record` — HR files leave for an employee, as approved (default) or for approval; audited with both names |
 | GET | `/leave/requests` | scoped |
 | GET | `/leave/requests/:id` | includes the approval trail |
 | POST | `/leave/requests/:id/submit` | submit a draft |

@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import {
   DayPortion,
   Gender,
@@ -227,6 +227,27 @@ export class CreateLeaveRequestDto {
   @IsOptional()
   @IsBoolean()
   saveAsDraft?: boolean;
+}
+
+/**
+ * HR filing leave on an employee's behalf (CW-067): the same request an
+ * employee makes, for the employee named here, never as a draft.
+ */
+export class RecordLeaveRequestDto extends OmitType(CreateLeaveRequestDto, [
+  'saveAsDraft',
+] as const) {
+  @ApiProperty({ description: 'The employee who is on leave' })
+  @IsUUID()
+  employeeId!: string;
+
+  @ApiPropertyOptional({
+    default: true,
+    description:
+      'Record it as approved, as when the manager was told in person; false sends it for approval',
+  })
+  @IsOptional()
+  @IsBoolean()
+  recordAsApproved?: boolean;
 }
 
 export class CancelLeaveRequestDto {

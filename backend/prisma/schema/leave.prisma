@@ -160,6 +160,10 @@ model LeaveRequest {
   cancelReason   String?
   /// True when the assistant filed it; shown in the UI and the audit log.
   createdViaAssistant Boolean @default(false)
+  /// HR who filed it on the employee's behalf (CW-067); null when the
+  /// employee, or the assistant for them, filed it themselves.
+  recordedByUserId String?  @db.Uuid
+  recordedBy       User?    @relation("LeaveRecordedBy", fields: [recordedByUserId], references: [id], onDelete: SetNull)
   approvalInstanceId String? @unique @db.Uuid
   approvalInstance   ApprovalInstance? @relation(fields: [approvalInstanceId], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now())

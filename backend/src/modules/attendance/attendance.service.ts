@@ -557,31 +557,66 @@ export class AttendanceService {
 
     for (const employee of employees) {
       await this.recalculateDay(organizationId, employee.id, day, organization.timezone);
-
-      const record = await this.prisma.attendanceRecord.findUnique({
-        where: { employeeId_workDate: { employeeId: employee.id, workDate: day } },
-      });
-      if (!record) continue;
-
-      if (record.status === AttendanceStatus.NOT_STARTED) {
-        await this.prisma.attendanceRecord.update({
-          where: { id: record.id },
-          data: { status: AttendanceStatus.ABSENT },
-        });
-        absent += 1;
-      } else if (record.firstClockInAt && !record.lastClockOutAt) {
-        await this.prisma.attendanceRecord.update({
-          where: { id: record.id },
-          data: { status: AttendanceStatus.INCOMPLETE },
-        });
-        incomplete += 1;
-      }
+      const closed = await this.closeOutRecord(employee.id, day);
+      if (closed === AttendanceStatus.ABSENT) absent += 1;
+      if (closed === AttendanceStatus.INCOMPLETE) incomplete += 1;
     }
 
     this.logger.log(
       `Closed out ${formatDateOnly(day)}: ${absent} absent, ${incomplete} incomplete`,
     );
     return { absent, incomplete };
+  }
+
+  /**
+   * Derives an employee's days again after their approved leave changed: leave
+   * recorded or approved after the fact, or approved leave cancelled (CW-067).
+   * Days already closed out are closed out again by the same rule, so a day
+   * that loses its leave reads as absent rather than not yet started. Today is
+   * derived but left open, and later days wait for their own close-out. A day
+   * payroll has locked was paid as it stood and is left as it is.
+   */
+  async rederiveAfterLeaveChange(
+    organizationId: string,
+    employeeId: string,
+    days: Date[],
+  ): Promise<void> {
+    const organization = await this.organization.getOrganization(organizationId);
+    const today = workDateFor(new Date(), organization.timezone);
+    const locked = await this.prisma.attendanceRecord.findMany({
+      where: { employeeId, workDate: { in: days.map(toDateOnly) }, lockedAt: { not: null } },
+      select: { workDate: true },
+    });
+    const paid = new Set(locked.map((r) => formatDateOnly(r.workDate)));
+    for (const value of days) {
+      const day = toDateOnly(value);
+      if (day.getTime() > today.getTime() || paid.has(formatDateOnly(day))) continue;
+      await this.recalculateDay(organizationId, employeeId, day, organization.timezone);
+      if (day.getTime() < today.getTime()) await this.closeOutRecord(employeeId, day);
+    }
+  }
+
+  /** The close-out rule for one day; returns the status it set, if any. */
+  private async closeOutRecord(employeeId: string, day: Date): Promise<AttendanceStatus | null> {
+    const record = await this.prisma.attendanceRecord.findUnique({
+      where: { employeeId_workDate: { employeeId, workDate: day } },
+    });
+    if (!record) return null;
+    if (record.status === AttendanceStatus.NOT_STARTED) {
+      await this.prisma.attendanceRecord.update({
+        where: { id: record.id },
+        data: { status: AttendanceStatus.ABSENT },
+      });
+      return AttendanceStatus.ABSENT;
+    }
+    if (record.firstClockInAt && !record.lastClockOutAt) {
+      await this.prisma.attendanceRecord.update({
+        where: { id: record.id },
+        data: { status: AttendanceStatus.INCOMPLETE },
+      });
+      return AttendanceStatus.INCOMPLETE;
+    }
+    return null;
   }
 
   // -------------------------------------------------------------------- devices

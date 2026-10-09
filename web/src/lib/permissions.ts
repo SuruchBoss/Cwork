@@ -37,6 +37,7 @@ export const P = {
   LEAVE_MANAGE: 'leave:manage',
   LEAVE_TYPE_MANAGE: 'leave:type:manage',
   LEAVE_BALANCE_ADJUST: 'leave:balance:adjust',
+  LEAVE_RECORD: 'leave:record',
 
   ATTENDANCE_READ: 'attendance:read',
   ATTENDANCE_READ_TEAM: 'attendance:read:team',

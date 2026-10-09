@@ -951,4 +951,57 @@ export const thMessages: Record<string, string> = {
   'The code "{code}" is already used. Choose another code.': 'รหัส "{code}" มีอยู่แล้ว ใช้รหัสอื่น',
   '"{name}" is already used. Choose another name, so an import can tell them apart.':
     'ชื่อ "{name}" มีอยู่แล้ว ใช้ชื่ออื่น เพื่อให้ไฟล์นำเข้าแยกออกว่าหมายถึงอันไหน',
+  // Recording leave for an employee (CW-067)
+  'Record leave for an employee': 'บันทึกการลาให้พนักงาน',
+  'Search by name, nickname or employee code': 'ค้นหาชื่อ ชื่อเล่น หรือรหัสพนักงาน',
+  'Matching employees': 'พนักงานที่ตรงกับคำค้น',
+  'No one matches "{term}"': 'ไม่พบพนักงานที่ตรงกับ "{term}"',
+  'Change': 'เปลี่ยน',
+  '{available} of {granted} days left': 'คงเหลือ {available} จาก {granted} วัน',
+  '— Choose —': '— เลือก —',
+  'First day of leave': 'วันแรกที่ลา',
+  'Until': 'ถึงวันที่',
+  '(one day)': '(ลาวันเดียว)',
+  'Full or half day': 'เต็มวันหรือครึ่งวัน',
+  'Full day': 'เต็มวัน',
+  'Morning': 'ครึ่งเช้า',
+  'Afternoon': 'ครึ่งบ่าย',
+  'Record as approved': 'บันทึกเป็นอนุมัติแล้ว',
+  'The manager already knows; no approval needed': 'หัวหน้าทราบแล้ว ไม่ต้องรออนุมัติ',
+  'Send to the manager to approve': 'ส่งให้หัวหน้าอนุมัติ',
+  'Note (optional)': 'หมายเหตุ (ไม่บังคับ)',
+  'Attach a medical certificate (optional)': 'แนบใบรับรองแพทย์ (ไม่บังคับ)',
+  'Attach a supporting document (optional)': 'แนบเอกสารประกอบ (ไม่บังคับ)',
+  'A PDF or a photo': 'ไฟล์ PDF หรือรูปถ่าย',
+  'Could not upload the file': 'อัปโหลดไฟล์ไม่สำเร็จ',
+  'Before you save': 'สรุปก่อนบันทึก',
+  'Leave taken': 'หักวันลา',
+  'Left after saving': 'คงเหลือหลังบันทึก',
+  '{days} days': '{days} วัน',
+  'Days taken: {dates} (days off not counted)': 'วันที่หัก: {dates} (ไม่รวมวันหยุด)',
+  'Save and record another': 'บันทึก และบันทึกคนต่อไป',
+  'Choose the employee first.': 'เลือกพนักงานก่อน',
+  'Choose a leave type.': 'เลือกประเภทการลาก่อน',
+  'The last day cannot be before the first.': 'วันสุดท้ายต้องไม่ก่อนวันแรกที่ลา',
+  '{type} for {name}, {dates}, recorded': 'บันทึก{type}ของ {name} {dates} แล้ว',
+  'Recorded by {hr}': 'บันทึกโดย {hr}',
+  '{name} has {available} days of {type} left, and this needs {requested}':
+    '{name} มี{type}เหลือ {available} วัน แต่รายการนี้ใช้ {requested} วัน',
+  '{name} already has leave on some of these days ({dates})':
+    '{name} มีการลาในบางวันของช่วงนี้อยู่แล้ว ({dates})',
+  'This leave type needs {days} days\' notice. If the manager has agreed, choose "Record as approved"':
+    'ลาประเภทนี้ต้องแจ้งล่วงหน้า {days} วัน ถ้าหัวหน้าอนุมัติแล้ว ให้เลือก "บันทึกเป็นอนุมัติแล้ว"',
+  'A day already past cannot be sent for approval. If the manager has agreed, choose "Record as approved"':
+    'วันที่ผ่านไปแล้วส่งให้หัวหน้าอนุมัติไม่ได้ ถ้าหัวหน้าอนุมัติแล้ว ให้เลือก "บันทึกเป็นอนุมัติแล้ว"',
+  'This leave type needs a document before it goes to the manager. Attach it, or choose "Record as approved"':
+    'ลาประเภทนี้ต้องแนบเอกสารก่อนส่งให้หัวหน้าอนุมัติ แนบไฟล์ หรือเลือก "บันทึกเป็นอนุมัติแล้ว"',
+  'The days picked are all days off, so no leave is taken':
+    'วันที่เลือกเป็นวันหยุดทั้งหมด ไม่มีวันลาให้หัก',
+  'This leave type is taken in full days only': 'ลาประเภทนี้ลาได้เต็มวันเท่านั้น',
+  'More days in a row than this leave type allows': 'ลาติดกันเกินกว่าที่ลาประเภทนี้อนุญาต',
+  '{name} is not eligible for this leave type': '{name} ใช้ลาประเภทนี้ไม่ได้',
+  '{name} has not worked here long enough for this leave type':
+    'อายุงานของ {name} ยังไม่ถึงเกณฑ์ของลาประเภทนี้',
+  'Your own leave goes to your manager. Choose "Send to the manager to approve"':
+    'การลาของคุณเองต้องให้หัวหน้าอนุมัติ ให้เลือก "ส่งให้หัวหน้าอนุมัติ"',
 };

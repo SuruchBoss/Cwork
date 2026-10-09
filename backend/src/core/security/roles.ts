@@ -85,6 +85,7 @@ const HR_OFFICER_PERMISSIONS: PermissionKey[] = [
   Permission.EMPLOYEE_READ_TEAM,
   Permission.LEAVE_READ,
   Permission.LEAVE_MANAGE,
+  Permission.LEAVE_RECORD,
   Permission.ATTENDANCE_READ,
   Permission.ATTENDANCE_MANAGE,
   Permission.OVERTIME_MANAGE,
