@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/network/error_text.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
@@ -185,11 +186,9 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
       }
     } on Object catch (error) {
       if (mounted) {
-        final String raw = error.toString();
-        final int separator = raw.indexOf(': ');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(separator >= 0 ? raw.substring(separator + 2) : raw),
+            content: Text(errorText(error)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -199,32 +198,42 @@ class _ApprovalCardState extends ConsumerState<_ApprovalCard> {
     }
   }
 
+  /// The reason is required, so the confirm button stays disabled until there
+  /// is one and says why. It used to be enabled and do nothing when tapped
+  /// with the field empty, which reads as the app not responding.
   Future<String?> _askReason() {
     final TextEditingController controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(ref.tr('Reason for rejection')),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(hintText: ref.tr('Explain it to the requester')),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(ref.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () {
-              final String text = controller.text.trim();
-              if (text.isEmpty) return;
-              Navigator.of(dialogContext).pop(text);
-            },
-            child: Text(ref.tr('Confirm')),
-          ),
-        ],
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) {
+          final bool hasReason = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            title: Text(ref.tr('Reason for rejection')),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              maxLines: 3,
+              onChanged: (_) => setDialogState(() {}),
+              decoration: InputDecoration(
+                hintText: ref.tr('Explain it to the requester'),
+                helperText: ref.tr('The requester sees this reason'),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(ref.tr('Back')),
+              ),
+              FilledButton(
+                onPressed: hasReason
+                    ? () => Navigator.of(dialogContext).pop(controller.text.trim())
+                    : null,
+                child: Text(ref.tr('Reject request')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
