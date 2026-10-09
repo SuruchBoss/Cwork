@@ -39,6 +39,7 @@ import {
   CreateLeaveRequestDto,
   CreateLeaveTypeDto,
   LeaveRequestQueryDto,
+  RecordLeaveRequestDto,
   UpdateLeaveTypeDto,
 } from './dto/leave.dto';
 import {
@@ -219,6 +220,25 @@ export class LeaveController {
   @ApiOperation({ summary: 'Submit a leave request' })
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateLeaveRequestDto) {
     return this.leave.create(user, dto);
+  }
+
+  // HR recording leave for an employee (CW-067). The audit entry is written by
+  // the service, so it can name the employee as well as HR.
+
+  @Post('requests/record/preview')
+  @RequirePermissions(Permission.LEAVE_RECORD)
+  @ApiOperation({ summary: 'Preview leave HR is about to record for an employee (CW-067)' })
+  previewRecord(@CurrentUser() user: AuthenticatedUser, @Body() dto: RecordLeaveRequestDto) {
+    return this.leave.previewRecord(user, dto);
+  }
+
+  @Post('requests/record')
+  @RequirePermissions(Permission.LEAVE_RECORD)
+  @ApiOperation({
+    summary: "Record leave on an employee's behalf, as approved or for approval (CW-067)",
+  })
+  record(@CurrentUser() user: AuthenticatedUser, @Body() dto: RecordLeaveRequestDto) {
+    return this.leave.record(user, dto);
   }
 
   @Get('requests')

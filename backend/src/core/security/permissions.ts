@@ -57,6 +57,8 @@ export const Permission = {
   LEAVE_MANAGE: 'leave:manage',
   LEAVE_TYPE_MANAGE: 'leave:type:manage',
   LEAVE_BALANCE_ADJUST: 'leave:balance:adjust',
+  /** File leave on another employee's behalf, as HR does when told in person (CW-067). */
+  LEAVE_RECORD: 'leave:record',
 
   // Attendance
   ATTENDANCE_CLOCK_SELF: 'attendance:clock:self',

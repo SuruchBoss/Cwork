@@ -56,6 +56,7 @@ model User {
   policyStepTargets     ApprovalPolicyStep[]
   assistantConversations AssistantConversation[]
   uploadedFiles         FileObject[]
+  recordedLeave         LeaveRequest[]        @relation("LeaveRecordedBy")
 
   @@unique([organizationId, email])
   @@index([organizationId, status])

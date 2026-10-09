@@ -297,6 +297,24 @@ entry, tags it and publishes the notes.
   before, and `db:init`'s closing steps and the Thai import guide now point
   here. The "Save" button had no Thai translation anywhere in the console; it
   has one now.
+- **HR records leave for an employee** (CW-067). Leave could be filed only by
+  the employee it was for, so at a company where nobody but HR uses Cwork it
+  could not enter at all. Someone with the new `leave:record` permission
+  (HR officer and above; existing installations get it from a migration) opens
+  "บันทึกการลาให้พนักงาน" on the Leave page, finds the employee by name,
+  nickname or code, and records the leave as approved, the default when the
+  manager was told in person, or sends it to the manager. The employee needs no
+  account. The same rules refuse it with the same code as the employee's own
+  request, worded in Thai with the employee named, and the preview refuses it
+  before saving. Two rules apply only when it goes to the manager: notice,
+  which a sick day recorded the next morning always breaks, and the supporting
+  document, which a medical certificate can still be attached as. Recorded as
+  approved, the days are used at once and attendance for days already closed
+  out as absent becomes leave, so payroll no longer deducts them; the request
+  keeps who entered it (`recordedByUserId`), shown as "บันทึกโดย …" in the leave
+  list, and the audit entry names both HR and the employee. HR cannot record
+  their own leave as approved. "Save and record another" keeps the leave type
+  and status for the next person.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the
@@ -425,6 +443,13 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Leave approved or cancelled after its days had passed left attendance
+  wrong.** The nightly close-out marks a working day with no punch absent, and
+  approving leave for that day afterwards left it absent, so payroll deducted a
+  day of paid leave. Cancelling approved leave that had begun did the opposite
+  and left the day as leave. Both now derive those days again, closing them out
+  by the same rule, so attendance and payroll follow the leave; a day payroll
+  has already locked is left as it was paid (CW-067).
 - **The leave import took figures Cwork could never have recorded** (#59). It
   refused a fraction only for a leave type without half days, so `0.3` days of
   annual leave went through. A figure must now be one Cwork could have written

@@ -5,6 +5,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   ApprovalEntityType,
   ApprovalStatus,
+  AuditAction,
   DayPortion,
   LeaveRequestStatus,
   LeaveUnit,
@@ -23,6 +24,8 @@ import {
   type ApprovalOutcome,
 } from '../approvals/approval-outcome.registry';
 import { ApprovalService } from '../approvals/approval.service';
+import { AttendanceService } from '../attendance/attendance.service';
+import { AuditService } from '../audit/audit.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
@@ -31,11 +34,21 @@ import type {
   CreateLeaveRequestDto,
   CreateLeaveTypeDto,
   LeaveRequestQueryDto,
+  RecordLeaveRequestDto,
   UpdateLeaveTypeDto,
 } from './dto/leave.dto';
 import { LeaveBalanceService } from './leave-balance.service';
 
 const DEFAULT_WORKING_WEEKDAYS = [1, 2, 3, 4, 5];
+
+/** Who entered a leave HR recorded (CW-067): their name if they are staff, else the address. */
+const RECORDED_BY_SELECT = {
+  select: {
+    id: true,
+    email: true,
+    employee: { select: { firstNameTh: true, lastNameTh: true } },
+  },
+} as const;
 
 @Injectable()
 export class LeaveService implements OnModuleInit {
@@ -47,6 +60,8 @@ export class LeaveService implements OnModuleInit {
     private readonly notifications: NotificationsService,
     private readonly organization: OrganizationService,
     private readonly sequences: SequenceService,
+    private readonly attendance: AttendanceService,
+    private readonly audit: AuditService,
   ) {}
 
   onModuleInit(): void {
@@ -108,7 +123,12 @@ export class LeaveService implements OnModuleInit {
    * what the balance would become. The mobile app calls this as the user picks
    * dates so the cost is visible before submitting.
    */
-  async preview(user: AuthenticatedUser, dto: CreateLeaveRequestDto, employeeId?: string) {
+  async preview(
+    user: AuthenticatedUser,
+    dto: CreateLeaveRequestDto,
+    employeeId?: string,
+    options: { checkNotice?: boolean } = {},
+  ) {
     const subjectId = employeeId ?? requireEmployeeId(user);
     const { leaveType, computed, employee } = await this.resolveRequest(
       user.organizationId,
@@ -137,7 +157,13 @@ export class LeaveService implements OnModuleInit {
       totalHours: computed.totalHours?.toNumber() ?? null,
       balanceBefore: balance?.available ?? 0,
       balanceAfter: (balance?.available ?? 0) - computed.totalDays.toNumber(),
-      warnings: this.collectWarnings(leaveType, computed.totalDays, balance?.available ?? 0, dto),
+      warnings: this.collectWarnings(
+        leaveType,
+        computed.totalDays,
+        balance?.available ?? 0,
+        dto,
+        options.checkNotice ?? true,
+      ),
     };
   }
 
@@ -169,30 +195,16 @@ export class LeaveService implements OnModuleInit {
 
       return tx.leaveRequest.create({
         data: {
-          organizationId: user.organizationId,
-          requestNo,
-          employeeId,
-          leaveTypeId: leaveType.id,
-          startDate: toDateOnly(dto.startDate),
-          endDate: toDateOnly(dto.endDate),
-          startPortion: dto.startPortion ?? DayPortion.FULL,
-          endPortion: dto.endPortion ?? DayPortion.FULL,
-          totalDays: toPrismaDecimal(computed.totalDays),
-          totalHours: computed.totalHours ? toPrismaDecimal(computed.totalHours) : null,
-          reason: dto.reason,
-          contactPhone: dto.contactPhone,
-          backupEmployeeId: dto.backupEmployeeId,
-          attachmentIds: dto.attachmentIds ?? [],
+          ...this.requestRow(
+            user.organizationId,
+            employeeId,
+            requestNo,
+            leaveType.id,
+            dto,
+            computed,
+          ),
           status: isDraft ? LeaveRequestStatus.DRAFT : LeaveRequestStatus.PENDING,
           submittedAt: isDraft ? null : new Date(),
-          days: {
-            create: computed.days.map((day) => ({
-              date: day.date,
-              portion: day.portion,
-              hours: day.hours !== null ? new Prisma.Decimal(day.hours) : null,
-              dayValue: toPrismaDecimal(day.dayValue),
-            })),
-          },
         },
       });
     });
@@ -215,6 +227,144 @@ export class LeaveService implements OnModuleInit {
       data: { createdViaAssistant: true },
     });
     return { ...created, createdViaAssistant: true };
+  }
+
+  // ------------------------------------------------------- recorded by HR (CW-067)
+
+  /**
+   * The preview HR sees while recording leave for someone else. It refuses
+   * what saving would refuse, with the same code, so HR reads the reason before
+   * pressing save rather than after; only the document is left to the save,
+   * since it is attached last.
+   */
+  async previewRecord(user: AuthenticatedUser, dto: RecordLeaveRequestDto) {
+    const employee = await this.recordableEmployee(user, dto.employeeId);
+    const approved = dto.recordAsApproved !== false;
+    const { leaveType, computed } = await this.resolveRequest(
+      user.organizationId,
+      employee.id,
+      dto,
+    );
+    this.assertRequestAllowed(leaveType, computed.totalDays, dto, {
+      checkNotice: !approved,
+      checkAttachment: false,
+    });
+    await this.assertNoOverlap(employee.id, toDateOnly(dto.startDate), toDateOnly(dto.endDate));
+    return this.preview(user, dto, employee.id, { checkNotice: false });
+  }
+
+  /**
+   * HR files leave on an employee's behalf, as when someone phones in sick or
+   * the manager was told in person. The employee need not have an account.
+   *
+   * The same rules as the employee's own request apply: eligibility, working
+   * days and holidays, half days, consecutive days, overlap and balance. Two
+   * rules are about the request reaching the manager, and they apply only when
+   * it still goes there: notice, which a sick day recorded the next morning
+   * always breaks, and the supporting document, which HR has in hand or the
+   * law lets the employer ask for rather than the system demand.
+   *
+   * Recorded as approved, the days go straight to `used`, and attendance for
+   * days already past is derived again so a day closed out as absent reads as
+   * leave. Otherwise it waits for approval like any other request.
+   */
+  async record(user: AuthenticatedUser, dto: RecordLeaveRequestDto) {
+    const employee = await this.recordableEmployee(user, dto.employeeId);
+    const approved = dto.recordAsApproved !== false;
+
+    // Approving one's own leave would skip the only other pair of eyes on it.
+    if (approved && employee.id === user.employeeId) {
+      throw new BusinessRuleError(
+        ErrorCode.CANNOT_RECORD_OWN_LEAVE,
+        'Your own leave goes to your manager; it cannot be recorded as approved by you',
+      );
+    }
+
+    const { leaveType, computed } = await this.resolveRequest(
+      user.organizationId,
+      employee.id,
+      dto,
+    );
+    this.assertRequestAllowed(leaveType, computed.totalDays, dto, {
+      checkNotice: !approved,
+      checkAttachment: !approved,
+    });
+
+    const year = toDateOnly(dto.startDate).getUTCFullYear();
+    await this.assertNoOverlap(employee.id, toDateOnly(dto.startDate), toDateOnly(dto.endDate));
+
+    const requestNo = await this.sequences.next(user.organizationId, 'LEAVE_REQUEST', year);
+    const now = new Date();
+
+    const request = await this.prisma.$transaction(async (tx) => {
+      const entitlement = await this.balances.ensureEntitlement(
+        tx,
+        user.organizationId,
+        employee.id,
+        leaveType,
+        year,
+      );
+      await this.assertSufficientBalance(entitlement, leaveType, computed.totalDays);
+      await this.balances.applyDelta(
+        tx,
+        entitlement.id,
+        approved ? { used: computed.totalDays } : { pending: computed.totalDays },
+      );
+
+      return tx.leaveRequest.create({
+        data: {
+          ...this.requestRow(
+            user.organizationId,
+            employee.id,
+            requestNo,
+            leaveType.id,
+            dto,
+            computed,
+          ),
+          recordedByUserId: user.userId,
+          status: approved ? LeaveRequestStatus.APPROVED : LeaveRequestStatus.PENDING,
+          submittedAt: now,
+          decidedAt: approved ? now : null,
+        },
+      });
+    });
+
+    if (approved) {
+      await this.attendance.rederiveAfterLeaveChange(
+        user.organizationId,
+        employee.id,
+        computed.days.map((d) => d.date),
+      );
+    } else {
+      await this.startApproval(user, request.id);
+    }
+
+    const name = `${employee.firstNameTh} ${employee.lastNameTh}`;
+    const range =
+      dto.startDate === dto.endDate ? dto.startDate : `${dto.startDate} to ${dto.endDate}`;
+    await this.audit.record({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: AuditAction.CREATE,
+      entityType: 'LeaveRequest',
+      entityId: request.id,
+      summary: `Recorded ${leaveType.name} for ${name} (${employee.employeeCode}), ${range}, ${
+        approved ? 'as approved' : 'for approval'
+      }`,
+      changes: {
+        requestNo,
+        employeeId: employee.id,
+        employeeCode: employee.employeeCode,
+        employeeName: name,
+        leaveTypeCode: leaveType.code,
+        startDate: dto.startDate,
+        endDate: dto.endDate,
+        totalDays: computed.totalDays.toNumber(),
+        status: approved ? LeaveRequestStatus.APPROVED : LeaveRequestStatus.PENDING,
+      },
+    });
+
+    return this.findOne(user, request.id);
   }
 
   async submitDraft(user: AuthenticatedUser, id: string) {
@@ -334,6 +484,19 @@ export class LeaveService implements OnModuleInit {
       await this.approvals.cancel(request.approvalInstanceId, reason ?? 'Cancelled by requester');
     }
 
+    // Days already past were derived as leave; without it they are absences again.
+    if (request.status === LeaveRequestStatus.APPROVED) {
+      const days = await this.prisma.leaveRequestDay.findMany({
+        where: { leaveRequestId: id },
+        select: { date: true },
+      });
+      await this.attendance.rederiveAfterLeaveChange(
+        user.organizationId,
+        request.employeeId,
+        days.map((d) => d.date),
+      );
+    }
+
     return this.findOne(user, id);
   }
 
@@ -370,6 +533,7 @@ export class LeaveService implements OnModuleInit {
               department: { select: { id: true, name: true } },
             },
           },
+          recordedBy: RECORDED_BY_SELECT,
         },
       }),
       this.prisma.leaveRequest.count({ where }),
@@ -399,6 +563,7 @@ export class LeaveService implements OnModuleInit {
           },
         },
         backupEmployee: { select: { id: true, firstNameTh: true, lastNameTh: true } },
+        recordedBy: RECORDED_BY_SELECT,
       },
     });
     if (!request) throw new NotFoundError('LeaveRequest', id);
@@ -442,6 +607,51 @@ export class LeaveService implements OnModuleInit {
   }
 
   // ------------------------------------------------------------------ internals
+
+  /** The employee HR may record leave for: one they can see, not removed. */
+  private async recordableEmployee(user: AuthenticatedUser, employeeId: string) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { AND: [{ id: employeeId, deletedAt: null }, employeeVisibilityFilter(user)] },
+      select: { id: true, employeeCode: true, firstNameTh: true, lastNameTh: true },
+    });
+    if (!employee) throw new NotFoundError('Employee', employeeId);
+    return employee;
+  }
+
+  /** The columns a request is stored with, whoever files it. */
+  private requestRow(
+    organizationId: string,
+    employeeId: string,
+    requestNo: string,
+    leaveTypeId: string,
+    dto: CreateLeaveRequestDto,
+    computed: Awaited<ReturnType<LeaveService['resolveRequest']>>['computed'],
+  ) {
+    return {
+      organizationId,
+      requestNo,
+      employeeId,
+      leaveTypeId,
+      startDate: toDateOnly(dto.startDate),
+      endDate: toDateOnly(dto.endDate),
+      startPortion: dto.startPortion ?? DayPortion.FULL,
+      endPortion: dto.endPortion ?? DayPortion.FULL,
+      totalDays: toPrismaDecimal(computed.totalDays),
+      totalHours: computed.totalHours ? toPrismaDecimal(computed.totalHours) : null,
+      reason: dto.reason,
+      contactPhone: dto.contactPhone,
+      backupEmployeeId: dto.backupEmployeeId,
+      attachmentIds: dto.attachmentIds ?? [],
+      days: {
+        create: computed.days.map((day) => ({
+          date: day.date,
+          portion: day.portion,
+          hours: day.hours !== null ? new Prisma.Decimal(day.hours) : null,
+          dayValue: toPrismaDecimal(day.dayValue),
+        })),
+      },
+    };
+  }
 
   private async resolveRequest(
     organizationId: string,
@@ -535,7 +745,9 @@ export class LeaveService implements OnModuleInit {
     },
     totalDays: Decimal,
     dto: CreateLeaveRequestDto,
+    options: { checkNotice?: boolean; checkAttachment?: boolean } = {},
   ): void {
+    const { checkNotice = true, checkAttachment = true } = options;
     if (totalDays.lessThanOrEqualTo(0)) {
       throw new BusinessRuleError(
         ErrorCode.NO_WORKING_DAYS_SELECTED,
@@ -572,7 +784,7 @@ export class LeaveService implements OnModuleInit {
     const noticeDays = Math.floor(
       (toDateOnly(dto.startDate).getTime() - toDateOnly(new Date()).getTime()) / 86_400_000,
     );
-    if (noticeDays < leaveType.minNoticeDays) {
+    if (checkNotice && noticeDays < leaveType.minNoticeDays) {
       throw new BusinessRuleError(
         ErrorCode.LEAVE_NOTICE_TOO_SHORT,
         `${leaveType.name} requires ${leaveType.minNoticeDays} days of notice`,
@@ -582,6 +794,7 @@ export class LeaveService implements OnModuleInit {
 
     const attachmentThreshold = leaveType.attachmentRequiredAfterDays;
     const needsAttachment =
+      checkAttachment &&
       leaveType.requiresAttachment &&
       (attachmentThreshold === null || totalDays.greaterThanOrEqualTo(attachmentThreshold));
     if (needsAttachment && (dto.attachmentIds ?? []).length === 0) {
@@ -597,6 +810,7 @@ export class LeaveService implements OnModuleInit {
     totalDays: Decimal,
     available: number,
     dto: CreateLeaveRequestDto,
+    checkNotice: boolean,
   ): string[] {
     const warnings: string[] = [];
     if (totalDays.toNumber() > available) {
@@ -605,7 +819,7 @@ export class LeaveService implements OnModuleInit {
     const noticeDays = Math.floor(
       (toDateOnly(dto.startDate).getTime() - toDateOnly(new Date()).getTime()) / 86_400_000,
     );
-    if (noticeDays < leaveType.minNoticeDays) {
+    if (checkNotice && noticeDays < leaveType.minNoticeDays) {
       warnings.push(`แจ้งล่วงหน้าน้อยกว่า ${leaveType.minNoticeDays} วัน`);
     }
     return warnings;
@@ -709,6 +923,7 @@ export class LeaveService implements OnModuleInit {
       where: { id: requestId },
       include: {
         leaveType: true,
+        days: { select: { date: true } },
         employee: { select: { userId: true, organizationId: true } },
       },
     });
@@ -746,6 +961,13 @@ export class LeaveService implements OnModuleInit {
         });
       }
     });
+
+    // Leave approved after its days began: those days were closed out without it.
+    await this.attendance.rederiveAfterLeaveChange(
+      request.organizationId,
+      request.employeeId,
+      request.days.map((d) => d.date),
+    );
   }
 
   /** Releases the reserved days back to the balance. */

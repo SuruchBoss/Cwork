@@ -3,6 +3,7 @@
 
 import { Module } from '@nestjs/common';
 import { SequenceService } from '../../core/utils/sequence.service';
+import { AttendanceModule } from '../attendance/attendance.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { LeaveBalanceService } from './leave-balance.service';
 import { LeaveController } from './leave.controller';
@@ -10,7 +11,7 @@ import { LeaveService } from './leave.service';
 import { PriorLeaveImportService } from './prior-leave-import.service';
 
 @Module({
-  imports: [OrganizationModule],
+  imports: [OrganizationModule, AttendanceModule],
   controllers: [LeaveController],
   providers: [LeaveService, LeaveBalanceService, PriorLeaveImportService, SequenceService],
   exports: [LeaveService, LeaveBalanceService],

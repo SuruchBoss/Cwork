@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import {
@@ -19,16 +19,20 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatNumber, todayIso } from '@/lib/format';
+import { formatDate, formatNumber, fullName, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { leaveStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { LeaveRequest, LeaveType, Page } from '@/types/api';
+import { RecordLeavePanel, type RecordedLeave } from './RecordLeavePanel';
 
 export default function LeavePage() {
   const t = useT();
   const canImport = useAuthStore((s) => s.canAny(P.LEAVE_BALANCE_ADJUST));
+  const canRecord = useAuthStore((s) => s.canAny(P.LEAVE_RECORD));
+  const [recording, setRecording] = useState(false);
+  const [toast, setToast] = useState<RecordedLeave | null>(null);
   const [status, setStatus] = useState('PENDING');
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [page, setPage] = useState(1);
@@ -58,19 +62,45 @@ export default function LeavePage() {
 
   const counts = requests.data?.meta.total ?? 0;
 
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   return (
     <div className="page">
       <PageHeader
         title={t('Leave')}
         description={t('All leave requests you can access')}
         actions={
-          canImport ? (
-            <Link to="/leave/import" className="btn btn--secondary">
-              {t('Import leave taken')}
-            </Link>
+          canImport || canRecord ? (
+            <>
+              {canImport && (
+                <Link to="/leave/import" className="btn btn--secondary">
+                  {t('Import leave taken')}
+                </Link>
+              )}
+              {canRecord && (
+                <Button variant="primary" onClick={() => setRecording(true)}>
+                  + {t('Record leave for an employee')}
+                </Button>
+              )}
+            </>
           ) : undefined
         }
       />
+
+      {recording && (
+        <RecordLeavePanel onClose={() => setRecording(false)} onRecorded={setToast} />
+      )}
+      <div className="toast-region" role="status" aria-live="polite">
+        {toast && (
+          <div className="toast">
+            {t('{type} for {name}, {dates}, recorded', { ...toast })}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid--4">
         <Stat label={t('Matching the filter')} value={counts} />
@@ -177,6 +207,15 @@ export default function LeavePage() {
                         <Badge tone={statusTone(request.status)}>
                           {t(leaveStatusLabels[request.status] ?? request.status)}
                         </Badge>
+                        {request.recordedBy && (
+                          <div className="subtle">
+                            {t('Recorded by {hr}', {
+                              hr: request.recordedBy.employee
+                                ? fullName(request.recordedBy.employee)
+                                : request.recordedBy.email,
+                            })}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

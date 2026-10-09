@@ -149,6 +149,8 @@ export interface LeaveType {
   isPaid: boolean;
   allowHalfDay: boolean;
   requiresAttachment: boolean;
+  /** With `requiresAttachment`, the length from which a document is asked for; null means always. */
+  attachmentRequiredAfterDays: number | null;
   minNoticeDays: number;
   colorHex: string;
   isActive: boolean;
@@ -190,6 +192,12 @@ export interface LeaveRequest {
   status: LeaveRequestStatus;
   submittedAt: string | null;
   createdViaAssistant: boolean;
+  /** HR who filed it on the employee's behalf (CW-067); null when the employee filed it. */
+  recordedBy?: {
+    id: string;
+    email: string;
+    employee: { firstNameTh: string; lastNameTh: string } | null;
+  } | null;
   leaveType: { id: string; code: string; name: string; colorHex: string; isPaid: boolean };
   employee: {
     id: string;
