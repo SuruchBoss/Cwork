@@ -283,6 +283,13 @@ entry, tags it and publishes the notes.
   A run already calculated without the figures is named, to be calculated
   again before it is approved. Amount columns in the templates stay numbers, so
   Excel can add them up.
+- **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
+  `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
+  before Cwork step by step, with a screenshot of each step and a table of the
+  problems an import reports, what each means and how to fix it in the file.
+  `docs/guide/capture-imports.mjs` retakes the screenshots against a fresh
+  `db:seed` company, importing for real, so the guide can follow the pages
+  when they change.
 
 ### Removed
 
