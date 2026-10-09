@@ -305,6 +305,20 @@ someone imports it.
   A run already calculated without the figures is named, to be calculated
   again before it is approved. Amount columns in the templates stay numbers, so
   Excel can add them up.
+- **Departments, positions and work locations can be added from the console**
+  (CW-072). A fresh install had none, and the Organisation page could only
+  read, so an employee file from Odoo that named its departments got one
+  `NOT_FOUND` per row. Someone with `org:manage` can now add and rename
+  departments and positions, and add work locations, from Organisation
+  structure, through the endpoints that were already there. A work location's
+  code follows ADR-0006 as the API enforces it, and the form never offers to
+  change a code once it is set. The form refuses a name already in use, because
+  the employee import matches by name as well as code and calls two records
+  with one name ambiguous. Refusals are worded in Thai and say what to change.
+  The page also lists positions and work locations, which it did not show
+  before, and `db:init`'s closing steps and the Thai import guide now point
+  here. The "Save" button had no Thai translation anywhere in the console; it
+  has one now.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the
