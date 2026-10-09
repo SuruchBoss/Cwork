@@ -11,6 +11,7 @@ const ANNUAL = {
   name: 'ลาพักร้อน',
   nameEn: 'Annual leave',
   allowHalfDay: true,
+  allowHourly: false,
   allowNegativeBalance: false,
   genderRestriction: null,
 };
@@ -24,6 +25,16 @@ const ORDINATION = {
   allowHalfDay: false,
   genderRestriction: Gender.MALE,
 };
+const PERSONAL = {
+  ...ANNUAL,
+  id: 'lt-personal',
+  code: 'PERSONAL',
+  name: 'ลากิจ',
+  nameEn: 'Personal leave',
+  // By the hour but not by the half day: hours decide, not halves.
+  allowHalfDay: false,
+  allowHourly: true,
+};
 const UNPAID = {
   ...ANNUAL,
   id: 'lt-unpaid',
@@ -33,11 +44,12 @@ const UNPAID = {
   allowNegativeBalance: true,
 };
 
-/** Entitlement before the import: 10 days annual, 30 sick, 15 ordination, 0 unpaid. */
+/** Entitlement before the import: 10 days annual, 30 sick, 15 ordination, 3 personal, 0 unpaid. */
 const ENTITLED: Record<string, number> = {
   'lt-annual': 10,
   'lt-sick': 30,
   'lt-ordain': 15,
+  'lt-personal': 3,
   'lt-unpaid': 0,
 };
 
@@ -47,7 +59,7 @@ function context(): PriorLeaveContext {
       ['E001', { id: 'emp-1', code: 'E001', name: 'สมชาย ใจดี', gender: Gender.MALE }],
       ['E002', { id: 'emp-2', code: 'E002', name: 'สมศรี มีสุข', gender: Gender.FEMALE }],
     ]),
-    leaveTypes: [ANNUAL, SICK, ORDINATION, UNPAID],
+    leaveTypes: [ANNUAL, SICK, ORDINATION, PERSONAL, UNPAID],
     availableBefore: (_employee, leaveType) => ENTITLED[leaveType],
   };
 }
@@ -158,6 +170,38 @@ describe('readPriorLeave', () => {
       context(),
     );
     expect(problems[0]).toMatchObject({ code: 'WHOLE_DAYS_ONLY' });
+  });
+
+  describe('a figure Cwork could have recorded for the leave type (#59)', () => {
+    const read = (header: string, value: Cell) =>
+      readPriorLeave(table([['E001', value]], ['รหัสพนักงาน', header]), context());
+
+    it('takes any two decimals for leave taken by the hour', () => {
+      // One hour of an eight-hour day is recorded as 0.13.
+      for (const value of [0.13, 0.3, 1.25]) {
+        const { problems, rows } = read('ลากิจ', value);
+        expect(problems).toEqual([]);
+        expect(rows[0].taken[0].days).toBe(value);
+      }
+    });
+
+    it('takes half days, and refuses 0.3, where the type is taken in half days', () => {
+      expect(read('ลาพักร้อน', 1.5).problems).toEqual([]);
+      expect(read('ลาพักร้อน', 0.5).problems).toEqual([]);
+      expect(read('ลาพักร้อน', 0.3).problems).toEqual([
+        expect.objectContaining({
+          code: 'HALF_DAYS_ONLY',
+          params: expect.objectContaining({ leaveType: 'ลาพักร้อน', value: '0.3' }),
+        }),
+      ]);
+    });
+
+    it('takes whole days only, refusing half a day, where the type is neither', () => {
+      expect(read('ลาบวช', 2).problems).toEqual([]);
+      expect(read('ลาบวช', 0.5).problems).toEqual([
+        expect.objectContaining({ code: 'WHOLE_DAYS_ONLY' }),
+      ]);
+    });
   });
 
   it('refuses leave a person could not have taken, but not a zero', () => {

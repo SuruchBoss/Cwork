@@ -43,6 +43,7 @@ export type ImportProblemCode =
   // Leave taken before Cwork.
   | 'INVALID_DAYS'
   | 'WHOLE_DAYS_ONLY'
+  | 'HALF_DAYS_ONLY'
   | 'NOT_ELIGIBLE'
   | 'OVER_ENTITLEMENT'
   // Pay before Cwork.
@@ -98,6 +99,7 @@ const MESSAGES: Record<ImportProblemCode, string> = {
   BANK_INCOMPLETE: 'A bank account needs the bank code, bank name and account number together',
   INVALID_DAYS: '"{value}" is not a number of days from 0 to 366',
   WHOLE_DAYS_ONLY: '{leaveType} is taken in whole days, not "{value}"',
+  HALF_DAYS_ONLY: '{leaveType} is taken in half days, such as 1 or 1.5, not "{value}"',
   NOT_ELIGIBLE: '{leaveType} does not apply to {employee}',
   OVER_ENTITLEMENT:
     '{employee} is entitled to {available} days of {leaveType} this year, not {value}',

@@ -425,6 +425,13 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The leave import took figures Cwork could never have recorded** (#59). It
+  refused a fraction only for a leave type without half days, so `0.3` days of
+  annual leave went through. A figure must now be one Cwork could have written
+  itself for that type: any two decimals for leave taken by the hour (an hour
+  of an eight-hour day is 0.13), multiples of 0.5 for half days, and whole days
+  otherwise. A half-day type refuses `0.3` with its own message, "ลาพักร้อน
+  กรอกได้ทีละครึ่งวัน เช่น 1 หรือ 1.5".
 - **Approvals said `ANNUAL` instead of the leave type's name.** A leave request
   waiting for a decision was described by the code its approval keeps, in the
   console and in the app. Both now show the name HR gave the type (ลาพักร้อน),
