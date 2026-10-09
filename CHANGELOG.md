@@ -30,9 +30,11 @@ year and, for a company that starts mid-year, what payroll paid them before
 Cwork, so the first run withholds the right tax (CW-059). The departments,
 positions and work locations that file names can be added from the console first
 (CW-072), and HR can record leave for employees who never open the app, as
-approved or for their manager to approve (CW-067). A Thai guide walks HR through those imports, and filing and approving
-leave in the app has been reworked for someone using it for the first time
-(CW-066). The console and the app also work in English; benefits, shifts and
+approved or for their manager to approve (CW-067). A foreign worker's passport
+and work permit, with when each expires, are kept on the record and come in
+with the import, as does a worker with only an English name (CW-068). A Thai
+guide walks HR through those imports, and filing and approving leave in the app
+has been reworked for someone using it for the first time (CW-066). The console and the app also work in English; benefits, shifts and
 issued documents are managed in the console; statuses read as words rather than
 codes; dates in the Thai console's tables show the Buddhist-era year (the first
 part of CW-058); and a public demo runs from the landing page.
@@ -43,7 +45,8 @@ so an API client that still sends that field should stop sending it. A leave
 balance's `used` now includes leave taken before Cwork, which is 0 until
 someone imports it. A migration gives the new `leave:record` permission to the
 HR officer, HR admin and super admin roles; a custom role that should record
-leave for others needs it added.
+leave for others needs it added. An imported row with no Thai name but an English
+one, which 0.3.1 refused, is now accepted.
 
 ### Added
 
@@ -341,6 +344,22 @@ leave for others needs it added.
   list, and the audit entry names both HR and the employee. HR cannot record
   their own leave as approved. "Save and record another" keeps the leave type
   and status for the next person.
+- **A foreign worker's passport and work permit** (CW-068). An employee record
+  could hold a passport number but not when it expires, and nothing about a
+  work permit, so a company employing foreign workers kept the dates HR has to
+  watch in a separate sheet. The record now holds the passport number, the work
+  permit number and each one's expiry date. The work permit number is
+  encrypted like the passport number and the national ID, shown only to
+  someone allowed to see sensitive identifiers, and redacted in the audit log.
+  The employee page has a "พาสปอร์ตและใบอนุญาตทำงาน" card to enter and renew
+  them; HR who may edit the record but not read the numbers can still enter a
+  renewed one, and sees that a number is on file. An expired date is marked.
+  The employee import has the same four columns, and a person with only an
+  English name and no national ID, as most foreign workers are, now imports:
+  the English name stands in for the Thai one, and a row with no name in either
+  language is reported as `NAME_REQUIRED`. A passport number is 5 to 20 letters
+  and digits, with spaces and dashes ignored; a number repeated in one file is
+  reported. Expiry alerts are not part of this.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the

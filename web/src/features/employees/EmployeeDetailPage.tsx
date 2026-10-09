@@ -20,6 +20,7 @@ import { employeeStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail, LeaveBalance } from '@/types/api';
+import { ForeignWorkerDocuments } from './ForeignWorkerDocuments';
 
 export default function EmployeeDetailPage() {
   const { id = '' } = useParams();
@@ -144,6 +145,8 @@ export default function EmployeeDetailPage() {
         </Card>
 
         <div className="stack">
+          <ForeignWorkerDocuments person={person} canEdit={canAny(P.EMPLOYEE_UPDATE)} />
+
           {balances.data && (
             <Card title={t('Leave balances')} flush>
               <div className="table-wrap">

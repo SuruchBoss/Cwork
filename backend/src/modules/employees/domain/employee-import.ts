@@ -48,6 +48,10 @@ export type EmployeeColumn =
   | 'national_id'
   | 'tax_id'
   | 'social_security_no'
+  | 'passport_no'
+  | 'passport_expires_on'
+  | 'work_permit_no'
+  | 'work_permit_expires_on'
   | 'work_email'
   | 'personal_email'
   | 'phone'
@@ -72,6 +76,11 @@ export interface ColumnSpec {
   th: string;
   en: string;
   required?: boolean;
+  /**
+   * A column that does instead: the Thai name may be left out for someone who
+   * has only an English one (CW-068).
+   */
+  alternative?: EmployeeColumn;
   /** What goes in it, for the template's second sheet. */
   hint: { th: string; en: string };
   width: number;
@@ -106,23 +115,34 @@ export const EMPLOYEE_COLUMNS: ColumnSpec[] = [
     th: 'ชื่อ',
     en: 'First name (Thai)',
     required: true,
+    alternative: 'first_name_en',
     width: 16,
-    hint: { th: 'ชื่อภาษาไทย', en: 'In Thai' },
+    hint: {
+      th: 'ชื่อภาษาไทย ว่างได้ถ้ามีชื่อภาษาอังกฤษ เช่น แรงงานต่างด้าว',
+      en: 'In Thai; may be blank for someone with an English name only, such as a foreign worker',
+    },
   },
   {
     key: 'last_name_th',
     th: 'นามสกุล',
     en: 'Last name (Thai)',
     required: true,
+    alternative: 'last_name_en',
     width: 18,
-    hint: { th: 'นามสกุลภาษาไทย', en: 'In Thai' },
+    hint: {
+      th: 'นามสกุลภาษาไทย ว่างได้ถ้ามีนามสกุลภาษาอังกฤษ',
+      en: 'In Thai; may be blank for someone with an English name only',
+    },
   },
   {
     key: 'first_name_en',
     th: 'ชื่อ (อังกฤษ)',
     en: 'First name (English)',
     width: 16,
-    hint: { th: 'ไม่บังคับ', en: 'Optional' },
+    hint: {
+      th: 'ไม่บังคับ ถ้าไม่มีชื่อภาษาไทย ระบบแสดงชื่อนี้แทน',
+      en: 'Optional; shown as the name when there is no Thai one',
+    },
   },
   {
     key: 'last_name_en',
@@ -179,6 +199,40 @@ export const EMPLOYEE_COLUMNS: ColumnSpec[] = [
     en: 'Social security no.',
     width: 15,
     hint: { th: 'ระบบเก็บแบบเข้ารหัส', en: 'Stored encrypted' },
+  },
+  {
+    key: 'passport_no',
+    th: 'เลขพาสปอร์ต',
+    en: 'Passport no.',
+    width: 14,
+    hint: {
+      th: 'แรงงานต่างด้าว ตัวอักษรภาษาอังกฤษกับตัวเลข ระบบเก็บแบบเข้ารหัส',
+      en: 'For a foreign worker; letters and digits, stored encrypted',
+    },
+  },
+  {
+    key: 'passport_expires_on',
+    th: 'วันหมดอายุพาสปอร์ต',
+    en: 'Passport expiry',
+    width: 14,
+    hint: DATE_HINT,
+  },
+  {
+    key: 'work_permit_no',
+    th: 'เลขใบอนุญาตทำงาน',
+    en: 'Work permit no.',
+    width: 16,
+    hint: {
+      th: 'ใบอนุญาตทำงานของแรงงานต่างด้าว ระบบเก็บแบบเข้ารหัส',
+      en: "A foreign worker's Thai work permit, stored encrypted",
+    },
+  },
+  {
+    key: 'work_permit_expires_on',
+    th: 'วันหมดอายุใบอนุญาตทำงาน',
+    en: 'Work permit expiry',
+    width: 14,
+    hint: DATE_HINT,
   },
   {
     key: 'work_email',
@@ -515,6 +569,10 @@ export interface ImportedEmployee {
   nationalId?: string;
   taxId?: string;
   socialSecurityNo?: string;
+  passportNo?: string;
+  passportExpiresOn?: string;
+  workPermitNo?: string;
+  workPermitExpiresOn?: string;
   workEmail?: string;
   personalEmail?: string;
   phone?: string;
@@ -561,11 +619,20 @@ export function readHeader(header: Cell[]): { columns: ColumnMap; problems: Impo
   });
 
   for (const column of EMPLOYEE_COLUMNS) {
-    if (column.required && !index.has(column.key)) {
-      problems.push(
-        importProblem('MISSING_COLUMN', { row: 1 }, { column: `${column.th} / ${column.en}` }),
-      );
-    }
+    if (!column.required || index.has(column.key)) continue;
+    if (column.alternative && index.has(column.alternative)) continue;
+    const other = EMPLOYEE_COLUMNS.find((c) => c.key === column.alternative);
+    problems.push(
+      importProblem(
+        'MISSING_COLUMN',
+        { row: 1 },
+        {
+          column: other
+            ? `${column.th} / ${column.en}" or "${other.th} / ${other.en}`
+            : `${column.th} / ${column.en}`,
+        },
+      ),
+    );
   }
   return { columns: { index, headers: header }, problems };
 }
@@ -606,13 +673,15 @@ export function readEmployees(
   const firstSeen = {
     code: new Map<string, number>(),
     nationalId: new Map<string, number>(),
+    passportNo: new Map<string, number>(),
     scannerId: new Map<string, number>(),
   };
 
   for (const { cells, row } of rows) {
     const rowProblems: ImportProblem[] = [];
     const where = (key: EmployeeColumn) => {
-      const i = columns.index.get(key)!;
+      const i = columns.index.get(key);
+      if (i === undefined) return { row };
       return { row, column: columnLetter(i), header: asText(columns.headers[i]) ?? undefined };
     };
     const raw = (key: EmployeeColumn): Cell => {
@@ -686,8 +755,19 @@ export function readEmployees(
         report('employee_code', 'DUPLICATE_IN_FILE', { value: employeeCode, other: earlier });
       else firstSeen.code.set(employeeCode, row);
     }
-    const firstNameTh = required('first_name_th', 80);
-    const lastNameTh = required('last_name_th', 80);
+    // A name in Thai, or in English for someone who has no Thai one (CW-068).
+    // Cwork shows the Thai fields, so an English-only name is carried there too.
+    const firstNameEn = text('first_name_en', 80);
+    const lastNameEn = text('last_name_en', 80);
+    const name = (thai: EmployeeColumn, english: EmployeeColumn, fallback?: string): string => {
+      const value = text(thai, 80) ?? fallback;
+      if (value === undefined && raw(thai) === null && raw(english) === null) {
+        report(columns.index.has(thai) ? thai : english, 'NAME_REQUIRED');
+      }
+      return value ?? '';
+    };
+    const firstNameTh = name('first_name_th', 'first_name_en', firstNameEn);
+    const lastNameTh = name('last_name_th', 'last_name_en', lastNameEn);
 
     // National ID: digits only once the dashes and spaces are gone.
     let nationalId = digits('national_id', 20);
@@ -705,6 +785,24 @@ export function readEmployees(
             other: earlier,
           });
         else firstSeen.nationalId.set(nationalId, row);
+      }
+    }
+
+    // A foreign worker's documents (CW-068). The passport number is masked in
+    // problems, like the national ID: both are secrets of the same kind.
+    let passportNo = digits('passport_no', 30)?.replace(/[\s-]/g, '').toUpperCase();
+    if (passportNo !== undefined) {
+      if (!/^[A-Z0-9]{5,20}$/.test(passportNo)) {
+        report('passport_no', 'INVALID_VALUE', { value: `…${passportNo.slice(-4)}` });
+        passportNo = undefined;
+      } else {
+        const earlier = firstSeen.passportNo.get(passportNo);
+        if (earlier)
+          report('passport_no', 'DUPLICATE_IN_FILE', {
+            value: `…${passportNo.slice(-4)}`,
+            other: earlier,
+          });
+        else firstSeen.passportNo.set(passportNo, row);
       }
     }
 
@@ -785,8 +883,8 @@ export function readEmployees(
       titleTh: text('title_th', 20),
       firstNameTh,
       lastNameTh,
-      firstNameEn: text('first_name_en', 80),
-      lastNameEn: text('last_name_en', 80),
+      firstNameEn,
+      lastNameEn,
       nickname: text('nickname', 40),
       dateOfBirth: date('date_of_birth'),
       gender: choice('gender'),
@@ -794,6 +892,10 @@ export function readEmployees(
       nationalId,
       taxId: digits('tax_id', 32),
       socialSecurityNo: digits('social_security_no', 32),
+      passportNo,
+      passportExpiresOn: date('passport_expires_on'),
+      workPermitNo: digits('work_permit_no', 32),
+      workPermitExpiresOn: date('work_permit_expires_on'),
       workEmail: text('work_email', 254)?.toLowerCase(),
       personalEmail: text('personal_email', 254)?.toLowerCase(),
       phone,

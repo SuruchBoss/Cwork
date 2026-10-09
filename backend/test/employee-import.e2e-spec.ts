@@ -291,6 +291,97 @@ describe('Employee import (e2e)', () => {
     });
   });
 
+  describe("foreign workers' documents (CW-068)", () => {
+    const rows = [
+      [
+        'รหัสพนักงาน',
+        'ชื่อ (อังกฤษ)',
+        'นามสกุล (อังกฤษ)',
+        'วันเริ่มงาน',
+        'เลขพาสปอร์ต',
+        'วันหมดอายุพาสปอร์ต',
+        'เลขใบอนุญาตทำงาน',
+        'วันหมดอายุใบอนุญาตทำงาน',
+      ],
+      // No Thai name, no national ID: nothing asked of them that they do not have.
+      [
+        'IMPF-1',
+        'Aung',
+        'Kyaw',
+        '2024-01-15',
+        'mb 123456',
+        '30/6/2573',
+        'WP-0012345',
+        '2027-03-31',
+      ],
+    ];
+    const iso = (value: unknown) => String(value).slice(0, 10);
+
+    it('imports someone with an English name only, a passport and a work permit', async () => {
+      const res = await upload('/employees/import', workbook(rows), 'แรงงานต่างด้าว.xlsx');
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ created: 1 });
+
+      const [worker] = await codesLike('IMPF-');
+      expect(worker).toMatchObject({
+        firstNameTh: 'Aung',
+        lastNameTh: 'Kyaw',
+        firstNameEn: 'Aung',
+        nationalIdEnc: null,
+      });
+      expect(iso(worker.passportExpiresOn?.toISOString())).toBe('2030-06-30');
+      expect(iso(worker.workPermitExpiresOn?.toISOString())).toBe('2027-03-31');
+      // Encrypted like the national ID: neither number is in the row as typed.
+      expect(worker.passportNoEnc).toBeTruthy();
+      expect(worker.passportNoEnc).not.toContain('MB123456');
+      expect(worker.workPermitNoEnc).not.toContain('WP-0012345');
+    });
+
+    it('shows the numbers only to someone who may see sensitive identifiers', async () => {
+      const [worker] = await codesLike('IMPF-');
+
+      const sensitive = await api.get(`/employees/${worker.id}`, managerToken);
+      expect(sensitive.body).toMatchObject({ passportNo: 'MB123456', workPermitNo: 'WP-0012345' });
+      expect(iso(sensitive.body.workPermitExpiresOn)).toBe('2027-03-31');
+
+      const officer = await api.get(`/employees/${worker.id}`, hrToken);
+      expect(officer.status).toBe(200);
+      expect(officer.body).not.toHaveProperty('passportNo');
+      expect(officer.body).not.toHaveProperty('workPermitNo');
+      expect(officer.body).not.toHaveProperty('workPermitNoEnc');
+      expect(officer.body).toMatchObject({ passportNoRecorded: true, workPermitNoRecorded: true });
+      // The dates are what HR watches, and they are not secret.
+      expect(iso(officer.body.passportExpiresOn)).toBe('2030-06-30');
+    });
+
+    it('takes a renewed permit through the API, and keeps the number out of the audit trail', async () => {
+      const [worker] = await codesLike('IMPF-');
+
+      const renewed = await api.patch(`/employees/${worker.id}`, hrToken, {
+        workPermitNo: 'WP-0099999',
+        workPermitExpiresOn: '2029-03-31',
+        passportExpiresOn: null,
+      });
+      expect(renewed.status).toBe(200);
+
+      const read = await api.get(`/employees/${worker.id}`, managerToken);
+      expect(read.body.workPermitNo).toBe('WP-0099999');
+      expect(iso(read.body.workPermitExpiresOn)).toBe('2029-03-31');
+      expect(read.body.passportExpiresOn).toBeNull();
+
+      const entries = await withDb((prisma) =>
+        prisma.auditLog.findMany({ where: { entityType: 'Employee', entityId: worker.id } }),
+      );
+      expect(JSON.stringify(entries)).not.toContain('WP-0099999');
+    });
+
+    it('refuses a passport number that is not letters and digits', async () => {
+      const [worker] = await codesLike('IMPF-');
+      const res = await api.patch(`/employees/${worker.id}`, hrToken, { passportNo: 'MB/1' });
+      expect(res.status).toBe(400);
+    });
+  });
+
   describe('scanner IDs', () => {
     it('can be set by hand, and one number never belongs to two people', async () => {
       const [first, second] = await codesLike('IMPCSV-');

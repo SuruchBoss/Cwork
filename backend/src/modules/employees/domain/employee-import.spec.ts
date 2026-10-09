@@ -222,7 +222,12 @@ describe('readEmployees', () => {
     // Nothing is written while there are problems; the service sees to that.
     expect(employees.map((e) => e.row)).toEqual([2, 4]);
     expect(problems).toEqual([
-      expect.objectContaining({ row: 3, column: 'C', header: 'นามสกุล *', code: 'REQUIRED' }),
+      expect.objectContaining({
+        row: 3,
+        column: 'C',
+        header: 'นามสกุล *',
+        code: 'NAME_REQUIRED',
+      }),
       expect.objectContaining({
         row: 3,
         column: 'D',
@@ -310,6 +315,118 @@ describe('readEmployees', () => {
       context(),
     );
     expect(problems.map((p) => p.code)).toEqual(['INVALID_NATIONAL_ID', 'INVALID_CHOICE']);
+  });
+
+  describe("a foreign worker's documents (CW-068)", () => {
+    const FOREIGN = [
+      'รหัสพนักงาน',
+      'first_name_en',
+      'last_name_en',
+      'วันเริ่มงาน',
+      'เลขพาสปอร์ต',
+      'วันหมดอายุพาสปอร์ต',
+      'เลขใบอนุญาตทำงาน',
+      'วันหมดอายุใบอนุญาตทำงาน',
+    ];
+
+    it('takes someone with an English name only, no national ID, and both documents', () => {
+      const { employees, problems } = readEmployees(
+        table(
+          [
+            [
+              'F001',
+              'Aung',
+              'Kyaw',
+              '2024-01-15',
+              'mb 123-456',
+              '30/6/2573',
+              'WP-0012345',
+              '2027-03-31',
+            ],
+          ],
+          FOREIGN,
+        ),
+        context(),
+      );
+
+      expect(problems).toEqual([]);
+      expect(employees[0]).toMatchObject({
+        firstNameTh: 'Aung',
+        lastNameTh: 'Kyaw',
+        firstNameEn: 'Aung',
+        lastNameEn: 'Kyaw',
+        passportNo: 'MB123456',
+        passportExpiresOn: '2030-06-30',
+        workPermitNo: 'WP-0012345',
+        workPermitExpiresOn: '2027-03-31',
+      });
+      expect(employees[0].nationalId).toBeUndefined();
+    });
+
+    it('keeps the Thai name where there is one, and fills only the half that is missing', () => {
+      const { employees } = readEmployees(
+        table(
+          [['F002', 'อ่อง', null, '2024-01-15', 'Aung', 'Kyaw']],
+          [...HEADER, 'first_name_en', 'last_name_en'],
+        ),
+        context(),
+      );
+      expect(employees[0]).toMatchObject({ firstNameTh: 'อ่อง', lastNameTh: 'Kyaw' });
+    });
+
+    it('asks for a name in either language when a row has neither', () => {
+      const { problems } = readEmployees(
+        table(
+          [['F003', null, 'Kyaw', '2024-01-15']],
+          ['รหัสพนักงาน', 'first_name_en', 'last_name_en', 'วันเริ่มงาน'],
+        ),
+        context(),
+      );
+      expect(problems).toEqual([
+        expect.objectContaining({ row: 2, column: 'B', code: 'NAME_REQUIRED' }),
+      ]);
+    });
+
+    it('needs a Thai or an English name column, and says so naming both', () => {
+      const { problems } = readHeader(['รหัสพนักงาน', 'นามสกุล', 'วันเริ่มงาน']);
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatchObject({ code: 'MISSING_COLUMN' });
+      expect(problems[0].message).toContain('ชื่อ / First name (Thai)');
+      expect(problems[0].message).toContain('ชื่อ (อังกฤษ) / First name (English)');
+    });
+
+    it('refuses a passport number that is not letters and digits, or appears twice, without repeating it', () => {
+      const { problems } = readEmployees(
+        table(
+          [
+            ['F004', 'A', 'B', '2024-01-15', 'MB/123456'],
+            ['F005', 'C', 'D', '2024-01-15', 'MB777777'],
+            ['F006', 'E', 'F', '2024-01-15', 'mb777777'],
+          ],
+          ['รหัสพนักงาน', 'first_name_en', 'last_name_en', 'วันเริ่มงาน', 'passport_no'],
+        ),
+        context(),
+      );
+      expect(problems).toEqual([
+        expect.objectContaining({ row: 2, code: 'INVALID_VALUE', params: { value: '…3456' } }),
+        expect.objectContaining({
+          row: 4,
+          code: 'DUPLICATE_IN_FILE',
+          params: { value: '…7777', other: 3 },
+        }),
+      ]);
+    });
+
+    it('refuses an expiry it cannot read as a date', () => {
+      const { problems } = readEmployees(
+        table(
+          [['F007', 'A', 'B', '2024-01-15', 'next year']],
+          ['รหัสพนักงาน', 'first_name_en', 'last_name_en', 'วันเริ่มงาน', 'work_permit_expires_on'],
+        ),
+        context(),
+      );
+      expect(problems).toEqual([expect.objectContaining({ code: 'INVALID_DATE' })]);
+    });
   });
 
   describe('references', () => {
