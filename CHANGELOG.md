@@ -308,6 +308,14 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Dates in the Thai console show the Buddhist-era year** (CW-058, first
+  part). `formatDate` wrote "28 ก.ย. 2026": a Thai month with a Gregorian year.
+  In Thai it now writes "28 ก.ย. 2569", in every table and detail page that goes
+  through it. New helpers write a calendar month or a pay-period code as words,
+  so "2026-08" can read "สิงหาคม 2569". English is unchanged, and stored values
+  and the API stay Gregorian ISO dates. Still to come under the same ticket: the
+  date input fields, the period labels on the payroll pages, the mobile app and
+  the certificate PDF, which all still show Gregorian years.
 - **Filing and approving leave in the app, done by someone who has never seen
   it** (CW-066). One day off was a trap: the range picker keeps "Save" disabled
   until an end date is tapped, so tapping the one day left a dead button. The
