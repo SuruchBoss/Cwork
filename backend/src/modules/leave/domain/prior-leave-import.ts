@@ -48,6 +48,11 @@ export interface PriorLeaveType {
   name: string;
   nameEn: string | null;
   allowHalfDay: boolean;
+  /**
+   * Taken by the hour. Cwork records an hour as `hours / hoursPerDay` rounded
+   * to two decimals, so any two-decimal figure is one it could have written.
+   */
+  allowHourly: boolean;
   allowNegativeBalance: boolean;
   genderRestriction: Gender | null;
 }
@@ -172,8 +177,15 @@ export function readPriorLeave(
         problems.push(importProblem('INVALID_DAYS', where, { value }));
         continue;
       }
-      if (!type.allowHalfDay && !Number.isInteger(days)) {
+      // A figure must be one Cwork could have recorded for this leave type (#59):
+      // whole days, half days, or any two decimals when it is taken by the hour.
+      const unit = type.allowHourly ? 'any' : type.allowHalfDay ? 'half' : 'whole';
+      if (unit === 'whole' && !Number.isInteger(days)) {
         problems.push(importProblem('WHOLE_DAYS_ONLY', where, { leaveType: type.name, value }));
+        continue;
+      }
+      if (unit === 'half' && !Number.isInteger(round2(days * 2))) {
+        problems.push(importProblem('HALF_DAYS_ONLY', where, { leaveType: type.name, value }));
         continue;
       }
       if (days > 0 && type.genderRestriction && type.genderRestriction !== employee.gender) {

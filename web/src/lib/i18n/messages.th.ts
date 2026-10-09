@@ -874,6 +874,8 @@ export const thMessages: Record<string, string> = {
   '"{value}" is not a number of days from 0 to 366': '"{value}" ไม่ใช่จำนวนวันระหว่าง 0 ถึง 366',
   '{leaveType} is taken in whole days, not "{value}"':
     '{leaveType} ลาได้เป็นวันเต็มเท่านั้น ไม่ใช่ "{value}"',
+  '{leaveType} is taken in half days, such as 1 or 1.5, not "{value}"':
+    '{leaveType} กรอกได้ทีละครึ่งวัน เช่น 1 หรือ 1.5 ไม่ใช่ "{value}"',
   '{leaveType} does not apply to {employee}': '{employee} ไม่มีสิทธิ์{leaveType}',
   '{employee} is entitled to {available} days of {leaveType} this year, not {value}':
     '{employee} มีสิทธิ์{leaveType}ในปีนี้ {available} วัน ไม่ใช่ {value} วัน',
