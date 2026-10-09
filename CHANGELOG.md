@@ -478,6 +478,17 @@ entry, tags it and publishes the notes.
   lost the one request waiting on a decision. The screenshots and the
   walkthrough are retaken on the corrected data.
 
+### Security
+
+- **Two dependency advisories in the API's production dependencies.**
+  `proxy-addr` moves to 2.0.8 (GHSA-jqcg-44mw-7w3h, critical) and the
+  `js-yaml` that `@nestjs/swagger` pins moves to 5.4.3 through a scoped
+  `overrides` entry (GHSA-r3ph-w7gj-g6xm, moderate), since no 11.x release
+  of `@nestjs/swagger` takes the fixed version. Cwork was not exposed to the
+  first: the advisory concerns IPv6 trust subnets, and the API sets `trust
+  proxy` to a hop count, which Express handles without compiling a subnet.
+  The YAML is only the API description served outside production.
+
 ## [0.3.1] — 2026-09-26
 
 A security release. It fixes
