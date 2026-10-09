@@ -15,11 +15,70 @@ function intlLocale(): string {
   return getLanguage() === 'en' ? 'en-US' : 'th-TH';
 }
 
-export function formatDate(value: string | Date | null | undefined, pattern = 'd MMM yyyy'): string {
+/**
+ * Thai years are counted in the Buddhist era (CW-058): 2569 is 2026. Only what
+ * is displayed changes. Stored values and the API stay Gregorian ISO dates.
+ */
+export const BUDDHIST_ERA_OFFSET = 543;
+
+/** A Gregorian year as the reader counts it: Buddhist era in Thai, unchanged in English. */
+export function formatYear(year: number): string {
+  return String(getLanguage() === 'en' ? year : year + BUDDHIST_ERA_OFFSET);
+}
+
+/**
+ * date-fns has no Buddhist calendar, so in Thai every `y` token outside quotes
+ * is replaced by the Buddhist-era year as a quoted literal before formatting.
+ * `yy` keeps its meaning of the last two digits.
+ */
+function displayPattern(pattern: string, date: Date): string {
+  if (getLanguage() === 'en') return pattern;
+  const year = String(date.getFullYear() + BUDDHIST_ERA_OFFSET);
+  let out = '';
+  let quoted = false;
+  for (let i = 0; i < pattern.length; i += 1) {
+    const char = pattern[i];
+    if (char === "'") {
+      quoted = !quoted;
+      out += char;
+    } else if (char === 'y' && !quoted) {
+      let run = 1;
+      while (pattern[i + run] === 'y') run += 1;
+      out += `'${run === 2 ? year.slice(-2) : year}'`;
+      i += run - 1;
+    } else {
+      out += char;
+    }
+  }
+  return out;
+}
+
+export function formatDate(
+  value: string | Date | null | undefined,
+  pattern = 'd MMM yyyy',
+): string {
   if (!value) return '—';
   const date = typeof value === 'string' ? parseISO(value) : value;
   if (Number.isNaN(date.getTime())) return '—';
-  return format(date, pattern, { locale: dateFnsLocale() });
+  return format(date, displayPattern(pattern, date), { locale: dateFnsLocale() });
+}
+
+/** A calendar month as words: "สิงหาคม 2569" / "August 2026". `month` counts from 1. */
+export function formatMonthYear(year: number, month: number): string {
+  return formatDate(new Date(year, month - 1, 1), 'LLLL yyyy');
+}
+
+/**
+ * A pay period's code as the month it is, when it is one: "2026-08" reads
+ * "สิงหาคม 2569" / "August 2026". Any other code is shown as HR wrote it.
+ */
+export function formatPeriod(code: string | null | undefined): string {
+  if (!code) return '—';
+  const match = /^(\d{4})-(\d{2})$/.exec(code);
+  if (!match) return code;
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return code;
+  return formatMonthYear(Number(match[1]), month);
 }
 
 export function formatDateTime(value: string | Date | null | undefined): string {

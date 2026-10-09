@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/network/error_text.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/common.dart';
 import '../application/leave_controller.dart';
@@ -52,24 +53,64 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
 
   bool get _canPreview => _leaveTypeId != null && _startDate != null && _endDate != null;
 
-  Future<void> _pickRange() async {
-    final DateTimeRange? range = await showDateRangePicker(
+  bool get _singleDay => _startDate != null && _startDate == _endDate;
+
+  /// Half days are offered only where they can apply: one day, of a type that
+  /// allows them. Offering them on a week-long request, or for a type the
+  /// server then refuses, was a choice the person could only get wrong.
+  bool _halfDayOffered(LeaveType? type) => _singleDay && (type?.allowHalfDay ?? false);
+
+  /// Two plain date fields instead of a range picker. In the range picker,
+  /// "Save" stays disabled until an end date is tapped, so someone taking one
+  /// day off tapped that day, found the button dead and was stuck; the way out
+  /// (tap the same day twice) is not something anyone guesses. The end date
+  /// now starts as the start date, so one day off is one tap.
+  Future<void> _pickStart() async {
+    final DateTime? picked = await showDatePicker(
       context: context,
+      initialDate: _startDate ?? DateTime.now(),
       firstDate: DateTime.now().subtract(const Duration(days: 60)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDateRange: _startDate != null && _endDate != null
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
-          : null,
-      helpText: ref.tr('Select your leave dates'),
+      helpText: ref.tr('First day of leave'),
     );
-
-    if (range == null) return;
+    if (picked == null) return;
     setState(() {
-      _startDate = range.start;
-      _endDate = range.end;
+      final bool wasSingleDay = _singleDay || _endDate == null;
+      _startDate = picked;
+      if (wasSingleDay || _endDate!.isBefore(picked)) _endDate = picked;
+      if (!_singleDay) _startPortion = 'FULL';
       _preview = null;
     });
     await _refreshPreview();
+  }
+
+  Future<void> _pickEnd() async {
+    if (_startDate == null) return _pickStart();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? _startDate!,
+      firstDate: _startDate!,
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      helpText: ref.tr('Last day of leave'),
+    );
+    if (picked == null) return;
+    setState(() {
+      _endDate = picked;
+      if (!_singleDay) _startPortion = 'FULL';
+      _preview = null;
+    });
+    await _refreshPreview();
+  }
+
+  /// Why "Submit" is disabled, in the words of the step still missing.
+  String? _missingStep() {
+    if (_leaveTypeId == null) return ref.tr('Choose a leave type');
+    if (_startDate == null) return ref.tr('Choose the day your leave starts');
+    if (_previewing) return null;
+    if (_preview != null && _preview!.totalDays <= 0) {
+      return ref.tr('The days you picked are all days off. Pick at least one working day');
+    }
+    return null;
   }
 
   Future<void> _refreshPreview() async {
@@ -131,11 +172,7 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
     }
   }
 
-  String _describe(Object error) {
-    final String raw = error.toString();
-    final int separator = raw.indexOf(': ');
-    return separator >= 0 ? raw.substring(separator + 2) : raw;
-  }
+  String _describe(Object error) => errorText(error);
 
   @override
   Widget build(BuildContext context) {
@@ -149,130 +186,226 @@ class _LeaveRequestSheetState extends ConsumerState<LeaveRequestSheet> {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (BuildContext context, ScrollController controller) => ListView(
-          controller: controller,
-          padding: const EdgeInsets.all(20),
+        // The form scrolls; the button, and anything that stops it, does not.
+        // With the summary card open the button sat below the fold, so a
+        // first-time user saw neither it nor the reason their request failed.
+        builder: (BuildContext context, ScrollController controller) => Column(
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    ref.tr('File a leave request'),
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            types.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object error, StackTrace _) => ErrorView(error: error),
-              data: (List<LeaveType> items) => DropdownButtonFormField<String>(
-                initialValue: _leaveTypeId,
-                decoration: InputDecoration(labelText: ref.tr('Leave type')),
-                items: items
-                    .map(
-                      (LeaveType type) => DropdownMenuItem<String>(
-                        value: type.id,
+            Expanded(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
                         child: Text(
-                          type.isPaid ? type.name : '${type.name} (${ref.tr('unpaid')})',
+                          ref.tr('File a leave request'),
+                          style: theme.textTheme.titleLarge,
                         ),
                       ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  types.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (Object error, StackTrace _) => ErrorView(error: error),
+                    data: (List<LeaveType> items) => DropdownButtonFormField<String>(
+                      initialValue: _leaveTypeId,
+                      decoration: InputDecoration(labelText: ref.tr('Leave type')),
+                      items: items
+                          .map(
+                            (LeaveType type) => DropdownMenuItem<String>(
+                              value: type.id,
+                              child: Text(
+                                type.isPaid ? type.name : '${type.name} (${ref.tr('unpaid')})',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          _leaveTypeId = value;
+                          final LeaveType? type = _typeById(items, value);
+                          if (!_halfDayOffered(type)) _startPortion = 'FULL';
+                          _preview = null;
+                        });
+                        _refreshPreview();
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _DateField(
+                    label: ref.tr('First day of leave'),
+                    value: _startDate == null ? ref.tr('Select a date') : Fmt.date(_startDate),
+                    onTap: _pickStart,
+                  ),
+                  const SizedBox(height: 14),
+                  _DateField(
+                    label: ref.tr('Until'),
+                    value: _endDate == null
+                        ? ref.tr('Select a date')
+                        : _singleDay
+                            ? ref.tr(
+                                '{date} (one day)',
+                                <String, Object>{'date': Fmt.date(_endDate)},
+                              )
+                            : Fmt.date(_endDate),
+                    onTap: _pickEnd,
+                  ),
+                  if (_halfDayOffered(_typeById(types.valueOrNull, _leaveTypeId))) ...<Widget>[
+                    const SizedBox(height: 14),
+                    SegmentedButton<String>(
+                      segments: <ButtonSegment<String>>[
+                        ButtonSegment<String>(value: 'FULL', label: Text(ref.tr('Full day'))),
+                        ButtonSegment<String>(value: 'MORNING', label: Text(ref.tr('Morning'))),
+                        ButtonSegment<String>(value: 'AFTERNOON', label: Text(ref.tr('Afternoon'))),
+                      ],
+                      selected: <String>{_startPortion},
+                      onSelectionChanged: (Set<String> selection) {
+                        setState(() {
+                          _startPortion = selection.first;
+                          _preview = null;
+                        });
+                        _refreshPreview();
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _reason,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: ref.tr('Reason (optional)'),
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (_previewing)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(),
+                      ),
                     )
-                    .toList(),
-                onChanged: (String? value) {
-                  setState(() {
-                    _leaveTypeId = value;
-                    _preview = null;
-                  });
-                  _refreshPreview();
-                },
+                  else if (_preview != null)
+                    _PreviewCard(preview: _preview!),
+                ],
               ),
             ),
-            const SizedBox(height: 14),
-            InkWell(
-              onTap: _pickRange,
-              borderRadius: BorderRadius.circular(10),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: ref.tr('Leave dates'),
-                  prefixIcon: const Icon(Icons.calendar_today_outlined),
-                ),
-                child: Text(
-                  _startDate == null
-                      ? ref.tr('Select a date')
-                      : _startDate == _endDate
-                          ? Fmt.date(_startDate)
-                          : '${Fmt.date(_startDate)} – ${Fmt.date(_endDate)}',
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            SegmentedButton<String>(
-              segments: <ButtonSegment<String>>[
-                ButtonSegment<String>(value: 'FULL', label: Text(ref.tr('Full day'))),
-                ButtonSegment<String>(value: 'MORNING', label: Text(ref.tr('Morning'))),
-                ButtonSegment<String>(value: 'AFTERNOON', label: Text(ref.tr('Afternoon'))),
-              ],
-              selected: <String>{_startPortion},
-              onSelectionChanged: (Set<String> selection) {
-                setState(() {
-                  _startPortion = selection.first;
-                  _preview = null;
-                });
-                _refreshPreview();
-              },
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _reason,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: ref.tr('Reason (optional)'),
-                alignLabelWithHint: true,
-              ),
-            ),
-            const SizedBox(height: 18),
-            if (_previewing)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_preview != null)
-              _PreviewCard(preview: _preview!),
-            if (_error != null) ...<Widget>[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  _error!,
-                  style: TextStyle(color: theme.colorScheme.onErrorContainer),
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed:
+            _SubmitBar(
+              error: _error,
+              hint: _submitting ? null : _missingStep(),
+              submitting: _submitting,
+              onSubmit:
                   _submitting || !_canPreview || (_preview?.totalDays ?? 0) <= 0 ? null : _submit,
-              child: _submitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(ref.tr('Submit request')),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+LeaveType? _typeById(List<LeaveType>? types, String? id) {
+  if (types == null || id == null) return null;
+  for (final LeaveType type in types) {
+    if (type.id == id) return type;
+  }
+  return null;
+}
+
+/// A tappable field that opens a date picker, styled like the other fields.
+class _DateField extends StatelessWidget {
+  const _DateField({required this.label, required this.value, required this.onTap});
+
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: const Icon(Icons.calendar_today_outlined),
+        ),
+        child: Text(value),
+      ),
+    );
+  }
+}
+
+/// The foot of the request sheet: what went wrong, the button, and what is
+/// still missing before it can be pressed.
+class _SubmitBar extends ConsumerWidget {
+  const _SubmitBar({
+    required this.error,
+    required this.hint,
+    required this.submitting,
+    required this.onSubmit,
+  });
+
+  final String? error;
+  final String? hint;
+  final bool submitting;
+  final VoidCallback? onSubmit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: 3,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (error != null) ...<Widget>[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    error!,
+                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              FilledButton(
+                onPressed: onSubmit,
+                child: submitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(ref.tr('Submit request')),
+              ),
+              if (hint != null) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  hint!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

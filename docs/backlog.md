@@ -47,9 +47,9 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-067 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 · CW-059 (payroll half, if anyone is taxed) |
-| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-059 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-067 · CW-072 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 |
+| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -182,6 +182,45 @@ At the pilot company nobody but HR uses Cwork, so leave cannot enter it at all.
 - Someone without the permission cannot file leave for anyone but themselves.
 
 **Files** `backend/src/modules/leave/`, `web/src/features/leave/`
+
+---
+
+### CW-072 · Add departments, positions and work locations from the console
+`P0` · organisation · web · **S** · Pilot A, by 31 October 2026
+
+A fresh install has no departments, positions or work locations, and the
+console cannot add any. `OrganizationPage` only reads, although the API has
+create and update endpoints for all three behind `org:manage`, and
+`setup.cli.ts` tells a new install to add them from Organisation. The employee
+import (CW-059) needs these names to exist already, so an Odoo export that keeps
+those columns fails with one `NOT_FOUND` per row, and HR's only way through is
+to blank the cells and lose the data. Found by UX on 2026-10-02 and checked in
+the code by the PO.
+
+**Decided 2026-10-09, PO with the owner:** a form in the console, not the
+import creating the names it does not find. A company adds a department again
+later, one at a time, and an import that creates names would turn one typo into
+a duplicate department.
+
+**Scope**
+- On Organisation, someone with `org:manage` adds and renames departments and
+  positions, and adds work locations, through the existing endpoints. No new
+  rules.
+- A work location's code follows ADR-0006 as the API enforces it (CW-049):
+  the form shows the format and the API's own message, and does not offer to
+  rename a code once it is in use.
+- `setup.cli.ts`, and the import guide's advice to leave the cell blank, say
+  what is true once this lands.
+
+**Acceptance**
+- On a fresh `db:init` install, an HR admin adds one of each from the console,
+  then imports an employee file that names them, with no `NOT_FOUND`.
+- Without `org:manage` the lists show with no add or edit controls, and the
+  API refuses, as it does today.
+- A duplicate name or an invalid work-location code is refused with a Thai
+  message that says what to change.
+
+**Files** `web/src/features/settings/`, `backend/src/modules/setup/` (message only)
 
 ---
 
@@ -596,74 +635,18 @@ task alone, the pilot measures confusion rather than the product.
 - CW-064 and CW-061 each have Thai wording from this ticket before they are
   built, and a UX review after.
 
+**Status 2026-10-09: the app half is merged** (#75). Leave and approvals in
+the app, as a first-time user meets them: one day off is one tap, Thai error
+messages from the error code, and a reject that cannot be sent without a reason.
+The PO checked that each message names someone who can actually help: leave
+that has started, and a missing document, go to HR, since only `leave:manage`
+can cancel started leave and HR cannot file leave for anyone until CW-067. Open:
+the import pages from the UX review on #59, and a Thai guide for them merged as
+#76. It tells HR to leave an unknown department blank until CW-072 lands.
+
 **Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
 `mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
 `web/src/features/leave/LeaveImportPage.tsx`, `docs/`
-
----
-
-
-### CW-059 · Start from a spreadsheet: import employees and opening balances
-`P1` · employees · leave · payroll · **L** · phase 3
-
-A company moving to Cwork has its people in Excel or in another system's
-export. Today each employee is typed in by hand, one form at a time. That is
-where an evaluation ends, and a competitor offers the import.
-
-It is P1 rather than a convenience because of payroll. Withholding projects the
-year from year-to-date figures (spec §6.3), and ภ.ง.ด.1ก and 50 ทวิ report the
-whole year. A company that starts in September has paid January to August
-somewhere else. Without those months, September's withholding is wrong and the
-annual filings are short. `priorEmployerIncome` does not cover this: those
-months were paid by **this** employer, and 50 ทวิ must count them as its own.
-
-**Scope**
-- A downloadable template, one file for employees and one for opening
-  balances.
-- Employees: the fields the employee form takes, sensitive ones included
-  (national ID, bank account, social security number), encrypted exactly as
-  when typed in.
-- Opening balances per employee: leave taken so far this year, and this year's
-  taxable income, tax withheld and social security paid before Cwork.
-- A preview that lists every problem by row and column before anything is
-  written. Nothing is written until the whole file is clean, and then all of
-  it is written in one step.
-- Importing needs the permission that creating employees needs, and each
-  import is audited as one event naming the file and the row count.
-
-**Acceptance**
-- A file saved from Thai Excel, as `.xlsx` or as Excel's default CSV (not
-  UTF-8), imports with Thai names intact.
-- A file with one bad row writes nothing and names the row and the problem.
-- Importing the same file twice creates no duplicates: the second run is
-  refused, row by row, naming the employee codes already present.
-- A company that imports January to August and runs September in Cwork
-  withholds the same September tax as if all nine months had run in Cwork.
-- Opening balances count as this employer's own in CW-046 and CW-047, not as a
-  previous employer's.
-- Leave balances after import equal entitlement minus the imported days taken.
-
-**Status 2026-09-30: the employee half is done** (0b44fd3, df09d81). The PO
-checked it against the acceptance. The e2e suites `employee-import` and
-`prior-leave-import` cover:
-- Thai intact from `.xlsx` and from Excel's default CSV;
-- one bad row writing nothing, and every problem listed at once;
-- the same file refused row by row;
-- balances equal to entitlement minus the days imported;
-- one audit event per import.
-
-Scanner IDs are unique per organisation and kept exactly as typed. The payroll
-half (year-to-date income, tax and social security) is still open, and so are
-the last two acceptance items. The import creates employees but no sign-in
-accounts; that is CW-064.
-
-**The pilot needs half of this by 31 October 2026:** employees, including
-their scanner IDs for CW-061, and opening leave balances. The file will come
-out of Odoo. The payroll opening balances can follow in a second delivery,
-because payroll is not in the pilot.
-
-**Files** `backend/src/modules/employees/`, `backend/src/modules/leave/`,
-`backend/src/modules/payroll/`, `web/src/features/employees/`
 
 ---
 
@@ -1097,6 +1080,13 @@ only the phone, and the recovery codes are shown once with a way to save them.
 ### CW-031 · A public demo instance, on Render
 `P2` · project · **M** · first in phase 3
 
+**2026-10-01: a real visitor hit the dead link.** The pilot company's owner
+pressed "ลองใช้ทันที" and got Render's "Not Found": the service has still not
+been created, so every visitor who takes the landing page's main button gets
+the same. Either the owner deploys it (docs/demo.md, three steps), or the
+button goes back to GitHub until they do. The PO asked for the first and keeps
+the second ready.
+
 **Status 2026-09-27: built, waiting on the owner's deploy.** fdf2385 delivers
 the scope, and the e2e suite covers the refusals and every lock-out route. The
 runbook is [demo.md](./demo.md), and it answers the Render questions below.
@@ -1368,3 +1358,4 @@ Kept so the reasoning survives.
 | **CW-053** · Nothing proved the security headers were served | A fix to nginx's `add_header` inheritance had put CSP and `X-Frame-Options` back on `/assets/` and `index.html`; nothing stopped the next `location` from dropping them again. CI now runs the image as shipped and asserts the headers on the paths that broke. b160cbb. |
 | **CW-055** · The phone frame covered the app in the film | Reported by the owner from two screenshots of the film in progress: the frame's camera cut-out sat on the app's greeting and its border clipped the right edge. The phone is now drawn with a status bar and a home-indicator strip around the app's full 390×844 screen, so neither covers any of it. Both takes were re-recorded from `docs/film/stage.html`, not patched. The PO checked frames from every chapter of both takes before closing. 18624fe. |
 | **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. The changelog entry carried the same wording and was corrected after closing. 5d14915, bc76d4c, e675493. |
+| **CW-059** · A company moving to Cwork had to type every employee in by hand, and its first payroll ignored the months paid before it | Two spreadsheet imports, each from `.xlsx` or Thai Excel's default CSV, with a preview that lists every problem by row and column and writes nothing until the whole file is clean. **Employees and leave already taken** (0b44fd3, df09d81): the second run of the same file is refused row by row, balances equal entitlement minus the days imported, and scanner IDs are kept for CW-061. **Pay before Cwork** (e4715b5): each employee's taxable income, tax withheld and social security from January to the last month paid elsewhere. These are stored as **this employer's own** (`PayrollOpeningBalance`), not as `priorEmployerIncome`, because the annual filings must count them as its own pay. `yearToDate()` keeps the three sources apart, and each payslip's snapshot records the split. The acceptance is an e2e test: nine months run in Cwork, the same eight months imported into another year, and September compared employee by employee. A month the figures cover cannot be calculated again (`PAID_BEFORE_CWORK`). **Not proven here:** that ภ.ง.ด.1ก and 50 ทวิ count these months. Neither filing exists yet, so the requirement is written into the acceptance of CW-046 and CW-047. The import creates no sign-in accounts (CW-064). Closed 2026-10-02. |

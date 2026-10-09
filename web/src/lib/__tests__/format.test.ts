@@ -1,8 +1,51 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest';
-import { formatMinutes, formatMoney, formatNumber, initials } from '../format';
+import { afterEach, describe, expect, it } from 'vitest';
+import { useUiStore } from '@/stores/ui.store';
+import {
+  formatDate,
+  formatDateTime,
+  formatMinutes,
+  formatMoney,
+  formatMonthYear,
+  formatNumber,
+  formatPeriod,
+  formatYear,
+  initials,
+} from '../format';
+
+afterEach(() => useUiStore.setState({ language: 'th' }));
+
+describe('Buddhist-era years in Thai (CW-058)', () => {
+  it('writes the year 543 ahead in Thai', () => {
+    expect(formatDate('2026-09-28')).toBe('28 ก.ย. 2569');
+    expect(formatDateTime(new Date(2026, 9, 1, 9, 5))).toBe('1 ต.ค. 2569 09:05');
+    expect(formatYear(2026)).toBe('2569');
+  });
+
+  it('keeps the two-digit form and leaves quoted text alone', () => {
+    expect(formatDate('2026-09-28', "d/M/yy 'yyyy'")).toBe('28/9/69 yyyy');
+  });
+
+  it('labels a pay period as the month it is', () => {
+    expect(formatPeriod('2026-08')).toBe('สิงหาคม 2569');
+    expect(formatMonthYear(2026, 1)).toBe('มกราคม 2569');
+  });
+
+  it('shows any other period code as HR wrote it', () => {
+    expect(formatPeriod('2026-13')).toBe('2026-13');
+    expect(formatPeriod('BONUS-Q3')).toBe('BONUS-Q3');
+    expect(formatPeriod(null)).toBe('—');
+  });
+
+  it('leaves English Gregorian', () => {
+    useUiStore.setState({ language: 'en' });
+    expect(formatDate('2026-09-28')).toBe('28 Sep 2026');
+    expect(formatYear(2026)).toBe('2026');
+    expect(formatPeriod('2026-08')).toBe('August 2026');
+  });
+});
 
 describe('formatMinutes', () => {
   it('renders hours and minutes', () => {
