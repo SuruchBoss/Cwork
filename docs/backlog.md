@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-075 · CW-076 · CW-070 · CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-078 · CW-075 · CW-076 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -239,7 +239,7 @@ rate changes after runs are paid.
 ---
 
 ### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
-`P0` · payroll · **S–M** · before Pilot B · needs the owner first
+`P0` · payroll · **S–M** · before Pilot B · ready after CW-075 (text read 2026-10-10)
 
 Two gaps the dev left open in CW-069 phase A and wrote down in
 `docs/payroll-thailand.md`, "Daily wages paid twice a month":
@@ -253,15 +253,31 @@ Two gaps the dev left open in CW-069 phase A and wrote down in
   paid at least twice the hourly rate (section 62, from secondary sources).
   Cwork underpays and only shows `REST_DAY_WORK_RATE`.
 
-**Before starting** (the owner): confirm sections 29, 56, 62, 68 and 76 (for
-CW-070's carried-over advances) of the Labour Protection Act in the official text.
-`*.go.th` is open since 2026-10-10, but from the cloud environment
-ratchakitcha.soc.go.th answers 403 to site pages (its document PDFs load),
-law.go.th answers 403, and labour.go.th, legal.labour.go.th, ccpl.mol.go.th
-and krisdika.go.th do not connect. The owner can download the consolidated
-Act (ฉบับปรับปรุงล่าสุด, กรมสวัสดิการและคุ้มครองแรงงาน) from a machine in
-Thailand and add the PDF, or the dev tries again later.
-The doc's table records how far each was checked.
+**Text read 2026-10-10 (PO).** The owner supplied the Act as first published:
+ราชกิจจานุเบกษา เล่ม ๑๑๕ ตอนที่ ๘ ก, 20 February 1998, 44 scanned pages (no text
+layer), kept outside this repo in the owner's notes. As enacted:
+- section 56 (page 13–14): wages for weekly days off are owed *except* to
+  employees paid by the day, the hour or the piece; traditional holidays and
+  annual leave are paid to everyone;
+- section 62 (page 14): work on a day off under sections 28, 29 or 30 pays
+  (1) at least 1× more on top of the day's wage for an employee entitled to
+  wages that day, (2) **at least 2×** the hourly rate for one who is not;
+- section 68 (page 16): the hourly rate of a *monthly* employee is the
+  monthly wage ÷ (30 × normal daily hours).
+
+The secondary sources the dev used say the same, so the 2× for daily staff on
+a weekly day off is not in doubt.
+
+The owner then supplied the Office of the Council of State's consolidated
+text, amended up to No. 7 (2019), 49 pages, also kept in the owner's notes
+(its text layer is garbled by a watermark; read the page images). None of
+sections 29, 56, 62, 68 and 76 carries an amendment footnote there, so the
+1998 wording stands up to 2019. Section 29 (pages 8–9): at least 13
+traditional holidays a year including Labour Day, and one that falls on a
+weekly day off moves to the next working day. Sections 76–77 (pages 17–18):
+see CW-078. **When starting**, the dev reads section 29 itself, and
+`docs/payroll-thailand.md` records each rule as checked against the
+consolidated text to 2019; amendments after 2019, if any, are not checked.
 
 **Acceptance**
 - A traditional holiday on a Sunday pays a daily employee for the next
@@ -276,47 +292,47 @@ The doc's table records how far each was checked.
 ---
 
 
-### CW-070 · Cash advances, deducted when they fall due
-`P0` · payroll · **S–M** · Pilot B, November 2026
+### CW-078 · Advances against sections 76 and 77, and their payslip code
+`P0` · payroll · **S** · before Pilot B · ready
 
-Advances (เบิกล่วงหน้า) are how many labourers get through a pay period, and
-the pilot gives them. Payroll has standing deductions such as loan repayment,
-but nothing records "500 baht paid out on the 8th, to come off this
-period's pay".
+CW-070 shipped with its carry-over warning saying section 76 was unread. The
+PO read sections 76 and 77 in the consolidated text to 2019 on 2026-10-10:
+- section 76 forbids deducting from wages, overtime and holiday pay except
+  (1) income tax and other sums a law requires, (2) union dues, (3) debts to a
+  savings cooperative or a welfare scheme, with the employee's consent,
+  (4) a guarantee deposit under section 10 or damages from wilful or grossly
+  negligent harm, with consent, (5) provident fund contributions. (2)–(5) are
+  each capped at 10%, and together at one fifth, of what is due on a payday
+  under section 70, unless the employee consents;
+- section 77: where consent is needed, it is made in writing, signed by the
+  employee, and states its purpose specifically.
+
+Repaying a cash advance is not in that list. Taking it back on the payday it
+belongs to is arguably the same wage paid early; recovering a carried balance
+from a later payday looks more like collecting a debt, and whether that is
+allowed, under which item, and with what cap is a question for a qualified
+person, not for Cwork to settle.
 
 **Scope**
-- HR records an advance: who, how much, on what date, and paid in cash.
-- It is deducted from the next pay run that includes that date, and shown as
-  its own line on the payslip.
-- An advance larger than the period's pay is not allowed to push net pay
-  below zero. What remains carries to the next period, and HR sees it.
+- `ADVANCE_CARRIED_OVER` (Thai and English) and `docs/payroll-thailand.md`
+  say what sections 76 and 77 actually say, as above, in one or two sentences;
+  that taking a carried balance from a later payday may need the employee's
+  signed consent for that purpose; and that Cwork does not keep that consent,
+  so HR must. No "not yet checked against the text" any more.
+- The question goes on #36's list for the qualified reviewer.
+- The payslip line for an advance uses the code `CASH_ADVANCE` instead of
+  `ADVANCE`, which the demo seed already gives to a standing deduction
+  (หักเงินยืมทดรอง). 0.4.0 is not released, so no stored payslip needs moving.
 
 **Acceptance**
-- Two advances in one period both appear on the payslip and both come off net
-  pay.
-- An advance bigger than the period's pay leaves net pay at zero and carries
-  the rest, visibly, to the next period.
-- Advances are audited, and a closed period's advances cannot be edited.
+- The run page shows the new warning in both languages, tested.
+- A payslip with a standing ADVANCE deduction and a cash advance shows two
+  different codes.
 
-**Decisions 2026-10-10 (PO, on the dev's plan):** advances and their
-deductions in two tables, the balance worked out from deductions rather than
-stored; a regular run deducts every outstanding advance dated on or before the
-period's end, so a daily employee's comes off H1 or H2 and a late one off the
-next run; advances come off last, after tax, social security, provident fund,
-benefits and standing items, one line each, and never take net pay below
-zero (`ADVANCE_CARRIED_OVER`); an advance in an approved or paid run cannot be
-changed, and one changed under a calculated run blocks approval until it is
-calculated again; deleting cancels with an audit trail; recording needs
-`payroll:run`. People who have left with an advance outstanding stay on the
-list. **Not verified:** recovering the carried-over part from a later period
-may be a deduction from wages under section 76, which needs written consent
-and has a cap; until the text is read, the warning tells HR so and the doc
-lists it with sections 29 and 68.
-
-**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
+**Files** `backend/src/modules/payroll/domain/payroll-calculator.ts`,
+`web/src/lib/i18n/`, `docs/payroll-thailand.md`
 
 ---
-
 
 ### CW-071 · Payslips and a wage receipt on paper
 `P0` · payroll · documents · **M** · Pilot B, November 2026
@@ -1390,6 +1406,7 @@ Kept so the reasoning survives.
 | **CW-059** · A company moving to Cwork had to type every employee in by hand, and its first payroll ignored the months paid before it | Two spreadsheet imports, each from `.xlsx` or Thai Excel's default CSV, with a preview that lists every problem by row and column and writes nothing until the whole file is clean. **Employees and leave already taken** (0b44fd3, df09d81): the second run of the same file is refused row by row, balances equal entitlement minus the days imported, and scanner IDs are kept for CW-061. **Pay before Cwork** (e4715b5): each employee's taxable income, tax withheld and social security from January to the last month paid elsewhere. These are stored as **this employer's own** (`PayrollOpeningBalance`), not as `priorEmployerIncome`, because the annual filings must count them as its own pay. `yearToDate()` keeps the three sources apart, and each payslip's snapshot records the split. The acceptance is an e2e test: nine months run in Cwork, the same eight months imported into another year, and September compared employee by employee. A month the figures cover cannot be calculated again (`PAID_BEFORE_CWORK`). **Not proven here:** that ภ.ง.ด.1ก and 50 ทวิ count these months. Neither filing exists yet, so the requirement is written into the acceptance of CW-046 and CW-047. The import creates no sign-in accounts (CW-064). Closed 2026-10-02. |
 | **CW-058** · Thai screens wrote the year in the Gregorian era, and date fields were the browser's own | Thai offices count years in พ.ศ.; a competitor opens its landing page with exactly this. The first part (db7b284) made `formatDate` write the Buddhist-era year. The rest (a1dd8bf): a `DateInput` built in the repo replaces all 15 native date fields, so in Thai a date is typed or picked day first in พ.ศ. and stored as the ISO date, while English keeps the browser's own field; pay periods show as months; the app's `Fmt.period` and date picker use พ.ศ.; the employment certificate writes "15 มกราคม 2567"; Thai notifications and errors that carried an ISO date write a Thai one. `expectNoAxeViolations` now fails on a Gregorian year on any Thai screen, and source guards in both clients refuse native date inputs and raw years. Choices made by the dev and accepted by the PO on 2026-10-10: the field is built rather than taken from a library, since none writes พ.ศ. and the console has no UI library; a two-digit year is the end of a พ.ศ. year and a four-digit year under 2400 is read as Gregorian, an unreadable date is marked and the old value kept; `min` greys out calendar days only, typed dates are left to the server as before; a new pay period's year and month are picked from lists; there is no payslip PDF, so the in-app payslip writes its pay date in words; the backend messages above were changed beyond the ticket's files because the app shows them. A UTC issue date the dev found on the way is CW-074 (#79). Closed 2026-10-10. |
 | **CW-074** · A certificate issued before 07:00 was dated the day before | Found by the dev while finishing CW-058: the issue date was the UTC date, a day behind Bangkok until 07:00, and verification read it the same way. Both now take the organisation's calendar day (`organizationToday`, by the rule `workDateFor` uses for punches), tested with the clock fixed at 06:30 Bangkok time on 1 October 2026; the same test gave 2026-09-30 before the fix. The same UTC "today" was replaced in leave notice days and cancellation, resignation dates and notice, the daily close-out of separations (which finished people a day late), structural-change effective dates and the compensation a certificate quotes. **Left as they are:** a few places still take the current *year* from UTC (the leave-balance year default, document reference numbers, expense years, file paths); they can be wrong only between 00:00 and 07:00 on 1 January. 94e96dc, closed 2026-10-10. |
+| **CW-070** · The pilot's labourers draw cash before payday, and nothing recorded it or took it back | Someone with `payroll:run` records an advance once it is paid (who, how much, the day, cash or transfer), never dated in the future. What is owed is worked out from deductions, never stored. A regular run takes back every advance owed up to the period's last day, after tax, social security and every other deduction, oldest first, one payslip line each, and never more than the payslip would pay; the rest is carried with `ADVANCE_CARRIED_OVER`, whose Thai text says that recovering it later may fall under section 76 and is not yet checked. An advance taken back by an approved or paid run is locked; one changed under a calculated run blocks approval until it is calculated again; a cancelled run gives back what it took. A Cash advances page lists what each person owes and which run took it back. Accepted from the dev: an advance recorded after a run was calculated waits for a recalculation or the next run, and does not block approval. Still open: the final-settlement run does not take advances (HR settles them by hand); section 76 is CW-078. 3b00760, closed 2026-10-10. |
 | **CW-069** · The pilot pays its labourers a daily wage every 15 days, and Cwork could only pay a monthly salary | A compensation can carry a `dailyRate` paid `SEMI_MONTHLY`, and a month can be paid in two periods, `YYYY-MM-H1` and `YYYY-MM-H2`, with one monthly period and one of each half per month enforced by the database. Days paid come from attendance, paid leave by its portion and paid holidays on working days. Social security is 5% of H1 with no floor, then the whole month less H1; withholding is half the estimated month, then the month less H1; neither goes negative, and any excess is a warning. H2 needs H1 marked paid. Each work location holds the minimum daily wage with its source. In the console: a pay card on the employee page that carries overtime, social security and provident fund over to a new rate, half-month periods with locked dates and labels such as "1–15 พฤศจิกายน 2569", the nine payslip warnings in Thai on the run page, and on an H2 run whose H1 is unpaid, the reason and a link to H1. Every figure in the tests is computed by hand; the comparison with the pilot's Excel is still to come at Pilot B. The legal basis of sections 56 and 62 is checked only from secondary sources, and 29 and 68 not at all (CW-076). 037e108, 8662703, closed 2026-10-10. |
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
 | **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |

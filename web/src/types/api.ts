@@ -380,7 +380,14 @@ export type PayFrequency = 'MONTHLY' | 'SEMI_MONTHLY';
 export interface PayrollAdvance {
   id: string;
   employeeId: string;
-  employee: { id: string; employeeCode: string; firstNameTh: string; lastNameTh: string };
+  employee: {
+    id: string;
+    employeeCode: string;
+    firstNameTh: string;
+    lastNameTh: string;
+    status?: EmployeeStatus;
+    deletedAt?: string | null;
+  };
   amount: number;
   paidOn: string;
   method: 'CASH' | 'BANK_TRANSFER';

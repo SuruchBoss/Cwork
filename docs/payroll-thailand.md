@@ -273,6 +273,7 @@ sources only, and still need reading in the official text:
 | Work on a holiday: one more times the hourly rate for an employee paid for the day, at least twice for one who is not | s.62 | secondary sources agree |
 | A traditional holiday on the weekly day off is replaced by the next working day | s.29 | not yet found in a source |
 | The hourly rate for overtime of a daily-wage employee | s.68 | not yet found in a source |
+| Taking back the part of a cash advance carried to a later period may be a deduction from wages, which needs the employee's written consent and is capped (CW-070) | s.76 | not yet read in any source |
 
 ### Known gaps
 
@@ -327,8 +328,11 @@ whether in cash or by transfer. Its date cannot be in the future.
   CW-076), so the run page's carry-over warning says so rather than implying
   the deduction is settled law.
 - **Not yet handled.** An employee who leaves still owing an advance stays on
-  the list, but the final-settlement run does not take it back, so HR settles
-  it by hand.
+  the list, marked as having left, but the final-settlement run does not take
+  it back, so HR settles it by hand.
+- **Who records them.** `payroll:run`, which the payroll officer, HR admin and
+  super admin roles hold. An HR officer who records advances needs it added
+  to their role; see [operations.md](./operations.md#giving-a-role-a-permission).
 
 ## Leave
 
