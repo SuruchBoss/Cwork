@@ -215,8 +215,8 @@ Two gaps the dev left open in CW-069 phase A and wrote down in
   paid at least twice the hourly rate (section 62, from secondary sources).
   Cwork underpays and only shows `REST_DAY_WORK_RATE`.
 
-**Before starting** (the owner): confirm sections 29, 56, 62 and 68 of the
-Labour Protection Act in the official text, or allow `*.go.th` so the dev can.
+**Before starting** (the owner): confirm sections 29, 56, 62, 68 and 76 (for
+CW-070's carried-over advances) of the Labour Protection Act in the official text, or allow `*.go.th` so the dev can.
 The doc's table records how far each was checked.
 
 **Acceptance**
@@ -253,6 +253,21 @@ period's pay".
 - An advance bigger than the period's pay leaves net pay at zero and carries
   the rest, visibly, to the next period.
 - Advances are audited, and a closed period's advances cannot be edited.
+
+**Decisions 2026-10-10 (PO, on the dev's plan):** advances and their
+deductions in two tables, the balance worked out from deductions rather than
+stored; a regular run deducts every outstanding advance dated on or before the
+period's end, so a daily employee's comes off H1 or H2 and a late one off the
+next run; advances come off last, after tax, social security, provident fund,
+benefits and standing items, one line each, and never take net pay below
+zero (`ADVANCE_CARRIED_OVER`); an advance in an approved or paid run cannot be
+changed, and one changed under a calculated run blocks approval until it is
+calculated again; deleting cancels with an audit trail; recording needs
+`payroll:run`. People who have left with an advance outstanding stay on the
+list. **Not verified:** recovering the carried-over part from a later period
+may be a deduction from wages under section 76, which needs written consent
+and has a cap; until the text is read, the warning tells HR so and the doc
+lists it with sections 29 and 68.
 
 **Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
 
