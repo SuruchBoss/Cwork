@@ -228,6 +228,7 @@ model Payslip {
   updatedAt      DateTime @updatedAt
 
   items PayslipItem[]
+  advanceDeductions PayrollAdvanceDeduction[]
 
   @@unique([runId, employeeId])
   @@index([employeeId, createdAt])
@@ -470,4 +471,56 @@ model ExpenseClaimItem {
 
   @@index([claimId])
   @@map("expense_claim_items")
+}
+
+enum AdvanceMethod {
+  CASH
+  BANK_TRANSFER
+}
+
+enum AdvanceStatus {
+  ACTIVE
+  CANCELLED
+}
+
+/// Money paid to an employee before payday (เบิกล่วงหน้า, CW-070), taken back
+/// from the regular runs that follow. What is still owed is the amount less
+/// what payslips in runs that were not cancelled have deducted, so a carried
+/// balance is never stored twice.
+model PayrollAdvance {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  amount         Decimal  @db.Decimal(18, 4)
+  paidOn         DateTime @db.Date
+  method         AdvanceMethod @default(CASH)
+  note           String?
+  status         AdvanceStatus @default(ACTIVE)
+  recordedById   String?  @db.Uuid
+  cancelledAt    DateTime?
+  cancelledById  String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  deductions PayrollAdvanceDeduction[]
+
+  @@index([organizationId, employeeId, paidOn])
+  @@map("payroll_advances")
+}
+
+/// What one payslip took back of one advance.
+model PayrollAdvanceDeduction {
+  id        String   @id @default(uuid()) @db.Uuid
+  advanceId String   @db.Uuid
+  advance   PayrollAdvance @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  payslipId String   @db.Uuid
+  payslip   Payslip  @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(18, 4)
+  createdAt DateTime @default(now())
+
+  @@unique([advanceId, payslipId])
+  @@index([payslipId])
+  @@map("payroll_advance_deductions")
 }

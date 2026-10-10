@@ -1102,4 +1102,39 @@ export const thMessages: Record<string, string> = {
   'Minimum wage {amount} a day · {source}': 'ค่าแรงขั้นต่ำวันละ {amount} · {source}',
   'No minimum wage set': 'ยังไม่ได้ตั้งค่าแรงขั้นต่ำ',
   'Edit {name}': 'แก้ไข {name}',
+
+  // Cash advances (CW-070)
+  'Cash advances': 'เงินเบิกล่วงหน้า',
+  'Paid before payday and taken back by the next pay run, after tax and social security':
+    'จ่ายให้ก่อนวันเงินเดือนออก แล้วหักคืนในรอบเงินเดือนถัดไป หลังหักภาษีและประกันสังคม',
+  'Still owed': 'ยังค้างหัก',
+  'All advances': 'เงินเบิกทั้งหมด',
+  'Only what is still owed': 'แสดงเฉพาะที่ยังค้างหัก',
+  'Cancelled the advance of {amount} to {name}': 'ยกเลิกเงินเบิก {amount} ของ {name} แล้ว',
+  'Nobody owes an advance': 'ไม่มีใครค้างเงินเบิก',
+  'No advances recorded': 'ยังไม่มีเงินเบิกที่บันทึกไว้',
+  'Paid on': 'วันที่จ่าย',
+  'Taken back': 'หักคืนแล้ว',
+  'Taken back in': 'หักคืนในงวด',
+  Cash: 'เงินสด',
+  'Bank transfer': 'โอนเงิน',
+  Settled: 'หักครบแล้ว',
+  'Edit the advance of {name}': 'แก้ไขเงินเบิกของ {name}',
+  'Cancel the advance of {name}': 'ยกเลิกเงินเบิกของ {name}',
+  'In an approved run': 'อยู่ในรอบที่อนุมัติแล้ว',
+  'Saved the advance of {amount} to {name}': 'บันทึกเงินเบิก {amount} ของ {name} แล้ว',
+  'Recorded {amount} paid to {name} on {date}': 'บันทึกเงินเบิก {amount} ที่จ่ายให้ {name} วันที่ {date} แล้ว',
+  'Choose the day the advance was paid.': 'เลือกวันที่จ่ายเงินเบิก',
+  'Edit an advance': 'แก้ไขเงินเบิก',
+  'Record an advance': 'บันทึกเงินเบิก',
+  'Amount (baht)': 'จำนวนเงิน (บาท)',
+  'Paid by': 'จ่ายเป็น',
+  'Record advance': 'บันทึกเงินเบิก',
+  'An advance is recorded once it has been paid, so the date cannot be in the future.':
+    'บันทึกเงินเบิกหลังจ่ายเงินแล้วเท่านั้น วันที่จึงเป็นวันในอนาคตไม่ได้',
+  'An approved or paid run has taken this advance back, so it can no longer change.':
+    'เงินเบิกนี้ถูกหักในรอบที่อนุมัติหรือจ่ายแล้ว จึงแก้ไขหรือยกเลิกไม่ได้',
+  'This advance has already been cancelled.': 'เงินเบิกนี้ถูกยกเลิกไปแล้ว',
+  "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Taking it from a later period may count as a deduction from wages under section 76, which needs the employee's written consent and has a limit; that has not been checked yet":
+    'เงินเบิก {amount} เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป การหักจากงวดหลังอาจนับเป็นการหักค่าจ้างตามมาตรา 76 ซึ่งต้องมีหนังสือยินยอมจากลูกจ้างและมีเพดาน เรื่องนี้ยังไม่ได้ตรวจกับตัวบท',
 };

@@ -368,6 +368,21 @@ entry, tags it and publishes the notes.
   /payroll/runs/:id` now returns as `firstHalf`. Work locations can be edited
   from the Organisation page to set the minimum daily wage, which needs its
   source.
+- **Cash advances, taken back on payday** (CW-070). Many labourers get through
+  a pay period on an advance, and Cwork had no way to record "500 baht paid on
+  the 8th, to come off this period's pay". Someone with `payroll:run` now
+  records an advance once it has been paid (who, how much, the day, cash or
+  transfer) on a new **Payroll → Cash advances** page, which also shows what
+  each person still owes and which run took it back. A regular run takes back
+  every advance owed up to the period's last day, after tax, social security
+  and every other deduction, oldest first, each on its own payslip line. It
+  never takes more than the payslip would pay: the rest is carried to the next
+  run and the run page says so, adding that taking it from a later period may
+  be a deduction from wages under section 76, which has not been checked
+  against the Act yet. An advance an approved or paid run has taken
+  back cannot be changed or cancelled, and a run cannot be approved on an
+  advance that changed after it was calculated. Every change is audited. The
+  rules are in `docs/payroll-thailand.md`.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the

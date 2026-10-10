@@ -67,6 +67,7 @@ export const qk = {
   payrollRuns: (periodId?: string) => ['payroll', 'runs', periodId] as const,
   payrollRun: (id: string) => ['payroll', 'runs', id] as const,
   payslip: (id: string) => ['payroll', 'payslips', id] as const,
+  advances: (owing: boolean) => ['payroll', 'advances', owing] as const,
   myPayslips: (year?: number) => ['payroll', 'payslips', 'me', year] as const,
 
   applications: (filters?: unknown) => ['recruitment', 'applications', filters] as const,

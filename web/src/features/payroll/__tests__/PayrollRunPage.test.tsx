@@ -148,6 +148,7 @@ describe('Payslip warnings on the run page (CW-069)', () => {
             },
             { code: 'SSO_OVER_IN_FIRST_HALF', params: { amount: 12.5 } },
             { code: 'REST_DAY_WORK_RATE', params: { hours: 8, rates: 'DAY_OFF 1x' } },
+            { code: 'ADVANCE_CARRIED_OVER', params: { amount: 1620 } },
             { code: 'SOMETHING_NEW' },
           ],
         },
@@ -166,9 +167,12 @@ describe('Payslip warnings on the run page (CW-069)', () => {
       screen.getByText('ครึ่งแรกหักประกันสังคมเกินยอดทั้งเดือนไป ฿12.50 ระบบไม่คืนให้อัตโนมัติ'),
     ).toBeInTheDocument();
     expect(screen.getByText(/ทำงานในวันหยุด \(8 ชม\. ที่ .* 1×\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/^เงินเบิก ฿1,620\.00 เกินกว่าที่งวดนี้หักได้ .*ตามมาตรา 76 /),
+    ).toBeInTheDocument();
     // A code this screen does not know yet is still shown, not dropped.
     expect(screen.getByText('SOMETHING_NEW')).toBeInTheDocument();
-    expect(screen.getByText('ตรวจ 4 เรื่อง')).toBeInTheDocument();
+    expect(screen.getByText('ตรวจ 5 เรื่อง')).toBeInTheDocument();
     await expectNoAxeViolations(container);
   });
 });

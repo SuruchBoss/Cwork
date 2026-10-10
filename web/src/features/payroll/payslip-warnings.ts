@@ -85,6 +85,11 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
             .join(', '),
         },
       );
+    case 'ADVANCE_CARRIED_OVER':
+      return t(
+        "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Taking it from a later period may count as a deduction from wages under section 76, which needs the employee's written consent and has a limit; that has not been checked yet",
+        { amount: money(p.amount) },
+      );
     default:
       return warning.code;
   }
