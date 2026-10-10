@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-079 · CW-062 · CW-061 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-078 · CW-075 · CW-076 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -155,6 +155,51 @@ seeing any of it.
 
 ## P0 — blocks a real deployment
 
+
+### CW-079 · Only the first administrator can ever hold more than the employee role
+`P0` · identity · **M** · Pilot A · ready
+
+Found by the dev on 2026-10-10 while writing who may record advances (CW-070),
+then checked by the PO in the code. Setup gives the first administrator
+`SUPER_ADMIN`, and an employee's account gets `EMPLOYEE`. Nothing else in the
+API or the console gives a user a role: `GET /organization/roles` only lists
+them, although `role:manage` exists and makes a second factor mandatory. So
+the pilot's HR person cannot be made `HR_OFFICER`, `HR_ADMIN` or
+`PAYROLL_OFFICER`, nor a supervisor `MANAGER`, without SQL or sharing the
+first administrator's password. Today the only written way is the SQL in
+`docs/operations.md` ("Giving a role a permission"), and `docs/security.md`
+says a customer can build a role without a code change, which only holds for
+someone with database access.
+
+**Scope**
+- An account's roles can be listed, granted and removed by someone with
+  `role:manage`, from the employee's page in the console, through new
+  endpoints. `UserRole` already has `departmentId` (a role limited to one
+  department) and `expiresAt`; both are offered.
+- System roles only. Editing which permissions a role holds, or creating a
+  role, stays out of this ticket and stays in `docs/operations.md` for now.
+- No one removes their own `role:manage`, and the last account holding
+  `SUPER_ADMIN` cannot lose it.
+- A grant or removal is audited and takes effect on the account's next token
+  (or at once, by setting `sessionsValidFrom` when a role is removed).
+- Granting a role that carries a privileged permission means the account must
+  enrol a second factor at its next sign-in, as the MFA rule already says; the
+  console says so when granting.
+- `docs/security.md` is corrected to say what a customer can do from the
+  console and what still needs the database.
+
+**Acceptance**
+- On a fresh install, the first administrator makes an employee's account
+  `HR_OFFICER` and `PAYROLL_OFFICER` from the console; that person signs in,
+  is asked to enrol a second factor, and can then record a cash advance.
+- Removing `PAYROLL_OFFICER` from them takes the advances page away at once.
+- The last `SUPER_ADMIN` cannot be removed; an account without `role:manage`
+  gets 403 on every new endpoint.
+
+**Files** `backend/src/modules/organization/`, `backend/src/modules/auth/`,
+`web/src/features/employees/`, `docs/security.md`, `docs/operations.md`
+
+---
 
 ### CW-075 · Social security uses the 2025 wage ceiling in 2026
 `P0` · payroll · **S–M** · before Pilot B · ready (regulation read 2026-10-10)
