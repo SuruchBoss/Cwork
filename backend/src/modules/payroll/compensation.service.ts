@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Injectable } from '@nestjs/common';
-import { AuditAction, EmploymentEventType, Prisma } from '@prisma/client';
+import { AuditAction, EmploymentEventType, PayFrequency, Prisma } from '@prisma/client';
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { toDateOnly } from '../../core/utils/date.util';
 import { AuditService } from '../audit/audit.service';
+import { minimumWageWarnings, type PayslipWarning } from './domain/daily-wage';
 import type {
   CreateRecurringItemDto,
   SetCompensationDto,
@@ -31,9 +32,16 @@ export class CompensationService {
   async setCompensation(user: AuthenticatedUser, dto: SetCompensationDto) {
     const employee = await this.prisma.employee.findFirst({
       where: { id: dto.employeeId, organizationId: user.organizationId, deletedAt: null },
-      select: { id: true },
+      select: {
+        id: true,
+        workLocation: {
+          select: { name: true, minimumDailyWage: true, minimumDailyWageSource: true },
+        },
+      },
     });
     if (!employee) throw new NotFoundError('Employee', dto.employeeId);
+
+    const payFrequency = assertPayBasis(dto);
 
     const effectiveFrom = toDateOnly(dto.effectiveFrom);
 
@@ -65,7 +73,8 @@ export class CompensationService {
           employeeId: dto.employeeId,
           effectiveFrom,
           baseSalary: new Prisma.Decimal(dto.baseSalary),
-          payFrequency: dto.payFrequency,
+          payFrequency,
+          dailyRate: dto.dailyRate !== undefined ? new Prisma.Decimal(dto.dailyRate) : null,
           isOvertimeEligible: dto.isOvertimeEligible,
           isSsoEligible: dto.isSsoEligible,
           pvdEmployeeRate: new Prisma.Decimal(dto.pvdEmployeeRate ?? 0),
@@ -80,8 +89,16 @@ export class CompensationService {
           employeeId: dto.employeeId,
           type: EmploymentEventType.SALARY_CHANGE,
           effectiveDate: effectiveFrom,
-          previousValue: previous ? { baseSalary: Number(previous.baseSalary) } : Prisma.DbNull,
-          newValue: { baseSalary: dto.baseSalary } as Prisma.InputJsonValue,
+          previousValue: previous
+            ? {
+                baseSalary: Number(previous.baseSalary),
+                ...(previous.dailyRate !== null ? { dailyRate: Number(previous.dailyRate) } : {}),
+              }
+            : Prisma.DbNull,
+          newValue: {
+            baseSalary: dto.baseSalary,
+            ...(dto.dailyRate !== undefined ? { dailyRate: dto.dailyRate } : {}),
+          } as Prisma.InputJsonValue,
           reason: dto.reason,
           recordedById: user.userId,
         },
@@ -101,10 +118,29 @@ export class CompensationService {
         employeeId: dto.employeeId,
         from: previous ? Number(previous.baseSalary) : null,
         to: dto.baseSalary,
+        ...(dto.dailyRate !== undefined ? { dailyRate: dto.dailyRate } : {}),
       },
     });
 
-    return created;
+    // A daily rate is checked against the minimum wage HR entered for the work
+    // location, as soon as it is set (CW-069). A warning, not a refusal: the
+    // announcement HR read may be newer than the rate on the location.
+    const warnings: PayslipWarning[] =
+      dto.dailyRate !== undefined
+        ? minimumWageWarnings(
+            dto.dailyRate,
+            employee.workLocation && {
+              name: employee.workLocation.name,
+              minimumDailyWage:
+                employee.workLocation.minimumDailyWage === null
+                  ? null
+                  : Number(employee.workLocation.minimumDailyWage),
+              minimumDailyWageSource: employee.workLocation.minimumDailyWageSource,
+            },
+          )
+        : [];
+
+    return { ...created, warnings };
   }
 
   async getCurrentCompensation(organizationId: string, employeeId: string, asOf = new Date()) {
@@ -224,4 +260,41 @@ export class CompensationService {
       where: { employeeId, taxYear, employee: { organizationId } },
     });
   }
+}
+
+/**
+ * How the employee is paid (CW-069): a monthly salary, or a daily wage paid in
+ * two halves of the month. Nothing else is paid by Cwork yet, so anything else
+ * is refused rather than stored and then paid as if it were monthly.
+ */
+function assertPayBasis(dto: SetCompensationDto): PayFrequency {
+  const payFrequency = dto.payFrequency ?? PayFrequency.MONTHLY;
+  if (payFrequency !== PayFrequency.MONTHLY && payFrequency !== PayFrequency.SEMI_MONTHLY) {
+    throw new BusinessRuleError(
+      'PAY_FREQUENCY_NOT_SUPPORTED',
+      `Cwork pays a monthly salary, or a daily wage twice a month; ${payFrequency} is not supported yet`,
+    );
+  }
+  if (dto.dailyRate === undefined) {
+    if (payFrequency === PayFrequency.SEMI_MONTHLY) {
+      throw new BusinessRuleError(
+        'DAILY_RATE_REQUIRED',
+        'Paying twice a month is for daily wages: give the daily rate',
+      );
+    }
+    return payFrequency;
+  }
+  if (dto.baseSalary > 0) {
+    throw new BusinessRuleError(
+      'DAILY_RATE_WITH_SALARY',
+      'An employee is paid either a monthly salary or a daily wage, not both: set the salary to 0',
+    );
+  }
+  if (payFrequency !== PayFrequency.SEMI_MONTHLY) {
+    throw new BusinessRuleError(
+      'DAILY_RATE_NEEDS_SEMI_MONTHLY',
+      'A daily wage is paid twice a month: set the pay frequency to SEMI_MONTHLY',
+    );
+  }
+  return payFrequency;
 }

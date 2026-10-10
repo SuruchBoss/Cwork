@@ -12,6 +12,7 @@ import {
   type TaxAllowanceInput,
   type TaxRuleSet,
 } from './thai-tax';
+import type { PayslipWarning } from './daily-wage';
 
 /**
  * Builds one payslip. Pure: every input is passed in, nothing is read from the
@@ -48,9 +49,31 @@ export interface RecurringLine {
   orderIndex: number;
 }
 
+/** What the first half of a semi-monthly month paid, as the second half reads it. */
+export interface FirstHalfPaid {
+  taxableIncome: number;
+  withholdingTax: number;
+  ssoEmployee: number;
+  /** The first half's social-security wage, before the ceiling. */
+  ssoWage: number;
+  pvdEmployee: number;
+}
+
+/**
+ * Which half of a semi-monthly month a payslip pays (CW-069). With either, the
+ * `ytd*` figures are the months before this one, without the first half.
+ */
+export type MonthHalf = { half: 1 } | { half: 2; firstHalf: FirstHalfPaid };
+
 export interface PayslipInput {
   /** Monthly base salary from the effective-dated compensation record. */
   baseSalary: number | Decimal;
+  /**
+   * A daily wage (CW-069): the rate times the days paid in the period. Never
+   * prorated, because the days already are the proration.
+   */
+  dailyWage?: { rate: number; daysPaid: number };
+  half?: MonthHalf;
   currency: string;
   /** Working days in the payroll period (excludes weekends and holidays). */
   workingDaysInPeriod: number;
@@ -94,6 +117,10 @@ export interface PayslipDraft {
   pvdEmployer: Decimal;
   employerCost: Decimal;
   overtimeHours: Decimal;
+  /** What HR should check, such as a first half that withheld more than the month. */
+  warnings: PayslipWarning[];
+  /** The social-security wage before the ceiling, which a second half adds to. */
+  ssoWage: Decimal;
 }
 
 export function buildPayslip(input: PayslipInput): PayslipDraft {
@@ -103,30 +130,54 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
 
   // ---- Earnings -----------------------------------------------------------
 
+  const daily = input.dailyWage;
+  const warnings: PayslipWarning[] = [];
   // Pro-rate salary when the employee did not work the full period (joined or
-  // left mid-month, or took unpaid leave).
-  const proratedSalary =
-    input.workingDaysInPeriod > 0 && input.payableDays < input.workingDaysInPeriod
+  // left mid-month, or took unpaid leave). A daily wage is paid by the day.
+  const prorates =
+    !daily && input.workingDaysInPeriod > 0 && input.payableDays < input.workingDaysInPeriod;
+  const proratedSalary = daily
+    ? round2(new Decimal(daily.rate).times(daily.daysPaid))
+    : prorates
       ? round2(baseSalary.times(input.payableDays).dividedBy(input.workingDaysInPeriod))
       : round2(baseSalary);
 
-  lines.push({
-    code: 'BASE',
-    name: 'เงินเดือน',
-    type: PayComponentType.EARNING,
-    amount: proratedSalary,
-    isTaxable: true,
-    orderIndex: 0,
-    meta: proratedSalary.equals(baseSalary)
-      ? undefined
-      : {
-          proratedFrom: baseSalary.toNumber(),
-          payableDays: input.payableDays,
-          workingDays: input.workingDaysInPeriod,
-        },
-  });
+  if (daily) {
+    lines.push({
+      code: 'BASE',
+      name: 'ค่าจ้างรายวัน',
+      type: PayComponentType.EARNING,
+      quantity: new Decimal(daily.daysPaid),
+      rate: new Decimal(daily.rate),
+      amount: proratedSalary,
+      isTaxable: true,
+      orderIndex: 0,
+      meta: { dailyRate: daily.rate, daysPaid: daily.daysPaid },
+    });
+  } else {
+    lines.push({
+      code: 'BASE',
+      name: 'เงินเดือน',
+      type: PayComponentType.EARNING,
+      amount: proratedSalary,
+      isTaxable: true,
+      orderIndex: 0,
+      meta: proratedSalary.equals(baseSalary)
+        ? undefined
+        : {
+            proratedFrom: baseSalary.toNumber(),
+            payableDays: input.payableDays,
+            workingDays: input.workingDaysInPeriod,
+          },
+    });
+  }
 
-  const hourlyRate = deriveHourlyRate(baseSalary, input.standardWorkHoursPerDay ?? 8);
+  // A daily-wage employee's hour is the day's wage over the hours of a day; a
+  // salaried one's is the month over thirty days, then the hours (see
+  // docs/payroll-thailand.md, "Daily wages").
+  const hourlyRate = daily
+    ? new Decimal(daily.rate).dividedBy(input.standardWorkHoursPerDay ?? 8).toDecimalPlaces(4)
+    : deriveHourlyRate(baseSalary, input.standardWorkHoursPerDay ?? 8);
   let overtimeHours = new Decimal(0);
 
   for (const ot of input.overtime) {
@@ -148,9 +199,7 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
 
   for (const item of input.recurring.filter((r) => r.type === PayComponentType.EARNING)) {
     const amount =
-      item.isProratable &&
-      input.workingDaysInPeriod > 0 &&
-      input.payableDays < input.workingDaysInPeriod
+      item.isProratable && prorates
         ? round2(
             new Decimal(item.amount).times(input.payableDays).dividedBy(input.workingDaysInPeriod),
           )
@@ -206,7 +255,7 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
     .reduce((acc, r) => acc.plus(r.amount), proratedSalary);
 
   const sso = input.isSsoEligible
-    ? computeSocialSecurity(ssoBase, rules, input.ytdSsoEmployee)
+    ? socialSecurityFor(ssoBase, input, rules, warnings)
     : {
         employeeContribution: new Decimal(0),
         employerContribution: new Decimal(0),
@@ -248,8 +297,16 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
   );
   const recurringTaxable = taxableEarnings.minus(oneTimeTaxable);
 
-  const withholding = computeMonthlyWithholding({
-    monthlyTaxableIncome: recurringTaxable,
+  // The month this payslip's withholding is worked out on. A whole month is
+  // itself. A first half estimates the month as twice the half; a second half
+  // is the two halves together (PO decision Q4).
+  const half = input.half;
+  const monthOf = (thisSlip: Decimal, firstHalf: number) =>
+    !half ? thisSlip : half.half === 1 ? thisSlip.times(2) : thisSlip.plus(firstHalf);
+  const firstHalf = half?.half === 2 ? half.firstHalf : null;
+
+  const forTheMonth = computeMonthlyWithholding({
+    monthlyTaxableIncome: monthOf(recurringTaxable, firstHalf?.taxableIncome ?? 0),
     ytdTaxableIncome: input.ytdTaxableIncome,
     ytdWithheld: input.ytdWithheldTax,
     monthNumber: input.monthNumber,
@@ -260,12 +317,38 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
       // annual figures back into the allowance calculation.
       socialSecurityContribution:
         (input.taxAllowances.socialSecurityContribution ?? 0) ||
-        Math.min(rules.socialSecurityCap, sso.employeeContribution.times(12).toNumber()),
+        Math.min(
+          rules.socialSecurityCap,
+          monthOf(sso.employeeContribution, firstHalf?.ssoEmployee ?? 0)
+            .times(12)
+            .toNumber(),
+        ),
       providentFundContribution:
-        (input.taxAllowances.providentFundContribution ?? 0) || pvdEmployee.times(12).toNumber(),
+        (input.taxAllowances.providentFundContribution ?? 0) ||
+        monthOf(pvdEmployee, firstHalf?.pvdEmployee ?? 0)
+          .times(12)
+          .toNumber(),
     },
     rules,
   });
+
+  // A first half withholds half the month's estimate. A second half withholds
+  // the month less what the first half took, and never less than nothing: if
+  // the first half took more, the difference is shown to HR, not refunded here.
+  let withholdingThisSlip = forTheMonth.withholdingThisMonth;
+  if (half?.half === 1) {
+    withholdingThisSlip = round2(withholdingThisSlip.dividedBy(2));
+  } else if (firstHalf) {
+    const rest = withholdingThisSlip.minus(firstHalf.withholdingTax);
+    if (rest.lessThan(0)) {
+      warnings.push({
+        code: 'WITHHOLDING_OVER_IN_FIRST_HALF',
+        params: { amount: round2(rest.negated()).toNumber() },
+      });
+    }
+    withholdingThisSlip = round2(Decimal.max(0, rest));
+  }
+  const withholding = { ...forTheMonth, withholdingThisMonth: withholdingThisSlip };
 
   if (withholding.withholdingThisMonth.greaterThan(0)) {
     lines.push({
@@ -278,6 +361,9 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
       meta: {
         projectedAnnualIncome: withholding.projectedAnnualIncome.toNumber(),
         projectedAnnualTax: withholding.projectedAnnualTax.toNumber(),
+        ...(half
+          ? { half: half.half, monthWithholding: forTheMonth.withholdingThisMonth.toNumber() }
+          : {}),
       },
     });
   }
@@ -306,7 +392,7 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
     });
   }
 
-  if (input.unpaidLeaveDays > 0 && input.workingDaysInPeriod > 0) {
+  if (!daily && input.unpaidLeaveDays > 0 && input.workingDaysInPeriod > 0) {
     // Already reflected in the prorated salary; recorded for transparency.
     lines.push({
       code: 'UNPAID_LEAVE',
@@ -371,6 +457,60 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
     pvdEmployer,
     employerCost: round2(grossEarnings.plus(employerContributions)),
     overtimeHours: round2(overtimeHours),
+    warnings,
+    ssoWage: round2(ssoBase),
+  };
+}
+
+/**
+ * Social security for this payslip (PO decision Q5).
+ *
+ * A whole month is the usual monthly contribution. A first half is 5% of its
+ * own wage up to the ceiling, with no floor: the floor is a monthly figure and
+ * half a month under it may still be a month over it. A second half is the
+ * whole month's contribution, with the floor and the ceiling applied once,
+ * less the first half, so the two halves always add up to what a monthly run
+ * would have deducted. It is never negative; a first half that took more than
+ * the month (a month that ended under the floor) is shown to HR.
+ */
+function socialSecurityFor(
+  ssoBase: Decimal,
+  input: PayslipInput,
+  rules: TaxRuleSet,
+  warnings: PayslipWarning[],
+) {
+  const half = input.half;
+  if (!half) return computeSocialSecurity(ssoBase, rules, input.ytdSsoEmployee);
+
+  if (half.half === 1) {
+    const { rate, maxMonthlyWage } = rules.socialSecurity;
+    const contributoryWage = Decimal.min(ssoBase, maxMonthlyWage);
+    const room = Decimal.max(0, new Decimal(rules.socialSecurityCap).minus(input.ytdSsoEmployee));
+    const contribution = round2(Decimal.min(contributoryWage.times(rate), room));
+    return {
+      contributoryWage: round2(contributoryWage),
+      employeeContribution: contribution,
+      employerContribution: contribution,
+    };
+  }
+
+  const month = computeSocialSecurity(
+    ssoBase.plus(half.firstHalf.ssoWage),
+    rules,
+    input.ytdSsoEmployee,
+  );
+  const rest = month.employeeContribution.minus(half.firstHalf.ssoEmployee);
+  if (rest.lessThan(0)) {
+    warnings.push({
+      code: 'SSO_OVER_IN_FIRST_HALF',
+      params: { amount: round2(rest.negated()).toNumber() },
+    });
+  }
+  const contribution = round2(Decimal.max(0, rest));
+  return {
+    contributoryWage: month.contributoryWage,
+    employeeContribution: contribution,
+    employerContribution: contribution,
   };
 }
 

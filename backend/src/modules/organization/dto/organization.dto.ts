@@ -10,6 +10,7 @@ import {
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -186,6 +187,27 @@ export class CreateWorkLocationDto {
   @IsArray()
   @IsString({ each: true })
   ipAllowlist?: string[];
+
+  @ApiPropertyOptional({
+    example: 400,
+    description:
+      'Minimum daily wage here, baht, as read from the Wage Committee announcement (CW-069). Null clears it',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  minimumDailyWage?: number | null;
+
+  @ApiPropertyOptional({
+    example: 'ประกาศคณะกรรมการค่าจ้าง เรื่อง อัตราค่าจ้างขั้นต่ำ (ฉบับที่ 14)',
+    description: 'The announcement the minimum daily wage was read from; required with it',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  minimumDailyWageSource?: string | null;
 }
 
 export class UpdateWorkLocationDto extends PartialType(CreateWorkLocationDto) {

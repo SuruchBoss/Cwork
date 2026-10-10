@@ -120,6 +120,13 @@ model PayrollPeriod {
   code           String
   year           Int
   month          Int
+  /// MONTHLY pays the whole month at once; SEMI_MONTHLY pays it in two halves
+  /// (CW-069). Only these two are used for periods.
+  payFrequency   PayFrequency @default(MONTHLY)
+  /// 0 = the whole month; 1 and 2 = the first and second half of a
+  /// SEMI_MONTHLY month. Never null, so the unique key below holds for
+  /// monthly periods too (a null would let two monthly periods share a month).
+  half           Int      @default(0)
   periodStart    DateTime @db.Date
   periodEnd      DateTime @db.Date
   /// Attendance/OT/claims after this instant roll into the next period.
@@ -132,6 +139,7 @@ model PayrollPeriod {
   runs PayrollRun[]
 
   @@unique([organizationId, code])
+  @@unique([organizationId, payFrequency, year, month, half])
   @@index([organizationId, year, month])
   @@map("payroll_periods")
 }
@@ -208,6 +216,11 @@ model Payslip {
   overtimeHours  Decimal  @default(0) @db.Decimal(8, 2)
   /// Frozen copy of employee, compensation and tax inputs used for this slip.
   snapshot       Json     @default("{}")
+  /// What HR should check before approving (CW-069), as `{ code, params }`
+  /// objects so the run page can say each one in the reader's language: a day
+  /// counted as worked from an incomplete punch, a daily rate under the work
+  /// location's minimum wage, a first half that withheld more than the month.
+  warnings       Json     @default("[]")
   pdfFileId      String?  @db.Uuid
   publishedAt    DateTime?
   viewedAt       DateTime?

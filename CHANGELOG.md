@@ -37,7 +37,9 @@ guide walks HR through those imports, and filing and approving leave in the app
 has been reworked for someone using it for the first time (CW-066). In Thai,
 every year the console, the app and the certificate PDF show is Buddhist era,
 and the console's date fields are typed and picked day first in it (CW-058).
-The console and the app also work in English; benefits, shifts and issued
+The API can pay daily wages twice a month, in two half-month periods, with
+the minimum wage checked against each work location; the screens for it are
+not in this release (CW-069). The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
 
@@ -48,7 +50,9 @@ balance's `used` now includes leave taken before Cwork, which is 0 until
 someone imports it. A migration gives the new `leave:record` permission to the
 HR officer, HR admin and super admin roles; a custom role that should record
 leave for others needs it added. An imported row with no Thai name but an English
-one, which 0.3.1 refused, is now accepted.
+one, which 0.3.1 refused, is now accepted. A month can now have only one
+monthly payroll period: the migration that enforces it stops and names the
+periods if an installation already has two for the same month.
 
 ### Added
 
@@ -362,6 +366,27 @@ one, which 0.3.1 refused, is now accepted.
   language is reported as `NAME_REQUIRED`. A passport number is 5 to 20 letters
   and digits, with spaces and dashes ignored; a number repeated in one file is
   reported. Expiry alerts are not part of this.
+- **Daily wages paid twice a month, in the API** (CW-069, phase A). Cwork paid
+  only a monthly salary, so a factory or shop paying staff by the day every
+  fifteen days could not use it. A compensation can now carry a `dailyRate`
+  (with the salary at 0 and the pay frequency `SEMI_MONTHLY`; anything else,
+  `DAILY` included, is refused), and a month can be paid in two periods, half 1
+  and half 2 (`YYYY-MM-H1`, `YYYY-MM-H2`). A month has at most one monthly
+  period and one of each half, enforced by the database. A half pays only the
+  daily-wage employees, a monthly run everyone else. The days paid come from
+  attendance, paid leave by its portion, and paid holidays on working days; an
+  incomplete punch counts as worked and is flagged. Social security is 5% of the
+  first half with no floor, then the whole month less the first half, so the
+  month equals a monthly run's; withholding is half the estimated month, then
+  the month less the first half, never negative, with any excess shown to HR.
+  The second half needs the first half paid. Benefit premiums and standing
+  allowances and deductions go on the second half. Each work location holds the
+  minimum daily wage HR read from the Wage Committee announcement, with its
+  source, and a rate under it, or no rate to compare with, is flagged when the
+  rate is set and when a half is calculated. Payslips carry `warnings` for the
+  run page. The rules, how far their legal basis has been checked, and the gaps
+  (substitute holidays, holiday work by daily staff) are in
+  `docs/payroll-thailand.md`. The screens come in phase B.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the
