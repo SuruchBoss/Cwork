@@ -78,7 +78,7 @@ describe('Importing leave taken before Cwork (CW-059)', () => {
 
     expect(post).toHaveBeenLastCalledWith('/leave/balances/import', expect.any(FormData));
     expect(
-      await screen.findByText('นำเข้าวันลาที่ใช้ไปในปี 2026 ของพนักงาน 1 คนแล้ว'),
+      await screen.findByText('นำเข้าวันลาที่ใช้ไปในปี 2569 ของพนักงาน 1 คนแล้ว'),
     ).toBeInTheDocument();
   });
 });

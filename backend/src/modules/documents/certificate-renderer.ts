@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DocumentRequestType } from '@prisma/client';
 import PDFDocument from 'pdfkit';
+import { formatThaiDocumentDate } from '../../core/utils/date.util';
 
 /**
  * Renders an HR certificate to a PDF (CW-008).
@@ -41,6 +42,7 @@ export interface CertificateData {
     position: string | null;
     positionEn: string | null;
     department: string | null;
+    /** ISO, as the merge data carries it; printed in words. */
     hireDate: string;
     yearsOfService: number;
     status: string;
@@ -66,7 +68,7 @@ export function certificateBody(data: CertificateData): string[] {
   const who = `${employee.nameTh}${employee.nameEn ? ` (${employee.nameEn})` : ''} รหัสพนักงาน ${employee.employeeCode}`;
   const role = employee.position ? `ตำแหน่ง ${employee.position}` : 'พนักงาน';
   const department = employee.department ? ` สังกัด${employee.department}` : '';
-  const tenure = `เริ่มปฏิบัติงานเมื่อวันที่ ${employee.hireDate} รวมอายุงาน ${employee.yearsOfService} ปี`;
+  const tenure = `เริ่มปฏิบัติงานเมื่อวันที่ ${formatThaiDocumentDate(employee.hireDate)} รวมอายุงาน ${employee.yearsOfService} ปี`;
 
   const intro = `${orgName} ขอรับรองว่า ${who} เป็นพนักงานของบริษัท ${role}${department} ${tenure}`;
   const salary = data.compensation
@@ -136,7 +138,7 @@ export class CertificateRenderer {
 
     doc.font(REGULAR).fontSize(11);
     doc.text(`เลขที่ ${data.referenceNo}`, { align: 'right' });
-    doc.text(`วันที่ ${data.issuedOn}`, { align: 'right' });
+    doc.text(`วันที่ ${formatThaiDocumentDate(data.issuedOn)}`, { align: 'right' });
     doc.moveDown(1);
 
     doc.font(BOLD).fontSize(16).text(data.typeLabel, { align: 'center' });

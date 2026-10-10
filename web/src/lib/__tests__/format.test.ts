@@ -13,6 +13,7 @@ import {
   formatPeriod,
   formatYear,
   initials,
+  parseThaiDate,
 } from '../format';
 
 afterEach(() => useUiStore.setState({ language: 'th' }));
@@ -37,6 +38,27 @@ describe('Buddhist-era years in Thai (CW-058)', () => {
     expect(formatPeriod('2026-13')).toBe('2026-13');
     expect(formatPeriod('BONUS-Q3')).toBe('BONUS-Q3');
     expect(formatPeriod(null)).toBe('—');
+  });
+
+  it('reads a date typed day first in the Buddhist era', () => {
+    expect(parseThaiDate('1/10/2569')).toBe('2026-10-01');
+    expect(parseThaiDate(' 1-10-69 ')).toBe('2026-10-01');
+    expect(parseThaiDate('1 ต.ค. 2569')).toBe('2026-10-01');
+    expect(parseThaiDate('1 ตุลาคม 2569')).toBe('2026-10-01');
+    expect(parseThaiDate('29/2/2567')).toBe('2024-02-29');
+  });
+
+  it('takes a Gregorian year or an ISO date as it is', () => {
+    expect(parseThaiDate('1/10/2026')).toBe('2026-10-01');
+    expect(parseThaiDate('2026-10-01')).toBe('2026-10-01');
+  });
+
+  it('refuses what is not a date', () => {
+    expect(parseThaiDate('31/2/2569')).toBeNull();
+    expect(parseThaiDate('1/13/2569')).toBeNull();
+    expect(parseThaiDate('1 ตุลา 2569')).toBeNull();
+    expect(parseThaiDate('พรุ่งนี้')).toBeNull();
+    expect(parseThaiDate('')).toBeNull();
   });
 
   it('leaves English Gregorian', () => {

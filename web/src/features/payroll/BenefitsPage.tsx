@@ -8,6 +8,7 @@ import {
   Badge,
   Button,
   Card,
+  DateInput,
   EmptyState,
   ErrorState,
   Field,
@@ -381,17 +382,15 @@ function EnrollTab() {
               </Select>
             </Field>
             <Field label={t('Effective from')}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.effectiveFrom}
-                onChange={(e) => setForm({ ...form, effectiveFrom: e.target.value })}
+                onChange={(value) => setForm({ ...form, effectiveFrom: value })}
               />
             </Field>
             <Field label={t('To (blank = ongoing)')}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.effectiveTo}
-                onChange={(e) => setForm({ ...form, effectiveTo: e.target.value })}
+                onChange={(value) => setForm({ ...form, effectiveTo: value })}
               />
             </Field>
           </div>

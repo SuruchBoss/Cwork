@@ -1018,4 +1018,11 @@ export const thMessages: Record<string, string> = {
   'A passport number is 5 to 20 English letters and digits.':
     'เลขพาสปอร์ตใช้ตัวอักษรภาษาอังกฤษและตัวเลข 5 ถึง 20 ตัว',
   'A number is on file. Leave blank to keep it.': 'มีเลขบันทึกไว้แล้ว เว้นว่างไว้ถ้าไม่เปลี่ยน',
+  // Thai date fields (CW-058)
+  'day/month/year': 'วัน/เดือน/ปี พ.ศ.',
+  'Choose a date': 'เลือกวันที่',
+  'Previous month': 'เดือนก่อนหน้า',
+  'Next month': 'เดือนถัดไป',
+  'Write the date as day/month/year, for example {example}':
+    'พิมพ์วันที่เป็น วัน/เดือน/ปี พ.ศ. เช่น {example}',
 };

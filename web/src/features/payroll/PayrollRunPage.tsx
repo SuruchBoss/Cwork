@@ -16,7 +16,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatDateTime, formatMoney } from '@/lib/format';
+import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -141,7 +141,7 @@ export default function PayrollRunPage() {
       <PageHeader
         title={t('Run {no}', { no: data.runNo })}
         description={t('Period {code} · pay date {date}', {
-          code: data.period.code,
+          code: formatPeriod(data.period.code),
           date: formatDate(data.period.payDate),
         })}
         actions={

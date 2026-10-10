@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { qk } from '@/app/query-client';
-import { Button, Field, Input, Select, Textarea } from '@/components/ui';
+import { Button, DateInput, Field, Select, Textarea } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
@@ -336,11 +336,9 @@ export function RecordLeavePanel({
 
         <div className="toolbar" style={{ alignItems: 'flex-start' }}>
           <Field label={t('First day of leave')}>
-            <Input
-              type="date"
+            <DateInput
               value={startDate}
-              onChange={(e) => {
-                const value = e.target.value;
+              onChange={(value) => {
                 // The last day follows the first until it is set apart: one day off, one pick.
                 if (endDate === startDate || endDate < value) setEndDate(value);
                 setStartDate(value);
@@ -348,12 +346,7 @@ export function RecordLeavePanel({
             />
           </Field>
           <Field label={t('Until')} hint={oneDay ? t('(one day)') : undefined}>
-            <Input
-              type="date"
-              value={endDate}
-              min={startDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <DateInput value={endDate} min={startDate} onChange={setEndDate} />
           </Field>
         </div>
 

@@ -9,17 +9,18 @@ import {
   Badge,
   Button,
   Card,
+  DateInput,
   EmptyState,
   ErrorState,
   Field,
-  Input,
   PageHeader,
+  Select,
   Stat,
   TableSkeleton,
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatPeriod, formatYear } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollPeriodStatusLabels, payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -98,7 +99,11 @@ export default function PayrollPage() {
 
       {latest && (
         <div className="grid grid--4">
-          <Stat label={t('Latest run')} value={latest.runNo} hint={latest.period?.code} />
+          <Stat
+            label={t('Latest run')}
+            value={latest.runNo}
+            hint={latest.period ? formatPeriod(latest.period.code) : undefined}
+          />
           <Stat label={t('Employees')} value={latest.employeeCount} />
           <Stat label={t('Total gross')} value={formatMoney(latest.totalGross, latest.currency)} />
           <Stat label={t('Net pay')} value={formatMoney(latest.totalNet, latest.currency)} />
@@ -108,41 +113,47 @@ export default function PayrollPage() {
       {creating && (
         <Card title={t('Create a pay period')}>
           <div className="toolbar">
+            {/* Chosen from lists, so the year reads in the reader's era (CW-058). */}
             <Field label={t('Year')}>
-              <Input
-                type="number"
+              <Select
                 value={form.year}
                 onChange={(e) => setForm({ ...form, year: Number(e.target.value) })}
-              />
+              >
+                {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((year) => (
+                  <option key={year} value={year}>
+                    {formatYear(year)}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label={t('Month')}>
-              <Input
-                type="number"
-                min={1}
-                max={12}
+              <Select
                 value={form.month}
                 onChange={(e) => setForm({ ...form, month: Number(e.target.value) })}
-              />
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <option key={month} value={month}>
+                    {formatDate(new Date(2000, month - 1, 1), 'LLLL')}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label={t('Period start')}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.periodStart}
-                onChange={(e) => setForm({ ...form, periodStart: e.target.value })}
+                onChange={(value) => setForm({ ...form, periodStart: value })}
               />
             </Field>
             <Field label={t('Period end')}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.periodEnd}
-                onChange={(e) => setForm({ ...form, periodEnd: e.target.value })}
+                onChange={(value) => setForm({ ...form, periodEnd: value })}
               />
             </Field>
             <Field label={t('Pay date')}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.payDate}
-                onChange={(e) => setForm({ ...form, payDate: e.target.value })}
+                onChange={(value) => setForm({ ...form, payDate: value })}
               />
             </Field>
             <Button
@@ -189,7 +200,7 @@ export default function PayrollPage() {
               <tbody>
                 {periods.data.map((period) => (
                   <tr key={period.id}>
-                    <td className="mono">{period.code}</td>
+                    <td>{formatPeriod(period.code)}</td>
                     <td>
                       {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
                     </td>
@@ -256,7 +267,7 @@ export default function PayrollPage() {
                 {runs.data.map((run) => (
                   <tr key={run.id}>
                     <td className="mono">{run.runNo}</td>
-                    <td>{run.period?.code ?? '—'}</td>
+                    <td>{formatPeriod(run.period?.code)}</td>
                     <td className="num">{run.employeeCount}</td>
                     <td className="num">{formatMoney(run.totalGross, run.currency)}</td>
                     <td className="num">{formatMoney(run.totalNet, run.currency)}</td>

@@ -39,8 +39,8 @@ void main() {
       final String text = errorText(
         failure('OVERLAPPING_LEAVE', <String, Object?>{'from': '2026-10-07', 'to': '2026-10-08'}),
       );
-      expect(text, contains('7 ต.ค. 2026'));
-      expect(text, contains('8 ต.ค. 2026'));
+      expect(text, contains('7 ต.ค. 2569'));
+      expect(text, contains('8 ต.ค. 2569'));
     });
 
     test('says what to do when the phone is offline', () {

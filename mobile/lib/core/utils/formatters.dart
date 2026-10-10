@@ -22,9 +22,40 @@ class Fmt {
   static final DateFormat _time = DateFormat('HH:mm');
   static final DateFormat _iso = DateFormat('yyyy-MM-dd');
 
-  static DateFormat get _date => DateFormat('d MMM yyyy', _intlLocale);
-  static DateFormat get _dateShort => DateFormat('d MMM', _intlLocale);
-  static DateFormat get _dateTime => DateFormat('d MMM yyyy HH:mm', _intlLocale);
+  /// Thai years are counted in the Buddhist era (CW-058): 2569 is 2026. Only
+  /// what is displayed changes; the API's dates stay Gregorian ISO.
+  static const int buddhistEraOffset = 543;
+
+  /// Formats [date] with [pattern] in the current language. intl has no
+  /// Buddhist calendar, so in Thai every `y` run outside quotes becomes the
+  /// Buddhist-era year as a quoted literal first; `yy` keeps its meaning of
+  /// the last two digits.
+  static String _format(String pattern, DateTime date) {
+    if (_en) return DateFormat(pattern, _intlLocale).format(date);
+    final String year = '${date.year + buddhistEraOffset}';
+    final StringBuffer out = StringBuffer();
+    bool quoted = false;
+    for (int i = 0; i < pattern.length; i++) {
+      final String char = pattern[i];
+      if (char == "'") {
+        quoted = !quoted;
+        out.write(char);
+      } else if (char == 'y' && !quoted) {
+        int run = 1;
+        while (i + run < pattern.length && pattern[i + run] == 'y') {
+          run++;
+        }
+        out.write("'${run == 2 ? year.substring(year.length - 2) : year}'");
+        i += run - 1;
+      } else {
+        out.write(char);
+      }
+    }
+    return DateFormat(out.toString(), _intlLocale).format(date);
+  }
+
+  /// A Gregorian year as the reader counts it: Buddhist era in Thai.
+  static String year(int value) => '${_en ? value : value + buddhistEraOffset}';
   static NumberFormat get _money => NumberFormat.currency(
         locale: _en ? 'en_US' : 'th_TH',
         symbol: '฿',
@@ -33,17 +64,24 @@ class Fmt {
 
   static String date(Object? value) {
     final DateTime? parsed = _parse(value);
-    return parsed == null ? '—' : _date.format(parsed);
+    return parsed == null ? '—' : _format('d MMM yyyy', parsed);
+  }
+
+  /// A date with the month in words, the way a document writes it:
+  /// "15 มกราคม 2567" / "15 January 2024". For the payslip's pay date.
+  static String dateLong(Object? value) {
+    final DateTime? parsed = _parse(value);
+    return parsed == null ? '—' : _format('d MMMM yyyy', parsed);
   }
 
   static String dateShort(Object? value) {
     final DateTime? parsed = _parse(value);
-    return parsed == null ? '—' : _dateShort.format(parsed);
+    return parsed == null ? '—' : _format('d MMM', parsed);
   }
 
   static String dateTime(Object? value) {
     final DateTime? parsed = _parse(value);
-    return parsed == null ? '—' : _dateTime.format(parsed.toLocal());
+    return parsed == null ? '—' : _format('d MMM yyyy HH:mm', parsed.toLocal());
   }
 
   static String time(Object? value) {
@@ -72,13 +110,13 @@ class Fmt {
   }
 
   /// A pay period's code as the month it is, when it is one: "2026-08" reads
-  /// "สิงหาคม 2026" / "August 2026". Any other code is shown as HR wrote it.
+  /// "สิงหาคม 2569" / "August 2026". Any other code is shown as HR wrote it.
   static String period(String code) {
     final RegExpMatch? match = RegExp(r'^(\d{4})-(\d{2})$').firstMatch(code);
     if (match == null) return code;
     final int month = int.parse(match.group(2)!);
     if (month < 1 || month > 12) return code;
-    return DateFormat('MMMM yyyy', _intlLocale).format(DateTime(int.parse(match.group(1)!), month));
+    return _format('MMMM yyyy', DateTime(int.parse(match.group(1)!), month));
   }
 
   /// Minutes as "8 ชม. 5 นาที" (Thai) or "8 hr 5 min" (English). Zero renders
@@ -106,13 +144,13 @@ class Fmt {
       if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
       if (diff.inHours < 24) return '${diff.inHours}h ago';
       if (diff.inDays < 7) return '${diff.inDays}d ago';
-      return _date.format(parsed);
+      return _format('d MMM yyyy', parsed);
     }
     if (diff.inMinutes < 1) return 'เมื่อสักครู่';
     if (diff.inMinutes < 60) return '${diff.inMinutes} นาทีที่แล้ว';
     if (diff.inHours < 24) return '${diff.inHours} ชั่วโมงที่แล้ว';
     if (diff.inDays < 7) return '${diff.inDays} วันที่แล้ว';
-    return _date.format(parsed);
+    return _format('d MMM yyyy', parsed);
   }
 
   static String initials(String? name) {

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import { Badge, Card, EmptyState, PageHeader, Person, Stat } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatMoney, formatRelative } from '@/lib/format';
+import { formatDate, formatMoney, formatPeriod, formatRelative } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { approvalEntityLabels, leaveStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -85,7 +85,7 @@ export default function DashboardPage() {
         {canSeePayroll && (
           <Stat
             label={t('Latest payroll run')}
-            value={run ? run.period?.code ?? run.runNo : '—'}
+            value={run ? (run.period ? formatPeriod(run.period.code) : run.runNo) : '—'}
             hint={run ? formatMoney(run.totalNet, run.currency) : t('No runs yet')}
             to="/payroll"
           />

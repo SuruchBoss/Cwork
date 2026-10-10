@@ -29,6 +29,56 @@ export function formatDateOnly(value: Date): string {
   return format(toDateOnly(value), DATE_ONLY_FORMAT);
 }
 
+const THAI_MONTHS = [
+  'มกราคม',
+  'กุมภาพันธ์',
+  'มีนาคม',
+  'เมษายน',
+  'พฤษภาคม',
+  'มิถุนายน',
+  'กรกฎาคม',
+  'สิงหาคม',
+  'กันยายน',
+  'ตุลาคม',
+  'พฤศจิกายน',
+  'ธันวาคม',
+];
+
+const THAI_MONTHS_SHORT = [
+  'ม.ค.',
+  'ก.พ.',
+  'มี.ค.',
+  'เม.ย.',
+  'พ.ค.',
+  'มิ.ย.',
+  'ก.ค.',
+  'ส.ค.',
+  'ก.ย.',
+  'ต.ค.',
+  'พ.ย.',
+  'ธ.ค.',
+];
+
+/**
+ * A calendar day in a Thai message, as the console shows one (CW-058):
+ * "15 ม.ค. 2567". For notifications and errors written in Thai, which used to
+ * carry the API's ISO date.
+ */
+export function formatThaiDate(value: Date | string): string {
+  const day = toDateOnly(value);
+  return `${day.getUTCDate()} ${THAI_MONTHS_SHORT[day.getUTCMonth()]} ${day.getUTCFullYear() + 543}`;
+}
+
+/**
+ * A calendar day the way a Thai document writes it (CW-058): the month in
+ * words and the Buddhist-era year, "15 มกราคม 2567" for 2024-01-15. For text
+ * printed on a document; the API keeps ISO dates.
+ */
+export function formatThaiDocumentDate(value: Date | string): string {
+  const day = toDateOnly(value);
+  return `${day.getUTCDate()} ${THAI_MONTHS[day.getUTCMonth()]} ${day.getUTCFullYear() + 543}`;
+}
+
 /** Calendar day (in `timezone`) that an instant belongs to. */
 export function workDateFor(instant: Date, timezone: string): Date {
   const local = toZonedTime(instant, timezone);

@@ -81,6 +81,62 @@ export function formatPeriod(code: string | null | undefined): string {
   return formatMonthYear(Number(match[1]), month);
 }
 
+/** A Date as the API's date-only string, from its local calendar day: 2026-10-01. */
+export function toIsoDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Thai month names and abbreviations, January first, as date-fns writes them. */
+const THAI_MONTHS: string[][] = Array.from({ length: 12 }, (_, month) => {
+  const date = new Date(2000, month, 1);
+  return [format(date, 'LLLL', { locale: th }), format(date, 'LLL', { locale: th })];
+});
+
+/**
+ * Reads a date typed into a Thai date field (CW-058) and returns it as the
+ * API's ISO date, or null if it is not one. Day comes first, the way Thai is
+ * written: "1/10/2569", "1-10-69", "1 ต.ค. 2569" and "1 ตุลาคม 2569" all mean
+ * 2026-10-01. A year of 2400 or more is Buddhist era; a smaller four-digit year
+ * is taken as Gregorian, since nobody types a date from before 1857; two digits
+ * are the end of a Buddhist-era year, as Thai offices abbreviate it. An ISO
+ * date (2026-10-01) is read as it is.
+ */
+export function parseThaiDate(text: string): string | null {
+  const input = text.trim().replace(/\s+/g, ' ');
+  if (!input) return null;
+
+  let day: number;
+  let month: number;
+  let year: number;
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(input);
+  const numeric = /^(\d{1,2})[/.\- ](\d{1,2})[/.\- ](\d{2}|\d{4})$/.exec(input);
+  const named = /^(\d{1,2}) ?([฀-๿.]+) ?(\d{2}|\d{4})$/.exec(input);
+  if (iso) {
+    [year, month, day] = [Number(iso[1]), Number(iso[2]), Number(iso[3])];
+  } else if (numeric) {
+    [day, month, year] = [Number(numeric[1]), Number(numeric[2]), Number(numeric[3])];
+  } else if (named) {
+    const name = named[2];
+    const index = THAI_MONTHS.findIndex((names) => names.includes(name));
+    if (index < 0) return null;
+    [day, month, year] = [Number(named[1]), index + 1, Number(named[3])];
+  } else {
+    return null;
+  }
+
+  if (!iso) {
+    if (year < 100) year += 2500;
+    if (year >= 2400) year -= BUDDHIST_ERA_OFFSET;
+  }
+  const date = new Date(year, month - 1, day);
+  // Rejects 31/2 and 13/1, which Date would quietly roll into the next month.
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  return toIsoDate(date);
+}
+
 export function formatDateTime(value: string | Date | null | undefined): string {
   return formatDate(value, 'd MMM yyyy HH:mm');
 }

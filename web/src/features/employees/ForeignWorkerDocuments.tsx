@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { qk } from '@/app/query-client';
-import { Badge, Button, Card, Field, Input } from '@/components/ui';
+import { Badge, Button, Card, DateInput, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, todayIso } from '@/lib/format';
@@ -192,11 +192,7 @@ function DocumentsForm({
           />
         </Field>
         <Field label={t('Passport expiry')}>
-          <Input
-            type="date"
-            value={passportExpiresOn}
-            onChange={(e) => setPassportExpiresOn(e.target.value)}
-          />
+          <DateInput value={passportExpiresOn} onChange={setPassportExpiresOn} />
         </Field>
       </div>
       <div className="toolbar" style={{ alignItems: 'flex-start' }}>
@@ -210,11 +206,7 @@ function DocumentsForm({
           />
         </Field>
         <Field label={t('Work permit expiry')}>
-          <Input
-            type="date"
-            value={workPermitExpiresOn}
-            onChange={(e) => setWorkPermitExpiresOn(e.target.value)}
-          />
+          <DateInput value={workPermitExpiresOn} onChange={setWorkPermitExpiresOn} />
         </Field>
       </div>
       {problem && (

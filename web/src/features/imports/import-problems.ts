@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { formatNumber } from '@/lib/format';
+import { formatNumber, formatPeriod } from '@/lib/format';
 import type { translate } from '@/lib/i18n';
 
 /**
@@ -84,6 +84,8 @@ export function describeProblem(problem: ImportProblem, t: Translate): string {
   const params = { ...problem.params };
   // "department", "position", … are words in a sentence, so they translate too.
   if (typeof params.what === 'string') params.what = t(params.what);
+  // A pay period's code reads as its month, in the reader's era (CW-058).
+  if (typeof params.period === 'string') params.period = formatPeriod(params.period);
   for (const name of AMOUNTS[problem.code] ?? []) {
     if (typeof params[name] === 'number') params[name] = formatNumber(params[name], 2);
   }

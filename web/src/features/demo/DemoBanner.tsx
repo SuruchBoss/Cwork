@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUiStore } from '@/stores/ui.store';
@@ -48,10 +49,7 @@ export function DemoBanner({ switcher = false }: { switcher?: boolean }) {
 
   if (!status) return null;
 
-  const at = new Intl.DateTimeFormat(language === 'th' ? 'th-TH' : 'en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(status.nextResetAt));
+  const at = formatTime(status.nextResetAt);
 
   const switchTo = async (role: DemoRole): Promise<void> => {
     setSwitching(role);

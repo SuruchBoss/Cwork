@@ -160,6 +160,8 @@ describe('Shift & roster management (e2e)', () => {
     });
     expect(overlap.status).toBe(409);
     expect(JSON.stringify(overlap.body)).toMatch(/ทับซ้อน/);
+    // The clashing range reads as Thai dates, Buddhist era (CW-058).
+    expect(JSON.stringify(overlap.body)).toContain('(1 มี.ค. 2570 – 30 มิ.ย. 2570)');
 
     // Starts the day after the first ends — no shared day, so it is allowed.
     const clear = await api.post('/schedule-assignments', hrToken, {

@@ -34,10 +34,12 @@ approved or for their manager to approve (CW-067). A foreign worker's passport
 and work permit, with when each expires, are kept on the record and come in
 with the import, as does a worker with only an English name (CW-068). A Thai
 guide walks HR through those imports, and filing and approving leave in the app
-has been reworked for someone using it for the first time (CW-066). The console and the app also work in English; benefits, shifts and
-issued documents are managed in the console; statuses read as words rather than
-codes; dates in the Thai console's tables show the Buddhist-era year (the first
-part of CW-058); and a public demo runs from the landing page.
+has been reworked for someone using it for the first time (CW-066). In Thai,
+every year the console, the app and the certificate PDF show is Buddhist era,
+and the console's date fields are typed and picked day first in it (CW-058).
+The console and the app also work in English; benefits, shifts and issued
+documents are managed in the console; statuses read as words rather than codes;
+and a public demo runs from the landing page.
 
 Upgrading from 0.3.1 means running the migrations, as every release does. No
 `.env` needs to change. One migration drops the unused `selfieFileId` column,
@@ -385,14 +387,31 @@ one, which 0.3.1 refused, is now accepted.
 
 ### Changed
 
-- **Dates in the Thai console show the Buddhist-era year** (CW-058, first
-  part). `formatDate` wrote "28 ก.ย. 2026": a Thai month with a Gregorian year.
-  In Thai it now writes "28 ก.ย. 2569", in every table and detail page that goes
-  through it. New helpers write a calendar month or a pay-period code as words,
-  so "2026-08" can read "สิงหาคม 2569". English is unchanged, and stored values
-  and the API stay Gregorian ISO dates. Still to come under the same ticket: the
-  date input fields, the period labels on the payroll pages, the mobile app and
-  the certificate PDF, which all still show Gregorian years.
+- **Thai dates count years in the Buddhist era, everywhere** (CW-058). The
+  console and the app wrote "28 ก.ย. 2026": a Thai month with a Gregorian year,
+  and some places did not localise dates at all. In Thai every year shown is now
+  Buddhist era, "28 ก.ย. 2569"; English is unchanged, and stored values and the
+  API stay Gregorian ISO dates.
+  - Date fields in the console were the browser's own, which wrote the date the
+    way the computer's locale does, often month first. In Thai a date field is
+    now typed and read day first in the Buddhist era, "1/10/2569",
+    "1 ต.ค. 2569" or "1 ตุลาคม 2569", with a calendar to pick from, and stores
+    2026-10-01. A date it cannot read says how to write one. English keeps the
+    browser's field.
+  - Pay periods read as their month, "สิงหาคม 2569", on the payroll pages, the
+    dashboard and in import problems, instead of the code "2026-08". A new pay
+    period's year and month are picked from lists, so the year reads in the
+    reader's era.
+  - The app writes Buddhist-era years in its dates, its pay-period label and its
+    date picker, which also takes a typed date day first. The payslip writes
+    its pay date in words, "15 มกราคม 2567".
+  - The employment certificate PDF printed the hire date and the issue date as
+    `2024-01-15`; it now writes them the way Thai documents do,
+    "15 มกราคม 2567". Thai notifications and errors that carried an ISO date
+    (overtime, leave, late punches, a clashing schedule) write a Thai one.
+  - Screen tests in the console now fail on a Gregorian year shown in Thai, and
+    a source check in both clients refuses the ways one has reached the screen
+    before, so a new screen cannot bring it back.
 - **Filing and approving leave in the app, done by someone who has never seen
   it** (CW-066). One day off was a trap: the range picker keeps "Save" disabled
   until an end date is tapped, so tapping the one day left a dead button. The

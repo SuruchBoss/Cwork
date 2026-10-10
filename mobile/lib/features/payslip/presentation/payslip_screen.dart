@@ -76,7 +76,10 @@ class PayslipScreen extends ConsumerWidget {
                       ],
                     ),
                     subtitle: Text(
-                      ref.tr('Paid on {date}', <String, Object>{'date': Fmt.date(slip.payDate)}),
+                      ref.tr(
+                        'Paid on {date}',
+                        <String, Object>{'date': Fmt.dateLong(slip.payDate)},
+                      ),
                     ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -140,7 +143,7 @@ class PayslipDetailScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(
-                    ref.tr('Paid on {date}', <String, Object>{'date': Fmt.date(slip.payDate)}),
+                    ref.tr('Paid on {date}', <String, Object>{'date': Fmt.dateLong(slip.payDate)}),
                     style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
                   const Divider(height: 24),

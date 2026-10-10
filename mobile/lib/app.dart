@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/config/app_config.dart';
 import 'core/config/server.dart';
 import 'core/config/server_address.dart';
+import 'core/i18n/buddhist_era_localizations.dart';
 import 'core/i18n/i18n.dart';
 import 'core/platform/platform_config.dart';
 import 'core/providers.dart';
@@ -103,7 +104,8 @@ class _CworkAppState extends ConsumerState<CworkApp> {
       locale: localeFor(ref.watch(languageProvider)),
       supportedLocales: const <Locale>[Locale('th', 'TH'), Locale('en', 'US')],
       localizationsDelegates: const <LocalizationsDelegate<Object>>[
-        GlobalMaterialLocalizations.delegate,
+        // Material's own strings, with Thai years in the Buddhist era (CW-058).
+        ThaiBuddhistEraLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
