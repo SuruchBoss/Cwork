@@ -53,6 +53,7 @@ import {
   resolveExportFormat,
 } from './domain/payroll-export';
 import { AuditService } from '../audit/audit.service';
+import { AdvancesService } from './advances.service';
 import type { CreatePayrollPeriodDto, CreatePayrollRunDto } from './dto/payroll.dto';
 
 /** The period fields a calculation reads — not the whole row. */
@@ -90,6 +91,7 @@ export class PayrollService {
     private readonly notifications: NotificationsService,
     private readonly sequences: SequenceService,
     private readonly audit: AuditService,
+    private readonly advances: AdvancesService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -404,7 +406,7 @@ export class PayrollService {
    */
   private async payslipsFor(
     organizationId: string,
-    run: { id: string; period: PayrollPeriodWindow },
+    run: { id: string; type: PayrollRunType; period: PayrollPeriodWindow },
     employees: PayrollSubject[],
     workingDaysInPeriod: number,
     firstHalf: FirstHalfRun,
@@ -426,6 +428,8 @@ export class PayrollService {
         employee,
         workingDaysInPeriod,
         firstHalf,
+        // Advances come back in the regular runs only (CW-070).
+        run.type === PayrollRunType.REGULAR,
       );
 
       // Paid in the other cycle: a daily-wage employee in a monthly run, or a
@@ -467,6 +471,7 @@ export class PayrollService {
         'A payroll run must be approved by someone other than the person who prepared it',
       );
     }
+    await this.advances.assertUnchangedSince(runId, run.calculatedAt);
 
     return this.prisma.payrollRun.update({
       where: { id: runId },
@@ -801,6 +806,7 @@ export class PayrollService {
     employee: { id: string; hireDate: Date; lastWorkingDate: Date | null },
     workingDaysInPeriod: number,
     firstHalfRun: FirstHalfRun = null,
+    takesBackAdvances = false,
   ) {
     const employeeId = employee.id;
     const compensation = await this.prisma.employeeCompensation.findFirst({
@@ -977,7 +983,14 @@ export class PayrollService {
     // allowances and deductions go on the second half (PO decision Q6).
     const monthlyItemsHere = half !== 1;
 
+    // Owed as of the period's last day: an advance paid in this period, one
+    // carried from the last, or one recorded late for a period already paid.
+    const advances = takesBackAdvances
+      ? await this.advances.owedFor(employeeId, period.periodEnd)
+      : [];
+
     const input: PayslipInput = {
+      advances,
       baseSalary: Number(compensation.baseSalary),
       ...(dailyRate !== null && daysPaid
         ? { dailyWage: { rate: dailyRate, daysPaid: daysPaid.days } }
@@ -1083,6 +1096,12 @@ export class PayrollService {
           overtime,
           calculatedAt: new Date().toISOString(),
         } as unknown as Prisma.InputJsonValue,
+        advanceDeductions: {
+          create: draft.advanceDeductions.map((taken) => ({
+            advanceId: taken.advanceId,
+            amount: toPrismaDecimal(taken.amount),
+          })),
+        },
         items: {
           create: draft.lines.map((line) => ({
             code: line.code,

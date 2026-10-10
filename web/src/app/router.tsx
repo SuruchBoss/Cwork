@@ -25,6 +25,7 @@ const RosterPage = lazy(() => import('@/features/attendance/RosterPage'));
 const PayrollPage = lazy(() => import('@/features/payroll/PayrollPage'));
 const PayrollRunPage = lazy(() => import('@/features/payroll/PayrollRunPage'));
 const PayrollImportPage = lazy(() => import('@/features/payroll/PayrollImportPage'));
+const AdvancesPage = lazy(() => import('@/features/payroll/AdvancesPage'));
 const ExpensesPage = lazy(() => import('@/features/payroll/ExpensesPage'));
 const BenefitsPage = lazy(() => import('@/features/payroll/BenefitsPage'));
 const RecruitmentPage = lazy(() => import('@/features/recruitment/RecruitmentPage'));
@@ -157,6 +158,7 @@ export const router = createBrowserRouter([
                 children: [
                   { index: true, element: <PayrollPage /> },
                   { path: 'runs/:id', element: <PayrollRunPage /> },
+                  { path: 'advances', element: <AdvancesPage /> },
                   {
                     path: 'import',
                     element: <RequirePermission any={[P.PAYROLL_RUN]} />,

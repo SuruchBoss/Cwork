@@ -293,6 +293,43 @@ sources only, and still need reading in the official text:
   run of an earlier month, whichever cycle that was, not with the previous
   half; the export files treat a half like any period. Both are deferred.
 
+## Cash advances
+
+An advance (เบิกล่วงหน้า, CW-070) is money paid before payday, recorded by
+someone with `payroll:run` once it has been paid: who, how much, the day, and
+whether in cash or by transfer. Its date cannot be in the future.
+
+- **Which run.** A regular run takes back every advance still owed that was
+  paid on or before the period's last day. So the run covering the day comes
+  first: the half for a daily-wage employee, the month for everyone else. What
+  that run could not take comes off the next, and an advance recorded late for
+  a period already paid comes off the next run rather than being lost.
+  Off-cycle, bonus and final-settlement runs do not take advances.
+- **Order.** After tax, social security, provident fund, benefit premiums and
+  standing deductions. An advance is not income, so it changes none of them.
+  Oldest advance first, each on its own payslip line naming the day it was
+  paid.
+- **Never below zero.** A run takes at most what the payslip would otherwise
+  pay. The rest is carried, and the payslip carries an
+  `ADVANCE_CARRIED_OVER` warning with the amount for the run page.
+- **What is owed** is never stored: it is the amount less what payslips in runs
+  that were not cancelled or failed have deducted. A cancelled run gives back
+  what it took; a recalculated run takes it again.
+- **Changing one.** An advance can be changed or cancelled until an approved or
+  paid run has taken it back (`ADVANCE_LOCKED`). If it changes while a run that
+  takes it back is only calculated, that run cannot be approved until it is
+  calculated again (`ADVANCES_CHANGED_SINCE_CALCULATION`). A cancelled advance
+  stays on record, and every change is audited.
+- **Not verified.** Taking the carried part from a later period may be a
+  deduction from wages under section 76 of the Labour Protection Act, which
+  needs the employee's written consent and caps the deduction. Nobody has read
+  the official text yet (with sections 29 and 68, it is on the owner's list in
+  CW-076), so the run page's carry-over warning says so rather than implying
+  the deduction is settled law.
+- **Not yet handled.** An employee who leaves still owing an advance stays on
+  the list, but the final-settlement run does not take it back, so HR settles
+  it by hand.
+
 ## Leave
 
 Statutory minimums seeded by default:

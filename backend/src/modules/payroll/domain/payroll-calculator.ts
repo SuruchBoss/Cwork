@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PayComponentType } from '@prisma/client';
+import { formatThaiDate } from '../../../core/utils/date.util';
 import { Decimal, round2 } from '../../../core/utils/money.util';
 import {
   computeMonthlyWithholding,
@@ -101,6 +102,19 @@ export interface PayslipInput {
   oneTimeIncome?: Array<{ code: string; name: string; amount: number }>;
   standardWorkHoursPerDay?: number;
   taxRules?: TaxRuleSet;
+  /**
+   * Advances still owed (CW-070), oldest first: what is left of each after
+   * earlier runs. Taken back after every other deduction, never below zero.
+   */
+  advances?: AdvanceOwed[];
+}
+
+export interface AdvanceOwed {
+  id: string;
+  /** ISO date the advance was paid. */
+  paidOn: string;
+  /** What is still owed on it. */
+  outstanding: number;
 }
 
 export interface PayslipDraft {
@@ -121,6 +135,8 @@ export interface PayslipDraft {
   warnings: PayslipWarning[];
   /** The social-security wage before the ceiling, which a second half adds to. */
   ssoWage: Decimal;
+  /** What this payslip takes back of each advance (CW-070). */
+  advanceDeductions: Array<{ advanceId: string; amount: Decimal }>;
 }
 
 export function buildPayslip(input: PayslipInput): PayslipDraft {
@@ -439,6 +455,17 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
     });
   }
 
+  // ---- Advances -----------------------------------------------------------
+  // Last, after tax, social security and every other deduction (PO, CW-070):
+  // they take back only what the period leaves, and the rest waits for the
+  // next run rather than pushing net pay below zero.
+  const advanceDeductions = takeBackAdvances(
+    grossEarnings.minus(sumLines(lines, PayComponentType.DEDUCTION)),
+    input.advances ?? [],
+    lines,
+    warnings,
+  );
+
   const totalDeductions = sumLines(lines, PayComponentType.DEDUCTION);
   const employerContributions = sumLines(lines, PayComponentType.EMPLOYER_CONTRIBUTION);
   const netPay = round2(grossEarnings.minus(totalDeductions));
@@ -459,7 +486,48 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
     overtimeHours: round2(overtimeHours),
     warnings,
     ssoWage: round2(ssoBase),
+    advanceDeductions,
   };
+}
+
+/**
+ * Takes back advances, oldest first, out of what the payslip would pay. Each
+ * deduction is its own line naming the day the advance was paid. Whatever
+ * the period cannot cover is carried, and said, rather than made negative.
+ */
+function takeBackAdvances(
+  netBeforeAdvances: Decimal,
+  advances: AdvanceOwed[],
+  lines: PayslipLine[],
+  warnings: PayslipWarning[],
+): Array<{ advanceId: string; amount: Decimal }> {
+  let available = Decimal.max(0, round2(netBeforeAdvances));
+  let carried = new Decimal(0);
+  const taken: Array<{ advanceId: string; amount: Decimal }> = [];
+  const oldestFirst = [...advances].sort((a, b) => a.paidOn.localeCompare(b.paidOn));
+  for (const advance of oldestFirst) {
+    const owed = round2(advance.outstanding);
+    if (owed.lessThanOrEqualTo(0)) continue;
+    const amount = Decimal.min(owed, available);
+    carried = carried.plus(owed.minus(amount));
+    if (amount.greaterThan(0)) {
+      available = available.minus(amount);
+      taken.push({ advanceId: advance.id, amount });
+      lines.push({
+        code: 'ADVANCE',
+        name: `หักเงินเบิกล่วงหน้า (${formatThaiDate(advance.paidOn)})`,
+        type: PayComponentType.DEDUCTION,
+        amount,
+        isTaxable: false,
+        orderIndex: 170,
+        meta: { advanceId: advance.id, paidOn: advance.paidOn, owed: owed.toNumber() },
+      });
+    }
+  }
+  if (carried.greaterThan(0)) {
+    warnings.push({ code: 'ADVANCE_CARRIED_OVER', params: { amount: carried.toNumber() } });
+  }
+  return taken;
 }
 
 /**

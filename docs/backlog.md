@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-075 · CW-069 · CW-076 · CW-070 · CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-075 · CW-076 · CW-070 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -111,7 +111,9 @@ date and phase 3 does not. It needs four things:
 - Cwork running on that NAS (CW-062);
 - the scanner's punches imported (CW-061);
 - employees and leave balances brought across (CW-059, whose payroll half can
-  follow, since payroll is not in the pilot).
+  follow, since payroll is not in the pilot). The company confirmed on
+  2026-10-10 that Odoo holds no HR data, so HR fills CW-059's template from
+  paper or their own Excel; there is no Odoo export to map.
 
 **The pilot was re-scoped on 2026-09-30, with the owner's agreement: "back
 office first", then a shadow payroll.** The company is about 20 people, mostly
@@ -155,7 +157,7 @@ seeing any of it.
 
 
 ### CW-075 · Social security uses the 2025 wage ceiling in 2026
-`P0` · payroll · **S–M** · before Pilot B · needs the owner first
+`P0` · payroll · **S–M** · before Pilot B · ready (regulation read 2026-10-10)
 
 Found by the dev on 2026-10-10 while checking CW-069. Several secondary
 sources (Baker McKenzie, กรุงเทพธุรกิจ, ไทยโพสต์, ประชาชาติ, ไทยรัฐ) report a
@@ -163,9 +165,19 @@ ministerial regulation of 11 December 2025, published in the Royal Gazette on
 12 December 2025, that replaces regulation No. 7 (1995) and raises the
 contribution ceiling for section 33 insured persons in steps: ฿17,500 a month
 for 2026–2028 (at most ฿875), ฿20,000 for 2029–2031 (฿1,000), ฿23,000 from
-2032 (฿1,150). The floor stays ฿1,650. Neither the dev nor the PO could open
-sso.go.th or ratchakitcha.soc.go.th from their environments, so **nobody has
-read the regulation itself yet**.
+2032 (฿1,150). The floor stays ฿1,650.
+
+**Verified 2026-10-10 (PO) against the Royal Gazette itself**:
+กฎกระทรวงกำหนดค่าจ้างขั้นต่ำและขั้นสูงที่ใช้เป็นฐานในการคำนวณเงินสมทบของ
+ผู้ประกันตนตามมาตรา ๓๓ พ.ศ. ๒๕๖๘, ราชกิจจานุเบกษา เล่ม ๑๔๒ ตอนที่ ๘๑ ก,
+12 December 2025, pages 5–6, signed 11 December 2025
+(<https://ratchakitcha.soc.go.th/documents/98728.pdf>, linked from the Social
+Security Office's own news page). Clause 1: in force from 1 January 2026.
+Clause 2: repeals regulation No. 7 (1995). Clause 3, per person per month:
+(1) 1 Jan 2026 – 31 Dec 2028: not below ฿1,650, not above ฿17,500;
+(2) 1 Jan 2029 – 31 Dec 2031: ฿1,650 to ฿20,000;
+(3) from 1 Jan 2032: ฿1,650 to ฿23,000.
+The 5% rate is not in this regulation; Cwork's existing rate stays.
 
 Cwork still uses ฿15,000 (`THAI_TAX_RULES_2026.socialSecurity.maxMonthlyWage`)
 and stops contributions at ฿9,000 a year (`socialSecurityCap`), which the
@@ -175,10 +187,11 @@ earning above ฿15,000, and the annual stop would cut contributions off before
 December at the new rate.
 
 **Before starting** (the owner)
-- Read the regulation in the Royal Gazette and confirm the figures and the
-  effective date, or allow `*.go.th` in the environment so the dev can.
-- Decide what happens to January–October 2026 runs already paid: report the
-  shortfall per employee and month for HR to settle, or leave them.
+- ~~Read the regulation in the Royal Gazette.~~ Done by the PO 2026-10-10,
+  see above. The figures and dates match what the dev found.
+- ~~Decide what happens to January–October 2026 runs already paid.~~ Decided
+  2026-10-10: report the shortfall for HR to settle. Locked and paid runs are
+  not recalculated or changed.
 
 **Scope**
 - The ceiling comes from the rules for the period's year; the 2026 rules carry
@@ -187,6 +200,18 @@ December at the new rate.
   ceiling, not a fixed ฿9,000. The income tax deduction for social security is
   checked against the Revenue Department's own rule as a separate figure.
 - `docs/payroll-thailand.md` names the regulation and the steps.
+- **Shortfall report** (read-only). For every payslip in a LOCKED or PAID
+  period of a year whose ceiling changed, it shows the employee, the month,
+  the wage used for social security, the amount deducted, the amount the new
+  ceiling gives, and the difference for the employee and for the employer.
+  Half-month periods are added up per calendar month before comparing, since
+  the contribution is monthly. Totals per month and for the year. HR admin and
+  payroll officer only, exported as CSV, and the export is audit-logged. Rows
+  with no difference are left out. It reads the stored payslips and the rules;
+  it writes nothing to payroll.
+- The report says on its face that it is a calculation to help HR settle with
+  the Social Security Office, not a filing, and that Cwork has not changed any
+  paid run.
 
 **Acceptance**
 - A ฿30,000 salary in 2026 deducts ฿875, employee and employer, in every month
@@ -194,96 +219,24 @@ December at the new rate.
 - ฿15,000, ฿17,500 and ฿17,501 are tested at the edges, from the rules and not
   from literals in the test.
 - A period in 2029 uses ฿20,000 without a code change, only the rules.
+- A PAID 2026 month at ฿30,000 calculated with ฿15,000 shows a ฿125 shortfall
+  for the employee and ฿125 for the employer; the payslip and the run are
+  unchanged afterwards (every stored amount, the status and `updatedAt`
+  compared before and after).
+- Two PAID halves of one month are compared as one month.
+- An organisation with no locked or paid 2026 run gets an empty report that
+  says so, not an error.
+
+**Note** No pilot company has run payroll in Cwork yet (Pilot A starts with
+attendance and employee data; Pilot B shadows November beside Excel). Today
+the report has nothing to show. It matters for anyone who installed Cwork
+themselves and ran 2026 payroll, and it is the pattern for the next time a
+rate changes after runs are paid.
 
 **Files** `backend/src/modules/payroll/domain/thai-tax.ts`,
 `docs/payroll-thailand.md`
 
 ---
-
-### CW-069 · Daily wages, and paying every 15 days
-`P0` · payroll · **L** · Pilot B, November 2026
-
-`payFrequency` (with `SEMI_MONTHLY` and `DAILY`) and `dailyRate` are in the
-schema and **used nowhere in the code**, so payroll can only pay a monthly
-salary. The pilot pays its labourers a daily wage every 15 days and its office
-staff monthly. That is the most common arrangement in Thai small business,
-and Cwork cannot compute it. A schema field that no code reads is also the
-thing this project said it would not keep.
-
-**Scope**
-- A daily-wage employee is paid days worked × daily rate. Paid leave and
-  public holidays are paid, and absence is not, as the Labour Protection Act
-  sets out.
-- Two pay groups in one organisation: daily staff on 1–15 and 16–end of
-  month, and monthly staff on the calendar month. Each has its own periods and
-  runs.
-- Social security for the 15-day groups is computed on the month's wages, with
-  the monthly ceiling applied once across both periods rather than once in
-  each.
-- Overtime at the legal multiples of the hourly rate derived from the daily
-  wage.
-
-**Acceptance**
-- For the pilot's November, each employee's pay from Cwork matches their
-  Excel, or every difference is explained and either Cwork or the Excel is
-  corrected. The comparison is recorded here.
-- A daily employee who works both halves of a month pays social security on
-  the whole month's wages, never above the monthly ceiling. Tested at the
-  boundary.
-- The minimum-wage floor is checked: a daily rate below the province's
-  minimum is flagged when it is entered, not discovered at payday.
-- The rules are written in `docs/payroll-thailand.md` next to the existing
-  ones, for #36's reviewer.
-
-**Decisions 2026-10-10 (PO, on the dev's survey before starting):**
-- Two phases: A is the backend, rules and `docs/payroll-thailand.md`; B is
-  the console (daily-rate compensation, half-month periods, period labels
-  "1–15 พฤศจิกายน 2569", the minimum-wage warning).
-- A period gains `payFrequency` (`MONTHLY` by default, `SEMI_MONTHLY`) and a
-  half; codes are `2026-11-H1` and `2026-11-H2`. A monthly period keeps its
-  code and needs no data migration. A run takes only the employees whose
-  compensation in that period has the same pay frequency.
-- An employee with a `dailyRate` is a daily-wage employee, paid
-  `SEMI_MONTHLY`; the API refuses a daily rate with a base salary above zero,
-  and `DAILY` pay frequency stays unused for now.
-- Paid days: worked days (present, late, early leave), paid leave in
-  proportion, and traditional holidays; weekly days off and absence are not
-  paid. An incomplete punch counts as worked and is flagged on the run for HR.
-  Every rule is checked against the Act's text before it goes in the doc.
-- Withholding tax: H1 is estimated from H1 × 2 and half of it withheld; H2 is
-  computed on the whole month less what H1 withheld, never below zero.
-- Social security: H1 is 5% of H1's wages, capped but not floored; H2 is the
-  whole month's contribution (floor and ceiling once) less H1's, never below
-  zero. The month's total equals what a monthly run would deduct.
-- A per-period benefit is deducted once a month, in H2.
-- No minimum-wage table in code: HR enters the minimum daily wage and the
-  announcement it comes from on each work location, and Cwork warns when a
-  daily rate is set below it and when a run is calculated.
-- Deferred: half-month opening balances, the assistant's run comparison,
-  half-month export files.
-
-**Phase A done 2026-10-10** (037e108, reviewed by the PO): the backend, the
-rules and `docs/payroll-thailand.md`, with every figure in the tests computed
-by hand and not yet compared with the pilot's Excel. Choices made by the dev
-and accepted: `SEMI_MONTHLY` without a daily rate is refused, as is every pay
-frequency but `MONTHLY` and `SEMI_MONTHLY`; the second half needs the first
-half **paid**, not only approved, because marking a run paid is what settles
-expense claims (so a shadow run has to mark H1 paid, and a company cannot start
-on a second half); standing allowances and deductions go on H2 with the
-benefits; a scheduled day with no attendance and no leave is unpaid and
-flagged; warnings live on `Payslip.warnings` as `{code, params}`; a month
-whose total falls under the ฿1,650 floor after H1 has deducted gets nothing in
-H2 and a warning, never an automatic refund; a rate under the minimum wage is a
-warning, not a refusal; the migration stops and names any duplicate monthly
-periods. The legal basis is checked only from secondary sources for sections
-56 and 62, and not found for 29 and 68; the doc says how far each was checked.
-Substitute holidays and holiday work by daily staff are split out as CW-076.
-**Phase B remains:** the console screens and the warnings on the run page.
-
-**Files** `backend/src/modules/payroll/`, `docs/payroll-thailand.md`
-
----
-
 
 ### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
 `P0` · payroll · **S–M** · before Pilot B · needs the owner first
@@ -300,8 +253,14 @@ Two gaps the dev left open in CW-069 phase A and wrote down in
   paid at least twice the hourly rate (section 62, from secondary sources).
   Cwork underpays and only shows `REST_DAY_WORK_RATE`.
 
-**Before starting** (the owner): confirm sections 29, 56, 62 and 68 of the
-Labour Protection Act in the official text, or allow `*.go.th` so the dev can.
+**Before starting** (the owner): confirm sections 29, 56, 62, 68 and 76 (for
+CW-070's carried-over advances) of the Labour Protection Act in the official text.
+`*.go.th` is open since 2026-10-10, but from the cloud environment
+ratchakitcha.soc.go.th answers 403 to site pages (its document PDFs load),
+law.go.th answers 403, and labour.go.th, legal.labour.go.th, ccpl.mol.go.th
+and krisdika.go.th do not connect. The owner can download the consolidated
+Act (ฉบับปรับปรุงล่าสุด, กรมสวัสดิการและคุ้มครองแรงงาน) from a machine in
+Thailand and add the PDF, or the dev tries again later.
 The doc's table records how far each was checked.
 
 **Acceptance**
@@ -338,6 +297,21 @@ period's pay".
 - An advance bigger than the period's pay leaves net pay at zero and carries
   the rest, visibly, to the next period.
 - Advances are audited, and a closed period's advances cannot be edited.
+
+**Decisions 2026-10-10 (PO, on the dev's plan):** advances and their
+deductions in two tables, the balance worked out from deductions rather than
+stored; a regular run deducts every outstanding advance dated on or before the
+period's end, so a daily employee's comes off H1 or H2 and a late one off the
+next run; advances come off last, after tax, social security, provident fund,
+benefits and standing items, one line each, and never take net pay below
+zero (`ADVANCE_CARRIED_OVER`); an advance in an approved or paid run cannot be
+changed, and one changed under a calculated run blocks approval until it is
+calculated again; deleting cancels with an audit trail; recording needs
+`payroll:run`. People who have left with an advance outstanding stay on the
+list. **Not verified:** recovering the carried-over part from a later period
+may be a deduction from wages under section 76, which needs written consent
+and has a cap; until the text is read, the warning tells HR so and the doc
+lists it with sections 29 and 68.
 
 **Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
 
@@ -599,6 +573,44 @@ many of the pilot's employees use one.
 
 
 ## P1 — before payroll runs on real people
+
+
+### CW-077 · Before Cwork is sold: what a paying customer is owed
+`P1` · business · docs · **M** · owner decides when; not queued
+
+The owner's income plan of 2026-10-10 makes Cwork the first product to earn,
+sold as a service (hosting, setup, import, keeping the rules current, support)
+with the code staying Apache-2.0. Against the backlog, these are what the plan
+does not yet cover. None blocks Pilot B, which is unpaid; all of them come
+before the first invoice.
+
+- **A qualified review of the payroll rules** (#36, open since September).
+  Every figure is computed by hand by the dev and checked by the PO; nobody
+  qualified has reviewed them, as `docs/payroll-thailand.md` says. Charging for
+  payroll on that basis is the largest risk in the plan.
+- **A data processing agreement.** When the owner hosts Cwork, the owner is
+  the customer's processor of employees' national IDs, salaries and health
+  data under the PDPA. `privacy.md` and `privacy-notice.th.md` cover the
+  employer's side only.
+- **Backups for a hosted instance.** CW-062 covers the pilot's own NAS. A
+  hosted customer needs nightly backups off the host, a restore that has been
+  tried, and `FIELD_ENCRYPTION_KEY` kept apart from them.
+- **What support means.** A channel, hours and a response time, written down,
+  and who answers when the owner is at the day job.
+- **Updates when the law moves.** CW-075 is the first example. A paying
+  customer needs a stated promise of how soon a rule change reaches them.
+- **The licence note.** CW-029 recorded that, with DCO and no CLA, the licence
+  "cannot realistically be changed". There are no outside contributors yet, so
+  an `ee/` folder under another licence for new code, as PaynEat-ERP did,
+  stays open to the owner; it should be decided before the first outside
+  contribution, not after.
+- **The README** says plainly that self-hosting is free and what the paid
+  service adds.
+
+**Acceptance** Each point above has an owner's decision recorded here, and the
+ones that need code or docs are their own tickets.
+
+---
 
 
 ### CW-073 · Foreign workers' documents expire without anyone being told
@@ -1378,6 +1390,7 @@ Kept so the reasoning survives.
 | **CW-059** · A company moving to Cwork had to type every employee in by hand, and its first payroll ignored the months paid before it | Two spreadsheet imports, each from `.xlsx` or Thai Excel's default CSV, with a preview that lists every problem by row and column and writes nothing until the whole file is clean. **Employees and leave already taken** (0b44fd3, df09d81): the second run of the same file is refused row by row, balances equal entitlement minus the days imported, and scanner IDs are kept for CW-061. **Pay before Cwork** (e4715b5): each employee's taxable income, tax withheld and social security from January to the last month paid elsewhere. These are stored as **this employer's own** (`PayrollOpeningBalance`), not as `priorEmployerIncome`, because the annual filings must count them as its own pay. `yearToDate()` keeps the three sources apart, and each payslip's snapshot records the split. The acceptance is an e2e test: nine months run in Cwork, the same eight months imported into another year, and September compared employee by employee. A month the figures cover cannot be calculated again (`PAID_BEFORE_CWORK`). **Not proven here:** that ภ.ง.ด.1ก and 50 ทวิ count these months. Neither filing exists yet, so the requirement is written into the acceptance of CW-046 and CW-047. The import creates no sign-in accounts (CW-064). Closed 2026-10-02. |
 | **CW-058** · Thai screens wrote the year in the Gregorian era, and date fields were the browser's own | Thai offices count years in พ.ศ.; a competitor opens its landing page with exactly this. The first part (db7b284) made `formatDate` write the Buddhist-era year. The rest (a1dd8bf): a `DateInput` built in the repo replaces all 15 native date fields, so in Thai a date is typed or picked day first in พ.ศ. and stored as the ISO date, while English keeps the browser's own field; pay periods show as months; the app's `Fmt.period` and date picker use พ.ศ.; the employment certificate writes "15 มกราคม 2567"; Thai notifications and errors that carried an ISO date write a Thai one. `expectNoAxeViolations` now fails on a Gregorian year on any Thai screen, and source guards in both clients refuse native date inputs and raw years. Choices made by the dev and accepted by the PO on 2026-10-10: the field is built rather than taken from a library, since none writes พ.ศ. and the console has no UI library; a two-digit year is the end of a พ.ศ. year and a four-digit year under 2400 is read as Gregorian, an unreadable date is marked and the old value kept; `min` greys out calendar days only, typed dates are left to the server as before; a new pay period's year and month are picked from lists; there is no payslip PDF, so the in-app payslip writes its pay date in words; the backend messages above were changed beyond the ticket's files because the app shows them. A UTC issue date the dev found on the way is CW-074 (#79). Closed 2026-10-10. |
 | **CW-074** · A certificate issued before 07:00 was dated the day before | Found by the dev while finishing CW-058: the issue date was the UTC date, a day behind Bangkok until 07:00, and verification read it the same way. Both now take the organisation's calendar day (`organizationToday`, by the rule `workDateFor` uses for punches), tested with the clock fixed at 06:30 Bangkok time on 1 October 2026; the same test gave 2026-09-30 before the fix. The same UTC "today" was replaced in leave notice days and cancellation, resignation dates and notice, the daily close-out of separations (which finished people a day late), structural-change effective dates and the compensation a certificate quotes. **Left as they are:** a few places still take the current *year* from UTC (the leave-balance year default, document reference numbers, expense years, file paths); they can be wrong only between 00:00 and 07:00 on 1 January. 94e96dc, closed 2026-10-10. |
+| **CW-069** · The pilot pays its labourers a daily wage every 15 days, and Cwork could only pay a monthly salary | A compensation can carry a `dailyRate` paid `SEMI_MONTHLY`, and a month can be paid in two periods, `YYYY-MM-H1` and `YYYY-MM-H2`, with one monthly period and one of each half per month enforced by the database. Days paid come from attendance, paid leave by its portion and paid holidays on working days. Social security is 5% of H1 with no floor, then the whole month less H1; withholding is half the estimated month, then the month less H1; neither goes negative, and any excess is a warning. H2 needs H1 marked paid. Each work location holds the minimum daily wage with its source. In the console: a pay card on the employee page that carries overtime, social security and provident fund over to a new rate, half-month periods with locked dates and labels such as "1–15 พฤศจิกายน 2569", the nine payslip warnings in Thai on the run page, and on an H2 run whose H1 is unpaid, the reason and a link to H1. Every figure in the tests is computed by hand; the comparison with the pilot's Excel is still to come at Pilot B. The legal basis of sections 56 and 62 is checked only from secondary sources, and 29 and 68 not at all (CW-076). 037e108, 8662703, closed 2026-10-10. |
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
 | **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |
 | **CW-072** · A fresh install had no departments, and the console could not add one | The employee import needs departments, positions and work locations to exist already, so an Odoo export failed with one `NOT_FOUND` per row. Organisation now adds and renames departments and positions, and adds work locations, through the endpoints that were already there. A work location's code follows ADR-0006 and is never offered for renaming. The form also refuses a duplicate name, which the API allows but the import would call ambiguous. Walked by the dev on a fresh `db:init` install through to an import with no `NOT_FOUND`. eeaa3c9, closed 2026-10-09. |

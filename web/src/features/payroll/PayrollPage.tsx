@@ -117,6 +117,9 @@ export default function PayrollPage() {
         actions={
           canRun && (
             <>
+              <Link to="/payroll/advances" className="btn btn--secondary">
+                {t('Cash advances')}
+              </Link>
               <Link to="/payroll/import" className="btn btn--secondary">
                 {t('Import pay before Cwork')}
               </Link>

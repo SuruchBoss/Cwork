@@ -376,6 +376,29 @@ export interface ApprovalTask {
 /** MONTHLY pays the month at once; SEMI_MONTHLY in two halves (CW-069). */
 export type PayFrequency = 'MONTHLY' | 'SEMI_MONTHLY';
 
+/** A cash advance and what is still owed on it (CW-070). */
+export interface PayrollAdvance {
+  id: string;
+  employeeId: string;
+  employee: { id: string; employeeCode: string; firstNameTh: string; lastNameTh: string };
+  amount: number;
+  paidOn: string;
+  method: 'CASH' | 'BANK_TRANSFER';
+  note: string | null;
+  status: 'ACTIVE' | 'CANCELLED';
+  deducted: number;
+  outstanding: number;
+  /** An approved or paid run took it back: it can no longer change. */
+  locked: boolean;
+  deductions: Array<{
+    amount: number;
+    runId: string;
+    runNo: string;
+    runStatus: PayrollRunStatus;
+    periodCode: string;
+  }>;
+}
+
 /** One record of an employee's pay. Amounts arrive as decimal strings. */
 export interface EmployeeCompensation {
   id: string;

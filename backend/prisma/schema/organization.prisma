@@ -45,6 +45,7 @@ model Organization {
   overtimeRequests      OvertimeRequest[]
   payComponents         PayComponent[]
   payrollPeriods        PayrollPeriod[]
+  payrollAdvances       PayrollAdvance[]
   payrollRuns           PayrollRun[]
   payrollOpeningBalances PayrollOpeningBalance[]
   benefitPlans          BenefitPlan[]

@@ -40,9 +40,11 @@ import {
   requireUpload,
   XLSX_CONTENT_TYPE,
 } from '../../core/spreadsheet/upload';
+import { AdvancesService } from './advances.service';
 import { BenefitsService } from './benefits.service';
 import { CompensationService } from './compensation.service';
 import {
+  CreateAdvanceDto,
   CreateBenefitPlanDto,
   CreateExpenseClaimDto,
   CreatePayrollPeriodDto,
@@ -51,6 +53,7 @@ import {
   DecideExpenseClaimDto,
   EnrollBenefitDto,
   SetCompensationDto,
+  UpdateAdvanceDto,
   UpdateBenefitPlanDto,
   UpsertTaxProfileDto,
 } from './dto/payroll.dto';
@@ -66,6 +69,7 @@ export class PayrollController {
     private readonly payroll: PayrollService,
     private readonly compensation: CompensationService,
     private readonly openingBalances: OpeningBalanceImportService,
+    private readonly advances: AdvancesService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -194,6 +198,44 @@ export class PayrollController {
   @ApiOperation({ summary: 'Payslip detail' })
   getPayslip(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.payroll.getPayslip(user, id, user.permissions.includes(Permission.PAYROLL_READ));
+  }
+
+  // ------------------------------------------------------------------ advances
+
+  @Get('advances')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({ summary: 'Cash advances, with what each still owes (CW-070)' })
+  listAdvances(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('employeeId', new ParseUUIDPipe({ optional: true })) employeeId?: string,
+    @Query('owing') owing?: string,
+  ) {
+    return this.advances.list(user.organizationId, { employeeId, owing: owing === 'true' });
+  }
+
+  @Post('advances')
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @ApiOperation({ summary: 'Record a cash advance already paid' })
+  createAdvance(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdvanceDto) {
+    return this.advances.create(user, dto);
+  }
+
+  @Patch('advances/:id')
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @ApiOperation({ summary: 'Change an advance no approved or paid run has taken back' })
+  updateAdvance(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAdvanceDto,
+  ) {
+    return this.advances.update(user, id, dto);
+  }
+
+  @Delete('advances/:id')
+  @RequirePermissions(Permission.PAYROLL_RUN)
+  @ApiOperation({ summary: 'Cancel an advance no approved or paid run has taken back' })
+  cancelAdvance(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.advances.cancel(user, id);
   }
 
   // --------------------------------------------------------------- compensation

@@ -40,6 +40,8 @@ and the console's date fields are typed and picked day first in it (CW-058).
 Daily wages can be paid twice a month, in two half-month periods, with the
 minimum wage set and checked on each work location; HR sets the pay on the
 employee page, and the run page says what to check on each payslip (CW-069).
+Cash advances are recorded once paid and taken back by the next regular run,
+after tax and social security, never below zero net pay (CW-070).
 The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
@@ -54,7 +56,8 @@ leave for others needs it added. An imported row with no Thai name but an Englis
 one, which 0.3.1 refused, is now accepted. A month can now have only one
 monthly payroll period: the migration that enforces it stops and names the
 periods if an installation already has two for the same month. A half-month
-period's dates are fixed, the 1st to the 15th and the 16th to the month's end.
+period's dates are fixed, the 1st to the 15th and the 16th to the month's end. A
+migration adds the tables for cash advances; nothing existing changes.
 
 ### Added
 
@@ -405,6 +408,21 @@ period's dates are fixed, the 1st to the 15th and the 16th to the month's end.
   /payroll/runs/:id` now returns as `firstHalf`. Work locations can be edited
   from the Organisation page to set the minimum daily wage, which needs its
   source.
+- **Cash advances, taken back on payday** (CW-070). Many labourers get through
+  a pay period on an advance, and Cwork had no way to record "500 baht paid on
+  the 8th, to come off this period's pay". Someone with `payroll:run` now
+  records an advance once it has been paid (who, how much, the day, cash or
+  transfer) on a new **Payroll → Cash advances** page, which also shows what
+  each person still owes and which run took it back. A regular run takes back
+  every advance owed up to the period's last day, after tax, social security
+  and every other deduction, oldest first, each on its own payslip line. It
+  never takes more than the payslip would pay: the rest is carried to the next
+  run and the run page says so, adding that taking it from a later period may
+  be a deduction from wages under section 76, which has not been checked
+  against the Act yet. An advance an approved or paid run has taken
+  back cannot be changed or cancelled, and a run cannot be approved on an
+  advance that changed after it was calculated. Every change is audited. The
+  rules are in `docs/payroll-thailand.md`.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the

@@ -3,6 +3,7 @@
 
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import {
+  AdvanceMethod,
   BenefitCategory,
   ExpenseCategory,
   ExpensePaymentMethod,
@@ -495,3 +496,36 @@ export class DecideExpenseClaimDto {
   @MaxLength(1000)
   note?: string;
 }
+
+/** A cash advance already paid out (CW-070). */
+export class CreateAdvanceDto {
+  @ApiProperty()
+  @IsUUID()
+  employeeId!: string;
+
+  @ApiProperty({ example: 500 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(10_000_000)
+  amount!: number;
+
+  @ApiProperty({ example: '2026-11-08', description: 'The day it was paid; not in the future' })
+  @IsDateString()
+  paidOn!: string;
+
+  @ApiPropertyOptional({ enum: AdvanceMethod, default: AdvanceMethod.CASH })
+  @IsOptional()
+  @IsEnum(AdvanceMethod)
+  method?: AdvanceMethod;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
+export class UpdateAdvanceDto extends PartialType(
+  OmitType(CreateAdvanceDto, ['employeeId'] as const),
+) {}

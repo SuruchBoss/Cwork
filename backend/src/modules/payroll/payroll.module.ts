@@ -4,6 +4,7 @@
 import { Module } from '@nestjs/common';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { OrganizationModule } from '../organization/organization.module';
+import { AdvancesService } from './advances.service';
 import { BenefitsService } from './benefits.service';
 import { CompensationService } from './compensation.service';
 import { ExpensesService } from './expenses.service';
@@ -16,6 +17,7 @@ import { PayrollService } from './payroll.service';
   controllers: [PayrollController, BenefitsController, ExpensesController],
   providers: [
     PayrollService,
+    AdvancesService,
     CompensationService,
     BenefitsService,
     ExpensesService,

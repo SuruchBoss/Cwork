@@ -135,6 +135,7 @@ model Employee {
   compensations     EmployeeCompensation[]
   recurringItems    EmployeeRecurringItem[]
   payslips          Payslip[]
+  payrollAdvances   PayrollAdvance[]
   taxProfiles       EmployeeTaxProfile[]
   payrollOpeningBalances PayrollOpeningBalance[]
   benefitEnrollments BenefitEnrollment[]
