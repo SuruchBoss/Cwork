@@ -70,7 +70,7 @@ describe('Payroll period export (e2e)', () => {
   }
 
   it('downloads a CSV of the period’s payslip totals when every run is approved', async () => {
-    const { periodId } = await preparePeriod(2028, 2, { approve: true });
+    const { periodId } = await preparePeriod(2034, 2, { approve: true });
 
     const res = await api.getRaw(`/payroll/periods/${periodId}/export`, payrollToken);
 
@@ -87,7 +87,7 @@ describe('Payroll period export (e2e)', () => {
   });
 
   it('appends an audit entry naming the actor, period, format and row count', async () => {
-    const { periodId, periodCode } = await preparePeriod(2028, 5, { approve: true });
+    const { periodId, periodCode } = await preparePeriod(2034, 5, { approve: true });
 
     await api.getRaw(`/payroll/periods/${periodId}/export`, payrollToken);
 
@@ -104,7 +104,7 @@ describe('Payroll period export (e2e)', () => {
   });
 
   it('refuses a period with a run that is not approved, naming the run', async () => {
-    const { periodId, runId } = await preparePeriod(2028, 3, { approve: false });
+    const { periodId, runId } = await preparePeriod(2034, 3, { approve: false });
     const run = await prisma.payrollRun.findUniqueOrThrow({ where: { id: runId } });
 
     const res = await api.get(`/payroll/periods/${periodId}/export`, payrollToken);
@@ -115,7 +115,7 @@ describe('Payroll period export (e2e)', () => {
   });
 
   it('refuses a period whose payslip totals disagree with the run totals, naming the difference', async () => {
-    const { periodId, runId } = await preparePeriod(2028, 4, { approve: true });
+    const { periodId, runId } = await preparePeriod(2034, 4, { approve: true });
     // Corrupt the recorded gross so it no longer matches the sum of the payslips.
     await prisma.payrollRun.update({
       where: { id: runId },
@@ -131,7 +131,7 @@ describe('Payroll period export (e2e)', () => {
   });
 
   it('gives an employee without the export permission no file', async () => {
-    const { periodId } = await preparePeriod(2028, 6, { approve: true });
+    const { periodId } = await preparePeriod(2034, 6, { approve: true });
     const employeeToken = await api.token(EMPLOYEE);
 
     const res = await api.get(`/payroll/periods/${periodId}/export`, employeeToken);

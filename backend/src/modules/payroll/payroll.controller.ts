@@ -15,6 +15,7 @@ import {
   Post,
   Query,
   Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -60,6 +61,7 @@ import {
 import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { PayrollService } from './payroll.service';
+import { SsoShortfallService } from './sso-shortfall.service';
 
 @ApiTags('Payroll')
 @ApiBearerAuth()
@@ -70,6 +72,7 @@ export class PayrollController {
     private readonly compensation: CompensationService,
     private readonly openingBalances: OpeningBalanceImportService,
     private readonly advances: AdvancesService,
+    private readonly ssoShortfall: SsoShortfallService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -120,6 +123,37 @@ export class PayrollController {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'private, max-age=0, no-store');
     res.send(file.content);
+  }
+
+  // -------------------------------------------------------------------- reports
+
+  @Get('reports/sso-shortfall')
+  @RequirePermissions(Permission.PAYROLL_EXPORT)
+  @ApiOperation({
+    summary:
+      'Social security that locked and paid runs deducted against the ceiling for their year (read only)',
+  })
+  @ApiQuery({ name: 'year', required: true, type: Number })
+  @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv'] })
+  @ApiQuery({ name: 'lang', required: false, enum: ['th', 'en'] })
+  async ssoShortfallReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+    @Query('year', ParseIntPipe) year: number,
+    @Query('format') format?: string,
+    @Query('lang') lang?: string,
+  ) {
+    if (format !== 'csv') return this.ssoShortfall.report(user.organizationId, year);
+    // The CSV leaves the system, so the service records it in the audit log.
+    const file = await this.ssoShortfall.exportCsv(user, year, lang);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(file.filename)}"`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    return new StreamableFile(Buffer.from(file.content, 'utf8'));
   }
 
   // ----------------------------------------------------------------------- runs

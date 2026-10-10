@@ -115,17 +115,26 @@ export default function PayrollPage() {
         title={t('Payroll')}
         description={t('Pay periods, runs and payslips')}
         actions={
-          canRun && (
+          (canRun || canExport) && (
             <>
-              <Link to="/payroll/advances" className="btn btn--secondary">
-                {t('Cash advances')}
-              </Link>
-              <Link to="/payroll/import" className="btn btn--secondary">
-                {t('Import pay before Cwork')}
-              </Link>
-              <Button variant="primary" onClick={() => setCreating((v) => !v)}>
-                + {t('New pay period')}
-              </Button>
+              {canExport && (
+                <Link to="/payroll/sso-shortfall" className="btn btn--secondary">
+                  {t('Social security shortfall')}
+                </Link>
+              )}
+              {canRun && (
+                <>
+                  <Link to="/payroll/advances" className="btn btn--secondary">
+                    {t('Cash advances')}
+                  </Link>
+                  <Link to="/payroll/import" className="btn btn--secondary">
+                    {t('Import pay before Cwork')}
+                  </Link>
+                  <Button variant="primary" onClick={() => setCreating((v) => !v)}>
+                    + {t('New pay period')}
+                  </Button>
+                </>
+              )}
             </>
           )
         }

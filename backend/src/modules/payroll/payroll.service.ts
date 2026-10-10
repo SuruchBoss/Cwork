@@ -45,6 +45,7 @@ import {
   type DailyWageDay,
   type PayslipWarning,
 } from './domain/daily-wage';
+import { taxRulesFor } from './domain/thai-tax';
 import { yearToDate } from './domain/year-to-date';
 import {
   EXPORT_FORMATS,
@@ -1037,7 +1038,9 @@ export class PayrollService {
       monthNumber: period.month,
       ytdTaxableIncome: yearSoFar.forThisMonth.taxableIncome,
       ytdWithheldTax: yearSoFar.forThisMonth.withholdingTax,
-      ytdSsoEmployee: yearSoFar.forThisMonth.ssoEmployee,
+      // The rules in force for the period's year: the social security ceiling
+      // and the tax relief change by year (CW-075).
+      taxRules: taxRulesFor(period.year),
       taxAllowances: taxProfile
         ? {
             hasSpouseAllowance: taxProfile.spouseAllowance,

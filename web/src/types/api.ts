@@ -406,6 +406,28 @@ export interface PayrollAdvance {
   }>;
 }
 
+/** Social security paid runs deducted against the ceiling for their year (CW-075). */
+export interface SsoShortfallReport {
+  year: number;
+  ceiling: number;
+  payslipsChecked: number;
+  rows: Array<{
+    employeeId: string;
+    employeeCode: string;
+    name: string;
+    month: number;
+    wage: number;
+    wageRebuilt: boolean;
+    deductedEmployee: number;
+    deductedEmployer: number;
+    owed: number;
+    employeeDifference: number;
+    employerDifference: number;
+  }>;
+  byMonth: Array<{ month: number; employee: number; employer: number }>;
+  total: { employee: number; employer: number };
+}
+
 /** One record of an employee's pay. Amounts arrive as decimal strings. */
 export interface EmployeeCompensation {
   id: string;

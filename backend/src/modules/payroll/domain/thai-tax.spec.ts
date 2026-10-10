@@ -7,6 +7,7 @@ import {
   computeOvertimePay,
   computeSocialSecurity,
   deriveHourlyRate,
+  taxRulesFor,
   THAI_TAX_RULES_2026,
 } from './thai-tax';
 
@@ -82,7 +83,7 @@ describe('computeAnnualTax', () => {
 
   it('caps social security relief at the annual maximum', () => {
     const result = computeAnnualTax(600_000, { socialSecurityContribution: 12_000 });
-    expect(result.allowanceDetail.socialSecurity).toBe(9_000);
+    expect(result.allowanceDetail.socialSecurity).toBe(THAI_TAX_RULES_2026.socialSecurityReliefCap);
   });
 
   it('limits donations to 10% of income after other deductions', () => {
@@ -117,25 +118,50 @@ describe('computeSocialSecurity', () => {
     expect(result.employerContribution.toNumber()).toBe(600);
   });
 
-  it('caps the contributory wage at 15,000', () => {
+  it("caps the contributory wage at the rule set's ceiling", () => {
+    const { rate, maxMonthlyWage } = THAI_TAX_RULES_2026.socialSecurity;
     const result = computeSocialSecurity(80_000);
-    expect(result.contributoryWage.toNumber()).toBe(15_000);
-    expect(result.employeeContribution.toNumber()).toBe(750);
+    expect(result.contributoryWage.toNumber()).toBe(maxMonthlyWage);
+    expect(result.employeeContribution.toNumber()).toBe(maxMonthlyWage * rate);
   });
 
   it('contributes nothing below the wage floor', () => {
     const result = computeSocialSecurity(1_000);
     expect(result.employeeContribution.toNumber()).toBe(0);
   });
+});
 
-  it('stops once the annual ceiling is reached', () => {
-    const result = computeSocialSecurity(30_000, THAI_TAX_RULES_2026, 8_700);
-    expect(result.employeeContribution.toNumber()).toBe(300);
+describe('social security by year (CW-075)', () => {
+  // Ministerial regulation of 11 December 2025, clause 3: the ceiling by year.
+  it('uses the ceiling in force for the year', () => {
+    expect(taxRulesFor(2025).socialSecurity.maxMonthlyWage).toBe(15_000);
+    expect(taxRulesFor(2026).socialSecurity.maxMonthlyWage).toBe(17_500);
+    expect(taxRulesFor(2028).socialSecurity.maxMonthlyWage).toBe(17_500);
+    expect(taxRulesFor(2029).socialSecurity.maxMonthlyWage).toBe(20_000);
+    expect(taxRulesFor(2032).socialSecurity.maxMonthlyWage).toBe(23_000);
+    expect(taxRulesFor(2040).socialSecurity.maxMonthlyWage).toBe(23_000);
+    // The floor and the rate do not change.
+    expect(taxRulesFor(2032).socialSecurity.minMonthlyWage).toBe(1_650);
+    expect(taxRulesFor(2032).socialSecurity.rate).toBe(0.05);
   });
 
-  it('contributes nothing when the annual ceiling is already met', () => {
-    const result = computeSocialSecurity(30_000, THAI_TAX_RULES_2026, 9_000);
-    expect(result.employeeContribution.toNumber()).toBe(0);
+  it('contributes on the wage up to the ceiling, at the old ceiling, the new one and just over', () => {
+    const rules = taxRulesFor(2026);
+    const { rate, maxMonthlyWage } = rules.socialSecurity;
+    const oldCeiling = taxRulesFor(2025).socialSecurity.maxMonthlyWage;
+    const at = (wage: number) => computeSocialSecurity(wage, rules).employeeContribution.toNumber();
+
+    expect(at(oldCeiling)).toBe(oldCeiling * rate);
+    expect(at(maxMonthlyWage)).toBe(maxMonthlyWage * rate);
+    expect(at(maxMonthlyWage + 1)).toBe(maxMonthlyWage * rate);
+  });
+
+  it('keeps the income tax relief as its own figure, not the contribution ceiling', () => {
+    expect(taxRulesFor(2025).socialSecurityReliefCap).toBe(9_000);
+    expect(taxRulesFor(2026).socialSecurityReliefCap).toBe(10_500);
+    // A later ceiling does not move the relief by itself: that is the Revenue
+    // Department's to set, and a new row in its own table.
+    expect(taxRulesFor(2029).socialSecurityReliefCap).toBe(10_500);
   });
 });
 

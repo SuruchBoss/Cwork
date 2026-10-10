@@ -33,7 +33,6 @@ const slip = (advances: PayslipInput['advances'], extra: Partial<PayslipInput> =
     monthNumber: 11,
     ytdTaxableIncome: 0,
     ytdWithheldTax: 0,
-    ytdSsoEmployee: 0,
     taxAllowances: {},
     advances,
     ...extra,

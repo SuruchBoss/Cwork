@@ -4,6 +4,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuditAction, PayrollRunStatus, Prisma } from '@prisma/client';
 import { BusinessRuleError } from '../../core/errors/domain.errors';
+import { taxRulesFor } from './domain/thai-tax';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { importProblem, type ImportProblem } from '../../core/spreadsheet/problems';
@@ -121,7 +122,9 @@ export class OpeningBalanceImportService {
     const year = thai ? period.year + 543 : period.year;
     const through =
       period.throughMonth === 1 ? month : thai ? `มกราคม–${month}` : `January–${month}`;
-    const sso = socialSecurityLimit(period.throughMonth).toLocaleString('en-US');
+    const sso = socialSecurityLimit(period.throughMonth, taxRulesFor(period.year)).toLocaleString(
+      'en-US',
+    );
 
     const header = thai
       ? [
@@ -346,6 +349,7 @@ export class OpeningBalanceImportService {
 
     const result = readOpeningBalances(table, {
       ...period,
+      rules: taxRulesFor(period.year),
       employees: new Map(
         employees.map((e) => [
           e.employeeCode,

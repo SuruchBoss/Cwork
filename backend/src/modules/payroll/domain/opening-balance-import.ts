@@ -249,16 +249,16 @@ export function readOpeningBalances(
 
 /**
  * The most an employee can have paid into social security by the end of a
- * month: the largest monthly contribution for every month so far, and never
- * past the annual ceiling. A figure above it is usually the employer's share
- * added in, which is not the employee's to count.
+ * month: the largest monthly contribution, for the year's ceiling, for every
+ * month so far. A figure above it is usually the employer's share added in,
+ * which is not the employee's to count.
  */
 export function socialSecurityLimit(
   throughMonth: number,
   rules: TaxRuleSet = THAI_TAX_RULES_2026,
 ): number {
   const monthly = rules.socialSecurity.maxMonthlyWage * rules.socialSecurity.rate;
-  return Math.min(rules.socialSecurityCap, round2(monthly * throughMonth));
+  return round2(monthly * Math.min(12, throughMonth));
 }
 
 /** Largest amount accepted: far beyond any salary, well inside the column. */

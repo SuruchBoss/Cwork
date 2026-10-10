@@ -21,7 +21,6 @@ const month = (monthNumber: number, baseSalary: number, ytd: PayToDate): Payslip
   monthNumber,
   ytdTaxableIncome: ytd.taxableIncome,
   ytdWithheldTax: ytd.withholdingTax,
-  ytdSsoEmployee: ytd.ssoEmployee,
   taxAllowances: { hasSpouseAllowance: true, childrenCount: 1 },
 });
 
