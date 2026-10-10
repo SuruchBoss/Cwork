@@ -16,7 +16,12 @@ import { PageDto } from '../../core/http/pagination.dto';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
-import { formatDateOnly, toDateOnly, yearsOfService } from '../../core/utils/date.util';
+import {
+  formatDateOnly,
+  formatThaiDate,
+  toDateOnly,
+  yearsOfService,
+} from '../../core/utils/date.util';
 import { Decimal, toPrismaDecimal } from '../../core/utils/money.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import {
@@ -893,7 +898,7 @@ export class LeaveService implements OnModuleInit {
       },
       notification: {
         title: 'คำขอลารออนุมัติ',
-        body: `${request.employee.firstNameTh} ${request.employee.lastNameTh} ขอ${request.leaveType.name} ${Number(request.totalDays)} วัน (${formatDateOnly(request.startDate)})`,
+        body: `${request.employee.firstNameTh} ${request.employee.lastNameTh} ขอ${request.leaveType.name} ${Number(request.totalDays)} วัน (${formatThaiDate(request.startDate)})`,
       },
     });
 
@@ -956,7 +961,7 @@ export class LeaveService implements OnModuleInit {
         await this.notifications.notifyIn(tx, request.organizationId, request.employee.userId, {
           type: 'leave.approved',
           title: 'คำขอลาได้รับการอนุมัติ',
-          body: `${request.leaveType.name} ${formatDateOnly(request.startDate)} - ${formatDateOnly(request.endDate)}${comment ? ` · ${comment}` : ''}`,
+          body: `${request.leaveType.name} ${formatThaiDate(request.startDate)} - ${formatThaiDate(request.endDate)}${comment ? ` · ${comment}` : ''}`,
           data: { leaveRequestId: requestId },
         });
       }
@@ -999,7 +1004,7 @@ export class LeaveService implements OnModuleInit {
         await this.notifications.notifyIn(tx, request.organizationId, request.employee.userId, {
           type: 'leave.rejected',
           title: 'คำขอลาไม่ได้รับการอนุมัติ',
-          body: comment ?? `${request.leaveType.name} ${formatDateOnly(request.startDate)}`,
+          body: comment ?? `${request.leaveType.name} ${formatThaiDate(request.startDate)}`,
           data: { leaveRequestId: requestId },
         });
       }

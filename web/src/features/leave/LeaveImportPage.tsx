@@ -3,7 +3,7 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
-import { formatNumber } from '@/lib/format';
+import { formatNumber, formatYear } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import type { ImportProblem } from '../imports/import-problems';
 import { SpreadsheetImport } from '../imports/SpreadsheetImport';
@@ -54,7 +54,7 @@ export default function LeaveImportPage() {
       count={(preview) => preview.rows.length}
       readyNote={(preview) =>
         t('The file is clean. Leave taken in {year}, and the balance each person is left with:', {
-          year: preview.year,
+          year: formatYear(preview.year),
         })
       }
       importLabel={(count) => t('Import leave for {count} employees', { count })}
@@ -110,7 +110,7 @@ export default function LeaveImportPage() {
         <>
           <p style={{ margin: 0, fontWeight: 600 }}>
             {t('Leave taken in {year} imported for {count} employees', {
-              year: result.year,
+              year: formatYear(result.year),
               count: result.employees,
             })}
           </p>

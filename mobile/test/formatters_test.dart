@@ -69,11 +69,29 @@ void main() {
     });
   });
 
+  group('Buddhist-era years in Thai (CW-058)', () {
+    tearDown(() => Fmt.locale = 'th');
+
+    test('writes dates with the year 543 ahead in Thai', () {
+      expect(Fmt.date('2026-09-28'), '28 ก.ย. 2569');
+      expect(Fmt.dateLong('2024-01-15'), '15 มกราคม 2567');
+      expect(Fmt.dateShort('2026-09-28'), '28 ก.ย.');
+      expect(Fmt.year(2026), '2569');
+    });
+
+    test('leaves English Gregorian', () {
+      Fmt.locale = 'en';
+      expect(Fmt.date('2026-09-28'), '28 Sep 2026');
+      expect(Fmt.dateLong('2024-01-15'), '15 January 2024');
+      expect(Fmt.year(2026), '2026');
+    });
+  });
+
   group('Fmt.period', () {
     tearDown(() => Fmt.locale = 'th');
 
     test('names the month of a year-month code', () {
-      expect(Fmt.period('2026-08'), 'สิงหาคม 2026');
+      expect(Fmt.period('2026-08'), 'สิงหาคม 2569');
       Fmt.locale = 'en';
       expect(Fmt.period('2026-08'), 'August 2026');
     });

@@ -55,6 +55,12 @@ describe('certificateBody', () => {
     expect(intro).toContain('EMP-0007');
   });
 
+  it('writes the hire date the way a Thai document does (CW-058)', () => {
+    const [intro] = certificateBody(data());
+    expect(intro).toContain('เริ่มปฏิบัติงานเมื่อวันที่ 1 มกราคม 2563');
+    expect(intro).not.toContain('2020');
+  });
+
   it('closes each certified type with its own purpose sentence', () => {
     const visa = certificateBody(data({ type: DocumentRequestType.VISA_SUPPORT_LETTER }));
     expect(visa.at(-1)).toContain('วีซ่า');

@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  DateInput,
   EmptyState,
   ErrorState,
   Field,
@@ -500,10 +501,10 @@ function RosterTab({ canManage }: { canManage: boolean }) {
       <Card>
         <div className="toolbar">
           <Field label={t('From')}>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <DateInput value={from} onChange={setFrom} />
           </Field>
           <Field label={t('To')}>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput value={to} onChange={setTo} />
           </Field>
           <Field label={t('Department')}>
             <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
@@ -556,17 +557,15 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                 </Select>
               </Field>
               <Field label={t('Effective from')}>
-                <Input
-                  type="date"
+                <DateInput
                   value={assignForm.effectiveFrom}
-                  onChange={(e) => setAssignForm({ ...assignForm, effectiveFrom: e.target.value })}
+                  onChange={(value) => setAssignForm({ ...assignForm, effectiveFrom: value })}
                 />
               </Field>
               <Field label={t('To (blank = indefinite)')}>
-                <Input
-                  type="date"
+                <DateInput
                   value={assignForm.effectiveTo}
-                  onChange={(e) => setAssignForm({ ...assignForm, effectiveTo: e.target.value })}
+                  onChange={(value) => setAssignForm({ ...assignForm, effectiveTo: value })}
                 />
               </Field>
             </div>

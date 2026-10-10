@@ -12,7 +12,13 @@ import {
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
-import { formatDateOnly, isoWeekday, minutesBetween, toDateOnly } from '../../core/utils/date.util';
+import {
+  formatDateOnly,
+  formatThaiDate,
+  isoWeekday,
+  minutesBetween,
+  toDateOnly,
+} from '../../core/utils/date.util';
 import { Decimal, toPrismaDecimal } from '../../core/utils/money.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import {
@@ -109,7 +115,7 @@ export class OvertimeService implements OnModuleInit {
       },
       notification: {
         title: 'คำขอทำโอทีรออนุมัติ',
-        body: `${request.employee.firstNameTh} ${request.employee.lastNameTh} ขอโอที ${hours.toFixed(1)} ชม. (${formatDateOnly(workDate)})`,
+        body: `${request.employee.firstNameTh} ${request.employee.lastNameTh} ขอโอที ${hours.toFixed(1)} ชม. (${formatThaiDate(workDate)})`,
       },
     });
 
@@ -366,7 +372,7 @@ export class OvertimeService implements OnModuleInit {
       {
         type,
         title,
-        body: body ?? `${formatDateOnly(request.workDate)}`,
+        body: body ?? `${formatThaiDate(request.workDate)}`,
         data: { overtimeRequestId: requestId },
       },
     );

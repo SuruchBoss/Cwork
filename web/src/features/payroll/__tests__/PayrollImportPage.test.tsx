@@ -122,10 +122,10 @@ describe('Importing pay before Cwork (CW-059)', () => {
       { query: { year: 2026, month: 8 } },
     );
     expect(
-      await screen.findByText('นำเข้ายอดช่วง มกราคม–สิงหาคม 2026 ของพนักงาน 2 คนแล้ว'),
+      await screen.findByText('นำเข้ายอดช่วง มกราคม–สิงหาคม 2569 ของพนักงาน 2 คนแล้ว'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('เริ่มคำนวณเงินเดือนใน Cwork ตั้งแต่เดือนกันยายน 2026'),
+      screen.getByText('เริ่มคำนวณเงินเดือนใน Cwork ตั้งแต่เดือนกันยายน 2569'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
@@ -142,7 +142,7 @@ describe('Importing pay before Cwork (CW-059)', () => {
 
     await upload();
     expect(await screen.findByRole('note')).toHaveTextContent(
-      'ภาษีที่หักจึงต่ำเกินไป ให้คำนวณใหม่ก่อนอนุมัติ: PAY-2026-00009 (2026-09)',
+      'ภาษีที่หักจึงต่ำเกินไป ให้คำนวณใหม่ก่อนอนุมัติ: PAY-2026-00009 (กันยายน 2569)',
     );
     await expectNoAxeViolations(container);
 
@@ -219,7 +219,7 @@ describe('Importing pay before Cwork (CW-059)', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'สมศรี มีสุข ได้รับเงินเดือนงวด 2026-08 ใน Cwork แล้ว ตัวเลขในไฟล์ต้องเป็นของเดือนก่อนหน้านั้นเท่านั้น',
+        'สมศรี มีสุข ได้รับเงินเดือนงวด สิงหาคม 2569 ใน Cwork แล้ว ตัวเลขในไฟล์ต้องเป็นของเดือนก่อนหน้านั้นเท่านั้น',
       ),
     ).toBeInTheDocument();
   });

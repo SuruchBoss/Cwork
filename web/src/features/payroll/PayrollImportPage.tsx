@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, Button, Card, Field, Select } from '@/components/ui';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatPeriod, formatYear } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import type { ImportProblem } from '../imports/import-problems';
 import { SpreadsheetImport } from '../imports/SpreadsheetImport';
@@ -76,8 +76,8 @@ export default function PayrollImportPage() {
   /** "January to August 2026", or "January 2026" alone. */
   const span = (year: number, month: number) =>
     month === 1
-      ? `${monthName(year, 1)} ${year}`
-      : t('January to {month} {year}', { month: monthName(year, month), year });
+      ? `${monthName(year, 1)} ${formatYear(year)}`
+      : t('January to {month} {year}', { month: monthName(year, month), year: formatYear(year) });
 
   const money = (value: number) => formatMoney(value);
 
@@ -92,7 +92,7 @@ export default function PayrollImportPage() {
           <span key={run.runId}>
             {i > 0 && ', '}
             {links ? <Link to={`/payroll/runs/${run.runId}`}>{run.runNo}</Link> : run.runNo} (
-            {run.period})
+            {formatPeriod(run.period)})
           </span>
         ))}
       </div>
@@ -141,8 +141,8 @@ export default function PayrollImportPage() {
                     setPeriod({ year, month: Math.min(period.month, latest) });
                   }}
                 >
-                  <option value={thisYear}>{thisYear}</option>
-                  <option value={thisYear - 1}>{thisYear - 1}</option>
+                  <option value={thisYear}>{formatYear(thisYear)}</option>
+                  <option value={thisYear - 1}>{formatYear(thisYear - 1)}</option>
                 </Select>
               </Field>
             </div>
@@ -229,7 +229,7 @@ export default function PayrollImportPage() {
             <p className="muted" style={{ margin: 0 }}>
               {t('Run payroll in Cwork from {month} {year}.', {
                 month: monthName(next.year, next.month),
-                year: next.year,
+                year: formatYear(next.year),
               })}
             </p>
             {stale(result.recalculate, true)}

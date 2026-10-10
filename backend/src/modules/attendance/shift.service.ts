@@ -10,6 +10,7 @@ import { employeeVisibilityFilter } from '../../core/security/employee-access';
 import {
   eachDateInRange,
   formatDateOnly,
+  formatThaiDate,
   isoWeekday,
   toDateOnly,
 } from '../../core/utils/date.util';
@@ -389,10 +390,10 @@ export class ShiftService {
   private async assertNoAssignmentOverlap(employeeId: string, candidate: DateRange): Promise<void> {
     const clash = await this.findAssignmentOverlap(employeeId, candidate);
     if (clash) {
-      const until = clash.to ? formatDateOnly(clash.to) : 'ไม่มีกำหนด';
+      const until = clash.to ? formatThaiDate(clash.to) : 'ไม่มีกำหนด';
       throw new ConflictError(
         'SCHEDULE_ASSIGNMENT_OVERLAP',
-        `พนักงานคนนี้มีตารางในช่วงที่ทับซ้อนอยู่แล้ว (${formatDateOnly(clash.from)} – ${until})`,
+        `พนักงานคนนี้มีตารางในช่วงที่ทับซ้อนอยู่แล้ว (${formatThaiDate(clash.from)} – ${until})`,
       );
     }
   }

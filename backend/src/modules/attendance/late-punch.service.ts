@@ -4,7 +4,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ApprovalEntityType, ApprovalStatus, PunchType } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';
-import { formatDateOnly } from '../../core/utils/date.util';
+import { formatDateOnly, formatThaiDate } from '../../core/utils/date.util';
 import {
   ApprovalOutcomeRegistry,
   type ApprovalOutcome,
@@ -81,7 +81,7 @@ export class LatePunchConfirmationService implements OnModuleInit {
       },
       notification: {
         title: 'การลงเวลาย้อนหลังรอการยืนยัน',
-        body: `${name} ลงเวลา (${formatDateOnly(input.workDate)}) ที่ส่งเข้าระบบช้ากว่าที่บันทึกไว้ ${delay} — โปรดยืนยันหรือปฏิเสธ`,
+        body: `${name} ลงเวลา (${formatThaiDate(input.workDate)}) ที่ส่งเข้าระบบช้ากว่าที่บันทึกไว้ ${delay} — โปรดยืนยันหรือปฏิเสธ`,
       },
     });
   }
@@ -109,8 +109,8 @@ export class LatePunchConfirmationService implements OnModuleInit {
       type: acknowledged ? 'attendance.late_punch.acknowledged' : 'attendance.late_punch.rejected',
       title: acknowledged ? 'การลงเวลาย้อนหลังได้รับการยืนยัน' : 'การลงเวลาย้อนหลังถูกปฏิเสธ',
       body: acknowledged
-        ? `การลงเวลาวันที่ ${formatDateOnly(punch.workDate)} ได้รับการยืนยันจากหัวหน้างานแล้ว`
-        : `การลงเวลาวันที่ ${formatDateOnly(punch.workDate)} ถูกปฏิเสธ${outcome.comment ? ` — ${outcome.comment}` : ''}`,
+        ? `การลงเวลาวันที่ ${formatThaiDate(punch.workDate)} ได้รับการยืนยันจากหัวหน้างานแล้ว`
+        : `การลงเวลาวันที่ ${formatThaiDate(punch.workDate)} ถูกปฏิเสธ${outcome.comment ? ` — ${outcome.comment}` : ''}`,
       data: { punchId: outcome.entityId },
     });
   }

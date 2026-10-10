@@ -9,10 +9,10 @@ import {
   Badge,
   Button,
   Card,
+  DateInput,
   EmptyState,
   ErrorState,
   Field,
-  Input,
   PageHeader,
   Person,
   Select,
@@ -146,10 +146,10 @@ export default function AttendancePage() {
       <Card>
         <div className="toolbar">
           <Field label={t('From')}>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <DateInput value={from} onChange={setFrom} />
           </Field>
           <Field label={t('To')}>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput value={to} onChange={setTo} />
           </Field>
           <Field label={t('Status')}>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
