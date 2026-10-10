@@ -34,6 +34,13 @@ describe('Buddhist-era years in Thai (CW-058)', () => {
     expect(formatMonthYear(2026, 1)).toBe('มกราคม 2569');
   });
 
+  it('labels a half of a semi-monthly month by its days (CW-069)', () => {
+    expect(formatPeriod('2026-11-H1')).toBe('1–15 พฤศจิกายน 2569');
+    expect(formatPeriod('2026-11-H2')).toBe('16–30 พฤศจิกายน 2569');
+    expect(formatPeriod('2028-02-H2')).toBe('16–29 กุมภาพันธ์ 2571');
+    expect(formatPeriod('2026-11-H3')).toBe('2026-11-H3');
+  });
+
   it('shows any other period code as HR wrote it', () => {
     expect(formatPeriod('2026-13')).toBe('2026-13');
     expect(formatPeriod('BONUS-Q3')).toBe('BONUS-Q3');

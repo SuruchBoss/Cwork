@@ -373,11 +373,32 @@ export interface ApprovalTask {
   };
 }
 
+/** MONTHLY pays the month at once; SEMI_MONTHLY in two halves (CW-069). */
+export type PayFrequency = 'MONTHLY' | 'SEMI_MONTHLY';
+
+/** One record of an employee's pay. Amounts arrive as decimal strings. */
+export interface EmployeeCompensation {
+  id: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  baseSalary: string | number;
+  payFrequency: PayFrequency;
+  dailyRate: string | number | null;
+  isOvertimeEligible: boolean;
+  isSsoEligible: boolean;
+  pvdEmployeeRate: string | number;
+  pvdEmployerRate: string | number;
+  reason: string | null;
+}
+
 export interface PayrollPeriod {
   id: string;
   code: string;
   year: number;
   month: number;
+  payFrequency: PayFrequency;
+  /** 0 for a whole month, 1 or 2 for a half. */
+  half: number;
   periodStart: string;
   periodEnd: string;
   payDate: string;
@@ -410,7 +431,20 @@ export interface PayrollRun {
   approvedAt: string | null;
   paidAt: string | null;
   failureReason: string | null;
-  period?: { code: string; year: number; month: number; payDate: string };
+  period?: {
+    code: string;
+    year: number;
+    month: number;
+    payDate: string;
+    payFrequency?: PayFrequency;
+    half?: number;
+  };
+}
+
+/** Something HR should check before approving a payslip (CW-069). */
+export interface PayslipWarning {
+  code: string;
+  params?: Record<string, string | number>;
 }
 
 export interface PayslipSummary {
@@ -420,6 +454,7 @@ export interface PayslipSummary {
   totalDeductions: string;
   netPay: string;
   publishedAt: string | null;
+  warnings?: PayslipWarning[];
   employee?: {
     id: string;
     employeeCode: string;

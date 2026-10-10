@@ -144,11 +144,58 @@ describe('Organisation: adding the records an employee import names (CW-072)', (
     await waitFor(() => expect(positionLoads()).toBeGreaterThan(before));
   });
 
-  it('offers no way to change a work location code', async () => {
+  it('sets a work location minimum wage with its source, but never its code (CW-069)', async () => {
     serve({ locations: [{ id: 'l-1', code: 'HQ', name: 'สำนักงานใหญ่', isActive: true }] });
     allow(true);
+    const { container } = renderWithProviders(<OrganizationPage />);
+    const user = userEvent.setup();
+
+    const row = (await screen.findByText('สำนักงานใหญ่')).closest('tr')!;
+    expect(within(row).getByText('ยังไม่ได้ตั้งค่าแรงขั้นต่ำ')).toBeInTheDocument();
+    await user.click(within(row).getByRole('button', { name: 'แก้ไข สำนักงานใหญ่' }));
+    const form = screen.getByRole('heading', { name: 'แก้ไขสถานที่ทำงาน' }).closest('section')!;
+    expect(within(form).getByLabelText('รหัส')).toHaveAttribute('readonly');
+
+    // A rate without the announcement it comes from is refused before sending.
+    await user.type(within(form).getByLabelText('ค่าแรงขั้นต่ำต่อวัน (บาท ไม่บังคับ)'), '400');
+    await user.click(within(form).getByRole('button', { name: 'บันทึก' }));
+    expect(await within(form).findByRole('alert')).toHaveTextContent(
+      'ระบุว่าค่าแรงขั้นต่ำนี้มาจากประกาศคณะกรรมการค่าจ้างฉบับไหน',
+    );
+    expect(patch).not.toHaveBeenCalled();
+
+    await user.type(
+      within(form).getByLabelText('ที่มาของอัตรา'),
+      'ประกาศคณะกรรมการค่าจ้าง ฉบับที่ 14',
+    );
+    await user.click(within(form).getByRole('button', { name: 'บันทึก' }));
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith('/work-locations/l-1', {
+        name: 'สำนักงานใหญ่',
+        minimumDailyWage: 400,
+        minimumDailyWageSource: 'ประกาศคณะกรรมการค่าจ้าง ฉบับที่ 14',
+      }),
+    );
+    await expectNoAxeViolations(container);
+  });
+
+  it('shows the minimum wage on the location row', async () => {
+    serve({
+      locations: [
+        {
+          id: 'l-1',
+          code: 'HQ',
+          name: 'สำนักงานใหญ่',
+          isActive: true,
+          minimumDailyWage: '400.0000',
+          minimumDailyWageSource: 'ประกาศฉบับที่ 14',
+        },
+      ],
+    });
+    allow(false);
     renderWithProviders(<OrganizationPage />);
     const row = (await screen.findByText('สำนักงานใหญ่')).closest('tr')!;
+    expect(row).toHaveTextContent('ค่าแรงขั้นต่ำวันละ ฿400.00 · ประกาศฉบับที่ 14');
     expect(within(row).queryByRole('button')).toBeNull();
   });
 

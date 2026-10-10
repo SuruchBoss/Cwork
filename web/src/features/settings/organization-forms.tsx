@@ -43,12 +43,15 @@ export interface WorkLocationRecord {
   code: string;
   name: string;
   isActive: boolean;
+  /** The minimum daily wage HR read from the Wage Committee's announcement (CW-069). */
+  minimumDailyWage?: string | null;
+  minimumDailyWageSource?: string | null;
 }
 
 export type OrgEditor =
   | { kind: 'department'; record?: DepartmentRecord }
   | { kind: 'position'; record?: PositionRecord }
-  | { kind: 'location' };
+  | { kind: 'location'; record?: WorkLocationRecord };
 
 const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -70,7 +73,7 @@ export function OrgEditorCard({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const editing = editor.kind !== 'location' ? editor.record : undefined;
+  const editing = editor.record;
 
   const [code, setCode] = useState(editing?.code ?? '');
   const [name, setName] = useState(
@@ -78,7 +81,7 @@ export function OrgEditorCard({
       ? (editor.record?.name ?? '')
       : editor.kind === 'position'
         ? (editor.record?.title ?? '')
-        : '',
+        : (editor.record?.name ?? ''),
   );
   const [nameEn, setNameEn] = useState(
     editor.kind === 'department'
@@ -94,6 +97,13 @@ export function OrgEditorCard({
         ? (editor.record?.departmentId ?? '')
         : '',
   );
+  // Cwork keeps no table of minimum wages: they differ by area and business
+  // type, so HR enters the one that applies here and where it was read (CW-069).
+  const location = editor.kind === 'location' ? editor.record : undefined;
+  const [minimumWage, setMinimumWage] = useState(
+    location?.minimumDailyWage ? String(Number(location.minimumDailyWage)) : '',
+  );
+  const [wageSource, setWageSource] = useState(location?.minimumDailyWageSource ?? '');
   const [problem, setProblem] = useState<string | null>(null);
 
   const taken = (): boolean => {
@@ -129,7 +139,15 @@ export function OrgEditorCard({
           ? api.patch(`/positions/${editing.id}`, body)
           : api.post('/positions', { ...body, code });
       }
-      return api.post('/work-locations', { code, name: name.trim() });
+      const wage = minimumWage.trim() ? Number(minimumWage) : null;
+      const body = {
+        name: name.trim(),
+        minimumDailyWage: wage ?? (editing ? null : undefined),
+        minimumDailyWageSource: wage !== null ? wageSource.trim() : editing ? null : undefined,
+      };
+      return editing
+        ? api.patch(`/work-locations/${editing.id}`, body)
+        : api.post('/work-locations', { ...body, code });
     },
     onSuccess: () => {
       // A position shows its department's name, so renaming a department refreshes both.
@@ -150,6 +168,15 @@ export function OrgEditorCard({
     setProblem(null);
     if (!editing && !code) return setProblem(t('Enter a code.'));
     if (!name.trim()) return setProblem(t('Enter a name.'));
+    if (editor.kind === 'location' && minimumWage.trim()) {
+      const wage = Number(minimumWage);
+      if (!Number.isFinite(wage) || wage <= 0) {
+        return setProblem(t('Enter the minimum daily wage as an amount in baht.'));
+      }
+      if (!wageSource.trim()) {
+        return setProblem(t('Say which Wage Committee announcement the minimum wage comes from.'));
+      }
+    }
     if (taken()) {
       return setProblem(
         t('"{name}" is already used. Choose another name, so an import can tell them apart.', {
@@ -163,7 +190,7 @@ export function OrgEditorCard({
   const title = {
     department: editing ? t('Rename a department') : t('Add a department'),
     position: editing ? t('Rename a position') : t('Add a position'),
-    location: t('Add a work location'),
+    location: editing ? t('Edit a work location') : t('Add a work location'),
   }[editor.kind];
 
   const nameLabel =
@@ -236,6 +263,34 @@ export function OrgEditorCard({
             </Field>
           )}
         </div>
+        {editor.kind === 'location' && (
+          <div className="toolbar">
+            <Field
+              label={t('Minimum daily wage (baht, optional)')}
+              hint={t(
+                'Checked against every daily rate here. Cwork does not know the rates itself.',
+              )}
+            >
+              <Input
+                inputMode="decimal"
+                value={minimumWage}
+                onChange={(e) => setMinimumWage(e.target.value.replace(/[^\d.]/g, ''))}
+                maxLength={10}
+                autoComplete="off"
+              />
+            </Field>
+            <Field
+              label={t('From the announcement')}
+              hint={t('For example: Wage Committee announcement No. 14')}
+            >
+              <Input
+                value={wageSource}
+                onChange={(e) => setWageSource(e.target.value)}
+                maxLength={255}
+              />
+            </Field>
+          </div>
+        )}
         {!editing && (
           <p className="muted" style={{ margin: 0 }}>
             {editor.kind === 'location'

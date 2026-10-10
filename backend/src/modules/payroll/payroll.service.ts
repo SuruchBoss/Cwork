@@ -128,6 +128,7 @@ export class PayrollService {
     }
     const half = dto.half ?? 0;
     const monthCode = `${dto.year}-${String(dto.month).padStart(2, '0')}`;
+    if (semiMonthly) assertHalfDates(dto.year, dto.month, half, periodStart, periodEnd);
 
     const existing = await this.prisma.payrollPeriod.findFirst({
       where: { organizationId, payFrequency, year: dto.year, month: dto.month, half },
@@ -332,11 +333,25 @@ export class PayrollService {
   private async firstHalfFor(organizationId: string, period: PayrollPeriodWindow) {
     if (period.payFrequency !== PayFrequency.SEMI_MONTHLY || period.half !== 2) return null;
 
-    const run = await this.prisma.payrollRun.findFirst({
+    const run = await this.firstHalfRunOf(organizationId, period);
+    if (run?.status !== PayrollRunStatus.PAID) {
+      throw new BusinessRuleError(
+        'FIRST_HALF_NOT_PAID',
+        `The second half of ${period.year}-${String(period.month).padStart(2, '0')} is ` +
+          'worked out from the first half: pay the first half first',
+        { firstHalfRunId: run?.id ?? null, firstHalfStatus: run?.status ?? null },
+      );
+    }
+    return { runId: run.id };
+  }
+
+  /** The regular run of the same month's first half, if one was made and not cancelled. */
+  private firstHalfRunOf(organizationId: string, period: { year: number; month: number }) {
+    return this.prisma.payrollRun.findFirst({
       where: {
         organizationId,
         type: PayrollRunType.REGULAR,
-        status: PayrollRunStatus.PAID,
+        status: { notIn: [PayrollRunStatus.CANCELLED, PayrollRunStatus.FAILED] },
         period: {
           payFrequency: PayFrequency.SEMI_MONTHLY,
           year: period.year,
@@ -344,16 +359,9 @@ export class PayrollService {
           half: 1,
         },
       },
-      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, runNo: true, status: true },
     });
-    if (!run) {
-      throw new BusinessRuleError(
-        'FIRST_HALF_NOT_PAID',
-        `The second half of ${period.year}-${String(period.month).padStart(2, '0')} is ` +
-          'worked out from the first half: pay the first half first',
-      );
-    }
-    return { runId: run.id };
   }
 
   /**
@@ -570,7 +578,18 @@ export class PayrollService {
     return this.prisma.payrollRun.findMany({
       where: { organizationId, ...(periodId ? { periodId } : {}) },
       orderBy: { createdAt: 'desc' },
-      include: { period: { select: { code: true, year: true, month: true, payDate: true } } },
+      include: {
+        period: {
+          select: {
+            code: true,
+            year: true,
+            month: true,
+            payDate: true,
+            payFrequency: true,
+            half: true,
+          },
+        },
+      },
     });
   }
 
@@ -596,6 +615,12 @@ export class PayrollService {
       },
     });
     if (!run) throw new NotFoundError('PayrollRun', runId);
+
+    // A second half says where its first half stands, so the run page can
+    // explain why it cannot be calculated yet rather than only refuse (CW-069).
+    if (run.period.payFrequency === PayFrequency.SEMI_MONTHLY && run.period.half === 2) {
+      return { ...run, firstHalf: await this.firstHalfRunOf(organizationId, run.period) };
+    }
     return run;
   }
 
@@ -1268,6 +1293,25 @@ export class PayrollService {
     });
     if (!period) throw new NotFoundError('PayrollPeriod', periodId);
     return period;
+  }
+}
+
+/**
+ * The two halves of a semi-monthly month are the 1st to the 15th and the 16th
+ * to the month's last day (CW-069). Anything else would leave days unpaid or
+ * pay them twice, since each half pays the attendance between its dates.
+ */
+function assertHalfDates(year: number, month: number, half: number, start: Date, end: Date) {
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const [from, to] = half === 1 ? [1, 15] : [16, lastDay];
+  const expected = (day: number) => Date.UTC(year, month - 1, day);
+  if (start.getTime() !== expected(from) || end.getTime() !== expected(to)) {
+    const iso = (day: number) => formatDateOnly(new Date(expected(day)));
+    throw new BusinessRuleError(
+      'INVALID_PERIOD_DATES',
+      `Half ${half} of ${year}-${String(month).padStart(2, '0')} runs from ${iso(from)} to ${iso(to)}`,
+      { periodStart: iso(from), periodEnd: iso(to) },
+    );
   }
 }
 

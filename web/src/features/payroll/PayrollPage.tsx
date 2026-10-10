@@ -27,6 +27,23 @@ import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { PayrollPeriod, PayrollRun } from '@/types/api';
 
+/** Which part of the month a new period pays (CW-069): all of it, or one half. */
+type Cycle = 'MONTH' | 'H1' | 'H2';
+
+/**
+ * A half's dates are fixed, the 1st to the 15th and the 16th to the month's
+ * last day, and the server refuses any other; a month's are a suggestion HR
+ * can change. Months count from 1.
+ */
+function cycleDates(year: number, month: number, cycle: Cycle) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = (d: number) => `${year}-${pad(month)}-${pad(d)}`;
+  const last = new Date(year, month, 0).getDate();
+  if (cycle === 'H1') return { periodStart: day(1), periodEnd: day(15) };
+  if (cycle === 'H2') return { periodStart: day(16), periodEnd: day(last) };
+  return { periodStart: day(1), periodEnd: day(last) };
+}
+
 export default function PayrollPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
@@ -36,13 +53,21 @@ export default function PayrollPage() {
 
   const [creating, setCreating] = useState(false);
   const now = new Date();
-  const [form, setForm] = useState({
+  const [cycle, setCycle] = useState<Cycle>('MONTH');
+  const [form, setForm] = useState(() => ({
     year: now.getFullYear(),
     month: now.getMonth() + 1,
-    periodStart: '',
-    periodEnd: '',
+    ...cycleDates(now.getFullYear(), now.getMonth() + 1, 'MONTH'),
     payDate: '',
-  });
+  }));
+  /** A change of year, month or cycle moves the dates with it. */
+  const choose = (next: { year?: number; month?: number; cycle?: Cycle }) => {
+    const year = next.year ?? form.year;
+    const month = next.month ?? form.month;
+    const nextCycle = next.cycle ?? cycle;
+    setCycle(nextCycle);
+    setForm({ ...form, year, month, ...cycleDates(year, month, nextCycle) });
+  };
 
   const periods = useQuery({
     queryKey: qk.payrollPeriods(),
@@ -55,7 +80,13 @@ export default function PayrollPage() {
   });
 
   const createPeriod = useMutation({
-    mutationFn: () => api.post<PayrollPeriod>('/payroll/periods', form),
+    mutationFn: () =>
+      api.post<PayrollPeriod>('/payroll/periods', {
+        ...form,
+        ...(cycle === 'MONTH'
+          ? {}
+          : { payFrequency: 'SEMI_MONTHLY', half: cycle === 'H1' ? 1 : 2 }),
+      }),
     onSuccess: () => {
       setCreating(false);
       void queryClient.invalidateQueries({ queryKey: ['payroll'] });
@@ -115,10 +146,7 @@ export default function PayrollPage() {
           <div className="toolbar">
             {/* Chosen from lists, so the year reads in the reader's era (CW-058). */}
             <Field label={t('Year')}>
-              <Select
-                value={form.year}
-                onChange={(e) => setForm({ ...form, year: Number(e.target.value) })}
-              >
+              <Select value={form.year} onChange={(e) => choose({ year: Number(e.target.value) })}>
                 {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((year) => (
                   <option key={year} value={year}>
                     {formatYear(year)}
@@ -127,10 +155,7 @@ export default function PayrollPage() {
               </Select>
             </Field>
             <Field label={t('Month')}>
-              <Select
-                value={form.month}
-                onChange={(e) => setForm({ ...form, month: Number(e.target.value) })}
-              >
+              <Select value={form.month} onChange={(e) => choose({ month: Number(e.target.value) })}>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                   <option key={month} value={month}>
                     {formatDate(new Date(2000, month - 1, 1), 'LLLL')}
@@ -138,15 +163,27 @@ export default function PayrollPage() {
                 ))}
               </Select>
             </Field>
+            <Field
+              label={t('Pays')}
+              hint={cycle === 'MONTH' ? undefined : t('Half-month periods pay daily-wage employees')}
+            >
+              <Select value={cycle} onChange={(e) => choose({ cycle: e.target.value as Cycle })}>
+                <option value="MONTH">{t('The whole month')}</option>
+                <option value="H1">{t('First half (1st–15th)')}</option>
+                <option value="H2">{t('Second half (16th–month end)')}</option>
+              </Select>
+            </Field>
             <Field label={t('Period start')}>
               <DateInput
                 value={form.periodStart}
+                disabled={cycle !== 'MONTH'}
                 onChange={(value) => setForm({ ...form, periodStart: value })}
               />
             </Field>
             <Field label={t('Period end')}>
               <DateInput
                 value={form.periodEnd}
+                disabled={cycle !== 'MONTH'}
                 onChange={(value) => setForm({ ...form, periodEnd: value })}
               />
             </Field>
@@ -166,8 +203,8 @@ export default function PayrollPage() {
             </Button>
           </div>
           {createPeriod.isError && (
-            <div className="alert alert--danger" style={{ marginTop: 10 }}>
-              {createPeriod.error instanceof Error ? createPeriod.error.message : t('Could not create')}
+            <div className="alert alert--danger" role="alert" style={{ marginTop: 10 }}>
+              {periodError(createPeriod.error, t)}
             </div>
           )}
         </Card>
@@ -194,7 +231,9 @@ export default function PayrollPage() {
                   <th>{t('Pay date')}</th>
                   <th>{t('Status')}</th>
                   <th>{t('Runs')}</th>
-                  <th />
+                  <th>
+                    <span className="visually-hidden">{t('Actions')}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -260,7 +299,9 @@ export default function PayrollPage() {
                   <th className="num">{t('Total gross')}</th>
                   <th className="num">{t('Net pay')}</th>
                   <th>{t('Status')}</th>
-                  <th />
+                  <th>
+                    <span className="visually-hidden">{t('Actions')}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -292,4 +333,27 @@ export default function PayrollPage() {
       </Card>
     </div>
   );
+}
+
+/** Why a period was refused, in the reader's language for the reasons HR can act on. */
+function periodError(
+  error: unknown,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (error instanceof ApiError) {
+    const details = (error.details ?? {}) as Record<string, string>;
+    if (error.code === 'PAYROLL_PERIOD_EXISTS') {
+      return t('That month already has this period: {period}', {
+        period: formatPeriod(details.code),
+      });
+    }
+    if (error.code === 'INVALID_PERIOD_DATES') {
+      return t('A half runs from {from} to {to}', {
+        from: formatDate(details.periodStart),
+        to: formatDate(details.periodEnd),
+      });
+    }
+    return error.message;
+  }
+  return error instanceof Error ? error.message : t('Could not create');
 }

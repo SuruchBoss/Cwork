@@ -15,7 +15,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatYear } from '@/lib/format';
+import { formatDate, formatMoney, formatYear } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
@@ -108,7 +108,7 @@ export default function OrganizationPage() {
       {editor && (
         <OrgEditorCard
           // A new key per form, so switching from one record to another starts clean.
-          key={`${editor.kind}-${editor.kind === 'location' ? 'new' : (editor.record?.id ?? 'new')}`}
+          key={`${editor.kind}-${editor.record?.id ?? 'new'}`}
           editor={editor}
           departments={departments.data ?? []}
           positions={positions.data ?? []}
@@ -256,10 +256,33 @@ export default function OrganizationPage() {
                 <tbody>
                   {locations.data.map((location) => (
                     <tr key={location.id}>
-                      <td>{location.name}</td>
+                      <td>
+                        {location.name}
+                        <div className="subtle">
+                          {location.minimumDailyWage
+                            ? t('Minimum wage {amount} a day · {source}', {
+                                amount: formatMoney(location.minimumDailyWage),
+                                source: location.minimumDailyWageSource ?? '',
+                              })
+                            : t('No minimum wage set')}
+                        </div>
+                      </td>
                       <td className="mono subtle">{location.code}</td>
                       <td style={{ width: 1 }}>
-                        {!location.isActive && <Badge tone="neutral">{t('Replaced')}</Badge>}
+                        {!location.isActive ? (
+                          <Badge tone="neutral">{t('Replaced')}</Badge>
+                        ) : (
+                          canManage && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              aria-label={t('Edit {name}', { name: location.name })}
+                              onClick={() => open({ kind: 'location', record: location })}
+                            >
+                              {t('Edit')}
+                            </Button>
+                          )
+                        )}
                       </td>
                     </tr>
                   ))}
