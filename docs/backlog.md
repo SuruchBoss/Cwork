@@ -47,9 +47,9 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-058 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 |
-| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -478,6 +478,31 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
+### CW-074 · A certificate issued before 07:00 is dated the day before
+`P1` · documents · **S** · before the pilot issues certificates
+
+Found by the dev while finishing CW-058. The certificate's issue date is
+`formatDateOnly(new Date())`, the date in UTC, so between 00:00 and 07:00 in
+Bangkok it prints the day before. The verification endpoint reads `issuedAt`
+the same way. The bug predates CW-058, which changed only how the date is
+written.
+
+**Scope**
+- The printed issue date and the date verification returns are the calendar
+  day in the organisation's timezone, by the same rule as `workDateFor`.
+- Any other place that turns `new Date()` into a date-only value through UTC is
+  fixed the same way.
+
+**Acceptance**
+- A certificate issued at 06:30 Bangkok time on 1 October 2026 prints
+  "1 ตุลาคม 2569", and verifying it returns 2026-10-01, under a test with the
+  clock fixed at that instant.
+
+**Files** `backend/src/modules/documents/`, `backend/src/core/utils/date.util.ts`
+
+---
+
+
 ### CW-073 · Foreign workers' documents expire without anyone being told
 `P1` · employees · notifications · **S–M** · after Pilot A
 
@@ -866,50 +891,6 @@ their account.
 ---
 
 
-### CW-058 · Thai dates in the Buddhist era, everywhere a year is shown
-`P2` · web · mobile · documents · **M** · phase 3
-
-In Thai, the console and the app write today as "28 ก.ย. 2026": Thai month,
-Gregorian year. Thai offices count years in พ.ศ., and a competitor opens its
-landing page with exactly this. Worse, some places are not localised at all:
-- **The employment certificate PDF** prints the hire date as `2024-01-15`
-  (`formatDateOnly` in `certificate-renderer.ts`). That is on a document an
-  employee hands to a bank.
-- **Date input fields** in the console are the browser's own (`type="date"`,
-  eleven of them), so they show whatever the browser's locale is. The product
-  film shows `09/01/2026`, month first.
-
-Only what is displayed changes. Stored values and the API stay ISO dates in the
-Gregorian calendar, and English stays Gregorian.
-
-**Acceptance**
-- In Thai, every year shown in the console, the app and generated PDFs is
-  Buddhist era: 28 ก.ย. 2569.
-- Date fields in Thai show and accept a Buddhist-era date, day first. Typing or
-  picking 1 ต.ค. 2569 stores 2026-10-01.
-- Certificates and payslips write dates in words the way Thai documents do:
-  "15 มกราคม 2567".
-- A test catches a Gregorian year on a Thai screen, so the next new screen
-  cannot bring it back. That includes the app's pay-period label, `Fmt.period`,
-  which PR #63 added as "สิงหาคม 2026", and any period label the console gains
-  after it.
-- English is unchanged.
-- The tax filing formats (CW-045 to CW-048) follow their own published layouts
-  and are out of scope here.
-
-**Status 2026-10-09: the first part is on `main`** (db7b284). `formatDate`
-writes the Buddhist-era year in Thai, with `formatYear`, `formatMonthYear` and
-`formatPeriod` for the rest. Still open: the date fields (still the browser's
-own, including the new leave-recording panel from CW-067), period labels on
-screens, the app's `Fmt.period` and `error_text_test.dart`, and the
-certificate PDF.
-
-**Files** `web/src/lib/format.ts`, `web/src/` date fields,
-`mobile/lib/core/utils/formatters.dart`, `backend/src/modules/documents/`
-
----
-
-
 ### CW-012 · Expense claims on mobile
 `P2` · mobile · **M**
 
@@ -1147,7 +1128,8 @@ and so does the same for web and mobile.
 `P3` · web · mobile · **M** · after the pilot items
 
 **Status 2026-09-30:**
-- **Item 2 is done** (PR #65). It needs one more retake once CW-058 lands.
+- **Item 2 is done** (PR #65). It needs one more retake now that CW-058 has
+  landed (a1dd8bf): the screenshots still show Gregorian years.
 - **Item 3 is done:** leave and approvals in PR #65, and the employee
   directory in PR #66.
 - **Item 1 is still open.** Chromium at phone size shows the light theme right,
@@ -1177,7 +1159,9 @@ ticket is that list, and the backlog is where it is tracked:
 6. Whole table rows that open their record, and still work by keyboard and
    screen reader.
 7. On the payroll page, drop the system term "รอบคำนวณ" and show periods as
-   months. Do it through CW-058's formatter, not a new one.
+   months. Do it through CW-058's formatter, not a new one. *(2026-10-10:
+   periods now show as months through `formatPeriod`; the words "รอบคำนวณ"
+   and "สร้างรอบคำนวณ" are still in `messages.th.ts`.)*
 8. Hide the benefit plan code under the plan's details.
 
 **Acceptance** Item 1 is done before the pilot goes live. The rest are done
@@ -1294,6 +1278,7 @@ Kept so the reasoning survives.
 | **CW-055** · The phone frame covered the app in the film | Reported by the owner from two screenshots of the film in progress: the frame's camera cut-out sat on the app's greeting and its border clipped the right edge. The phone is now drawn with a status bar and a home-indicator strip around the app's full 390×844 screen, so neither covers any of it. Both takes were re-recorded from `docs/film/stage.html`, not patched. The PO checked frames from every chapter of both takes before closing. 18624fe. |
 | **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. The changelog entry carried the same wording and was corrected after closing. 5d14915, bc76d4c, e675493. |
 | **CW-059** · A company moving to Cwork had to type every employee in by hand, and its first payroll ignored the months paid before it | Two spreadsheet imports, each from `.xlsx` or Thai Excel's default CSV, with a preview that lists every problem by row and column and writes nothing until the whole file is clean. **Employees and leave already taken** (0b44fd3, df09d81): the second run of the same file is refused row by row, balances equal entitlement minus the days imported, and scanner IDs are kept for CW-061. **Pay before Cwork** (e4715b5): each employee's taxable income, tax withheld and social security from January to the last month paid elsewhere. These are stored as **this employer's own** (`PayrollOpeningBalance`), not as `priorEmployerIncome`, because the annual filings must count them as its own pay. `yearToDate()` keeps the three sources apart, and each payslip's snapshot records the split. The acceptance is an e2e test: nine months run in Cwork, the same eight months imported into another year, and September compared employee by employee. A month the figures cover cannot be calculated again (`PAID_BEFORE_CWORK`). **Not proven here:** that ภ.ง.ด.1ก and 50 ทวิ count these months. Neither filing exists yet, so the requirement is written into the acceptance of CW-046 and CW-047. The import creates no sign-in accounts (CW-064). Closed 2026-10-02. |
+| **CW-058** · Thai screens wrote the year in the Gregorian era, and date fields were the browser's own | Thai offices count years in พ.ศ.; a competitor opens its landing page with exactly this. The first part (db7b284) made `formatDate` write the Buddhist-era year. The rest (a1dd8bf): a `DateInput` built in the repo replaces all 15 native date fields, so in Thai a date is typed or picked day first in พ.ศ. and stored as the ISO date, while English keeps the browser's own field; pay periods show as months; the app's `Fmt.period` and date picker use พ.ศ.; the employment certificate writes "15 มกราคม 2567"; Thai notifications and errors that carried an ISO date write a Thai one. `expectNoAxeViolations` now fails on a Gregorian year on any Thai screen, and source guards in both clients refuse native date inputs and raw years. Choices made by the dev and accepted by the PO on 2026-10-10: the field is built rather than taken from a library, since none writes พ.ศ. and the console has no UI library; a two-digit year is the end of a พ.ศ. year and a four-digit year under 2400 is read as Gregorian, an unreadable date is marked and the old value kept; `min` greys out calendar days only, typed dates are left to the server as before; a new pay period's year and month are picked from lists; there is no payslip PDF, so the in-app payslip writes its pay date in words; the backend messages above were changed beyond the ticket's files because the app shows them. A UTC issue date the dev found on the way is CW-074 (#79). Closed 2026-10-10. |
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
 | **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |
 | **CW-072** · A fresh install had no departments, and the console could not add one | The employee import needs departments, positions and work locations to exist already, so an Odoo export failed with one `NOT_FOUND` per row. Organisation now adds and renames departments and positions, and adds work locations, through the endpoints that were already there. A work location's code follows ADR-0006 and is never offered for renaming. The form also refuses a duplicate name, which the API allows but the import would call ambiguous. Walked by the dev on a fresh `db:init` install through to an import with no `NOT_FOUND`. eeaa3c9, closed 2026-10-09. |

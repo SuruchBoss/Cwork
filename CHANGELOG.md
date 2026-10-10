@@ -507,6 +507,16 @@ one, which 0.3.1 refused, is now accepted.
 
 ### Fixed
 
+- **A certificate issued before 07:00 in Bangkok was dated the day before**
+  (CW-074). Its issue date, and the date the verification endpoint returns,
+  were the UTC date, a day behind Bangkok until 07:00. They are now the
+  calendar day in the organisation's timezone, by the rule attendance already
+  uses for punches. The same UTC "today" counted a leave request's notice and
+  decided whether approved leave had started, set the date a resignation was
+  approved and the date an employee's change took effect, refused a final
+  working day of "today", and closed out a separation a day late; all now use
+  the organisation's day. The notice of an approved resignation writes the
+  final working day as a Thai date rather than an ISO one.
 - **Leave approved or cancelled after its days had passed left attendance
   wrong.** The nightly close-out marks a working day with no punch absent, and
   approving leave for that day afterwards left it absent, so payroll deducted a

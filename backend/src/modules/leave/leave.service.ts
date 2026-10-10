@@ -168,6 +168,7 @@ export class LeaveService implements OnModuleInit {
         balance?.available ?? 0,
         dto,
         options.checkNotice ?? true,
+        await this.organization.today(user.organizationId),
       ),
     };
   }
@@ -176,7 +177,12 @@ export class LeaveService implements OnModuleInit {
     const employeeId = requireEmployeeId(user);
     const { leaveType, computed } = await this.resolveRequest(user.organizationId, employeeId, dto);
 
-    this.assertRequestAllowed(leaveType, computed.totalDays, dto);
+    this.assertRequestAllowed(
+      leaveType,
+      computed.totalDays,
+      dto,
+      await this.organization.today(user.organizationId),
+    );
 
     const year = toDateOnly(dto.startDate).getUTCFullYear();
     await this.assertNoOverlap(employeeId, toDateOnly(dto.startDate), toDateOnly(dto.endDate));
@@ -250,10 +256,16 @@ export class LeaveService implements OnModuleInit {
       employee.id,
       dto,
     );
-    this.assertRequestAllowed(leaveType, computed.totalDays, dto, {
-      checkNotice: !approved,
-      checkAttachment: false,
-    });
+    this.assertRequestAllowed(
+      leaveType,
+      computed.totalDays,
+      dto,
+      await this.organization.today(user.organizationId),
+      {
+        checkNotice: !approved,
+        checkAttachment: false,
+      },
+    );
     await this.assertNoOverlap(employee.id, toDateOnly(dto.startDate), toDateOnly(dto.endDate));
     return this.preview(user, dto, employee.id, { checkNotice: false });
   }
@@ -290,10 +302,16 @@ export class LeaveService implements OnModuleInit {
       employee.id,
       dto,
     );
-    this.assertRequestAllowed(leaveType, computed.totalDays, dto, {
-      checkNotice: !approved,
-      checkAttachment: !approved,
-    });
+    this.assertRequestAllowed(
+      leaveType,
+      computed.totalDays,
+      dto,
+      await this.organization.today(user.organizationId),
+      {
+        checkNotice: !approved,
+        checkAttachment: !approved,
+      },
+    );
 
     const year = toDateOnly(dto.startDate).getUTCFullYear();
     await this.assertNoOverlap(employee.id, toDateOnly(dto.startDate), toDateOnly(dto.endDate));
@@ -443,7 +461,7 @@ export class LeaveService implements OnModuleInit {
     // days have been consumed and may already be reflected in attendance.
     if (
       request.status === LeaveRequestStatus.APPROVED &&
-      request.startDate <= toDateOnly(new Date()) &&
+      request.startDate <= (await this.organization.today(user.organizationId)) &&
       !canManage
     ) {
       throw new BusinessRuleError(
@@ -750,6 +768,7 @@ export class LeaveService implements OnModuleInit {
     },
     totalDays: Decimal,
     dto: CreateLeaveRequestDto,
+    today: Date,
     options: { checkNotice?: boolean; checkAttachment?: boolean } = {},
   ): void {
     const { checkNotice = true, checkAttachment = true } = options;
@@ -787,7 +806,7 @@ export class LeaveService implements OnModuleInit {
     }
 
     const noticeDays = Math.floor(
-      (toDateOnly(dto.startDate).getTime() - toDateOnly(new Date()).getTime()) / 86_400_000,
+      (toDateOnly(dto.startDate).getTime() - today.getTime()) / 86_400_000,
     );
     if (checkNotice && noticeDays < leaveType.minNoticeDays) {
       throw new BusinessRuleError(
@@ -816,13 +835,14 @@ export class LeaveService implements OnModuleInit {
     available: number,
     dto: CreateLeaveRequestDto,
     checkNotice: boolean,
+    today: Date,
   ): string[] {
     const warnings: string[] = [];
     if (totalDays.toNumber() > available) {
       warnings.push(`เกินวันลาคงเหลือ ${(totalDays.toNumber() - available).toFixed(1)} วัน`);
     }
     const noticeDays = Math.floor(
-      (toDateOnly(dto.startDate).getTime() - toDateOnly(new Date()).getTime()) / 86_400_000,
+      (toDateOnly(dto.startDate).getTime() - today.getTime()) / 86_400_000,
     );
     if (checkNotice && noticeDays < leaveType.minNoticeDays) {
       warnings.push(`แจ้งล่วงหน้าน้อยกว่า ${leaveType.minNoticeDays} วัน`);

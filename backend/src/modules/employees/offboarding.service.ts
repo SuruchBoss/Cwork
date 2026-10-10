@@ -14,7 +14,8 @@ import {
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
-import { toDateOnly } from '../../core/utils/date.util';
+import { formatThaiDate, toDateOnly, workDateFor } from '../../core/utils/date.util';
+import { organizationToday } from '../organization/organization-today';
 import {
   ApprovalOutcomeRegistry,
   type ApprovalOutcome,
@@ -75,16 +76,15 @@ export class OffboardingService implements OnModuleInit {
     });
 
     const lastWorkingDate = toDateOnly(dto.requestedLastWorkingDate);
-    if (lastWorkingDate <= toDateOnly(new Date())) {
+    const today = await organizationToday(this.prisma, user.organizationId);
+    if (lastWorkingDate <= today) {
       throw new BusinessRuleError(
         'INVALID_LAST_WORKING_DATE',
         'The final working day must be in the future',
       );
     }
 
-    const noticeDays = Math.round(
-      (lastWorkingDate.getTime() - toDateOnly(new Date()).getTime()) / 86_400_000,
-    );
+    const noticeDays = Math.round((lastWorkingDate.getTime() - today.getTime()) / 86_400_000);
 
     const resignation = await this.prisma.$transaction(async (tx) => {
       const created = await tx.resignationRequest.create({
@@ -348,7 +348,7 @@ export class OffboardingService implements OnModuleInit {
       await tx.employee.update({
         where: { id: resignation.employeeId },
         data: {
-          resignationDate: toDateOnly(new Date()),
+          resignationDate: await organizationToday(tx, resignation.employee.organizationId),
           lastWorkingDate,
         },
       });
@@ -374,7 +374,7 @@ export class OffboardingService implements OnModuleInit {
           {
             type: 'resignation.approved',
             title: 'คำขอลาออกได้รับการอนุมัติ',
-            body: `วันทำงานสุดท้ายของคุณคือ ${lastWorkingDate.toISOString().slice(0, 10)}`,
+            body: `วันทำงานสุดท้ายของคุณคือ ${formatThaiDate(lastWorkingDate)}`,
             data: { resignationId },
           },
         );
@@ -387,14 +387,26 @@ export class OffboardingService implements OnModuleInit {
    * Idempotent, so a missed run simply catches up the next day.
    */
   async finaliseDueSeparations(now: Date = new Date()): Promise<number> {
-    const due = await this.prisma.resignationRequest.findMany({
+    // "Passed" is by each organisation's own calendar (CW-074). No timezone is
+    // more than a day ahead of UTC, so the query takes everything up to the
+    // day after UTC's and each one is checked against its own today.
+    const candidates = await this.prisma.resignationRequest.findMany({
       where: {
         status: ResignationStatus.APPROVED,
-        agreedLastWorkingDate: { lt: toDateOnly(now) },
+        agreedLastWorkingDate: { lt: new Date(toDateOnly(now).getTime() + 86_400_000) },
         employee: { status: { notIn: [EmployeeStatus.RESIGNED, EmployeeStatus.TERMINATED] } },
       },
-      include: { employee: { select: { id: true, userId: true } } },
+      include: {
+        employee: {
+          select: { id: true, userId: true, organization: { select: { timezone: true } } },
+        },
+      },
     });
+    const due = candidates.filter(
+      (r) =>
+        r.agreedLastWorkingDate !== null &&
+        r.agreedLastWorkingDate < workDateFor(now, r.employee.organization.timezone),
+    );
 
     for (const resignation of due) {
       await this.prisma.$transaction([

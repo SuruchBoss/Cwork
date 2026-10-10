@@ -16,7 +16,12 @@ import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.error
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
-import { formatDateOnly, toDateOnly, yearsOfService } from '../../core/utils/date.util';
+import {
+  formatDateOnly,
+  toDateOnly,
+  workDateFor,
+  yearsOfService,
+} from '../../core/utils/date.util';
 import { formatMoney } from '../../core/utils/money.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import {
@@ -272,7 +277,15 @@ export class DocumentsService implements OnModuleInit {
     // an HMAC of the request id, so it disambiguates and cannot be guessed.
     const candidates = await this.prisma.documentRequest.findMany({
       where: { referenceNo, status: DocumentRequestStatus.ISSUED },
-      include: { employee: { select: { firstNameTh: true, lastNameTh: true } } },
+      include: {
+        employee: {
+          select: {
+            firstNameTh: true,
+            lastNameTh: true,
+            organization: { select: { timezone: true } },
+          },
+        },
+      },
     });
     const match = candidates.find((r) => this.verificationCodeFor(r.id) === code.toUpperCase());
     if (!match) return { valid: false as const };
@@ -281,7 +294,10 @@ export class DocumentsService implements OnModuleInit {
       valid: true as const,
       referenceNo: match.referenceNo,
       type: DOCUMENT_TYPE_LABELS[match.type],
-      issuedOn: match.issuedAt ? formatDateOnly(match.issuedAt) : null,
+      // The day it was issued where the organisation is, as the PDF prints it (CW-074).
+      issuedOn: match.issuedAt
+        ? formatDateOnly(workDateFor(match.issuedAt, match.employee.organization.timezone))
+        : null,
       employeeName: `${match.employee.firstNameTh} ${match.employee.lastNameTh}`,
     };
   }
@@ -325,7 +341,9 @@ export class DocumentsService implements OnModuleInit {
           include: {
             position: { select: { title: true, titleEn: true } },
             department: { select: { name: true, nameEn: true } },
-            organization: { select: { name: true, legalName: true, taxId: true, currency: true } },
+            organization: {
+              select: { name: true, legalName: true, taxId: true, currency: true, timezone: true },
+            },
           },
         },
       },
@@ -333,14 +351,17 @@ export class DocumentsService implements OnModuleInit {
     if (!request) throw new NotFoundError('DocumentRequest', requestId);
 
     const employee = request.employee;
+    const { timezone, ...organization } = employee.organization;
+    // Dates are the organisation's own calendar days, not UTC's (CW-074).
+    const today = workDateFor(new Date(), timezone);
     let compensation: { baseSalary: string; currency: string } | null = null;
 
     if (request.includeSalary) {
       const record = await this.prisma.employeeCompensation.findFirst({
         where: {
           employeeId: employee.id,
-          effectiveFrom: { lte: toDateOnly(new Date()) },
-          OR: [{ effectiveTo: null }, { effectiveTo: { gte: toDateOnly(new Date()) } }],
+          effectiveFrom: { lte: today },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: today } }],
         },
         orderBy: { effectiveFrom: 'desc' },
       });
@@ -359,8 +380,8 @@ export class DocumentsService implements OnModuleInit {
       language: request.language,
       addressedTo: request.addressedTo,
       purpose: request.purpose,
-      issuedOn: formatDateOnly(new Date()),
-      organization: employee.organization,
+      issuedOn: formatDateOnly(request.issuedAt ? workDateFor(request.issuedAt, timezone) : today),
+      organization,
       employee: {
         employeeCode: employee.employeeCode,
         nameTh: `${employee.firstNameTh} ${employee.lastNameTh}`,
