@@ -176,9 +176,11 @@ December at the new rate.
 
 **Before starting** (the owner)
 - Read the regulation in the Royal Gazette and confirm the figures and the
-  effective date, or allow `*.go.th` in the environment so the dev can.
-- Decide what happens to January–October 2026 runs already paid: report the
-  shortfall per employee and month for HR to settle, or leave them.
+  effective date, or allow `*.go.th` in the environment so the dev can. The
+  owner is allowing `*.go.th` (2026-10-10); start once they say it is open.
+- ~~Decide what happens to January–October 2026 runs already paid.~~ Decided
+  2026-10-10: report the shortfall for HR to settle. Locked and paid runs are
+  not recalculated or changed.
 
 **Scope**
 - The ceiling comes from the rules for the period's year; the 2026 rules carry
@@ -187,6 +189,18 @@ December at the new rate.
   ceiling, not a fixed ฿9,000. The income tax deduction for social security is
   checked against the Revenue Department's own rule as a separate figure.
 - `docs/payroll-thailand.md` names the regulation and the steps.
+- **Shortfall report** (read-only). For every payslip in a LOCKED or PAID
+  period of a year whose ceiling changed, it shows the employee, the month,
+  the wage used for social security, the amount deducted, the amount the new
+  ceiling gives, and the difference for the employee and for the employer.
+  Half-month periods are added up per calendar month before comparing, since
+  the contribution is monthly. Totals per month and for the year. HR admin and
+  payroll officer only, exported as CSV, and the export is audit-logged. Rows
+  with no difference are left out. It reads the stored payslips and the rules;
+  it writes nothing to payroll.
+- The report says on its face that it is a calculation to help HR settle with
+  the Social Security Office, not a filing, and that Cwork has not changed any
+  paid run.
 
 **Acceptance**
 - A ฿30,000 salary in 2026 deducts ฿875, employee and employer, in every month
@@ -194,6 +208,19 @@ December at the new rate.
 - ฿15,000, ฿17,500 and ฿17,501 are tested at the edges, from the rules and not
   from literals in the test.
 - A period in 2029 uses ฿20,000 without a code change, only the rules.
+- A PAID 2026 month at ฿30,000 calculated with ฿15,000 shows a ฿125 shortfall
+  for the employee and ฿125 for the employer; the payslip and the run are
+  unchanged afterwards (every stored amount, the status and `updatedAt`
+  compared before and after).
+- Two PAID halves of one month are compared as one month.
+- An organisation with no locked or paid 2026 run gets an empty report that
+  says so, not an error.
+
+**Note** No pilot company has run payroll in Cwork yet (Pilot A starts with
+attendance and employee data; Pilot B shadows November beside Excel). Today
+the report has nothing to show. It matters for anyone who installed Cwork
+themselves and ran 2026 payroll, and it is the pattern for the next time a
+rate changes after runs are paid.
 
 **Files** `backend/src/modules/payroll/domain/thai-tax.ts`,
 `docs/payroll-thailand.md`
