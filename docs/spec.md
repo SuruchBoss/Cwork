@@ -87,7 +87,7 @@ what the pilot needs:
 
 | Today | What it means for the pilot |
 |---|---|
-| Odoo, in a container on the company's NAS | Cwork runs on the same NAS beside it (CW-062). Employee records come out of Odoo as a spreadsheet (CW-059). |
+| Odoo, in a container on the company's NAS | Cwork runs on the same NAS beside it (CW-062). ~~Employee records come out of Odoo as a spreadsheet.~~ Corrected 2026-10-10: Odoo holds no HR data, so HR fills CW-059's import template from paper or their own Excel. |
 | ~~A fingerprint scanner for clocking in, exported to Excel~~ | Corrected 2026-09-30, below. |
 
 **Corrected on 2026-09-30.** The owner's fuller description replaces the
@@ -105,7 +105,7 @@ The owner's answers the same day:
 | Deductions | Cash advances (เบิกล่วงหน้า) are common. Overtime happens, but not often. |
 | Payroll and social security | Done in-house, **in Excel**. |
 | Staff | Foreign workers are among them. |
-| Odoo | Used for accounting and stock, not HR. |
+| Odoo | Used for accounting and stock, not HR. Confirmed with the company 2026-10-10: it holds accounting files only, and has never held employees, departments, positions, leave or foreign-worker documents. |
 
 So the people who would use Cwork are the owner or whoever does HR and pay,
 not the staff. Neither the app nor the GPS or scanner punch is exercised by

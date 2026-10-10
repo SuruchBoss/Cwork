@@ -111,7 +111,9 @@ date and phase 3 does not. It needs four things:
 - Cwork running on that NAS (CW-062);
 - the scanner's punches imported (CW-061);
 - employees and leave balances brought across (CW-059, whose payroll half can
-  follow, since payroll is not in the pilot).
+  follow, since payroll is not in the pilot). The company confirmed on
+  2026-10-10 that Odoo holds no HR data, so HR fills CW-059's template from
+  paper or their own Excel; there is no Odoo export to map.
 
 **The pilot was re-scoped on 2026-09-30, with the owner's agreement: "back
 office first", then a shadow payroll.** The company is about 20 people, mostly
