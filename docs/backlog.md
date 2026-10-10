@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-068 (fields) · CW-058 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · CW-058 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-069 · CW-070 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-058 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -478,32 +478,31 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
-### CW-068 · Foreign workers' documents
-`P1` · employees · **M** · fields in Pilot A, alerts after
+### CW-073 · Foreign workers' documents expire without anyone being told
+`P1` · employees · notifications · **S–M** · after Pilot A
 
-The pilot employs foreign workers. A work permit, visa or passport that
-lapses unnoticed carries heavy penalties for the employer. Cwork stores
-`passportNoEnc` and an `expiresAt` on employee documents, but CW-059's import
-has no column for either, and nothing ever looks at the dates.
+Split from CW-068, whose Pilot A half is done: an employee now carries
+`passportExpiresOn` and `workPermitExpiresOn`, and the employee page marks a
+date that has already passed. Nothing looks at those dates ahead of time, and
+a work permit that lapses unnoticed carries heavy penalties for the employer.
 
-**Scope, Pilot A (by 31 October)**
-- The employee record and CW-059's import take a passport number, a work
-  permit number and the expiry date of each. Numbers are encrypted like the
-  national ID.
-- The import accepts a foreign worker with no Thai national ID and with names
-  in English only.
-
-**Scope, after the pilot**
-- A list of documents expiring within 30, 60 and 90 days, and a notification
-  to HR as each window opens.
+**Scope**
+- A list for HR of passports and work permits expiring within 30, 60 and 90
+  days, and already expired, for active employees they can see. Dates and
+  names only, never the document numbers.
+- A notification to HR as each window opens for a document, once per window,
+  not daily. A renewal (a later expiry date) clears it and starts its own
+  windows. An employee who has left is neither listed nor notified.
 
 **Acceptance**
-- The pilot's foreign workers import with their passport and work permit
-  details, and nothing is required of them that they do not have.
-- (After the pilot) a work permit expiring in 29 days appears on the list and
-  HR is notified once, not daily.
+- A work permit expiring in 29 days appears on the list, and HR is notified
+  once, not daily.
+- Renewing that permit removes it from the list, and nothing more is sent for
+  the old date.
+- The list and the notification never contain a passport or work permit
+  number.
 
-**Files** `backend/src/modules/employees/`, `backend/prisma/schema/`,
+**Files** `backend/src/modules/employees/`, `backend/src/modules/notifications/`,
 `web/src/features/employees/`
 
 ---
@@ -1296,4 +1295,5 @@ Kept so the reasoning survives.
 | **CW-057** · SECURITY.md described a system that no longer existed | Found while reviewing the ERP's ADR-0022. Three of its five "known gaps" had closed weeks earlier (MFA, malware scanning, shared rate limits), and "Supported versions" was still waiting for a first tag after four releases. It now lists only gaps true of the current release, adds the tenant-boundary gap, says that during 0.x only the latest release receives security fixes, and gives the four ecosystem projects' private channels. Cwork adopted ADR-0022 on 2026-09-27, and the section links it rather than restating it. **The first pass contradicted the ADR:** it required every project that adapted vulnerable code to ship a fix before any advisory, dropping decision 9's "or its owner has said it is not affected". By that wording GHSA-3cgw-73cr-r8c6 could not have been published, even though the section cited it as the example. The PO compared the section with the merged ADR before closing. The changelog entry carried the same wording and was corrected after closing. 5d14915, bc76d4c, e675493. |
 | **CW-059** · A company moving to Cwork had to type every employee in by hand, and its first payroll ignored the months paid before it | Two spreadsheet imports, each from `.xlsx` or Thai Excel's default CSV, with a preview that lists every problem by row and column and writes nothing until the whole file is clean. **Employees and leave already taken** (0b44fd3, df09d81): the second run of the same file is refused row by row, balances equal entitlement minus the days imported, and scanner IDs are kept for CW-061. **Pay before Cwork** (e4715b5): each employee's taxable income, tax withheld and social security from January to the last month paid elsewhere. These are stored as **this employer's own** (`PayrollOpeningBalance`), not as `priorEmployerIncome`, because the annual filings must count them as its own pay. `yearToDate()` keeps the three sources apart, and each payslip's snapshot records the split. The acceptance is an e2e test: nine months run in Cwork, the same eight months imported into another year, and September compared employee by employee. A month the figures cover cannot be calculated again (`PAID_BEFORE_CWORK`). **Not proven here:** that ภ.ง.ด.1ก and 50 ทวิ count these months. Neither filing exists yet, so the requirement is written into the acceptance of CW-046 and CW-047. The import creates no sign-in accounts (CW-064). Closed 2026-10-02. |
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
+| **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |
 | **CW-072** · A fresh install had no departments, and the console could not add one | The employee import needs departments, positions and work locations to exist already, so an Odoo export failed with one `NOT_FOUND` per row. Organisation now adds and renames departments and positions, and adds work locations, through the endpoints that were already there. A work location's code follows ADR-0006 and is never offered for renaming. The form also refuses a duplicate name, which the API allows but the import would call ambiguous. Walked by the dev on a fresh `db:init` install through to an import with no `NOT_FOUND`. eeaa3c9, closed 2026-10-09. |
