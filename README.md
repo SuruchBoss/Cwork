@@ -466,7 +466,7 @@ of the employee's pay.
 
 **Business rules are pure functions.** Leave arithmetic, attendance derivation,
 Thai tax, KPI scoring and assessment grading live in `domain/` directories with
-no database, no framework and no I/O. That is why 397 domain tests run in under ten
+no database, no framework and no I/O. That is why 413 domain tests run in under ten
 seconds — and why *"why was I charged 2.5 days?"* is answered by reading one
 function instead of a query plan.
 
@@ -582,8 +582,8 @@ means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 500 backend unit
-tests, 132 web, 100 mobile, plus a 325-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 516 backend unit
+tests, 132 web, 100 mobile, plus a 333-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -642,8 +642,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 500 backend unit tests, 132 web,
-  100 mobile, 325 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 516 backend unit tests, 132 web,
+  100 mobile, 333 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the

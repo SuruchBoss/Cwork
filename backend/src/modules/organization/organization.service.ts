@@ -149,6 +149,7 @@ export class OrganizationService {
   }
 
   createWorkLocation(organizationId: string, dto: CreateWorkLocationDto) {
+    assertMinimumWageSource(dto.minimumDailyWage, dto.minimumDailyWageSource);
     return this.prisma.workLocation.create({
       data: {
         ...dto,
@@ -162,9 +163,15 @@ export class OrganizationService {
   async updateWorkLocation(organizationId: string, id: string, dto: UpdateWorkLocationDto) {
     const existing = await this.prisma.workLocation.findFirst({
       where: { id, organizationId, deletedAt: null },
-      select: { code: true },
+      select: { code: true, minimumDailyWage: true, minimumDailyWageSource: true },
     });
     if (!existing) throw new NotFoundError('WorkLocation', id);
+    assertMinimumWageSource(
+      dto.minimumDailyWage !== undefined ? dto.minimumDailyWage : existing.minimumDailyWage,
+      dto.minimumDailyWageSource !== undefined
+        ? dto.minimumDailyWageSource
+        : existing.minimumDailyWageSource,
+    );
 
     // The code is an identifier once the site is first used: a correction before
     // that is ordinary editing, but after it the code is fixed and must be
@@ -200,6 +207,7 @@ export class OrganizationService {
    * are moved to the replacement so new punches go there.
    */
   async supersedeWorkLocation(organizationId: string, id: string, dto: CreateWorkLocationDto) {
+    assertMinimumWageSource(dto.minimumDailyWage, dto.minimumDailyWageSource);
     const old = await this.prisma.workLocation.findFirst({
       where: { id, organizationId, deletedAt: null },
       select: { id: true },
@@ -356,5 +364,22 @@ export class OrganizationService {
       });
       cursor = parent?.parentId ?? null;
     }
+  }
+}
+
+/**
+ * A minimum daily wage is kept only with the announcement it was read from
+ * (CW-069): rates differ by area and business type and change by announcement,
+ * so a number without its source cannot be checked when the next one comes out.
+ */
+function assertMinimumWageSource(
+  wage: number | Prisma.Decimal | null | undefined,
+  source: string | null | undefined,
+) {
+  if (wage !== null && wage !== undefined && !source?.trim()) {
+    throw new BusinessRuleError(
+      'MINIMUM_WAGE_SOURCE_REQUIRED',
+      'Say which Wage Committee announcement the minimum daily wage comes from',
+    );
   }
 }

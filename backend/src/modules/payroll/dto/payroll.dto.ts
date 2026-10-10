@@ -15,6 +15,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -28,7 +29,9 @@ import {
 } from 'class-validator';
 
 export class CreatePayrollPeriodDto {
-  @ApiPropertyOptional({ description: 'Defaults to YYYY-MM' })
+  @ApiPropertyOptional({
+    description: 'Defaults to YYYY-MM, or YYYY-MM-H1 / YYYY-MM-H2 for a half',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(32)
@@ -47,6 +50,21 @@ export class CreatePayrollPeriodDto {
   @Min(1)
   @Max(12)
   month!: number;
+
+  @ApiPropertyOptional({
+    enum: [PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY],
+    default: PayFrequency.MONTHLY,
+    description: 'SEMI_MONTHLY pays the month in two halves (CW-069)',
+  })
+  @IsOptional()
+  @IsIn([PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY])
+  payFrequency?: PayFrequency;
+
+  @ApiPropertyOptional({ enum: [1, 2], description: 'Which half, for a SEMI_MONTHLY period' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsIn([1, 2])
+  half?: number;
 
   @ApiProperty({ example: '2026-09-01' })
   @IsDateString()
@@ -98,10 +116,24 @@ export class SetCompensationDto {
   @Min(0)
   baseSalary!: number;
 
-  @ApiPropertyOptional({ enum: PayFrequency, default: PayFrequency.MONTHLY })
+  @ApiPropertyOptional({
+    enum: PayFrequency,
+    default: PayFrequency.MONTHLY,
+    description: 'MONTHLY for a salary, SEMI_MONTHLY for a daily wage (CW-069)',
+  })
   @IsOptional()
   @IsEnum(PayFrequency)
   payFrequency?: PayFrequency;
+
+  @ApiPropertyOptional({
+    example: 400,
+    description: 'Daily wage. Makes the employee a daily-wage employee: baseSalary must be 0',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  dailyRate?: number;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()

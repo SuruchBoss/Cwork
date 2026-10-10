@@ -104,6 +104,15 @@ employee ceiling is ฿9,000; once reached, contributions stop for the year.
 
 Both the floor and the annual ceiling are implemented and tested.
 
+> **The ceiling has changed and Cwork has not.** A ministerial regulation on the
+> contributory wage for มาตรา 33, published in December 2025, is reported to
+> raise the monthly ceiling to ฿17,500 from 1 January 2026 (a ฿875
+> contribution), ฿20,000 from 2029 and ฿23,000 from 2032, with the ฿1,650
+> floor unchanged. That has been read only in secondary reports so far, not in
+> the Royal Gazette itself, and updating the rule set (and the annual ceiling
+> that follows from it) is tracked as its own change because it moves every
+> monthly run.
+
 ## Overtime
 
 Multipliers from the Labour Protection Act, applied to the hourly rate:
@@ -144,6 +153,145 @@ attendance records exist. Days that simply have not been closed out yet — futu
 dates in the period, or a clock-in rollout still in progress — must not reduce
 pay. Getting this wrong silently shorts people's salary, which is the worst
 class of payroll bug because nobody notices until they do.
+
+## Daily wages paid twice a month
+
+Added for the second pilot (CW-069). Implementation:
+`backend/src/modules/payroll/domain/daily-wage.ts` and the half-month branches
+of `payroll-calculator.ts`; tests: `semi-monthly.spec.ts` (hand-worked
+figures) and `test/payroll-semi-monthly.e2e-spec.ts`.
+
+> The pilot's own Excel workbook has not arrived, so none of this has been
+> compared with the figures the pilot pays today. The examples in the tests are
+> worked by hand.
+
+### Who is paid this way
+
+An employee whose compensation has a `dailyRate` is a daily-wage employee. The
+salary must then be 0, and the pay frequency `SEMI_MONTHLY`: the API refuses a
+daily rate with a salary, a daily rate on any other frequency, and
+`SEMI_MONTHLY` without a daily rate. Frequencies other than `MONTHLY` and
+`SEMI_MONTHLY` (`DAILY`, `WEEKLY` and the rest) are refused until Cwork pays
+them.
+
+A semi-monthly month has two periods, half 1 and half 2 (codes `YYYY-MM-H1`
+and `YYYY-MM-H2`); a monthly month has one. The database allows at most one
+monthly period per month and one of each half. A half's run pays only the
+daily-wage employees; a monthly run pays everyone else.
+
+### Days paid
+
+For each day of the half the employee was employed:
+
+| The day | Paid |
+|---|---|
+| Worked: present, late or left early | 1 day, less any unpaid leave taken that day |
+| Worked, but the punch is incomplete | 1 day, **and flagged** for HR on the payslip |
+| Paid leave (sick, annual, personal business…) | its portion: ½ for a half day |
+| A paid public holiday on a scheduled working day | 1 day |
+| The weekly day off, an absence, unpaid leave | 0 |
+| A scheduled day with no attendance and no leave | 0, **and flagged**: usually a day not closed yet |
+| A public holiday on the weekly day off | 0, **and flagged**: see substitute days below |
+
+The working days are the employee's schedule; with no schedule assigned, Monday
+to Friday, the same default the overtime engine uses. Holidays are those marked
+paid for the whole organisation or for the employee's work location.
+
+Pay is the daily rate times the days paid. It is not prorated: the days are
+the proration.
+
+Overtime is paid on the hourly rate of the day: daily rate ÷ standard hours per
+day (8). A salaried employee's is still salary ÷ 30 ÷ 8.
+
+### Social security in two halves
+
+- **First half:** 5% of the half's wage, capped at the monthly ceiling, with
+  **no floor**. The floor is a monthly figure: half a month under it can still
+  be a month over it.
+- **Second half:** the whole month's contribution, with the floor and the
+  ceiling applied once to the two halves' wages together, less what the first
+  half took. Never negative.
+
+So the month always adds up to what a monthly run would deduct, to the satang.
+The one exception is a month whose total ends under the floor after the first
+half has already contributed: the month owes nothing, the second half takes
+nothing, and the payslip shows HR the amount the first half took over
+(`SSO_OVER_IN_FIRST_HALF`). Cwork does not refund it by itself.
+
+The annual employee ceiling limits either half the same way it limits a month.
+
+### Withholding in two halves
+
+- **First half:** estimates the month as twice the half, works out that month's
+  withholding by the usual projection (below), and withholds half of it.
+- **Second half:** works out the month's withholding on the two halves
+  together, and withholds that less what the first half withheld. Never
+  negative: if the first half withheld more, the second withholds nothing and
+  the payslip shows HR the difference (`WITHHOLDING_OVER_IN_FIRST_HALF`).
+
+Both halves project from the months *before* this one, including months paid
+before Cwork (the opening balance) and a previous employer's pay, exactly as a
+monthly run does. The first half is added to the month, not to the year so far.
+
+The second half is worked out from the first, so it cannot be calculated until
+the first half's run is **paid** (`FIRST_HALF_NOT_PAID`). Paid, not just
+approved, also because marking a run paid is what marks the expense claims it
+paid; a second half calculated earlier would pay them again.
+
+### Monthly items
+
+Benefit premiums (employee and employer share) and standing allowances and
+deductions are monthly amounts, charged on the **second half** only.
+
+### Minimum wage
+
+Cwork keeps no table of minimum wages: they differ by province, district and
+business type, and change by announcement. HR enters the daily minimum on each
+work location with the Wage Committee announcement it came from (both
+required together). A daily rate is checked against it when the rate is set
+and again when a half is calculated, and the payslip says so if the rate is
+under it (`BELOW_MINIMUM_WAGE`), if the location has none set
+(`MINIMUM_WAGE_NOT_SET`), or if the employee has no work location
+(`NO_WORK_LOCATION`). These are warnings, not refusals.
+
+### What HR sees
+
+Every payslip carries `warnings`: `{ code, params }` objects the run page shows
+beside the employee. The codes above, plus `INCOMPLETE_PUNCH_COUNTED`,
+`NO_ATTENDANCE_RECORD`, `HOLIDAY_ON_DAY_OFF` and `REST_DAY_WORK_RATE` (below).
+
+### Legal basis, and how far it has been checked
+
+The rules above were set by the product owner from the Labour Protection Act
+B.E. 2541. The build environment could not reach the Council of State's
+database or the Royal Gazette, so the sections were checked against secondary
+sources only, and still need reading in the official text:
+
+| Rule | Section | Checked |
+|---|---|---|
+| A daily-wage employee is paid for traditional holidays and annual leave, not for the weekly day off | s.56 | secondary sources agree |
+| Work on a holiday: one more times the hourly rate for an employee paid for the day, at least twice for one who is not | s.62 | secondary sources agree |
+| A traditional holiday on the weekly day off is replaced by the next working day | s.29 | not yet found in a source |
+| The hourly rate for overtime of a daily-wage employee | s.68 | not yet found in a source |
+
+### Known gaps
+
+- **Substitute holidays.** The holiday table has no notion of a substitute
+  day. When a public holiday falls on an employee's weekly day off, Cwork pays
+  nothing for it and flags it (`HOLIDAY_ON_DAY_OFF`); HR has to enter the
+  substitute day as a holiday for it to be paid.
+- **Holiday and day-off work by daily staff.** The overtime engine has one
+  multiplier per type for everybody (day off 1×, holiday 2×). A daily-wage
+  employee is not paid for the weekly day off, so work on it is owed at least
+  twice the hourly rate, and holiday pay plus holiday work is owed differently
+  again. Cwork does not apply a separate rate; a payslip with such hours is
+  flagged (`REST_DAY_WORK_RATE`) for HR to check.
+- A salary paid in two halves is not supported; only daily wages are.
+- Opening balances are monthly. A company cannot start in Cwork with the
+  second half of a month: the second half needs a paid first half.
+- The assistant's run variance compares a half with the latest signed-off
+  run of an earlier month, whichever cycle that was, not with the previous
+  half; the export files treat a half like any period. Both are deferred.
 
 ## Leave
 

@@ -135,6 +135,13 @@ model WorkLocation {
   /// Empty list = no IP restriction for this site.
   ipAllowlist      String[] @default([])
   timezone         String?
+  /// The minimum daily wage that applies here, as HR read it from the Wage
+  /// Committee's announcement (CW-069). Cwork keeps no table of rates: they
+  /// differ by province, district and business type and change by
+  /// announcement, so a rate is only as good as the announcement it came from,
+  /// which is why the source is kept beside it.
+  minimumDailyWage       Decimal? @db.Decimal(18, 4)
+  minimumDailyWageSource String?
   isActive         Boolean  @default(true)
   /// Set when this code was retired by a supersede (CW-049): the old row is kept
   /// so its history stays valid, deactivated, and points at its replacement. A

@@ -331,6 +331,27 @@ entry, tags it and publishes the notes.
   language is reported as `NAME_REQUIRED`. A passport number is 5 to 20 letters
   and digits, with spaces and dashes ignored; a number repeated in one file is
   reported. Expiry alerts are not part of this.
+- **Daily wages paid twice a month, in the API** (CW-069, phase A). Cwork paid
+  only a monthly salary, so a factory or shop paying staff by the day every
+  fifteen days could not use it. A compensation can now carry a `dailyRate`
+  (with the salary at 0 and the pay frequency `SEMI_MONTHLY`; anything else,
+  `DAILY` included, is refused), and a month can be paid in two periods, half 1
+  and half 2 (`YYYY-MM-H1`, `YYYY-MM-H2`). A month has at most one monthly
+  period and one of each half, enforced by the database. A half pays only the
+  daily-wage employees, a monthly run everyone else. The days paid come from
+  attendance, paid leave by its portion, and paid holidays on working days; an
+  incomplete punch counts as worked and is flagged. Social security is 5% of the
+  first half with no floor, then the whole month less the first half, so the
+  month equals a monthly run's; withholding is half the estimated month, then
+  the month less the first half, never negative, with any excess shown to HR.
+  The second half needs the first half paid. Benefit premiums and standing
+  allowances and deductions go on the second half. Each work location holds the
+  minimum daily wage HR read from the Wage Committee announcement, with its
+  source, and a rate under it, or no rate to compare with, is flagged when the
+  rate is set and when a half is calculated. Payslips carry `warnings` for the
+  run page. The rules, how far their legal basis has been checked, and the gaps
+  (substitute holidays, holiday work by daily staff) are in
+  `docs/payroll-thailand.md`. The screens come in phase B.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the
