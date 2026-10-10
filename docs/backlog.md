@@ -239,7 +239,7 @@ rate changes after runs are paid.
 ---
 
 ### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
-`P0` · payroll · **S–M** · before Pilot B · needs the owner first
+`P0` · payroll · **S–M** · before Pilot B · ready after CW-075 (text read 2026-10-10)
 
 Two gaps the dev left open in CW-069 phase A and wrote down in
 `docs/payroll-thailand.md`, "Daily wages paid twice a month":
@@ -253,15 +253,27 @@ Two gaps the dev left open in CW-069 phase A and wrote down in
   paid at least twice the hourly rate (section 62, from secondary sources).
   Cwork underpays and only shows `REST_DAY_WORK_RATE`.
 
-**Before starting** (the owner): confirm sections 29, 56, 62, 68 and 76 (for
-CW-070's carried-over advances) of the Labour Protection Act in the official text.
-`*.go.th` is open since 2026-10-10, but from the cloud environment
-ratchakitcha.soc.go.th answers 403 to site pages (its document PDFs load),
-law.go.th answers 403, and labour.go.th, legal.labour.go.th, ccpl.mol.go.th
-and krisdika.go.th do not connect. The owner can download the consolidated
-Act (ฉบับปรับปรุงล่าสุด, กรมสวัสดิการและคุ้มครองแรงงาน) from a machine in
-Thailand and add the PDF, or the dev tries again later.
-The doc's table records how far each was checked.
+**Text read 2026-10-10 (PO).** The owner supplied the Act as first published:
+ราชกิจจานุเบกษา เล่ม ๑๑๕ ตอนที่ ๘ ก, 20 February 1998, 44 scanned pages (no text
+layer), kept outside this repo in the owner's notes. As enacted:
+- section 56 (page 13–14): wages for weekly days off are owed *except* to
+  employees paid by the day, the hour or the piece; traditional holidays and
+  annual leave are paid to everyone;
+- section 62 (page 14): work on a day off under sections 28, 29 or 30 pays
+  (1) at least 1× more on top of the day's wage for an employee entitled to
+  wages that day, (2) **at least 2×** the hourly rate for one who is not;
+- section 68 (page 16): the hourly rate of a *monthly* employee is the
+  monthly wage ÷ (30 × normal daily hours).
+
+The secondary sources the dev used say the same, so the 2× for daily staff on
+a weekly day off is not in doubt. Not yet read: sections 29 (substitute day)
+and 76 (CW-070's carried-over advances), and the Act has been amended several
+times since 1998. **When starting**, the dev reads sections 29 and 76 from the
+same file and checks each section used against the amending Acts that can be
+reached (secondary sources at least), then records in `docs/payroll-thailand.md`
+which version each rule was checked against. A section that may have changed
+and cannot be checked goes back to the PO, who asks the owner for the
+consolidated text.
 
 **Acceptance**
 - A traditional holiday on a Sunday pays a daily employee for the next
