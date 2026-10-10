@@ -56,6 +56,7 @@ const carried: PayrollAdvance = {
 
 const fresh: PayrollAdvance = {
   ...carried,
+  employee: { ...worker, status: 'RESIGNED' },
   id: 'a-2',
   amount: 300,
   paidOn: '2026-11-20',
@@ -127,6 +128,9 @@ describe('Cash advances (CW-070)', () => {
     expect(within(locked).getByText('อยู่ในรอบที่อนุมัติแล้ว')).toBeInTheDocument();
 
     const open = screen.getByText('20 พ.ย. 2569').closest('tr')!;
+    // Left, still owing: shown, not hidden, so HR can collect it.
+    expect(within(open).getByText('ลาออกแล้ว')).toBeInTheDocument();
+    expect(within(locked).queryByText('ลาออกแล้ว')).toBeNull();
     expect(within(open).getByText(/โอนเงิน/)).toBeInTheDocument();
     expect(
       within(open).getByRole('button', { name: 'แก้ไขเงินเบิกของ สมชาย ใจดี' }),

@@ -252,6 +252,21 @@ describe('Cash advances (e2e)', () => {
     expect(list[ids.a4]).toMatchObject({ status: 'CANCELLED', deducted: 0 });
   });
 
+  it('keeps someone who left still owing on the list of what is owed', async () => {
+    const a5 = await record({ amount: 250, paidOn: date(26) });
+    ids.a5 = a5.body.id;
+    await prisma.employee.update({
+      where: { id: worker },
+      data: { status: EmployeeStatus.RESIGNED, deletedAt: new Date() },
+    });
+
+    const owing = await api.get('/payroll/advances?owing=true', payrollToken);
+    const theirs = (owing.body as Array<Advance & { employee: { status: string } }>).find(
+      (a) => a.id === ids.a5,
+    );
+    expect(theirs).toMatchObject({ outstanding: 250, employee: { status: 'RESIGNED' } });
+  });
+
   it('is audited', async () => {
     const trail = await prisma.auditLog.findMany({
       where: { entityType: 'PayrollAdvance', entityId: { in: [ids.a1, ids.a4] } },

@@ -140,6 +140,11 @@ export default function AdvancesPage() {
   );
 }
 
+/** Someone who left still owing stays on the list, so HR can collect it (PO, CW-070). */
+const LEFT: ReadonlyArray<string> = ['RESIGNED', 'TERMINATED', 'RETIRED'];
+const hasLeft = (advance: PayrollAdvance) =>
+  Boolean(advance.employee.deletedAt) || LEFT.includes(advance.employee.status ?? '');
+
 const nameOf = (advance: PayrollAdvance) =>
   `${advance.employee.firstNameTh} ${advance.employee.lastNameTh}`;
 
@@ -192,6 +197,7 @@ function AdvanceTable({
               <tr key={advance.id}>
                 <td>
                   <Person name={nameOf(advance)} meta={advance.employee.employeeCode} />
+                  {hasLeft(advance) && <Badge tone="warning">{t('Has left')}</Badge>}
                 </td>
                 <td>
                   {formatDate(advance.paidOn)}

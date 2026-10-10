@@ -20,7 +20,14 @@ const FINAL_RUNS: PayrollRunStatus[] = [PayrollRunStatus.APPROVED, PayrollRunSta
 
 const withDeductions = {
   employee: {
-    select: { id: true, employeeCode: true, firstNameTh: true, lastNameTh: true },
+    select: {
+      id: true,
+      employeeCode: true,
+      firstNameTh: true,
+      lastNameTh: true,
+      status: true,
+      deletedAt: true,
+    },
   },
   deductions: {
     select: {

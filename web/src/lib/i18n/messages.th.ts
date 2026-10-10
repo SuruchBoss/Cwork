@@ -1119,6 +1119,7 @@ export const thMessages: Record<string, string> = {
   Cash: 'เงินสด',
   'Bank transfer': 'โอนเงิน',
   Settled: 'หักครบแล้ว',
+  'Has left': 'ลาออกแล้ว',
   'Edit the advance of {name}': 'แก้ไขเงินเบิกของ {name}',
   'Cancel the advance of {name}': 'ยกเลิกเงินเบิกของ {name}',
   'In an approved run': 'อยู่ในรอบที่อนุมัติแล้ว',

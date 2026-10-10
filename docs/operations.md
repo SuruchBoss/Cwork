@@ -197,6 +197,25 @@ than locked out. Note that the mobile app can present a code but cannot yet
 enrol one — see CW-021 in the backlog — so turning this on organisation-wide
 while field staff have no console access will strand them.
 
+## Giving a role a permission
+
+Roles are copied into the organisation when it is set up, and Cwork has no
+screen or API to change what a role may do yet. To give one a permission, add
+it to the role's row. For example, so an HR officer can record cash advances
+(CW-070), which needs `payroll:run`:
+
+```sql
+UPDATE "roles"
+SET "permissions" = array_append("permissions", 'payroll:run')
+WHERE "key" = 'HR_OFFICER'
+  AND NOT ('payroll:run' = ANY("permissions"));
+```
+
+Permissions are read from the database on every request, so the change takes
+effect at once, for everyone holding the role. `payroll:run` also lets the role
+create pay periods and calculate runs; approving a run needs `payroll:approve`,
+which stays separate. Nothing in Cwork rewrites a role's permissions later.
+
 ## Scheduled jobs
 
 `ScheduledTasksService` runs nightly maintenance. Cron times are UTC, chosen to
