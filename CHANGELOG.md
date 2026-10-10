@@ -37,9 +37,10 @@ guide walks HR through those imports, and filing and approving leave in the app
 has been reworked for someone using it for the first time (CW-066). In Thai,
 every year the console, the app and the certificate PDF show is Buddhist era,
 and the console's date fields are typed and picked day first in it (CW-058).
-The API can pay daily wages twice a month, in two half-month periods, with
-the minimum wage checked against each work location; the screens for it are
-not in this release (CW-069). The console and the app also work in English; benefits, shifts and issued
+Daily wages can be paid twice a month, in two half-month periods, with the
+minimum wage set and checked on each work location; HR sets the pay on the
+employee page, and the run page says what to check on each payslip (CW-069).
+The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
 
@@ -52,7 +53,8 @@ HR officer, HR admin and super admin roles; a custom role that should record
 leave for others needs it added. An imported row with no Thai name but an English
 one, which 0.3.1 refused, is now accepted. A month can now have only one
 monthly payroll period: the migration that enforces it stops and names the
-periods if an installation already has two for the same month.
+periods if an installation already has two for the same month. A half-month
+period's dates are fixed, the 1st to the 15th and the 16th to the month's end.
 
 ### Added
 
@@ -387,6 +389,22 @@ periods if an installation already has two for the same month.
   run page. The rules, how far their legal basis has been checked, and the gaps
   (substitute holidays, holiday work by daily staff) are in
   `docs/payroll-thailand.md`. The screens come in phase B.
+- **Daily wages and half-month periods in the console** (CW-069, phase B). The
+  employee page has a Pay card, for anyone with `compensation:read`, showing the
+  current pay, any change already scheduled and the records before it; someone
+  with `compensation:manage` sets a monthly salary or a daily wage from a date.
+  A new record carries over the previous one's overtime, social security and
+  provident-fund settings, which a pay change does not touch, and a rate under
+  the work location's minimum wage is reported on saving. A pay period can be
+  created for the whole month or for either half; a half's dates are fixed and
+  the API now refuses others (`INVALID_PERIOD_DATES`). Halves are labelled by
+  their dates (“1–15 พฤศจิกายน 2569”) on the web and in the mobile app. A run
+  page lists every payslip warning in words, in Thai or English, with a count
+  per payslip; on a second half it says why it cannot be calculated while the
+  first half is unpaid, and links to the first half's run, which `GET
+  /payroll/runs/:id` now returns as `firstHalf`. Work locations can be edited
+  from the Organisation page to set the minimum daily wage, which needs its
+  source.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the

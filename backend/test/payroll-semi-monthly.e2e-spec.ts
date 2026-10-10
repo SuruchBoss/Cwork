@@ -180,6 +180,20 @@ describe('Daily wages paid twice a month (e2e)', () => {
       });
       expect(daily.status).toBe(400);
     });
+
+    it('holds a half to its days: the 1st to the 15th, the 16th to the month end', async () => {
+      const wrong = await api.post('/payroll/periods', payrollToken, {
+        year: YEAR,
+        month: 4,
+        payFrequency: 'SEMI_MONTHLY',
+        half: 2,
+        periodStart: date(15, 4),
+        periodEnd: date(30, 4),
+        payDate: date(30, 4),
+      });
+      expect(wrong.body.code).toBe('INVALID_PERIOD_DATES');
+      expect(wrong.body.details).toEqual({ periodStart: date(16, 4), periodEnd: date(30, 4) });
+    });
   });
 
   describe('a daily wage', () => {
@@ -334,6 +348,10 @@ describe('Daily wages paid twice a month (e2e)', () => {
       const early = await calculatedRun(second.id);
       expect(early.calculated.body.code).toBe('FIRST_HALF_NOT_PAID');
       secondHalfRun = early.runId;
+
+      // The run page can say why: the first half is calculated, not paid.
+      const page = await api.get(`/payroll/runs/${secondHalfRun}`, payrollToken);
+      expect(page.body.firstHalf).toMatchObject({ id: runId, status: PayrollRunStatus.CALCULATED });
     });
 
     it('counts the first half by attendance and holidays, and flags what HR should check', async () => {
@@ -364,6 +382,8 @@ describe('Daily wages paid twice a month (e2e)', () => {
       expect((await api.post(`/payroll/runs/${firstHalfRun}/approve`, ceoToken)).status).toBe(201);
       const paid = await api.post(`/payroll/runs/${firstHalfRun}/pay`, ceoToken);
       expect(paid.body.status).toBe(PayrollRunStatus.PAID);
+      const page = await api.get(`/payroll/runs/${secondHalfRun}`, payrollToken);
+      expect(page.body.firstHalf.status).toBe(PayrollRunStatus.PAID);
 
       // The run refused earlier calculates now.
       const runId = secondHalfRun;

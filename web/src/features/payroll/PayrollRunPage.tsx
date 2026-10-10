@@ -21,7 +21,8 @@ import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
-import type { PayrollRun, PayslipSummary } from '@/types/api';
+import type { PayFrequency, PayrollRun, PayrollRunStatus, PayslipSummary } from '@/types/api';
+import { describeWarning } from './payslip-warnings';
 
 interface RunDetail extends PayrollRun {
   period: {
@@ -31,8 +32,75 @@ interface RunDetail extends PayrollRun {
     payDate: string;
     periodStart: string;
     periodEnd: string;
+    payFrequency: PayFrequency;
+    half: number;
   };
   payslips: PayslipSummary[];
+  /** On a second half: the same month's first-half run, or null if there is none (CW-069). */
+  firstHalf?: { id: string; runNo: string; status: PayrollRunStatus } | null;
+}
+
+/**
+ * Why a second half cannot be calculated yet (CW-069): it is worked out from
+ * the first half, which has to be paid first. Said in words, with the way to
+ * the first half, because a button that merely does nothing explains nothing.
+ */
+function FirstHalfNotice({
+  firstHalf,
+}: {
+  firstHalf: { id: string; runNo: string; status: PayrollRunStatus } | null;
+}) {
+  const t = useT();
+  return (
+    <div className="alert alert--warning" role="status">
+      <p id="first-half-notice" style={{ margin: 0 }}>
+        {firstHalf
+          ? t(
+              'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be paid before this half can be calculated.',
+              {
+                no: firstHalf.runNo,
+                status: t(payrollStatusLabels[firstHalf.status] ?? firstHalf.status),
+              },
+            )
+          : t(
+              'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate, approve and pay it before this half.',
+            )}
+      </p>
+      {firstHalf && (
+        <p style={{ margin: '6px 0 0' }}>
+          <Link to={`/payroll/runs/${firstHalf.id}`}>
+            {t('Open the first half’s run {no}', { no: firstHalf.runNo })}
+          </Link>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The payslips HR should check before approving, each warning in words (CW-069). */
+function PayslipWarnings({ payslips }: { payslips: PayslipSummary[] }) {
+  const t = useT();
+  const flagged = payslips.filter((slip) => (slip.warnings?.length ?? 0) > 0);
+  if (flagged.length === 0) return null;
+  return (
+    <Card title={t('Check before approving ({count})', { count: flagged.length })}>
+      <ul className="stack" style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+        {flagged.map((slip) => (
+          <li key={slip.id}>
+            <Person
+              name={`${slip.employee?.firstNameTh ?? ''} ${slip.employee?.lastNameTh ?? ''}`}
+              meta={slip.employee?.employeeCode}
+            />
+            <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+              {slip.warnings!.map((warning, i) => (
+                <li key={`${warning.code}-${i}`}>{describeWarning(warning, t)}</li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
 }
 
 interface RunExplanation {
@@ -135,6 +203,7 @@ export default function PayrollRunPage() {
   const data = run.data;
   const canRun = can(P.PAYROLL_RUN);
   const canApprove = can(P.PAYROLL_APPROVE);
+  const waitsForFirstHalf = data.firstHalf !== undefined && data.firstHalf?.status !== 'PAID';
 
   return (
     <div className="page">
@@ -153,6 +222,8 @@ export default function PayrollRunPage() {
               <Button
                 variant="primary"
                 loading={act.isPending && act.variables === 'calculate'}
+                disabled={waitsForFirstHalf}
+                aria-describedby={waitsForFirstHalf ? 'first-half-notice' : undefined}
                 onClick={() => act.mutate('calculate')}
               >
                 {t('Calculate payroll')}
@@ -196,6 +267,8 @@ export default function PayrollRunPage() {
         )}
       </div>
 
+      {waitsForFirstHalf && <FirstHalfNotice firstHalf={data.firstHalf ?? null} />}
+
       {act.isError && (
         <div className="alert alert--danger" role="alert">
           {act.error instanceof Error ? act.error.message : t('Could not complete the action')}
@@ -231,6 +304,8 @@ export default function PayrollRunPage() {
         />
       </div>
 
+      <PayslipWarnings payslips={data.payslips} />
+
       <Card title={t('Payslips ({count})', { count: data.payslips.length })} flush>
         {data.payslips.length > 0 ? (
           <div className="table-wrap">
@@ -243,6 +318,7 @@ export default function PayrollRunPage() {
                   <th className="num">{t('Deductions')}</th>
                   <th className="num">{t('Net')}</th>
                   <th>{t('Published')}</th>
+                  <th>{t('To check')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -265,6 +341,15 @@ export default function PayrollRunPage() {
                         <Badge tone="success">{t('Published')}</Badge>
                       ) : (
                         <Badge tone="neutral">{t('Not published')}</Badge>
+                      )}
+                    </td>
+                    <td>
+                      {(slip.warnings?.length ?? 0) > 0 ? (
+                        <Badge tone="warning">
+                          {t('{count} to check', { count: slip.warnings!.length })}
+                        </Badge>
+                      ) : (
+                        '—'
                       )}
                     </td>
                   </tr>

@@ -109,14 +109,21 @@ class Fmt {
     return fixed.endsWith('.0') ? fixed.substring(0, fixed.length - 2) : fixed;
   }
 
-  /// A pay period's code as the month it is, when it is one: "2026-08" reads
-  /// "สิงหาคม 2569" / "August 2026". Any other code is shown as HR wrote it.
+  /// A pay period's code as the dates it covers: "2026-08" reads
+  /// "สิงหาคม 2569" / "August 2026", and a half of a semi-monthly month
+  /// (CW-069) "2026-11-H1" reads "1–15 พฤศจิกายน 2569", "2026-11-H2"
+  /// "16–30 พฤศจิกายน 2569". Any other code is shown as HR wrote it.
   static String period(String code) {
-    final RegExpMatch? match = RegExp(r'^(\d{4})-(\d{2})$').firstMatch(code);
+    final RegExpMatch? match = RegExp(r'^(\d{4})-(\d{2})(?:-H([12]))?$').firstMatch(code);
     if (match == null) return code;
+    final int year = int.parse(match.group(1)!);
     final int month = int.parse(match.group(2)!);
     if (month < 1 || month > 12) return code;
-    return _format('MMMM yyyy', DateTime(int.parse(match.group(1)!), month));
+    final String monthYear = _format('MMMM yyyy', DateTime(year, month));
+    final String? half = match.group(3);
+    if (half == null) return monthYear;
+    final int lastDay = DateTime(year, month + 1, 0).day;
+    return half == '1' ? '1–15 $monthYear' : '16–$lastDay $monthYear';
   }
 
   /// Minutes as "8 ชม. 5 นาที" (Thai) or "8 hr 5 min" (English). Zero renders

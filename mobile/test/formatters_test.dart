@@ -96,6 +96,13 @@ void main() {
       expect(Fmt.period('2026-08'), 'August 2026');
     });
 
+    test('names the days of a half of a semi-monthly month (CW-069)', () {
+      expect(Fmt.period('2026-11-H1'), '1–15 พฤศจิกายน 2569');
+      expect(Fmt.period('2026-11-H2'), '16–30 พฤศจิกายน 2569');
+      Fmt.locale = 'en';
+      expect(Fmt.period('2028-02-H2'), '16–29 February 2028');
+    });
+
     test('leaves any other code as HR wrote it', () {
       expect(Fmt.period('2026-H1'), '2026-H1');
       expect(Fmt.period('2026-13'), '2026-13');

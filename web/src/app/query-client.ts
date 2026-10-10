@@ -34,6 +34,7 @@ export const qk = {
   employees: (filters?: unknown) => ['employees', filters] as const,
   employee: (id: string) => ['employees', id] as const,
   employmentEvents: (id: string) => ['employees', id, 'events'] as const,
+  compensation: (employeeId: string) => ['employees', employeeId, 'compensation'] as const,
   departments: ['departments'] as const,
   departmentTree: ['departments', 'tree'] as const,
   positions: ['positions'] as const,

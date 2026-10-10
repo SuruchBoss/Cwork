@@ -69,16 +69,23 @@ export function formatMonthYear(year: number, month: number): string {
 }
 
 /**
- * A pay period's code as the month it is, when it is one: "2026-08" reads
- * "สิงหาคม 2569" / "August 2026". Any other code is shown as HR wrote it.
+ * A pay period's code as the dates it covers. A month, "2026-08", reads
+ * "สิงหาคม 2569" / "August 2026"; a half of a semi-monthly month (CW-069),
+ * "2026-11-H1", reads "1–15 พฤศจิกายน 2569" and "2026-11-H2" reads
+ * "16–30 พฤศจิกายน 2569", the second half running to the month's last day.
+ * Any other code is shown as HR wrote it.
  */
 export function formatPeriod(code: string | null | undefined): string {
   if (!code) return '—';
-  const match = /^(\d{4})-(\d{2})$/.exec(code);
+  const match = /^(\d{4})-(\d{2})(?:-H([12]))?$/.exec(code);
   if (!match) return code;
+  const year = Number(match[1]);
   const month = Number(match[2]);
   if (month < 1 || month > 12) return code;
-  return formatMonthYear(Number(match[1]), month);
+  const monthYear = formatMonthYear(year, month);
+  if (!match[3]) return monthYear;
+  const lastDay = new Date(year, month, 0).getDate();
+  return match[3] === '1' ? `1–15 ${monthYear}` : `16–${lastDay} ${monthYear}`;
 }
 
 /** A Date as the API's date-only string, from its local calendar day: 2026-10-01. */

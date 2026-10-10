@@ -20,6 +20,7 @@ import { employeeStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail, LeaveBalance } from '@/types/api';
+import { CompensationCard } from './CompensationCard';
 import { ForeignWorkerDocuments } from './ForeignWorkerDocuments';
 
 export default function EmployeeDetailPage() {
@@ -103,9 +104,7 @@ export default function EmployeeDetailPage() {
             <DetailRow
               label={t('Manager')}
               value={
-                person.manager
-                  ? `${person.manager.firstNameTh} ${person.manager.lastNameTh}`
-                  : null
+                person.manager ? `${person.manager.firstNameTh} ${person.manager.lastNameTh}` : null
               }
             />
             <DetailRow label={t('Employment type')} value={person.employmentType} />
@@ -145,6 +144,9 @@ export default function EmployeeDetailPage() {
         </Card>
 
         <div className="stack">
+          {canAny(P.COMPENSATION_READ) && (
+            <CompensationCard employeeId={person.id} canManage={canAny(P.COMPENSATION_MANAGE)} />
+          )}
           <ForeignWorkerDocuments person={person} canEdit={canAny(P.EMPLOYEE_UPDATE)} />
 
           {balances.data && (

@@ -1025,4 +1025,81 @@ export const thMessages: Record<string, string> = {
   'Next month': 'เดือนถัดไป',
   'Write the date as day/month/year, for example {example}':
     'พิมพ์วันที่เป็น วัน/เดือน/ปี พ.ศ. เช่น {example}',
+
+  // Daily wages and half-month pay (CW-069)
+  Pay: 'ค่าจ้าง',
+  'Change pay': 'เปลี่ยนค่าจ้าง',
+  'Set pay': 'ตั้งค่าจ้าง',
+  'Could not load the pay history.': 'โหลดประวัติค่าจ้างไม่ได้',
+  'Saved. Check before the next payroll run:': 'บันทึกแล้ว ตรวจก่อนคำนวณเงินเดือนรอบถัดไป:',
+  'No pay set. Payroll skips an employee without one.':
+    'ยังไม่ได้ตั้งค่าจ้าง การคำนวณเงินเดือนจะข้ามพนักงานที่ไม่มีค่าจ้าง',
+  'Current pay': 'ค่าจ้างปัจจุบัน',
+  Since: 'ตั้งแต่',
+  'Not yet in effect': 'ยังไม่มีผล',
+  'From {date}': 'ตั้งแต่ {date}',
+  Upcoming: 'รอมีผล',
+  '{amount} a day, paid twice a month': 'วันละ {amount} จ่ายเดือนละ 2 ครั้ง',
+  '{amount} a month': 'เดือนละ {amount}',
+  'Choose the date the pay starts.': 'เลือกวันที่ค่าจ้างนี้เริ่มมีผล',
+  'Enter the amount in baht, with at most two decimal places.':
+    'ใส่จำนวนเงินเป็นบาท ทศนิยมไม่เกิน 2 ตำแหน่ง',
+  'Starts on': 'เริ่มมีผล',
+  'Paid as': 'จ่ายแบบ',
+  'Monthly salary': 'เงินเดือน (รายเดือน)',
+  'Daily wage, paid twice a month': 'ค่าจ้างรายวัน จ่ายเดือนละ 2 ครั้ง',
+  'Baht a day': 'บาทต่อวัน',
+  'Baht a month': 'บาทต่อเดือน',
+  'Checked against the minimum wage set on the work location.':
+    'ระบบเทียบกับค่าแรงขั้นต่ำที่ตั้งไว้ในสถานที่ทำงาน',
+  'Reason (optional)': 'เหตุผล (ไม่บังคับ)',
+  'A pay record already starts on that date. Choose another date.':
+    'มีค่าจ้างที่เริ่มวันนั้นอยู่แล้ว เลือกวันอื่น',
+  'Pay is either a monthly salary or a daily wage paid twice a month.':
+    'ค่าจ้างเป็นได้แบบเดียว คือเงินเดือนรายเดือน หรือค่าจ้างรายวันที่จ่ายเดือนละ 2 ครั้ง',
+  'Counted {days} day(s) with an incomplete punch as worked: {dates}':
+    'นับ {days} วันที่ลงเวลาไม่ครบเป็นวันทำงาน: {dates}',
+  'Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}':
+    'ไม่จ่าย {days} วันทำงานที่ไม่มีบันทึกเวลาและไม่มีการลา: {dates}',
+  'A public holiday fell on the weekly day off ({dates}): add the substitute day to the holiday calendar for it to be paid':
+    'วันหยุดตามประเพณีตรงกับวันหยุดประจำสัปดาห์ ({dates}) ให้เพิ่มวันหยุดชดเชยในปฏิทินวันหยุดก่อน ระบบจึงจะจ่ายให้',
+  'The daily rate {rate} is below the minimum wage {minimum} at {location} ({source})':
+    'ค่าจ้างวันละ {rate} ต่ำกว่าค่าแรงขั้นต่ำ {minimum} ของ {location} ({source})',
+  '{location} has no minimum wage set, so the daily rate was not checked':
+    '{location} ยังไม่ได้ตั้งค่าแรงขั้นต่ำ ระบบจึงยังไม่ได้ตรวจค่าจ้างรายวัน',
+  'The employee has no work location, so the daily rate was not checked against a minimum wage':
+    'พนักงานยังไม่มีสถานที่ทำงาน ระบบจึงยังไม่ได้เทียบค่าจ้างรายวันกับค่าแรงขั้นต่ำ',
+  'The first half deducted {amount} more social security than the whole month owes; it is not refunded automatically':
+    'ครึ่งแรกหักประกันสังคมเกินยอดทั้งเดือนไป {amount} ระบบไม่คืนให้อัตโนมัติ',
+  'The first half withheld {amount} more tax than the whole month owes, so this half withholds none':
+    'ครึ่งแรกหักภาษีเกินยอดทั้งเดือนไป {amount} ครึ่งนี้จึงไม่หักภาษี',
+  'Work on a day off or a holiday ({hours} h at {rates}): check the rate owed to a daily-wage employee':
+    'มีการทำงานในวันหยุด ({hours} ชม. ที่ {rates}) ตรวจอัตราที่ต้องจ่ายลูกจ้างรายวันด้วย',
+  'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be paid before this half can be calculated.':
+    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก รอบครึ่งแรกเลขที่ {no} ตอนนี้สถานะ“{status}” ต้องจ่ายครึ่งแรกก่อนจึงจะคำนวณครึ่งนี้ได้',
+  'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate, approve and pay it before this half.':
+    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก แต่ครึ่งแรกยังไม่มีรอบคำนวณ ให้สร้างรอบครึ่งแรก คำนวณ อนุมัติ และจ่ายก่อน',
+  'Open the first half’s run {no}': 'เปิดรอบครึ่งแรกเลขที่ {no}',
+  'Check before approving ({count})': 'ตรวจก่อนอนุมัติ ({count})',
+  'To check': 'ต้องตรวจ',
+  '{count} to check': 'ตรวจ {count} เรื่อง',
+  Pays: 'งวดการจ่าย',
+  'Half-month periods pay daily-wage employees': 'งวดครึ่งเดือนใช้จ่ายลูกจ้างรายวัน',
+  'The whole month': 'ทั้งเดือน',
+  'First half (1st–15th)': 'ครึ่งแรก (วันที่ 1–15)',
+  'Second half (16th–month end)': 'ครึ่งหลัง (วันที่ 16–สิ้นเดือน)',
+  'That month already has this period: {period}': 'เดือนนั้นมีงวดนี้อยู่แล้ว: {period}',
+  'A half runs from {from} to {to}': 'งวดครึ่งเดือนต้องเริ่ม {from} ถึง {to}',
+  'Enter the minimum daily wage as an amount in baht.': 'ใส่ค่าแรงขั้นต่ำต่อวันเป็นจำนวนเงินบาท',
+  'Say which Wage Committee announcement the minimum wage comes from.':
+    'ระบุว่าค่าแรงขั้นต่ำนี้มาจากประกาศคณะกรรมการค่าจ้างฉบับไหน',
+  'Edit a work location': 'แก้ไขสถานที่ทำงาน',
+  'Minimum daily wage (baht, optional)': 'ค่าแรงขั้นต่ำต่อวัน (บาท ไม่บังคับ)',
+  'Checked against every daily rate here. Cwork does not know the rates itself.':
+    'ใช้ตรวจค่าจ้างรายวันของทุกคนที่นี่ Cwork ไม่มีตารางค่าแรงขั้นต่ำในตัว',
+  'From the announcement': 'ที่มาของอัตรา',
+  'For example: Wage Committee announcement No. 14': 'เช่น ประกาศคณะกรรมการค่าจ้าง ฉบับที่ 14',
+  'Minimum wage {amount} a day · {source}': 'ค่าแรงขั้นต่ำวันละ {amount} · {source}',
+  'No minimum wage set': 'ยังไม่ได้ตั้งค่าแรงขั้นต่ำ',
+  'Edit {name}': 'แก้ไข {name}',
 };

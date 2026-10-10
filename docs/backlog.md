@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-075 · CW-069 · CW-070 · CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-075 · CW-069 · CW-076 · CW-070 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -262,7 +262,57 @@ thing this project said it would not keep.
 - Deferred: half-month opening balances, the assistant's run comparison,
   half-month export files.
 
+**Phase A done 2026-10-10** (037e108, reviewed by the PO): the backend, the
+rules and `docs/payroll-thailand.md`, with every figure in the tests computed
+by hand and not yet compared with the pilot's Excel. Choices made by the dev
+and accepted: `SEMI_MONTHLY` without a daily rate is refused, as is every pay
+frequency but `MONTHLY` and `SEMI_MONTHLY`; the second half needs the first
+half **paid**, not only approved, because marking a run paid is what settles
+expense claims (so a shadow run has to mark H1 paid, and a company cannot start
+on a second half); standing allowances and deductions go on H2 with the
+benefits; a scheduled day with no attendance and no leave is unpaid and
+flagged; warnings live on `Payslip.warnings` as `{code, params}`; a month
+whose total falls under the ฿1,650 floor after H1 has deducted gets nothing in
+H2 and a warning, never an automatic refund; a rate under the minimum wage is a
+warning, not a refusal; the migration stops and names any duplicate monthly
+periods. The legal basis is checked only from secondary sources for sections
+56 and 62, and not found for 29 and 68; the doc says how far each was checked.
+Substitute holidays and holiday work by daily staff are split out as CW-076.
+**Phase B remains:** the console screens and the warnings on the run page.
+
 **Files** `backend/src/modules/payroll/`, `docs/payroll-thailand.md`
+
+---
+
+
+### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
+`P0` · payroll · **S–M** · before Pilot B · needs the owner first
+
+Two gaps the dev left open in CW-069 phase A and wrote down in
+`docs/payroll-thailand.md`, "Daily wages paid twice a month":
+
+- **Substitute holidays.** A traditional holiday that falls on a weekly day
+  off moves to the next working day. Cwork's holiday table has no substitute
+  day, so the daily employee is not paid for it; the payslip only shows
+  `HOLIDAY_ON_DAY_OFF` and HR has to add the day by hand.
+- **Holiday work.** Overtime has one rate per day type, `DAY_OFF` at 1×. A
+  daily employee is not paid for a weekly day off, so work on it should be
+  paid at least twice the hourly rate (section 62, from secondary sources).
+  Cwork underpays and only shows `REST_DAY_WORK_RATE`.
+
+**Before starting** (the owner): confirm sections 29, 56, 62 and 68 of the
+Labour Protection Act in the official text, or allow `*.go.th` so the dev can.
+The doc's table records how far each was checked.
+
+**Acceptance**
+- A traditional holiday on a Sunday pays a daily employee for the next
+  working day, without HR adding it.
+- Four hours worked by a daily employee on a weekly day off are paid at the
+  multiple the confirmed text gives, and on a traditional holiday likewise.
+- Monthly employees' pay does not change.
+
+**Files** `backend/src/modules/payroll/`, `backend/src/modules/attendance/`,
+`docs/payroll-thailand.md`
 
 ---
 
