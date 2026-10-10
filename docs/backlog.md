@@ -155,7 +155,7 @@ seeing any of it.
 
 
 ### CW-075 · Social security uses the 2025 wage ceiling in 2026
-`P0` · payroll · **S–M** · before Pilot B · needs the owner first
+`P0` · payroll · **S–M** · before Pilot B · ready (regulation read 2026-10-10)
 
 Found by the dev on 2026-10-10 while checking CW-069. Several secondary
 sources (Baker McKenzie, กรุงเทพธุรกิจ, ไทยโพสต์, ประชาชาติ, ไทยรัฐ) report a
@@ -163,9 +163,19 @@ ministerial regulation of 11 December 2025, published in the Royal Gazette on
 12 December 2025, that replaces regulation No. 7 (1995) and raises the
 contribution ceiling for section 33 insured persons in steps: ฿17,500 a month
 for 2026–2028 (at most ฿875), ฿20,000 for 2029–2031 (฿1,000), ฿23,000 from
-2032 (฿1,150). The floor stays ฿1,650. Neither the dev nor the PO could open
-sso.go.th or ratchakitcha.soc.go.th from their environments, so **nobody has
-read the regulation itself yet**.
+2032 (฿1,150). The floor stays ฿1,650.
+
+**Verified 2026-10-10 (PO) against the Royal Gazette itself**:
+กฎกระทรวงกำหนดค่าจ้างขั้นต่ำและขั้นสูงที่ใช้เป็นฐานในการคำนวณเงินสมทบของ
+ผู้ประกันตนตามมาตรา ๓๓ พ.ศ. ๒๕๖๘, ราชกิจจานุเบกษา เล่ม ๑๔๒ ตอนที่ ๘๑ ก,
+12 December 2025, pages 5–6, signed 11 December 2025
+(<https://ratchakitcha.soc.go.th/documents/98728.pdf>, linked from the Social
+Security Office's own news page). Clause 1: in force from 1 January 2026.
+Clause 2: repeals regulation No. 7 (1995). Clause 3, per person per month:
+(1) 1 Jan 2026 – 31 Dec 2028: not below ฿1,650, not above ฿17,500;
+(2) 1 Jan 2029 – 31 Dec 2031: ฿1,650 to ฿20,000;
+(3) from 1 Jan 2032: ฿1,650 to ฿23,000.
+The 5% rate is not in this regulation; Cwork's existing rate stays.
 
 Cwork still uses ฿15,000 (`THAI_TAX_RULES_2026.socialSecurity.maxMonthlyWage`)
 and stops contributions at ฿9,000 a year (`socialSecurityCap`), which the
@@ -175,9 +185,8 @@ earning above ฿15,000, and the annual stop would cut contributions off before
 December at the new rate.
 
 **Before starting** (the owner)
-- Read the regulation in the Royal Gazette and confirm the figures and the
-  effective date, or allow `*.go.th` in the environment so the dev can. The
-  owner is allowing `*.go.th` (2026-10-10); start once they say it is open.
+- ~~Read the regulation in the Royal Gazette.~~ Done by the PO 2026-10-10,
+  see above. The figures and dates match what the dev found.
 - ~~Decide what happens to January–October 2026 runs already paid.~~ Decided
   2026-10-10: report the shortfall for HR to settle. Locked and paid runs are
   not recalculated or changed.
@@ -243,7 +252,13 @@ Two gaps the dev left open in CW-069 phase A and wrote down in
   Cwork underpays and only shows `REST_DAY_WORK_RATE`.
 
 **Before starting** (the owner): confirm sections 29, 56, 62, 68 and 76 (for
-CW-070's carried-over advances) of the Labour Protection Act in the official text, or allow `*.go.th` so the dev can.
+CW-070's carried-over advances) of the Labour Protection Act in the official text.
+`*.go.th` is open since 2026-10-10, but from the cloud environment
+ratchakitcha.soc.go.th answers 403 to site pages (its document PDFs load),
+law.go.th answers 403, and labour.go.th, legal.labour.go.th, ccpl.mol.go.th
+and krisdika.go.th do not connect. The owner can download the consolidated
+Act (ฉบับปรับปรุงล่าสุด, กรมสวัสดิการและคุ้มครองแรงงาน) from a machine in
+Thailand and add the PDF, or the dev tries again later.
 The doc's table records how far each was checked.
 
 **Acceptance**
