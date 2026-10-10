@@ -12,7 +12,7 @@
  *
  * The scenario is the common one: someone phoned in sick, the day was closed
  * out overnight as an absence, and HR records the sick day afterwards. It is
- * set in June 2024, a month no other spec runs payroll for.
+ * set in June 2019, a month no other spec runs payroll for.
  */
 import { AttendanceStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
@@ -25,9 +25,9 @@ const EMPLOYEE = 'dev2@cwork.example';
 const PAYROLL = 'payroll@cwork.example';
 
 /** A Tuesday, closed out as an absence before HR records it as sick leave. */
-const SICK_DAY = '2024-06-11';
+const SICK_DAY = '2019-06-11';
 /** The Wednesday after, recorded as unpaid leave. */
-const UNPAID_DAY = '2024-06-12';
+const UNPAID_DAY = '2019-06-12';
 
 interface Balance {
   code: string;
@@ -73,7 +73,7 @@ describe('Leave recorded by HR (e2e)', () => {
     const created = await api.post('/employees', hrToken, {
       firstNameTh: 'สมชาย',
       lastNameTh: 'ใจดี',
-      hireDate: '2024-01-02',
+      hireDate: '2019-01-02',
     });
     expect(created.status).toBe(201);
     somchaiId = created.body.id;
@@ -82,7 +82,7 @@ describe('Leave recorded by HR (e2e)', () => {
     await prisma.employee.update({ where: { id: somchaiId }, data: { status: 'ACTIVE' } });
     const pay = await api.post('/payroll/compensation', payrollToken, {
       employeeId: somchaiId,
-      effectiveFrom: '2024-01-02',
+      effectiveFrom: '2019-01-02',
       baseSalary: 30000,
     });
     expect(pay.status).toBeLessThan(300);
@@ -109,7 +109,7 @@ describe('Leave recorded by HR (e2e)', () => {
     return record?.status ?? null;
   }
 
-  async function balance(code: string, year = 2024): Promise<Balance> {
+  async function balance(code: string, year = 2019): Promise<Balance> {
     const res = await api.get<Balance[]>(`/leave/balances/${somchaiId}?year=${year}`, hrToken);
     return res.body.find((b) => b.code === code)!;
   }
@@ -197,23 +197,23 @@ describe('Leave recorded by HR (e2e)', () => {
       const unpaid = await record({
         employeeId: somchaiId,
         leaveTypeId: types.get('SICK'),
-        startDate: '2024-06-13',
-        endDate: '2024-06-13',
+        startDate: '2019-06-13',
+        endDate: '2019-06-13',
       });
       expect(unpaid.status).toBe(201);
-      await attendance.closeOutDay(organizationId, new Date('2024-06-13T00:00:00Z'));
+      await attendance.closeOutDay(organizationId, new Date('2019-06-13T00:00:00Z'));
 
       const cancelled = await api.post(`/leave/requests/${unpaid.body.id}/cancel`, hrToken, {
         reason: 'บันทึกผิดวัน',
       });
 
       expect(cancelled.status).toBe(201);
-      expect(await dayStatus('2024-06-13')).toBe(AttendanceStatus.ABSENT);
+      expect(await dayStatus('2019-06-13')).toBe(AttendanceStatus.ABSENT);
     });
   });
 
   it('leaves a day payroll has locked as it was paid', async () => {
-    const day = '2024-06-20';
+    const day = '2019-06-20';
     await attendance.closeOutDay(organizationId, new Date(`${day}T00:00:00Z`));
     await prisma.attendanceRecord.update({
       where: { employeeId_workDate: { employeeId: somchaiId, workDate: new Date(day) } },
@@ -241,11 +241,11 @@ describe('Leave recorded by HR (e2e)', () => {
     expect(unpaid.status).toBe(201);
 
     const period = await api.post('/payroll/periods', payrollToken, {
-      year: 2024,
+      year: 2019,
       month: 6,
-      periodStart: '2024-06-01',
-      periodEnd: '2024-06-30',
-      payDate: '2024-06-30',
+      periodStart: '2019-06-01',
+      periodEnd: '2019-06-30',
+      payDate: '2019-06-30',
     });
     expect(period.status).toBe(201);
     const run = await api.post('/payroll/runs', payrollToken, { periodId: period.body.id });
@@ -255,7 +255,7 @@ describe('Leave recorded by HR (e2e)', () => {
     const slip = await prisma.payslip.findUniqueOrThrow({
       where: { runId_employeeId: { runId: run.body.id, employeeId: somchaiId } },
     });
-    // June 2024 has 20 working days. The unpaid day is deducted; the sick day,
+    // June 2019 has 20 working days. The unpaid day is deducted; the sick day,
     // closed out as an absence before it was recorded, is not; the cancelled
     // day and the day payroll had locked are the absences left.
     expect(Number(slip.unpaidLeaveDays)).toBe(1);
@@ -263,7 +263,8 @@ describe('Leave recorded by HR (e2e)', () => {
   });
 
   describe('the same rules as the employee’s own request', () => {
-    // A Saturday: no working day to take, whoever files it.
+    // A Saturday while the demo employee is employed: no working day to take,
+    // whoever files it. It creates no pay period, so it does not touch 2024 payroll.
     const saturday = { startDate: '2024-06-15', endDate: '2024-06-15' };
 
     it('refuses with the same code and message the employee gets', async () => {
@@ -325,8 +326,8 @@ describe('Leave recorded by HR (e2e)', () => {
       const preview = await api.post('/leave/requests/record/preview', hrToken, {
         employeeId: somchaiId,
         leaveTypeId: types.get('SICK'),
-        startDate: '2024-06-18',
-        endDate: '2024-06-18',
+        startDate: '2019-06-18',
+        endDate: '2019-06-18',
         recordAsApproved: false,
       });
 
@@ -338,8 +339,8 @@ describe('Leave recorded by HR (e2e)', () => {
       const res = await record({
         employeeId: somchaiId,
         leaveTypeId: types.get('SICK'),
-        startDate: '2024-06-18',
-        endDate: '2024-06-18',
+        startDate: '2019-06-18',
+        endDate: '2019-06-18',
         recordAsApproved: false,
       });
 
@@ -392,8 +393,8 @@ describe('Leave recorded by HR (e2e)', () => {
         {
           employeeId: own,
           leaveTypeId: types.get('SICK'),
-          startDate: '2024-06-19',
-          endDate: '2024-06-19',
+          startDate: '2019-06-19',
+          endDate: '2019-06-19',
         },
         employeeToken,
       );
@@ -405,8 +406,8 @@ describe('Leave recorded by HR (e2e)', () => {
       const res = await record({
         employeeId: hrEmployeeId,
         leaveTypeId: types.get('SICK'),
-        startDate: '2024-06-19',
-        endDate: '2024-06-19',
+        startDate: '2019-06-19',
+        endDate: '2019-06-19',
       });
 
       expect(res.status).toBe(422);

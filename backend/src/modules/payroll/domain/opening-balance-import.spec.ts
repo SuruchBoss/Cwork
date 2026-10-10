@@ -8,6 +8,7 @@ import {
   socialSecurityLimit,
   type OpeningBalanceContext,
 } from './opening-balance-import';
+import { taxRulesFor } from './thai-tax';
 
 const HEADER: Cell[] = [
   'รหัสพนักงาน',
@@ -97,7 +98,7 @@ describe('readOpeningBalances', () => {
         ['E999', 'ใครก็ไม่รู้', 1, 0, 0], // no such employee
         ['E002', 'สมศรี', '12,34', -5, '1.005'], // not amounts
         ['E001', 'สมชาย อีกครั้ง', 1, 0, 0], // twice
-        ['E003', 'อนุชา', 10_000, 12_000, 6_750], // tax over income, SSO over 8 months
+        ['E003', 'อนุชา', 10_000, 12_000, 7_500], // tax over income, SSO over 8 months (7,000)
         [null, 'ไม่มีรหัส', 1, 0, 0],
       ]),
       context(),
@@ -112,7 +113,7 @@ describe('readOpeningBalances', () => {
       [4, 'E', 'INVALID_AMOUNT', { value: '1.005' }],
       [5, 'A', 'DUPLICATE_IN_FILE', { value: 'E001', other: 2 }],
       [6, 'D', 'TAX_OVER_INCOME', { value: 12_000, income: 10_000 }],
-      [6, 'E', 'SSO_OVER_LIMIT', { value: 6_750, max: 6_000, months: 8 }],
+      [6, 'E', 'SSO_OVER_LIMIT', { value: 7_500, max: 7_000, months: 8 }],
       [7, 'A', 'REQUIRED', null],
     ]);
     expect(problems[0].header).toBe('ภาษีหัก ณ ที่จ่าย');
@@ -167,10 +168,11 @@ describe('readOpeningBalances', () => {
 });
 
 describe('socialSecurityLimit', () => {
-  it('is the largest monthly contribution for each month, up to the annual ceiling', () => {
-    expect(socialSecurityLimit(1)).toBe(750);
-    expect(socialSecurityLimit(8)).toBe(6_000);
-    expect(socialSecurityLimit(12)).toBe(9_000);
+  it("is the largest monthly contribution, at the year's ceiling, for each month so far", () => {
+    expect(socialSecurityLimit(1, taxRulesFor(2026))).toBe(875);
+    expect(socialSecurityLimit(8, taxRulesFor(2026))).toBe(7_000);
+    expect(socialSecurityLimit(12, taxRulesFor(2026))).toBe(10_500);
+    expect(socialSecurityLimit(12, taxRulesFor(2025))).toBe(9_000);
   });
 });
 

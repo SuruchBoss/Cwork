@@ -13,7 +13,6 @@ import { computeSocialSecurity, THAI_TAX_RULES_2026 } from './thai-tax';
  */
 
 const { rate, maxMonthlyWage } = THAI_TAX_RULES_2026.socialSecurity;
-const annualCap = THAI_TAX_RULES_2026.socialSecurityCap;
 
 const daily = (dailyRate: number, daysPaid: number): PayslipInput => ({
   baseSalary: 0,
@@ -33,7 +32,6 @@ const daily = (dailyRate: number, daysPaid: number): PayslipInput => ({
   monthNumber: 1,
   ytdTaxableIncome: 0,
   ytdWithheldTax: 0,
-  ytdSsoEmployee: 0,
   taxAllowances: {},
 });
 
@@ -84,8 +82,8 @@ describe('Social security across two halves (PO decision Q5)', () => {
     expect(h2.ssoEmployer.toNumber()).toBe(200);
   });
 
-  // The boundary cases take the ceilings from the rule set rather than writing
-  // 15,000 and 9,000 down, so a change of rates is a change of data (CW-075).
+  // The boundary cases take the ceiling from the rule set rather than writing
+  // it down, so a change of rates is a change of data (CW-075).
   const ceiling = maxMonthlyWage * rate;
   /** A daily rate that makes 13 days 65% of the monthly ceiling, 26 days 130%. */
   const underHalf = maxMonthlyWage / 20;
@@ -111,26 +109,6 @@ describe('Social security across two halves (PO decision Q5)', () => {
     expect(h2.ssoEmployee.toNumber()).toBe(0);
   });
 
-  it('stops at the annual ceiling, in either half', () => {
-    // 300 left of the year's ceiling: H1 would pay more and takes 300; the
-    // month is limited to the same 300, so H2 takes nothing.
-    const ytd = annualCap - 300;
-    const { h1, h2 } = month(
-      { ...daily(underHalf, 13), ytdSsoEmployee: ytd },
-      { ...daily(underHalf, 13), ytdSsoEmployee: ytd },
-    );
-
-    expect(h1.ssoEmployee.toNumber()).toBe(300);
-    expect(h2.ssoEmployee.toNumber()).toBe(0);
-    expect(h1.ssoEmployee.plus(h2.ssoEmployee).toNumber()).toBe(
-      computeSocialSecurity(
-        maxMonthlyWage * 1.3,
-        THAI_TAX_RULES_2026,
-        ytd,
-      ).employeeContribution.toNumber(),
-    );
-  });
-
   it('never goes negative, and shows HR what the first half took over the month', () => {
     // H1 400 × 2 = 800 → 40 (no floor). The month, 800 + 400 = 1,200, is under
     // the 1,650 floor and contributes nothing, so H1 took 40 too much.
@@ -144,44 +122,45 @@ describe('Social security across two halves (PO decision Q5)', () => {
 
 describe('Withholding across two halves (PO decision Q4)', () => {
   // 2,000 a day × 13 days = 26,000 a half, 52,000 a month, 624,000 a year.
-  // Expenses 100,000 (capped), personal 60,000, social security 9,000 (capped):
-  // net 455,000. Tax: 150,000 × 5% + 155,000 × 10% = 7,500 + 15,500 = 23,000.
-  // January has twelve months left: 23,000 ÷ 12 = 1,916.67 for the month.
+  // Expenses 100,000 (capped), personal 60,000, social security 875 × 12 =
+  // 10,500 (the 2026 relief): net 453,500. Tax: 150,000 × 5% + 153,500 × 10%
+  // = 7,500 + 15,350 = 22,850. January has twelve months left: 22,850 ÷ 12 =
+  // 1,904.17 for the month.
   it('withholds half the estimated month in the first half, and the rest in the second', () => {
     const { h1, h2 } = month(daily(2_000, 13), daily(2_000, 13));
 
-    expect(h1.withholdingTax.toNumber()).toBe(958.34); // 1,916.67 ÷ 2, half up
-    expect(h2.withholdingTax.toNumber()).toBe(958.33); // 1,916.67 − 958.34
+    expect(h1.withholdingTax.toNumber()).toBe(952.09); // 1,904.17 ÷ 2, half up
+    expect(h2.withholdingTax.toNumber()).toBe(952.08); // 1,904.17 − 952.09
     expect(h1.withholdingTax.plus(h2.withholdingTax).toNumber()).toBe(
       buildPayslip({ ...daily(2_000, 26) }).withholdingTax.toNumber(),
     );
   });
 
   it('builds on the months before, not on the first half twice', () => {
-    // November, ten months of 52,000 paid and 1,916.67 withheld each:
-    // projected 520,000 + 52,000 × 2 = 624,000 → 23,000; outstanding
-    // 23,000 − 19,166.70 = 3,833.30 over two months = 1,916.65.
+    // November, ten months of 52,000 paid and 19,166.70 withheld so far:
+    // projected 520,000 + 52,000 × 2 = 624,000 → 22,850; outstanding
+    // 22,850 − 19,166.70 = 3,683.30 over two months = 1,841.65.
     const november = { monthNumber: 11, ytdTaxableIncome: 520_000, ytdWithheldTax: 19_166.7 };
     const { h1, h2 } = month(
       { ...daily(2_000, 13), ...november },
       { ...daily(2_000, 13), ...november },
     );
 
-    expect(h1.withholdingTax.toNumber()).toBe(958.33); // 1,916.65 ÷ 2, half up
-    expect(h2.withholdingTax.toNumber()).toBe(958.32);
+    expect(h1.withholdingTax.toNumber()).toBe(920.83); // 1,841.65 ÷ 2, half up
+    expect(h2.withholdingTax.toNumber()).toBe(920.82);
   });
 
   it('withholds nothing in a second half that would go negative, and shows the difference', () => {
-    // H1 estimates 52,000 a month and withholds 958.34. The month turns out to
+    // H1 estimates 52,000 a month and withholds 952.09. The month turns out to
     // be 26,000 + 2,000 = 28,000: 336,000 a year, net 336,000 − 100,000 −
-    // 60,000 − 9,000 = 167,000, tax 17,000 × 5% = 850, 70.83 for the month.
+    // 60,000 − 10,500 = 165,500, tax 15,500 × 5% = 775, 64.58 for the month.
     const { h1, h2 } = month(daily(2_000, 13), daily(2_000, 1));
 
-    expect(h1.withholdingTax.toNumber()).toBe(958.34);
+    expect(h1.withholdingTax.toNumber()).toBe(952.09);
     expect(h2.withholdingTax.toNumber()).toBe(0);
     expect(h2.warnings).toContainEqual({
       code: 'WITHHOLDING_OVER_IN_FIRST_HALF',
-      params: { amount: 887.51 }, // 958.34 − 70.83
+      params: { amount: 887.51 }, // 952.09 − 64.58
     });
     expect(h2.netPay.toNumber()).toBe(h2.grossEarnings.minus(h2.totalDeductions).toNumber());
   });

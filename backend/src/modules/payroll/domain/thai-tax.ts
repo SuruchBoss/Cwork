@@ -49,7 +49,13 @@ export interface TaxRuleSet {
   ssfCap: number;
   /** PVD + RMF + SSF + national savings fund combined ceiling. */
   retirementCombinedCap: number;
-  socialSecurityCap: number;
+  /**
+   * The most social security an employee may claim as income tax relief in
+   * the year. A Revenue Department figure: contributions are deductible as
+   * paid, so it follows the contribution ceiling in practice, but it is kept
+   * as its own number rather than derived from it (CW-075).
+   */
+  socialSecurityReliefCap: number;
   mortgageInterestCap: number;
   /** Donations are capped at this share of income after other deductions. */
   donationRateCap: number;
@@ -92,16 +98,61 @@ export const THAI_TAX_RULES_2026: TaxRuleSet = {
   ssfRateCap: 0.3,
   ssfCap: 200_000,
   retirementCombinedCap: 500_000,
-  socialSecurityCap: 9_000,
+  socialSecurityReliefCap: 10_500,
   mortgageInterestCap: 100_000,
   donationRateCap: 0.1,
   educationDonationMultiplier: 2,
   socialSecurity: {
     rate: 0.05,
     minMonthlyWage: 1_650,
-    maxMonthlyWage: 15_000,
+    maxMonthlyWage: 17_500,
   },
 };
+
+/**
+ * The wage ceiling for section 33 contributions, by the year a period falls
+ * in (CW-075). Ministerial regulation of 11 December 2025, Royal Gazette vol.
+ * 142, part 81 Kor, 12 December 2025, clause 3; before it, regulation No. 7
+ * (1995) set ฿15,000. The floor stays ฿1,650 throughout, and the 5% rate is not
+ * in the regulation.
+ */
+export const SOCIAL_SECURITY_CEILINGS: ReadonlyArray<{ from: number; maxMonthlyWage: number }> = [
+  { from: 1995, maxMonthlyWage: 15_000 },
+  { from: 2026, maxMonthlyWage: 17_500 },
+  { from: 2029, maxMonthlyWage: 20_000 },
+  { from: 2032, maxMonthlyWage: 23_000 },
+];
+
+/**
+ * Income tax relief for social security, by tax year. Checked against
+ * secondary sources only (docs/payroll-thailand.md): ฿9,000 to 2025, ฿10,500
+ * for 2026. A later year keeps the last known figure until the Revenue
+ * Department's is added here.
+ */
+export const SOCIAL_SECURITY_RELIEF_CAPS: ReadonlyArray<{ from: number; cap: number }> = [
+  { from: 1995, cap: 9_000 },
+  { from: 2026, cap: 10_500 },
+];
+
+const inForce = <T extends { from: number }>(table: ReadonlyArray<T>, year: number): T =>
+  [...table].reverse().find((row) => row.from <= year) ?? table[0];
+
+/**
+ * The rules for a payroll year: the 2026 tax rules with the social security
+ * ceiling and relief cap in force that year. A change in either is a new row
+ * in its table, not a code change.
+ */
+export function taxRulesFor(year: number): TaxRuleSet {
+  return {
+    ...THAI_TAX_RULES_2026,
+    year,
+    socialSecurityReliefCap: inForce(SOCIAL_SECURITY_RELIEF_CAPS, year).cap,
+    socialSecurity: {
+      ...THAI_TAX_RULES_2026.socialSecurity,
+      maxMonthlyWage: inForce(SOCIAL_SECURITY_CEILINGS, year).maxMonthlyWage,
+    },
+  };
+}
 
 export interface TaxAllowanceInput {
   hasSpouseAllowance?: boolean;
@@ -268,7 +319,7 @@ function buildAllowanceDetail(
 
   const sso = Decimal.min(
     new Decimal(input.socialSecurityContribution ?? 0),
-    new Decimal(rules.socialSecurityCap),
+    new Decimal(rules.socialSecurityReliefCap),
   );
   if (sso.greaterThan(0)) detail.socialSecurity = sso;
 
@@ -382,13 +433,14 @@ export interface SocialSecurityResult {
 /**
  * Social Security Fund contribution (มาตรา 33).
  *
- * 5% of wage, with the wage floored at 1,650 and capped at 15,000 THB/month —
- * so the contribution is between 83 and 750 THB. Employer matches.
+ * 5% of the month's wage, with the wage floored and capped by the rules for
+ * the year (฿1,650 and ฿17,500 in 2026, so between ฿83 and ฿875). Employer
+ * matches. The ceiling is monthly: there is no separate yearly stop, which an
+ * earlier version took to be 12 × the old ceiling's contribution (CW-075).
  */
 export function computeSocialSecurity(
   monthlyWage: number | Decimal,
   rules: TaxRuleSet = THAI_TAX_RULES_2026,
-  ytdEmployeeContribution: number | Decimal = 0,
 ): SocialSecurityResult {
   const { rate, minMonthlyWage, maxMonthlyWage } = rules.socialSecurity;
   const wage = new Decimal(monthlyWage.toString());
@@ -403,16 +455,7 @@ export function computeSocialSecurity(
   }
 
   const contributoryWage = Decimal.min(wage, new Decimal(maxMonthlyWage));
-  let contribution = round2(contributoryWage.times(rate));
-
-  // The annual ceiling (9,000) stops contributions late in the year.
-  const remainingAnnualRoom = Decimal.max(
-    new Decimal(0),
-    new Decimal(rules.socialSecurityCap).minus(ytdEmployeeContribution.toString()),
-  );
-  if (contribution.greaterThan(remainingAnnualRoom)) {
-    contribution = round2(remainingAnnualRoom);
-  }
+  const contribution = round2(contributoryWage.times(rate));
 
   return {
     contributoryWage: round2(contributoryWage),

@@ -1138,4 +1138,27 @@ export const thMessages: Record<string, string> = {
   'This advance has already been cancelled.': 'เงินเบิกนี้ถูกยกเลิกไปแล้ว',
   "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Taking it from a later period may count as a deduction from wages under section 76, which needs the employee's written consent and has a limit; that has not been checked yet":
     'เงินเบิก {amount} เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป การหักจากงวดหลังอาจนับเป็นการหักค่าจ้างตามมาตรา 76 ซึ่งต้องมีหนังสือยินยอมจากลูกจ้างและมีเพดาน เรื่องนี้ยังไม่ได้ตรวจกับตัวบท',
+
+  // Social security shortfall report (CW-075)
+  'Social security shortfall': 'ส่วนต่างประกันสังคม',
+  'What locked and paid runs deducted, against the ceiling in force for their year':
+    'ยอดที่รอบล็อกแล้วและจ่ายแล้วหักไป เทียบกับเพดานที่ใช้ในปีนั้น',
+  'A calculation to help HR settle with the Social Security Office. It is not a filing, and Cwork has changed no paid or locked run.':
+    'ตัวเลขนี้ช่วย HR เตรียมชำระส่วนต่างกับสำนักงานประกันสังคม ไม่ใช่แบบยื่น และ Cwork ไม่ได้แก้รอบที่จ่ายหรือล็อกแล้ว',
+  'Download CSV': 'ดาวน์โหลด CSV',
+  'Ceiling for {year}: {amount} a month': 'เพดานปี {year}: {amount} ต่อเดือน',
+  'Differences by employee and month': 'ส่วนต่างรายคนรายเดือน',
+  'No locked or paid run in {year}': 'ยังไม่มีรอบที่ล็อกหรือจ่ายแล้วในปี {year}',
+  'There is nothing to compare yet.': 'ยังไม่มีอะไรให้เทียบ',
+  'Nothing owed for {year}': 'ปี {year} ไม่มีส่วนต่าง',
+  'Every locked and paid run deducted what the ceiling for the year gives.':
+    'ทุกรอบที่ล็อกหรือจ่ายแล้วหักครบตามเพดานของปีนั้น',
+  'Social security wage': 'ค่าจ้างที่ใช้คิดประกันสังคม',
+  Deducted: 'หักไปแล้ว',
+  'Owed on the ceiling': 'ที่ต้องหักตามเพดาน',
+  'Employee difference': 'ส่วนต่างลูกจ้าง',
+  'Employer difference': 'ส่วนต่างนายจ้าง',
+  'Worked out from the payslip lines': 'คำนวณจากรายการในสลิป',
+  'Total for {month}': 'รวม {month}',
+  'Total for {year}': 'รวมปี {year}',
 };

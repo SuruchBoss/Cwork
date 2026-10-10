@@ -20,6 +20,7 @@ import { PayrollRunStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { readXlsx, writeXlsx } from 'src/core/spreadsheet/xlsx';
 import { workDateFor } from 'src/core/utils/date.util';
+import { taxRulesFor } from 'src/modules/payroll/domain/thai-tax';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 import { isoDate } from './utils/dates';
 
@@ -28,8 +29,27 @@ const CEO = 'ceo@cwork.example'; // approves: whoever prepared a run cannot
 const HR_OFFICER = 'hr.officer@cwork.example'; // HR, but not payroll
 const EMPLOYEE_CODE = 'EMP-0007';
 
-/** All nine months run in Cwork. No other spec touches this year. */
-const IN_CWORK_YEAR = 2029;
+/**
+ * Years reserved for the nine months run in Cwork, one for each social
+ * security ceiling (CW-075); no other spec touches them. The year used is the
+ * one whose rules match the year imported into, so September's tax compares
+ * like with like.
+ */
+const IN_CWORK_YEARS = [2024, 2028, 2029, 2033];
+
+/** The reserved year whose ceiling and tax relief are the imported year's. */
+function inCworkYearFor(importYear: number): number {
+  const target = taxRulesFor(importYear);
+  const year = IN_CWORK_YEARS.find((candidate) => {
+    const rules = taxRulesFor(candidate);
+    return (
+      rules.socialSecurity.maxMonthlyWage === target.socialSecurity.maxMonthlyWage &&
+      rules.socialSecurityReliefCap === target.socialSecurityReliefCap
+    );
+  });
+  if (year === undefined) throw new Error(`No reserved year has the rules of ${importYear}`);
+  return year;
+}
 
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const HEADER = [
@@ -225,16 +245,18 @@ describe('Pay before Cwork (e2e)', () => {
     let importedRunId: string;
     let imported: Map<string, Figures>;
     let file: Buffer;
+    let inCworkYear: number;
 
     beforeAll(async () => {
+      inCworkYear = inCworkYearFor(importYear);
       // All nine months in Cwork, each approved before the next builds on it.
       for (let month = 1; month <= 8; month += 1) {
-        const { runId, calculated } = await runMonth(IN_CWORK_YEAR, month);
+        const { runId, calculated } = await runMonth(inCworkYear, month);
         expect(calculated.body.status).toBe('CALCULATED');
         const approved = await api.post(`/payroll/runs/${runId}/approve`, ceoToken);
         expect(approved.body.status).toBe(PayrollRunStatus.APPROVED);
       }
-      const september = await runMonth(IN_CWORK_YEAR, 9);
+      const september = await runMonth(inCworkYear, 9);
       inCworkSeptember = await payslips(september.runId);
 
       // What the old system's year-to-date report would say for January to August.
@@ -243,7 +265,7 @@ describe('Pay before Cwork (e2e)', () => {
         where: {
           run: {
             status: PayrollRunStatus.APPROVED,
-            period: { year: IN_CWORK_YEAR, month: { lte: 8 } },
+            period: { year: inCworkYear, month: { lte: 8 } },
           },
         },
         _sum: { taxableIncome: true, withholdingTax: true, ssoEmployee: true },

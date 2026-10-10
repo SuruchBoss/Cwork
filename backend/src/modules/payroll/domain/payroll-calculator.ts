@@ -96,7 +96,6 @@ export interface PayslipInput {
   monthNumber: number;
   ytdTaxableIncome: number;
   ytdWithheldTax: number;
-  ytdSsoEmployee: number;
   taxAllowances: TaxAllowanceInput;
   /** Non-recurring taxable income such as a bonus. */
   oneTimeIncome?: Array<{ code: string; name: string; amount: number }>;
@@ -334,7 +333,7 @@ export function buildPayslip(input: PayslipInput): PayslipDraft {
       socialSecurityContribution:
         (input.taxAllowances.socialSecurityContribution ?? 0) ||
         Math.min(
-          rules.socialSecurityCap,
+          rules.socialSecurityReliefCap,
           monthOf(sso.employeeContribution, firstHalf?.ssoEmployee ?? 0)
             .times(12)
             .toNumber(),
@@ -548,13 +547,12 @@ function socialSecurityFor(
   warnings: PayslipWarning[],
 ) {
   const half = input.half;
-  if (!half) return computeSocialSecurity(ssoBase, rules, input.ytdSsoEmployee);
+  if (!half) return computeSocialSecurity(ssoBase, rules);
 
   if (half.half === 1) {
     const { rate, maxMonthlyWage } = rules.socialSecurity;
     const contributoryWage = Decimal.min(ssoBase, maxMonthlyWage);
-    const room = Decimal.max(0, new Decimal(rules.socialSecurityCap).minus(input.ytdSsoEmployee));
-    const contribution = round2(Decimal.min(contributoryWage.times(rate), room));
+    const contribution = round2(contributoryWage.times(rate));
     return {
       contributoryWage: round2(contributoryWage),
       employeeContribution: contribution,
@@ -562,11 +560,7 @@ function socialSecurityFor(
     };
   }
 
-  const month = computeSocialSecurity(
-    ssoBase.plus(half.firstHalf.ssoWage),
-    rules,
-    input.ytdSsoEmployee,
-  );
+  const month = computeSocialSecurity(ssoBase.plus(half.firstHalf.ssoWage), rules);
   const rest = month.employeeContribution.minus(half.firstHalf.ssoEmployee);
   if (rest.lessThan(0)) {
     warnings.push({

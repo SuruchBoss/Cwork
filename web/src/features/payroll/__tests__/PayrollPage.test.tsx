@@ -113,3 +113,26 @@ describe('Half-month pay periods (CW-069)', () => {
     );
   });
 });
+
+describe('Social security shortfall link (CW-075)', () => {
+  it('shows the report to whoever may export payroll, and only to them', async () => {
+    useAuthStore.setState({
+      can: (...permissions: string[]) => permissions.includes(P.PAYROLL_EXPORT),
+    });
+    const { unmount } = render();
+    expect(await screen.findByRole('link', { name: 'ส่วนต่างประกันสังคม' })).toHaveAttribute(
+      'href',
+      '/payroll/sso-shortfall',
+    );
+    // Exporting alone does not run payroll.
+    expect(screen.queryByRole('link', { name: 'เงินเบิกล่วงหน้า' })).toBeNull();
+    unmount();
+
+    useAuthStore.setState({
+      can: (...permissions: string[]) => permissions.includes(P.PAYROLL_RUN),
+    });
+    render();
+    expect(await screen.findByRole('link', { name: 'เงินเบิกล่วงหน้า' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'ส่วนต่างประกันสังคม' })).toBeNull();
+  });
+});

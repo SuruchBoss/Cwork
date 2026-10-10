@@ -383,6 +383,17 @@ entry, tags it and publishes the notes.
   back cannot be changed or cancelled, and a run cannot be approved on an
   advance that changed after it was calculated. Every change is audited. The
   rules are in `docs/payroll-thailand.md`.
+- **A report of the social security that locked and paid runs owe** (CW-075).
+  Runs paid before Cwork knew the 2026 ceiling stay as they were; **Payroll →
+  Social security shortfall** (`payroll:export`) lists, for a year, what each
+  locked or paid run deducted against what the ceiling for that year gives:
+  one row per employee and month, the two halves of a semi-monthly month added
+  together, with each side's difference and totals per month and for the year.
+  It skips anyone the run did not cover for social security and rows that come
+  out even, rebuilds the wage from the payslip lines for payslips calculated
+  before CW-069 and says so, and writes nothing. The CSV, in Thai or English,
+  is recorded in the audit log. It says on the page that it is not a filing;
+  `docs/guide/sso-shortfall.th.md` walks HR through it.
 - **A Thai guide for HR to the three spreadsheet imports** (CW-059, CW-066):
   `docs/guide/import-from-excel.th.md` walks employees, leave taken and pay
   before Cwork step by step, with a screenshot of each step and a table of the
@@ -528,6 +539,17 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Social security was deducted on the old ฿15,000 ceiling in 2026** (CW-075).
+  The ministerial regulation of 11 December 2025 (Royal Gazette vol. 142, part
+  81 Kor, 12 December 2025) raised the wage ceiling for section 33 to ฿17,500
+  from 2026, ฿20,000 from 2029 and ฿23,000 from 2032, so Cwork took up to ฿125
+  a month too little from each side for anyone earning above ฿15,000. Each
+  period now uses the ceiling for its own year, so the change of 2029 needs no
+  release. The annual stop at ฿9,000 is gone: it was twelve months at the old
+  maximum, not a rule, and would have skipped December at the new ceiling. The
+  income tax relief for social security is its own figure, ฿10,500 for 2026
+  (read in secondary sources only), no longer twelve times the old
+  contribution.
 - **A certificate issued before 07:00 in Bangkok was dated the day before**
   (CW-074). Its issue date, and the date the verification endpoint returns,
   were the UTC date, a day behind Bangkok until 07:00. They are now the

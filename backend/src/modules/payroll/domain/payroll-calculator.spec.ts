@@ -3,6 +3,7 @@
 
 import { PayComponentType } from '@prisma/client';
 import { buildPayslip, type PayslipInput } from './payroll-calculator';
+import { taxRulesFor, THAI_TAX_RULES_2026 } from './thai-tax';
 
 const base: PayslipInput = {
   baseSalary: 30_000,
@@ -21,20 +22,23 @@ const base: PayslipInput = {
   monthNumber: 1,
   ytdTaxableIncome: 0,
   ytdWithheldTax: 0,
-  ytdSsoEmployee: 0,
   taxAllowances: {},
 };
 
 const lineFor = (draft: ReturnType<typeof buildPayslip>, code: string) =>
   draft.lines.find((l) => l.code === code);
 
+/** The 2026 ceiling's contribution, from the rules rather than written down (CW-075). */
+const ceilingContribution =
+  THAI_TAX_RULES_2026.socialSecurity.maxMonthlyWage * THAI_TAX_RULES_2026.socialSecurity.rate;
+
 describe('buildPayslip', () => {
   it('pays full salary and deducts social security for a clean month', () => {
     const draft = buildPayslip(base);
 
     expect(draft.grossEarnings.toNumber()).toBe(30_000);
-    expect(draft.ssoEmployee.toNumber()).toBe(750); // capped at 15,000 × 5%
-    expect(draft.ssoEmployer.toNumber()).toBe(750);
+    expect(draft.ssoEmployee.toNumber()).toBe(ceilingContribution); // 30,000 is over the ceiling
+    expect(draft.ssoEmployer.toNumber()).toBe(ceilingContribution);
     expect(draft.netPay.toNumber()).toBe(30_000 - draft.totalDeductions.toNumber());
   });
 
@@ -126,7 +130,7 @@ describe('buildPayslip', () => {
   it('includes employer contributions in the employer cost, not in deductions', () => {
     const draft = buildPayslip({ ...base, pvdEmployerRate: 5 });
 
-    expect(draft.employerCost.toNumber()).toBe(30_000 + 750 + 1_500);
+    expect(draft.employerCost.toNumber()).toBe(30_000 + ceilingContribution + 1_500);
     expect(draft.netPay.toNumber()).toBeLessThan(30_000);
   });
 
@@ -146,7 +150,7 @@ describe('buildPayslip', () => {
   it('caps the social-security base at the statutory ceiling for high earners', () => {
     const draft = buildPayslip({ ...base, baseSalary: 200_000 });
 
-    expect(draft.ssoEmployee.toNumber()).toBe(750);
+    expect(draft.ssoEmployee.toNumber()).toBe(ceilingContribution);
   });
 
   it('produces no negative net pay line ordering surprises', () => {
@@ -181,8 +185,16 @@ describe('year-to-date handling', () => {
     expect(lineFor(january, 'WHT')?.meta).toMatchObject({ projectedAnnualIncome: 540_000 });
   });
 
-  it('stops social security once the annual ceiling is reached', () => {
-    const draft = buildPayslip({ ...base, ytdSsoEmployee: 9_000 });
-    expect(draft.ssoEmployee.toNumber()).toBe(0);
+  it('keeps contributing at the ceiling in December: the ceiling is monthly (CW-075)', () => {
+    const rules = taxRulesFor(2026);
+    const december = buildPayslip({
+      ...base,
+      baseSalary: 30_000,
+      monthNumber: 12,
+      taxRules: rules,
+    });
+    const { rate, maxMonthlyWage } = rules.socialSecurity;
+    expect(december.ssoEmployee.toNumber()).toBe(maxMonthlyWage * rate);
+    expect(december.ssoEmployer.toNumber()).toBe(maxMonthlyWage * rate);
   });
 });

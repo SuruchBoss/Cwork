@@ -12,7 +12,7 @@
  */
 import { AttendanceStatus, EmployeeStatus, PayrollRunStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
-import { computeSocialSecurity, THAI_TAX_RULES_2026 } from 'src/modules/payroll/domain/thai-tax';
+import { computeSocialSecurity, taxRulesFor } from 'src/modules/payroll/domain/thai-tax';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const PAYROLL = 'payroll@cwork.example'; // prepares runs, manages compensation
@@ -398,25 +398,25 @@ describe('Daily wages paid twice a month (e2e)', () => {
       expect(factory.warnings).toEqual([]);
 
       // The opening balance is the year so far. November projects 520,000 +
-      // 52,000 × 2 = 624,000: net 624,000 − 100,000 − 60,000 − 9,000 (the
-      // social security allowance of the 2026 rule set) =
-      // 455,000, tax 23,000; less 19,166.70 withheld, 3,833.30 over the last
-      // two months is 1,916.65 for November. The first half withheld half of
-      // it, 958.33 (half up); the second withholds the rest, 958.32.
+      // 52,000 × 2 = 624,000: net 624,000 − 100,000 − 60,000 − 10,500 (the
+      // social security relief from 2026) = 453,500, tax 22,850; less 19,166.70
+      // withheld, 3,683.30 over the last two months is 1,841.65 for November.
+      // The first half withheld half of it, 920.83 (half up); the second
+      // withholds the rest, 920.82.
       const firstSlip = await slipOf(firstHalfRun, movedOver);
       const secondSlip = await slipOf(runId, movedOver);
       expect(Number(firstSlip.grossEarnings)).toBe(26_000); // 10 days × 2,600
-      expect(Number(firstSlip.withholdingTax)).toBe(958.33);
-      expect(Number(secondSlip.withholdingTax)).toBe(958.32);
-      // Both halves are over the ceiling wage, so the first already pays the
-      // month's contribution (within what is left of the year's ceiling) and
-      // the second takes none. From the rule set, not written down (CW-075).
-      const { rate, maxMonthlyWage } = THAI_TAX_RULES_2026.socialSecurity;
-      const room = THAI_TAX_RULES_2026.socialSecurityCap - 7_500;
-      expect(Number(firstSlip.ssoEmployee)).toBe(Math.min(maxMonthlyWage * rate, room));
+      expect(Number(firstSlip.withholdingTax)).toBe(920.83);
+      expect(Number(secondSlip.withholdingTax)).toBe(920.82);
+      // Both halves are over the 2031 ceiling wage, so the first already pays
+      // the month's contribution and the second takes none. From the rules for
+      // the year, not written down (CW-075).
+      const rules = taxRulesFor(YEAR);
+      const { rate, maxMonthlyWage } = rules.socialSecurity;
+      expect(Number(firstSlip.ssoEmployee)).toBe(maxMonthlyWage * rate);
       expect(Number(secondSlip.ssoEmployee)).toBe(0);
       expect(Number(firstSlip.ssoEmployee) + Number(secondSlip.ssoEmployee)).toBe(
-        computeSocialSecurity(52_000, THAI_TAX_RULES_2026, 7_500).employeeContribution.toNumber(),
+        computeSocialSecurity(52_000, rules).employeeContribution.toNumber(),
       );
     });
 

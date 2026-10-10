@@ -11,6 +11,7 @@ import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { BenefitsController, ExpensesController, PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
+import { SsoShortfallService } from './sso-shortfall.service';
 
 @Module({
   imports: [OrganizationModule],
@@ -22,6 +23,7 @@ import { PayrollService } from './payroll.service';
     BenefitsService,
     ExpensesService,
     OpeningBalanceImportService,
+    SsoShortfallService,
     SequenceService,
   ],
   exports: [PayrollService, CompensationService, BenefitsService, ExpensesService],

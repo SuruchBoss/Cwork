@@ -17,7 +17,7 @@
 > [issue #36](https://github.com/SuruchBoss/Cwork/issues/36) is open for it.
 
 Implementation: `backend/src/modules/payroll/domain/thai-tax.ts`.
-Tests: `thai-tax.spec.ts` (27 cases, hand-verified bracket arithmetic).
+Tests: `thai-tax.spec.ts` (28 cases, hand-verified bracket arithmetic).
 
 ## Personal income tax
 
@@ -59,7 +59,7 @@ Order of operations, per the Revenue Code:
 | RMF | actual | 30% of income |
 | SSF | actual | 30% of income, ฿200,000 |
 | PVD + RMF + SSF combined | — | ฿500,000 |
-| Social security | actual | ฿9,000/year |
+| Social security | actual | ฿9,000/year to 2025, ฿10,500 for 2026 (see below) |
 | Mortgage interest | actual | ฿100,000 |
 | Donations | actual | 10% of income after other deductions |
 | Education donations | 2× the amount | still inside the 10% cap |
@@ -98,20 +98,70 @@ Once imported, a month the figures cover cannot be calculated again in Cwork
 
 ## Social security (มาตรา 33)
 
-5% of wage, with the wage floored at ฿1,650 and capped at ฿15,000/month — so
-the contribution is between ฿83 and ฿750. The employer matches it. The annual
-employee ceiling is ฿9,000; once reached, contributions stop for the year.
+5% of wage, with the wage floored at ฿1,650 and capped at a monthly ceiling
+that depends on the year the period falls in. The employer matches it.
 
-Both the floor and the annual ceiling are implemented and tested.
+| Year | Wage ceiling | Most a month |
+|---|---|---|
+| to 2025 | ฿15,000 | ฿750 |
+| 2026 – 2028 | ฿17,500 | ฿875 |
+| 2029 – 2031 | ฿20,000 | ฿1,000 |
+| 2032 on | ฿23,000 | ฿1,150 |
 
-> **The ceiling has changed and Cwork has not.** A ministerial regulation on the
-> contributory wage for มาตรา 33, published in December 2025, is reported to
-> raise the monthly ceiling to ฿17,500 from 1 January 2026 (a ฿875
-> contribution), ฿20,000 from 2029 and ฿23,000 from 2032, with the ฿1,650
-> floor unchanged. That has been read only in secondary reports so far, not in
-> the Royal Gazette itself, and updating the rule set (and the annual ceiling
-> that follows from it) is tracked as its own change because it moves every
-> monthly run.
+The floor stays ฿1,650 (฿83) throughout. Each period uses the row for its own
+year (`taxRulesFor(year)`, `SOCIAL_SECURITY_CEILINGS`), so a December 2028 run
+deducts at most ฿875 and a January 2029 run at most ฿1,000; a change of
+ceiling is a new row in the table, not a code change.
+
+There is **no annual stop**. Before CW-075, contributions stopped once an
+employee had paid ฿9,000 in the year. That figure is twelve months at the old
+฿750 maximum, not a rule of the Act: a monthly ceiling already limits the
+year, and with the 2026 ceiling a stop at ฿9,000 would have skipped December
+for anyone at the top.
+
+**Source.** Ministerial regulation on the wage used to compute contributions
+(กฎกระทรวงกำหนดค่าจ้างที่ใช้เป็นฐานในการคำนวณเงินสมทบ), signed 11 December
+2025, Royal Gazette vol. 142, part 81 Kor, 12 December 2025, pp. 5–6, clause 3:
+<https://ratchakitcha.soc.go.th/documents/98728.pdf>. The product owner read
+the steps, the floor and the 1 January 2026 start in that text. The 5% rate is
+set elsewhere and is unchanged.
+
+**Income tax relief.** What an employee may deduct for social security is its
+own figure (`SOCIAL_SECURITY_RELIEF_CAPS`), not twelve times the contribution:
+฿9,000 to 2025 and ฿10,500 for 2026. The ฿10,500 has been read only in
+secondary sources so far, not in a Revenue Department notice. A later year
+keeps the last known figure until the Revenue Department publishes its own;
+the relief is still the lower of what was actually paid and the cap.
+
+### Runs paid before Cwork knew the new ceiling
+
+Cwork 0.4 and earlier deducted on ฿15,000 for 2026, so every 2026 payslip
+above ฿15,000 took up to ฿125 too little from the employee, and as much again
+from the employer. Those runs stay as they were: a locked or paid run is never
+recalculated or changed (the owner's decision).
+
+Instead, **Payroll → Social security shortfall** (`payroll:export`: HR admin
+and payroll officers) lists, for a year, what each locked or paid run deducted
+against what the ceiling for that year gives:
+
+- one row per employee and month, with the two halves of a semi-monthly month
+  added together and the ceiling applied once to their wages;
+- the wage, what the employee and employer paid, what the ceiling gives, and
+  the employee's and employer's difference; rows that come out even are left
+  out;
+- totals per month and for the year, and a CSV download in Thai or English,
+  recorded in the audit log;
+- runs that count: paid runs, and runs in a locked or closed period that were
+  not cancelled; open periods and their calculated runs are left out;
+- a payslip whose compensation was not covered by social security is skipped;
+- the wage is the one stored on the payslip. A payslip calculated before
+  CW-069 did not store it; for those it is rebuilt from the payslip's base pay
+  and the earnings flagged as counting towards social security, and the row
+  says so.
+
+It writes nothing. It is not a filing: how and when the difference is paid to
+the Social Security Office, and whether the employee's share is taken back,
+is for HR to settle. A year with no locked or paid run gives an empty report.
 
 ## Overtime
 
@@ -218,7 +268,7 @@ half has already contributed: the month owes nothing, the second half takes
 nothing, and the payslip shows HR the amount the first half took over
 (`SSO_OVER_IN_FIRST_HALF`). Cwork does not refund it by itself.
 
-The annual employee ceiling limits either half the same way it limits a month.
+Each half uses the ceiling for the year its month falls in.
 
 ### Withholding in two halves
 
