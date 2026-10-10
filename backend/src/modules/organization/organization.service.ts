@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { toDateOnly } from '../../core/utils/date.util';
+import { organizationToday } from './organization-today';
 import type {
   CreateDepartmentDto,
   CreateHolidayDto,
@@ -30,6 +31,11 @@ export interface DepartmentNode {
 @Injectable()
 export class OrganizationService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Today's calendar day where the organisation is (CW-074). */
+  today(organizationId: string): Promise<Date> {
+    return organizationToday(this.prisma, organizationId);
+  }
 
   getOrganization(organizationId: string) {
     return this.prisma.organization.findUniqueOrThrow({ where: { id: organizationId } });

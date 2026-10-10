@@ -17,6 +17,7 @@ import type { AuthenticatedUser } from '../../core/security/current-user';
 import { Permission } from '../../core/security/permissions';
 import { SystemRole } from '../../core/security/roles';
 import { toDateOnly } from '../../core/utils/date.util';
+import { organizationToday } from '../organization/organization-today';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { AuditService } from '../audit/audit.service';
 import { employeeVisibilityFilter } from '../../core/security/employee-access';
@@ -484,11 +485,12 @@ export class EmployeesService {
 
     if (events.length === 0) return;
 
+    const today = await organizationToday(this.prisma, user.organizationId);
     await this.prisma.employmentEvent.createMany({
       data: events.map((event) => ({
         employeeId: after.id,
         type: event.type,
-        effectiveDate: toDateOnly(new Date()),
+        effectiveDate: today,
         previousValue: event.previousValue as Prisma.InputJsonValue,
         newValue: event.newValue as Prisma.InputJsonValue,
         recordedById: user.userId,

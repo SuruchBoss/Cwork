@@ -16,6 +16,7 @@
 import { createHmac } from 'node:crypto';
 import { DocumentRequestStatus, DocumentRequestType } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
+import { formatThaiDocumentDate } from 'src/core/utils/date.util';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const HR = 'hr.manager@cwork.example'; // holds document:issue
@@ -121,5 +122,56 @@ describe('Document PDF issuance (e2e)', () => {
 
     const bad = await api.get(`/documents/verify?ref=${referenceNo}&code=WRONGCODE0000`);
     expect(bad.body.valid).toBe(false);
+  });
+
+  it('dates a certificate issued before 07:00 in Bangkok by the Bangkok day (CW-074)', async () => {
+    const employee = await prisma.employee.findFirstOrThrow({
+      where: { user: { email: REQUESTER } },
+      select: { id: true, organizationId: true },
+    });
+    const earlyRef = `DOC-${stamp}E`;
+    const early = await prisma.documentRequest.create({
+      data: {
+        organizationId: employee.organizationId,
+        referenceNo: earlyRef,
+        employeeId: employee.id,
+        type: DocumentRequestType.EMPLOYMENT_CERTIFICATE,
+        status: DocumentRequestStatus.APPROVED,
+      },
+      select: { id: true },
+    });
+
+    // 06:30 on 1 October 2026 in Bangkok, which is still 30 September in UTC.
+    // Only the clock is fixed; timers stay real so the HTTP round trip runs.
+    jest.useFakeTimers({
+      now: new Date('2026-09-30T23:30:00.000Z'),
+      doNotFake: [
+        'nextTick',
+        'setImmediate',
+        'clearImmediate',
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'queueMicrotask',
+        'hrtime',
+        'performance',
+      ],
+    });
+    try {
+      const issued = await api.post(`/documents/requests/${early.id}/issue`, hrToken, {});
+      expect(issued.status).toBe(201);
+
+      // What the PDF was drawn from, and the line it prints.
+      const data = await api.get(`/documents/requests/${early.id}/certificate-data`, hrToken);
+      expect(data.body.issuedOn).toBe('2026-10-01');
+      expect(formatThaiDocumentDate(data.body.issuedOn)).toBe('1 ตุลาคม 2569');
+    } finally {
+      jest.useRealTimers();
+    }
+
+    const verified = await api.get(`/documents/verify?ref=${earlyRef}&code=${codeFor(early.id)}`);
+    expect(verified.body.valid).toBe(true);
+    expect(verified.body.issuedOn).toBe('2026-10-01');
   });
 });
