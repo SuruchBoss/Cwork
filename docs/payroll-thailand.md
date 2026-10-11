@@ -101,6 +101,39 @@ Once imported, a month the figures cover cannot be calculated again in Cwork
 5% of wage, with the wage floored at ฿1,650 and capped at a monthly ceiling
 that depends on the year the period falls in. The employer matches it.
 
+**Rounded to a whole baht, and a wage under the floor is worked on the floor**
+(CW-084). The form in use from 1 January 2026, สปส.1-10 part 2, is fixed by the
+Social Security Office's announcement on the form of returns, how to file them
+and how to send in contributions (No. 2) B.E. 2568, Royal Gazette vol. 142,
+special part 405 Ngor, 30 December 2025, pp. 23–27, which replaces the 2018
+form. Its notes under the table say:
+
+- note 1: a wage under the floor (฿1,650) is worked out on the floor, and over
+  the ceiling on the ceiling (฿17,500 for 2026–2028, ฿20,000 for 2029–2031 and
+  ฿23,000 from 2032, the same table as below);
+- note 3: a foreign worker is filed under the social security card number, in
+  the national ID column;
+- note 4: each person's contribution, if it has 50 satang or more, is rounded
+  up to the baht, and under 50 satang down; the employer sends in the same
+  rounded amount as the insured person's;
+- note 6: an insured person with no wage that month is still listed, with a
+  wage and a contribution of nil.
+
+So a wage of ฿5,010 gives ฿251 for each side (250.50 up), a wage of ฿1,200 gives
+฿83 (1,650 × 5% = 82.50 up), and ฿20,000 in 2026 gives ฿875. A month in which
+nothing was paid contributes nothing. One function, `computeSocialSecurity`,
+gives a person's monthly contribution; payslips, the half-month split, the
+shortfall report and the monthly filing all use it, because what is withheld
+has to equal what is filed. In a half-month month the first half takes 5% of
+its own wage up to the ceiling, in whole baht and with no floor (the floor is
+monthly), and the second half takes the month's figure less the first half, so
+the two always add up to what a monthly run would have deducted. A run that was
+already approved or paid is never recalculated; a month paid before this change
+was worked in satang, and the shortfall report shows the difference.
+
+Whether the accountant agrees with the rounding, the floor and the nil month is
+asked in issue #36.
+
 | Year | Wage ceiling | Most a month |
 |---|---|---|
 | to 2025 | ฿15,000 | ฿750 |

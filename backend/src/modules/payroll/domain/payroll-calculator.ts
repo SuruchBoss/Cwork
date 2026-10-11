@@ -10,6 +10,7 @@ import {
   computeSocialSecurity,
   deriveHourlyRate,
   THAI_TAX_RULES_2026,
+  wholeBaht,
   type TaxAllowanceInput,
   type TaxRuleSet,
 } from './thai-tax';
@@ -532,15 +533,16 @@ function takeBackAdvances(
 }
 
 /**
- * Social security for this payslip (PO decision Q5).
+ * Social security for this payslip (PO decision Q5, CW-084).
  *
- * A whole month is the usual monthly contribution. A first half is 5% of its
- * own wage up to the ceiling, with no floor: the floor is a monthly figure and
- * half a month under it may still be a month over it. A second half is the
- * whole month's contribution, with the floor and the ceiling applied once,
- * less the first half, so the two halves always add up to what a monthly run
- * would have deducted. It is never negative; a first half that took more than
- * the month (a month that ended under the floor) is shown to HR.
+ * A whole month is the month's contribution, worked out by
+ * `computeSocialSecurity`. A first half is 5% of its own wage up to the
+ * ceiling, rounded to a whole baht, with no floor: the floor is a monthly
+ * figure and half a month under it may still be a month over it. A second half
+ * is the whole month's contribution, with the floor, the ceiling and the
+ * rounding applied once, less the first half, so the two halves always add up
+ * to what a monthly run would have deducted, in whole baht. It is never
+ * negative; a first half that took more than the month is shown to HR.
  */
 function socialSecurityFor(
   ssoBase: Decimal,
@@ -553,8 +555,8 @@ function socialSecurityFor(
 
   if (half.half === 1) {
     const { rate, maxMonthlyWage } = rules.socialSecurity;
-    const contributoryWage = Decimal.min(ssoBase, maxMonthlyWage);
-    const contribution = round2(contributoryWage.times(rate));
+    const contributoryWage = Decimal.min(Decimal.max(ssoBase, 0), maxMonthlyWage);
+    const contribution = wholeBaht(contributoryWage.times(rate));
     return {
       contributoryWage: round2(contributoryWage),
       employeeContribution: contribution,

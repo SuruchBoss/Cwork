@@ -94,16 +94,29 @@ describe('Social security across two halves (PO decision Q5)', () => {
   const underHalf = maxMonthlyWage / 20;
 
   it('applies the monthly ceiling once, to the whole month', () => {
-    // H1 is 65% of the ceiling wage and pays 5% of it in full. The month, 130%,
-    // is over the ceiling, so it contributes the ceiling's 5% and H2 takes the
-    // rest of that.
-    const firstHalf = maxMonthlyWage * 0.65 * rate;
+    // H1 is 65% of the ceiling wage: 5% of it is 568.75, 569 in whole baht. The
+    // month, 130%, is over the ceiling, so it contributes the ceiling's 5% and
+    // H2 takes the rest of that.
+    const firstHalf = Math.round(maxMonthlyWage * 0.65 * rate);
     const { h1, h2 } = month(daily(underHalf, 13), daily(underHalf, 13));
 
     expect(h1.ssoEmployee.toNumber()).toBe(firstHalf);
     expect(h2.ssoEmployee.toNumber()).toBe(ceiling - firstHalf);
     expect(h1.ssoEmployee.plus(h2.ssoEmployee).toNumber()).toBe(ceiling);
     expect(h2.warnings).toEqual([]);
+  });
+
+  it('rounds to a whole baht as the form says, and the two halves add up to the month (CW-084)', () => {
+    // 501 × 5 = 2,505 in each half. H1: 5% is 125.25, 125. The month, 5,010,
+    // gives 250.50, which the form rounds up to 251, so H2 takes 126.
+    const { h1, h2 } = month(daily(501, 5), daily(501, 5));
+
+    expect(h1.ssoEmployee.toNumber()).toBe(125);
+    expect(h2.ssoEmployee.toNumber()).toBe(126);
+    expect(h1.ssoEmployee.plus(h2.ssoEmployee).toNumber()).toBe(251);
+    // The employer pays the same, so both halves match on that side too.
+    expect(h1.ssoEmployer.toNumber()).toBe(125);
+    expect(h2.ssoEmployer.toNumber()).toBe(126);
   });
 
   it('takes nothing more in the second half when the first already reached the ceiling', () => {
@@ -114,14 +127,34 @@ describe('Social security across two halves (PO decision Q5)', () => {
     expect(h2.ssoEmployee.toNumber()).toBe(0);
   });
 
-  it('never goes negative, and shows HR what the first half took over the month', () => {
+  it('works a month that ended under the floor on the floor, the second half taking the rest (CW-084)', () => {
     // H1 400 × 2 = 800 → 40 (no floor). The month, 800 + 400 = 1,200, is under
-    // the 1,650 floor and contributes nothing, so H1 took 40 too much.
+    // the 1,650 floor, so it is worked on 1,650: 82.50, 83 in whole baht. H2
+    // takes 83 − 40 = 43.
     const { h1, h2 } = month(daily(400, 2), daily(400, 1));
 
     expect(h1.ssoEmployee.toNumber()).toBe(40);
+    expect(h2.ssoEmployee.toNumber()).toBe(43);
+    expect(h2.warnings).toEqual([]);
+  });
+
+  it('never goes negative, and shows HR what a first half already paid took over the month', () => {
+    // A first half paid before the form's rules were applied took 100 on a wage
+    // of 800. The month, 1,200, is worked on the floor to 83: 17 too much.
+    const h1 = buildPayslip({ ...daily(400, 2), half: { half: 1 } });
+    const h2 = buildPayslip({
+      ...daily(400, 1),
+      half: { half: 2, firstHalf: { ...paid(h1), ssoEmployee: 100 } },
+    });
+
     expect(h2.ssoEmployee.toNumber()).toBe(0);
-    expect(h2.warnings).toContainEqual({ code: 'SSO_OVER_IN_FIRST_HALF', params: { amount: 40 } });
+    expect(h2.warnings).toContainEqual({ code: 'SSO_OVER_IN_FIRST_HALF', params: { amount: 17 } });
+  });
+
+  it('contributes nothing for a month in which nobody was paid', () => {
+    const { h1, h2 } = month(daily(400, 0), daily(400, 0));
+    expect(h1.ssoEmployee.toNumber()).toBe(0);
+    expect(h2.ssoEmployee.toNumber()).toBe(0);
   });
 });
 

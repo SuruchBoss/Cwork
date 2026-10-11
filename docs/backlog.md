@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-084 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -156,36 +156,50 @@ seeing any of it.
 ## P0 — blocks a real deployment
 
 
+### CW-084 · Social security is rounded to the satang and is zero below the floor; the official form says otherwise
+`P0` · payroll · **S** · before Pilot B · ready
 
-### CW-071 · Payslips and a wage receipt on paper
-`P0` · payroll · documents · **M** · Pilot B, November 2026
+Found by the dev while reading the official สปส.1-10 part 2 form for CW-048.
+The form in force from 1 January 2026 is in the Social Security Office's
+announcement on contribution forms (No. 2) B.E. 2568, Royal Gazette vol. 142,
+special part 405 Ng, 30 December 2025, pages 23-27 (read by the PO on
+2026-10-11; it replaces the 2018 forms, whose notes say the same but print a
+15,000 ceiling). The notes under part 2:
 
-The pilot pays in cash to staff without smartphones, so a payslip on a
-screen reaches nobody. The Labour Protection Act also expects the employer to
-keep a record of wages paid. The PO understands a receipt the employee signs
-to be the usual way; an accountant should confirm (#36).
+- note 1: a wage under 1,650 is contributed on 1,650; over the ceiling, on
+  17,500 (2026-2028), 20,000 (2029-2031) and 23,000 (from 2032), the ceilings
+  CW-075 already applies; Cwork returns no contribution at all below the
+  floor (`computeSocialSecurity` in `payroll/domain/thai-tax.ts`);
+- note 4: each insured person's contribution is rounded to the baht, 50
+  satang and over up, under 50 satang down, and the employer pays the same
+  rounded amount; Cwork rounds to the satang (a wage of 5,010 gives 250.50,
+  the form 251). Column 5 prints whole baht;
+- note 6: an insured person paid nothing in the month is listed with columns
+  4 and 5 as 0.
+
+What is withheld must equal what is filed, so the payslip and the CW-048 file
+both follow the form, every month.
 
 **Scope**
-- One printable payslip per employee per run, in Thai, sized so two or four
-  fit on an A4 sheet to be cut. It is built on the certificate renderer from
-  CW-008.
-- A wage receipt sheet for the run: one row per employee with net pay and a
-  space to sign. It is printed on A4, and HR files it.
-- Dates in พ.ศ. (CW-058).
+- One function gives a person's monthly contribution: the wage, the floor
+  and ceiling of the period's year, then rounding to the baht as the form
+  says; the employer's share equals it. Payslips, the half-month split
+  (CW-069: the month's figure is fixed by this function, H2 is the month
+  less H1), the shortfall report (CW-075) and CW-048 all use it.
+- A wage of nil in a month contributes nothing (note 6); the rules go on #36
+  for the accountant to confirm.
+- `docs/payroll-thailand.md` cites the 2025 announcement, notes 1, 4 and 6
+  (volume, part, date, pages); the PDF is not committed.
 
 **Acceptance**
-- Every line on the printed payslip matches the payslip on screen, tested,
-  not inspected.
-- Thai renders with no missing glyphs, and the documents print correctly on
-  A4 from Chrome and from the NAS's PDF.
-- A foreign worker's slip shows their name as HR entered it.
-- Printing is audited, and only people who may see pay can print.
+- Hand-computed in tests: wage 5,010 gives 251 and 251; wage 1,200 gives
+  83 (1,650 × 5% = 82.50, rounded up); wage 20,000 in 2026 gives 875; a
+  half-month pair whose month is 5,010 sums to 251.
+- No payslip already approved or paid is recalculated.
 
-**Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`,
-`web/src/features/payroll/`
+**Files** `backend/src/modules/payroll/domain/`, `docs/payroll-thailand.md`
 
 ---
-
 
 ### CW-064 · An employee's first sign-in
 `P2` · auth · mobile · **M** · not needed by the pilot
@@ -429,8 +443,9 @@ pages later; none are set here.
 
 **Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** Cwork
 Pro is an annual self-hosted subscription — the licence key unlocks the `ee/`
-features for the year (candidates: Social Security Office and Revenue
-Department filing files, bank transfer files) and includes online support; a
+features for the year (candidates: online filing to the Social Security
+Office and the Revenue Department, bank transfer files; the filing files HR
+uploads by hand stay free, owner 2026-10-11, CW-048) and includes online support; a
 remote installation is offered as a paid extra. Letting it lapse leaves the
 free edition fully working. Payroll calculation and the law updates behind it
 stay free, and a rule change is released for both editions at the same time.
@@ -518,6 +533,32 @@ satang to a few baht per prorated payslip, paid short.
 - Nobody with a full month changes by a satang.
 
 **Files** `backend/src/modules/payroll/`
+
+---
+
+### CW-083 · A department limit on the payroll officer role does not limit pay
+`P1` · identity · payroll · **S** · before a customer hands out department-limited roles · not queued
+
+Found by the PO while reviewing CW-071. `docs/security.md` says a department
+limit narrows `employee:read` only, and payroll reads (`payroll:read`: runs,
+payslips, and since CW-071 printed payslips and wage receipts) are
+organisation-wide by design. The console offers a department limit for
+`PAYROLL_OFFICER`, because the role carries `employee:read`, without saying
+so. An HR manager who limits a payroll officer to one department to keep the
+other departments' pay from them would be wrong about what they did.
+
+**Scope**
+- When a department limit is chosen for a role that also carries permissions
+  the limit does not narrow, the console says which, in plain Thai and
+  English (for `PAYROLL_OFFICER`: pay of every department stays visible).
+- Whether payroll should honour a department limit is a separate product
+  decision for the owner; this ticket does not change who sees pay.
+
+**Acceptance**
+- Granting `PAYROLL_OFFICER` limited to a department shows the note before
+  saving; granting `MANAGER` limited to a department does not.
+
+**Files** `web/src/features/employees/`, `docs/security.md`
 
 ---
 
@@ -841,6 +882,22 @@ every payslip. There is no way to get them out.
 
 Runs alongside the ภ.ง.ด. chain rather than after it — it shares the export seam
 and nothing else.
+
+**Decided by the owner (2026-10-11):** free. The file HR uploads by hand
+is the company's own payroll data going out, which the Editions section
+keeps free; submitting it to the Social Security Office online is the Pro
+candidate, as the README already says.
+
+**File format (2026-10-11):** no public SSO document the dev could open
+gives the e-Services upload layout (field widths, separator, encoding); the
+e-Services manual only lists the accepted file types and a download of the
+upload file behind the login. The owner is asked for a sample upload file
+from e-Services, names and ID numbers blanked. Until it comes, the monthly
+totals per person and the สปส.1-10 part 2 content (CSV/Excel and a printable
+PDF) are built; the upload formatter waits. Contributions come from CW-084.
+The printed form to follow is the 2025 announcement cited in CW-084 (part 1
+totals, part 2 columns 1-5; a foreign worker's social security card number
+goes in the ID column, note 3).
 
 **Acceptance**
 - The seeded demo company's export matches hand-computed employee and employer
@@ -1342,3 +1399,4 @@ Kept so the reasoning survives.
 | **CW-078** · The carry-over warning for cash advances said section 76 was unread | The PO read sections 76 and 77 in the consolidated text to 2019. `ADVANCE_CARRIED_OVER` (Thai and English), `docs/payroll-thailand.md` and the Thai guide now say that repaying an advance is not among the deductions section 76 allows, that taking a carried balance from a later payday may need the employee's written, signed consent naming that purpose (section 77), and that Cwork does not keep that consent, so HR must. The question is on #36 for a qualified reviewer. The advance payslip line is coded `CASH_ADVANCE`, apart from the demo seed's standing `ADVANCE` deduction, tested together. Accepted from the dev: "Who records them" points to giving an HR officer the payroll officer role from the employee's page (CW-079). 0874e40, closed 2026-10-11. |
 | **CW-076** · A daily-wage worker was paid nothing for a holiday on the weekly day off, and rest-day work at the salaried rate | Verified against the consolidated Labour Protection Act to 2019 (Krisdika), sections 29, 56, 61, 62, 63 and 68, none amended in that text; amendments after 2019 are not checked. A half-month run for a daily-wage employee moves a traditional holiday on the weekly day off to the next working day of the employee's own schedule that is not a holiday (two in a row take the next two), looking a month back and ahead, so a substitute in the next half is paid there; the payslip lists each substitute (`SUBSTITUTE_HOLIDAY`). Rest-day overtime below the daily-wage minimum is raised on the payslip, at least 2× on the weekly day off and 1× on a traditional holiday (`REST_DAY_RATE_RAISED`); the overtime request keeps the organisation's rate. Salaried pay is unchanged. Accepted from the dev: a holiday HR entered always counts as its own holiday (the double payment this causes is CW-081); work on a substitute day is paid as the holiday and flagged for HR to record as overtime (`SUBSTITUTE_HOLIDAY_WORKED`); an employee who leaves before the substitute day is flagged as owed (`HOLIDAY_ON_DAY_OFF`); 1.5× (s.61) and 3× (s.63) stay as the organisation sets them. 948396d, closed 2026-10-11. |
 | **CW-081** · A substitute holiday was two different days to payroll and to attendance | `resolveWorkCalendar` decides, per employee and day, whether it is a working day, a weekly day off, a holiday or a substitute, from the employee's schedule and daily shift changes and both the organisation's and the work location's holidays; attendance, leave, overtime type and the daily-wage run all use it. A holiday row can name the holiday it stands in for (`substituteForId`, nullable, one substitute per holiday, after it, same location, no substitute of a substitute; a holiday with a substitute cannot be deleted), set from the organisation page, which also shows the automatic substitute for a Monday–Friday schedule. Tested on 5 December 2026 with and without 7 December entered: the salaried employee is on holiday, not absent, on the 7th; leave on the 7th alone is refused and 7–8 counts one day; overtime on the 7th is holiday overtime at 2×; the daily-wage worker is paid the 7th once (10 days, 5,000, plus 500 overtime). `SUBSTITUTE_HOLIDAY_WORKED` is gone. Accepted from the dev: an entered substitute applies only to employees whose holiday fell on their day off and for whom it is a working day, otherwise the automatic one; existing rows entered as substitutes count as their own holiday until linked (0.4.0 upgrade notes); daily shift changes to a day off count as a day off everywhere; attendance and overtime now see work-location holidays. Left: monthly proration (CW-082) and days closed before the upgrade. 3621a32, closed 2026-10-11. |
+| **CW-071** · The pilot pays in cash to staff without smartphones, and a payslip on a screen reached nobody | An approved or paid run prints as PDF from the run page: payslips one, two or four to an A4 sheet (cut lines; a long slip shrinks its type, then takes its own page, never drops a line) and a wage-receipt sheet with one row per employee, net pay, a space to sign, totals and page numbers. Dates in พ.ศ., Sarabun embedded and checked for missing glyphs, a foreign worker's name as HR entered it; a daily wage prints as days × rate, `CASH_ADVANCE` on its own line, a substitute holiday as a note. Every line of a printed slip is tested against the payslip record the API returns. Printing needs `payroll:read`, refuses a run not yet approved (`PAYROLL_RUN_NOT_PRINTABLE`) or a slip whose lines do not add up (`PAYSLIP_DOES_NOT_ADD_UP`), and is audited as an export of the run. Accepted from the dev: only `SUBSTITUTE_HOLIDAY` prints, other warnings stay HR's; "matches the screen" means the API payslip record, as the console has no payslip page yet; employees printing their own slip is not in this ticket; the receipt's wording is a template, with three questions for an accountant on #36. Two holiday-page fixes from the browser walk of CW-081 ride along (the substitute picker's layout, and no automatic note under a holiday with an entered substitute). Guide: `docs/guide/printing-payslips.th.md`. a26329b, closed 2026-10-11. |
