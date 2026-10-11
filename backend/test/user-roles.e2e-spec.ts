@@ -110,6 +110,20 @@ describe('Roles given from the console (e2e)', () => {
   });
 
   afterAll(async () => {
+    // Other specs count the demo company's people and accounts; this one leaves as it came.
+    if (employeeId) {
+      const employee = await prisma.employee.update({
+        where: { id: employeeId },
+        data: { deletedAt: new Date(), status: 'TERMINATED' },
+        select: { userId: true },
+      });
+      if (employee.userId) {
+        await prisma.user.update({
+          where: { id: employee.userId },
+          data: { status: 'DISABLED', sessionsValidFrom: new Date() },
+        });
+      }
+    }
     await ctx?.close();
   });
 
