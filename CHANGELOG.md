@@ -389,12 +389,14 @@ entry, tags it and publishes the notes.
   transfer) on a new **Payroll → Cash advances** page, which also shows what
   each person still owes and which run took it back. A regular run takes back
   every advance owed up to the period's last day, after tax, social security
-  and every other deduction, oldest first, each on its own payslip line. It
-  never takes more than the payslip would pay: the rest is carried to the next
-  run and the run page says so, adding that taking it from a later period may
-  be a deduction from wages under section 76, which has not been checked
-  against the Act yet. An advance an approved or paid run has taken
-  back cannot be changed or cancelled, and a run cannot be approved on an
+  and every other deduction, oldest first, each on its own payslip line coded
+  `CASH_ADVANCE` (CW-078). It never takes more than the payslip would pay: the
+  rest is carried to the next run and the run page says so, adding that section
+  76 of the Labour Protection Act does not list repaying an advance among the
+  deductions it allows, so taking it from a later payday may need the
+  employee's written, signed consent naming that purpose (section 77), which
+  Cwork does not keep and HR must (CW-078). An advance an approved or paid run
+  has taken back cannot be changed or cancelled, and a run cannot be approved on an
   advance that changed after it was calculated. Every change is audited. The
   rules are in `docs/payroll-thailand.md`.
 - **A report of the social security that locked and paid runs owe** (CW-075).

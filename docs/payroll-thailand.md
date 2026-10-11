@@ -323,7 +323,7 @@ sources only, and still need reading in the official text:
 | Work on a holiday: one more times the hourly rate for an employee paid for the day, at least twice for one who is not | s.62 | secondary sources agree |
 | A traditional holiday on the weekly day off is replaced by the next working day | s.29 | not yet found in a source |
 | The hourly rate for overtime of a daily-wage employee | s.68 | not yet found in a source |
-| Taking back the part of a cash advance carried to a later period may be a deduction from wages, which needs the employee's written consent and is capped (CW-070) | s.76 | not yet read in any source |
+| Repaying a cash advance is not among the deductions from wages s.76 allows; consent to a deduction must be written, signed and name its purpose (CW-078) | s.76, s.77 | consolidated text to 2019 (Krisdika), read by the PO on 2026-10-10 |
 
 ### Known gaps
 
@@ -371,18 +371,28 @@ whether in cash or by transfer. Its date cannot be in the future.
   takes it back is only calculated, that run cannot be approved until it is
   calculated again (`ADVANCES_CHANGED_SINCE_CALCULATION`). A cancelled advance
   stays on record, and every change is audited.
-- **Not verified.** Taking the carried part from a later period may be a
-  deduction from wages under section 76 of the Labour Protection Act, which
-  needs the employee's written consent and caps the deduction. Nobody has read
-  the official text yet (with sections 29 and 68, it is on the owner's list in
-  CW-076), so the run page's carry-over warning says so rather than implying
-  the deduction is settled law.
+- **Sections 76 and 77** (CW-078, read in the consolidated text to 2019).
+  Section 76 allows deductions from wages, overtime and holiday pay only for
+  tax and other sums a law requires, union dues, debts to a savings
+  cooperative or welfare scheme, a guarantee deposit or damages for wilful or
+  grossly negligent harm, and provident fund contributions; the last four are
+  capped at 10% each and one fifth together of a payday's pay unless the
+  employee consents. Repaying an advance is not on that list. Taking it back on
+  the payday it belongs to is arguably the same wage paid early, but taking a
+  carried balance from a later payday may need the employee's consent, which
+  section 77 says must be written, signed and state its purpose. Cwork does not
+  keep that consent, so HR must, and the run page's carry-over warning says
+  so. Whether the deduction is allowed, under which item and with what cap is
+  on the list in [issue #36](https://github.com/SuruchBoss/Cwork/issues/36)
+  for a qualified reviewer.
 - **Not yet handled.** An employee who leaves still owing an advance stays on
   the list, marked as having left, but the final-settlement run does not take
   it back, so HR settles it by hand.
 - **Who records them.** `payroll:run`, which the payroll officer, HR admin and
-  super admin roles hold. An HR officer who records advances needs it added
-  to their role; see [operations.md](./operations.md#giving-a-role-a-permission).
+  super admin roles hold. An HR officer who records advances can be given the
+  payroll officer role as well, from the employee's page (CW-079).
+- **The payslip line** is coded `CASH_ADVANCE` (CW-078), not `ADVANCE`, which
+  the demo seed gives to a standing deduction.
 
 ## Leave
 
