@@ -175,6 +175,11 @@ model Holiday {
   workLocationId String?  @db.Uuid
   workLocation   WorkLocation? @relation(fields: [workLocationId], references: [id], onDelete: Cascade)
   isPaid         Boolean  @default(true)
+  /// The holiday this row is the substitute day for, when it fell on the
+  /// weekly day off (Labour Protection Act s.29). Null for an ordinary holiday.
+  substituteForId String?  @unique @db.Uuid
+  substituteFor   Holiday? @relation("HolidaySubstitute", fields: [substituteForId], references: [id], onDelete: Restrict)
+  substitute      Holiday? @relation("HolidaySubstitute")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

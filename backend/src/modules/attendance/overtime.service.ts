@@ -15,7 +15,6 @@ import type { AuthenticatedUser } from '../../core/security/current-user';
 import {
   formatDateOnly,
   formatThaiDate,
-  isoWeekday,
   minutesBetween,
   toDateOnly,
 } from '../../core/utils/date.util';
@@ -28,7 +27,9 @@ import {
 import { ApprovalService } from '../approvals/approval.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
+import { isHoliday } from '../organization/domain/work-calendar';
 import { OrganizationService } from '../organization/organization.service';
+import { WorkCalendarService } from '../organization/work-calendar.service';
 import type { CreateOvertimeDto, DecideOvertimeDto } from './dto/attendance.dto';
 
 /**
@@ -55,6 +56,7 @@ export class OvertimeService implements OnModuleInit {
     private readonly notifications: NotificationsService,
     private readonly organization: OrganizationService,
     private readonly sequences: SequenceService,
+    private readonly calendar: WorkCalendarService,
   ) {}
 
   onModuleInit(): void {
@@ -378,29 +380,18 @@ export class OvertimeService implements OnModuleInit {
     );
   }
 
-  /** Picks the statutory category from the calendar and the employee's roster. */
+  /**
+   * Picks the statutory category from the employee's work calendar: a holiday
+   * or its substitute day is holiday work (CW-081), a day off is day-off work.
+   */
   private async inferOvertimeType(
     organizationId: string,
     employeeId: string,
     workDate: Date,
   ): Promise<OvertimeType> {
-    const holidays = await this.organization.holidayDateSet(organizationId, workDate, workDate);
-    if (holidays.has(formatDateOnly(workDate))) return OvertimeType.HOLIDAY;
-
-    const assignment = await this.prisma.scheduleAssignment.findFirst({
-      where: {
-        employeeId,
-        effectiveFrom: { lte: workDate },
-        OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
-      },
-      orderBy: { effectiveFrom: 'desc' },
-      include: { schedule: { select: { workingDays: true } } },
-    });
-
-    const workingDays = assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
-    return workingDays.includes(isoWeekday(workDate))
-      ? OvertimeType.NORMAL_DAY
-      : OvertimeType.DAY_OFF;
+    const day = await this.calendar.dayFor(organizationId, employeeId, workDate);
+    if (isHoliday(day)) return OvertimeType.HOLIDAY;
+    return day.scheduled ? OvertimeType.NORMAL_DAY : OvertimeType.DAY_OFF;
   }
 
   private async resolveMultiplier(organizationId: string, type: OvertimeType): Promise<number> {

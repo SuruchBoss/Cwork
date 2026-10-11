@@ -239,6 +239,24 @@ export class CreateHolidayDto {
   @IsOptional()
   @IsUUID()
   workLocationId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The holiday this day is the substitute for, when it fell on the weekly day off (s.29)',
+  })
+  @IsOptional()
+  @IsUUID()
+  substituteForId?: string;
+}
+
+export class UpdateHolidayDto {
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'The holiday this day is the substitute for; null makes it an ordinary holiday',
+  })
+  @IsOptional()
+  @IsUUID()
+  substituteForId?: string | null;
 }
 
 export class UpdateOrganizationDto {

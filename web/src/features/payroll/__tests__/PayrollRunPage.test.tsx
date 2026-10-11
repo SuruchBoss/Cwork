@@ -190,7 +190,6 @@ describe('Payslip warnings on the run page (CW-069)', () => {
           ...slip,
           warnings: [
             { code: 'SUBSTITUTE_HOLIDAY', params: { days: 1, dates: '2026-12-05 → 2026-12-07' } },
-            { code: 'SUBSTITUTE_HOLIDAY_WORKED', params: { days: 1, dates: '2026-12-07' } },
             { code: 'REST_DAY_RATE_RAISED', params: { hours: 4, rates: 'DAY_OFF 1x → 2x' } },
           ],
         },
@@ -203,7 +202,6 @@ describe('Payslip warnings on the run page (CW-069)', () => {
         'จ่ายวันหยุดตามประเพณีที่ตรงกับวันหยุดประจำสัปดาห์ 1 วัน เป็นวันหยุดชดเชยในวันทำงานถัดไปแล้ว: 5 ธ.ค. 2569 → 7 ธ.ค. 2569 ไม่ต้องเพิ่มวันเหล่านี้ในปฏิทินวันหยุดซ้ำ',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/^มาทำงานในวันหยุดชดเชย 1 วัน: 7 ธ\.ค\. 2569/)).toBeInTheDocument();
     expect(
       screen.getByText(
         /^จ่ายค่าทำงานในวันหยุด 4 ชม\. ตามอัตราขั้นต่ำของลูกจ้างรายวัน \(มาตรา 62\): .+ 1× → 2×$/,

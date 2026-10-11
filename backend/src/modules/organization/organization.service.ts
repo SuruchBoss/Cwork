@@ -3,13 +3,25 @@
 
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
+import {
+  BusinessRuleError,
+  ConflictError,
+  ErrorCode,
+  NotFoundError,
+} from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
-import { toDateOnly } from '../../core/utils/date.util';
+import {
+  eachDateInRange,
+  formatDateOnly,
+  isoWeekday,
+  toDateOnly,
+} from '../../core/utils/date.util';
+import { resolveWorkCalendar } from './domain/work-calendar';
 import { organizationToday } from './organization-today';
 import type {
   CreateDepartmentDto,
   CreateHolidayDto,
+  UpdateHolidayDto,
   CreatePositionDto,
   CreateWorkLocationDto,
   UpdateDepartmentDto,
@@ -259,36 +271,178 @@ export class OrganizationService {
 
   // ------------------------------------------------------------------- holidays
 
-  listHolidays(organizationId: string, year?: number) {
+  /**
+   * The holiday calendar. Each row says which holiday it is the substitute
+   * for, if HR entered it as one, and an ordinary holiday on a weekend says
+   * where the automatic rule moves it for a Monday-to-Friday week when no
+   * substitute is entered (CW-081). Someone on another schedule gets their
+   * own: the work calendar decides per employee.
+   */
+  async listHolidays(organizationId: string, year?: number) {
     const range = year
-      ? {
-          date: {
-            gte: new Date(Date.UTC(year, 0, 1)),
-            lte: new Date(Date.UTC(year, 11, 31)),
-          },
-        }
-      : {};
-    return this.prisma.holiday.findMany({
-      where: { organizationId, ...range },
+      ? { from: new Date(Date.UTC(year, 0, 1)), to: new Date(Date.UTC(year, 11, 31)) }
+      : null;
+    const rows = await this.prisma.holiday.findMany({
+      where: { organizationId, ...(range ? { date: { gte: range.from, lte: range.to } } : {}) },
       orderBy: { date: 'asc' },
+      include: { substituteFor: { select: { id: true, date: true, name: true } } },
     });
+    if (rows.length === 0) return [];
+
+    // The automatic substitute can cross into the next year; look a month on.
+    const first = rows[0]!.date;
+    const last = rows[rows.length - 1]!.date;
+    const windowTo = new Date(
+      Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate() + 31),
+    );
+    const around = await this.prisma.holiday.findMany({
+      where: { organizationId, date: { gte: first, lte: windowTo } },
+      select: {
+        date: true,
+        isPaid: true,
+        workLocationId: true,
+        substituteFor: { select: { date: true } },
+      },
+    });
+    const automaticByScope = new Map<string | null, Map<string, string>>();
+    const automaticFor = (workLocationId: string | null) => {
+      if (!automaticByScope.has(workLocationId)) {
+        const days = resolveWorkCalendar(
+          eachDateInRange(first, windowTo).map((date) => ({
+            date: formatDateOnly(date),
+            scheduled: isoWeekday(date) <= 5,
+            employed: true,
+          })),
+          around
+            .filter((h) => h.workLocationId === null || h.workLocationId === workLocationId)
+            .map((h) => ({
+              date: formatDateOnly(h.date),
+              isPaid: h.isPaid,
+              substituteFor: h.substituteFor ? formatDateOnly(h.substituteFor.date) : null,
+            })),
+        );
+        automaticByScope.set(
+          workLocationId,
+          new Map(
+            days.filter((d) => d.substitutedOn !== null).map((d) => [d.date, d.substitutedOn!]),
+          ),
+        );
+      }
+      return automaticByScope.get(workLocationId)!;
+    };
+
+    return rows.map((row) => ({
+      ...row,
+      substituteOnWeekdays:
+        row.substituteForId === null
+          ? (automaticFor(row.workLocationId).get(formatDateOnly(row.date)) ?? null)
+          : null,
+    }));
   }
 
-  createHoliday(organizationId: string, dto: CreateHolidayDto) {
+  async createHoliday(organizationId: string, dto: CreateHolidayDto) {
+    const date = toDateOnly(dto.date);
+    if (dto.substituteForId) {
+      await this.assertCanStandIn(organizationId, dto.substituteForId, {
+        date,
+        workLocationId: dto.workLocationId ?? null,
+      });
+    }
     return this.prisma.holiday.create({
       data: {
         organizationId,
-        date: toDateOnly(dto.date),
+        date,
         name: dto.name,
         nameEn: dto.nameEn,
         workLocationId: dto.workLocationId,
+        substituteForId: dto.substituteForId,
       },
     });
   }
 
+  /** Marks a holiday as the substitute for another, or back as an ordinary one. */
+  async updateHoliday(organizationId: string, id: string, dto: UpdateHolidayDto) {
+    const holiday = await this.prisma.holiday.findFirst({
+      where: { id, organizationId },
+      select: { id: true, date: true, workLocationId: true, substitute: { select: { id: true } } },
+    });
+    if (!holiday) throw new NotFoundError('Holiday', id);
+    if (dto.substituteForId) {
+      if (holiday.substitute) {
+        throw new BusinessRuleError(
+          ErrorCode.SUBSTITUTE_OF_SUBSTITUTE,
+          'This holiday has a substitute of its own, so it cannot be a substitute',
+        );
+      }
+      await this.assertCanStandIn(organizationId, dto.substituteForId, holiday, id);
+    }
+    return this.prisma.holiday.update({
+      where: { id },
+      data: { substituteForId: dto.substituteForId ?? null },
+    });
+  }
+
   async deleteHoliday(organizationId: string, id: string): Promise<void> {
-    const result = await this.prisma.holiday.deleteMany({ where: { id, organizationId } });
-    if (result.count === 0) throw new NotFoundError('Holiday', id);
+    const holiday = await this.prisma.holiday.findFirst({
+      where: { id, organizationId },
+      select: { substitute: { select: { date: true } } },
+    });
+    if (!holiday) throw new NotFoundError('Holiday', id);
+    if (holiday.substitute) {
+      throw new ConflictError(
+        ErrorCode.HOLIDAY_HAS_SUBSTITUTE,
+        'Remove the substitute day entered for this holiday first',
+        { substituteDate: formatDateOnly(holiday.substitute.date) },
+      );
+    }
+    await this.prisma.holiday.delete({ where: { id } });
+  }
+
+  /**
+   * A substitute stands in for an ordinary holiday of the same calendar (the
+   * whole organisation, or the same work location) that comes before it and
+   * has no other substitute.
+   */
+  private async assertCanStandIn(
+    organizationId: string,
+    holidayId: string,
+    substitute: { date: Date; workLocationId: string | null },
+    substituteId?: string,
+  ): Promise<void> {
+    const holiday = await this.prisma.holiday.findFirst({
+      where: { id: holidayId, organizationId },
+      select: {
+        date: true,
+        workLocationId: true,
+        substituteForId: true,
+        substitute: { select: { id: true } },
+      },
+    });
+    if (!holiday) throw new NotFoundError('Holiday', holidayId);
+    if (holiday.substituteForId !== null) {
+      throw new BusinessRuleError(
+        ErrorCode.SUBSTITUTE_OF_SUBSTITUTE,
+        'A substitute day cannot have a substitute of its own',
+      );
+    }
+    if (holiday.workLocationId !== substitute.workLocationId) {
+      throw new BusinessRuleError(
+        ErrorCode.SUBSTITUTE_LOCATION_MISMATCH,
+        'A substitute applies to the same work location as its holiday',
+      );
+    }
+    if (substitute.date <= holiday.date) {
+      throw new BusinessRuleError(
+        ErrorCode.SUBSTITUTE_NOT_AFTER_HOLIDAY,
+        'A substitute day comes after the holiday it stands in for',
+      );
+    }
+    if (holiday.substitute && holiday.substitute.id !== substituteId) {
+      throw new ConflictError(
+        ErrorCode.HOLIDAY_ALREADY_HAS_SUBSTITUTE,
+        'That holiday already has a substitute day',
+      );
+    }
   }
 
   /**

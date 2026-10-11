@@ -68,11 +68,6 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
             .join(', '),
         },
       );
-    case 'SUBSTITUTE_HOLIDAY_WORKED':
-      return t(
-        'Worked on {days} substitute holiday(s): {dates}. The day is paid as a holiday; record the hours as work on a public holiday for the work itself to be paid',
-        { days: Number(p.days ?? 0), dates: dates() },
-      );
     case 'REST_DAY_RATE_RAISED':
       return t(
         'Paid {hours} h of rest-day work at the least the law allows a daily-wage employee (section 62): {rates}',

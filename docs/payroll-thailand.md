@@ -254,24 +254,29 @@ the proration.
 ### Substitute holidays
 
 A traditional holiday that falls on the employee's weekly day off moves to
-their next working day (section 29, third paragraph). Cwork works this out by
-itself for each daily-wage employee, from their own schedule and the paid
-holidays where they work: the substitute is the next scheduled day that is not
-itself a holiday, and two holidays on days off in a row take the next two
-working days. HR does not add the substitute to the holiday calendar.
+one of their working days (section 29, third paragraph). One work calendar
+decides this for every employee and day (CW-081), and attendance, leave,
+overtime and both kinds of payroll run use its answer:
 
-- The substitute day pays one day as a holiday, whether or not the employee
-  came in. The payslip lists each holiday and its substitute
-  (`SUBSTITUTE_HOLIDAY`), so HR can see it was paid and does not enter it again:
-  a holiday entered on that day is taken as a holiday of its own, and the
-  substitute moves on to the day after.
-- The substitute can fall in the next half, or come from a holiday in the last;
-  each half looks a month either side for it.
-- If the employee came in on their substitute day, it is still paid once as the
-  holiday and the payslip says so (`SUBSTITUTE_HOLIDAY_WORKED`): the hours are
-  holiday work, which HR records as overtime on a public holiday.
-- If the employee leaves before a working day comes, the holiday is owed but
-  not paid, and flagged (`HOLIDAY_ON_DAY_OFF`) for the final pay.
+- **The day.** If HR marked a later holiday row as the substitute for the
+  holiday (the holiday page, or `substituteForId`), that day is used for
+  everyone whose day off the holiday fell on, as long as it is one of their
+  working days. Otherwise it is the next working day of their own schedule
+  (and any day-by-day roster change) that is neither a holiday nor already
+  another holiday's substitute; two holidays on days off in a row take the
+  next two. A row marked as a substitute is not a holiday of its own: for
+  someone the holiday did not fall on a day off, it is an ordinary working day.
+  The holiday page shows where each weekend holiday lands for a
+  Monday-to-Friday week.
+- **Attendance** reads a substitute day as a holiday, so the nightly close-out
+  does not mark anyone absent on it. **Leave** on it takes nothing.
+  **Overtime** asked for on it is holiday work.
+- **A daily-wage half** pays it once, as a holiday, whether or not the employee
+  came in, and lists each holiday and its substitute on the payslip
+  (`SUBSTITUTE_HOLIDAY`). The substitute can fall in the next half or come from
+  a holiday in the last; the calendar looks a month either side. If the
+  employee leaves before a working day comes, the holiday is owed but not paid,
+  and flagged (`HOLIDAY_ON_DAY_OFF`) for the final pay.
 
 ### Overtime and rest-day work
 
@@ -386,14 +391,14 @@ after 2019, if there are any, are not checked.
 
 ### Known gaps
 
-- **Substitute days outside a daily wage.** Only a daily-wage half works out
-  substitute days. Attendance, leave and the overtime engine do not know them,
-  for anyone: a salaried employee who stays home on a substitute day the
-  holiday calendar does not list is marked absent and docked, leave taken on
-  it is charged, and an overtime request on it is a working-day request. Until
-  that changes, a company that observes substitute days for salaried staff
-  enters them in the holiday calendar; a daily-wage half then takes the entry
-  as a holiday of its own (see "Substitute holidays").
+- **Working days for a salaried run's proration.** A monthly run still counts
+  the period's working days as Monday to Friday less the organisation's
+  holidays, for prorating a joiner or a leaver and for the value of an unpaid
+  day; it does not use each employee's work calendar, so a substitute day
+  counts as a working day there. Attendance (and so absences) does use it.
+- **Days already derived.** Attendance closed before the upgrade, and leave
+  requested before it, keep the answer they were given; recalculating a day or
+  re-submitting the leave applies the work calendar.
 - **Statutory floors for everyone.** Only a daily-wage employee's rest-day
   work is raised to the statutory minimum. Every other overtime rate, and every
   rate for salaried staff, is the organisation's setting, trusted as entered.

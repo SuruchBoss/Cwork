@@ -7,7 +7,6 @@ import {
   countDaysPaid,
   dailyWageOvertime,
   minimumWageWarnings,
-  substituteHolidays,
   type DailyWageDay,
 } from './daily-wage';
 import { computeSocialSecurity, THAI_TAX_RULES_2026 } from './thai-tax';
@@ -242,14 +241,13 @@ describe('The days a daily-wage employee is paid for (PO decision Q3)', () => {
     ]);
   });
 
-  it('pays a substitute day worked once, and asks HR to record the work as holiday work', () => {
-    const result = countDaysPaid([day('2026-12-07', { substituteFor: '2026-12-05' })]);
+  it('pays a substitute day once, whatever attendance says (CW-081: work on it is holiday overtime)', () => {
+    const result = countDaysPaid([
+      day('2026-12-07', { attendance: AttendanceStatus.HOLIDAY, substituteFor: '2026-12-05' }),
+    ]);
 
     expect(result).toMatchObject({ worked: 0, holidays: 1, days: 1 });
-    expect(result.warnings).toContainEqual({
-      code: 'SUBSTITUTE_HOLIDAY_WORKED',
-      params: { days: 1, dates: '2026-12-07' },
-    });
+    expect(result.warnings.map((w) => w.code)).toEqual(['SUBSTITUTE_HOLIDAY']);
   });
 
   it('flags a holiday on the weekly day off whose substitute comes after the employee leaves', () => {
@@ -261,46 +259,6 @@ describe('The days a daily-wage employee is paid for (PO decision Q3)', () => {
     expect(result.warnings).toEqual([
       { code: 'HOLIDAY_ON_DAY_OFF', params: { days: 1, dates: '2026-12-05' } },
     ]);
-  });
-});
-
-describe('Substitute days for holidays on the weekly day off (section 29, CW-076)', () => {
-  /** Days of December 2026 for someone working Monday to Friday (the 5th is a Saturday). */
-  const week = (from: number, to: number, holidays: number[]) =>
-    Array.from({ length: to - from + 1 }, (_, i) => {
-      const date = new Date(Date.UTC(2026, 11, from + i));
-      return {
-        date: date.toISOString().slice(0, 10),
-        scheduled: date.getUTCDay() !== 0 && date.getUTCDay() !== 6,
-        paidHoliday: holidays.includes(from + i),
-      };
-    });
-
-  it('moves a holiday on a Saturday to the Monday after', () => {
-    expect(substituteHolidays(week(4, 9, [5]))).toEqual(new Map([['2026-12-07', '2026-12-05']]));
-  });
-
-  it('gives two holidays on days off the next two working days, past a holiday on a working day', () => {
-    // Saturday 5, Sunday 6 and Monday 7 are all holidays: Tuesday and Wednesday stand in.
-    expect(substituteHolidays(week(4, 11, [5, 6, 7]))).toEqual(
-      new Map([
-        ['2026-12-08', '2026-12-05'],
-        ['2026-12-09', '2026-12-06'],
-      ]),
-    );
-  });
-
-  it("follows the employee's own schedule, and needs none for a holiday they would work", () => {
-    const calendar = [
-      { date: '2026-12-05', scheduled: true, paidHoliday: true }, // works Saturdays
-      { date: '2026-12-06', scheduled: false, paidHoliday: false },
-      { date: '2026-12-07', scheduled: true, paidHoliday: false },
-    ];
-    expect(substituteHolidays(calendar).size).toBe(0);
-  });
-
-  it('leaves out a holiday whose substitute is past the end of the calendar', () => {
-    expect(substituteHolidays(week(4, 6, [5])).size).toBe(0);
   });
 });
 

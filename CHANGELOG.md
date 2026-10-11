@@ -555,14 +555,31 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A substitute holiday was a different day to payroll and to attendance**
+  (CW-081). Only a daily-wage run knew that a holiday on the weekly day off
+  moves to a working day; attendance, leave and overtime knew only the holiday
+  table. A company that entered the substitute day for its salaried staff paid
+  its daily-wage staff a second day off, and one that did not docked salaried
+  staff who stayed home and charged leave taken that day. One work calendar
+  now decides, per employee and day, whether it is a working day, a day off, a
+  holiday or a holiday's substitute, from the holiday table, their schedule and
+  any roster change, and attendance, leave, overtime and both kinds of payroll
+  run use it: a substitute day is never an absence, takes no leave, makes
+  overtime holiday work, and is paid once. HR can mark a holiday row as the
+  substitute for another (`substituteForId` on `POST /holidays`, or
+  `PATCH /holidays/:id`), which then replaces the automatic day; the holiday
+  page offers this and shows where each weekend holiday lands for a
+  Monday-to-Friday week. A holiday with a substitute cannot be deleted before
+  it. Attendance and overtime now also see a work location's own holidays,
+  which they used to miss.
+
 - **Daily-wage staff were underpaid for holidays on their day off and for
   work on it** (CW-076). A traditional holiday that falls on the weekly day off
   moves to the next working day (Labour Protection Act s.29), but Cwork paid a
   daily-wage employee nothing for it unless HR entered the substitute day by
   hand. A half's run now works out each employee's substitute days from their
   own schedule, pays them as holidays, and lists them on the payslip
-  (`SUBSTITUTE_HOLIDAY`) so they are not entered twice; a substitute day the
-  employee came in on, or one that falls after they leave, is flagged. Work on
+  (`SUBSTITUTE_HOLIDAY`); one that falls after they leave is flagged. Work on
   the weekly day off was paid at the organisation's day-off rate, 1×, which is
   meant for salaried staff already paid for that day: a daily-wage employee is
   owed at least 2× (s.62(2)), and at least 1× on top of the day for a

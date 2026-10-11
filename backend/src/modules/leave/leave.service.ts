@@ -33,7 +33,9 @@ import { AttendanceService } from '../attendance/attendance.service';
 import { AuditService } from '../audit/audit.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
+import { isHoliday } from '../organization/domain/work-calendar';
 import { OrganizationService } from '../organization/organization.service';
+import { WorkCalendarService } from '../organization/work-calendar.service';
 import { availableBalance, computeLeaveDays, type BalanceInput } from './domain/leave-calculator';
 import type {
   CreateLeaveRequestDto,
@@ -67,6 +69,7 @@ export class LeaveService implements OnModuleInit {
     private readonly sequences: SequenceService,
     private readonly attendance: AttendanceService,
     private readonly audit: AuditService,
+    private readonly workCalendar: WorkCalendarService,
   ) {}
 
   onModuleInit(): void {
@@ -734,12 +737,14 @@ export class LeaveService implements OnModuleInit {
       : DEFAULT_WORKING_WEEKDAYS;
     const hoursPerDay = schedule?.defaultShift ? schedule.defaultShift.standardWorkMinutes / 60 : 8;
 
-    const holidayDates = await this.organization.holidayDateSet(
+    // Holidays and their substitute days take no leave (CW-081).
+    const workDays = await this.workCalendar.daysFor(
       organizationId,
+      employee.id,
       toDateOnly(dto.startDate),
       toDateOnly(dto.endDate),
-      employee.workLocationId,
     );
+    const holidayDates = new Set([...workDays.values()].filter(isHoliday).map((day) => day.date));
 
     const computed = computeLeaveDays({
       startDate: toDateOnly(dto.startDate),

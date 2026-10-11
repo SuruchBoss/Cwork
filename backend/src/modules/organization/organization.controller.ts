@@ -24,6 +24,7 @@ import { Permission } from '../../core/security/permissions';
 import {
   CreateDepartmentDto,
   CreateHolidayDto,
+  UpdateHolidayDto,
   CreatePositionDto,
   CreateWorkLocationDto,
   UpdateDepartmentDto,
@@ -192,6 +193,18 @@ export class OrganizationController {
   @ApiOperation({ summary: 'Add a public holiday' })
   createHoliday(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateHolidayDto) {
     return this.service.createHoliday(user.organizationId, dto);
+  }
+
+  @Patch('holidays/:id')
+  @RequirePermissions(Permission.ORG_MANAGE)
+  @Audited({ action: AuditAction.UPDATE, entityType: 'Holiday' })
+  @ApiOperation({ summary: 'Mark a holiday as the substitute for another, or not' })
+  updateHoliday(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateHolidayDto,
+  ) {
+    return this.service.updateHoliday(user.organizationId, id, dto);
   }
 
   @Delete('holidays/:id')
