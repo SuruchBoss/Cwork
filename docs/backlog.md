@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-079 · CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-078 · CW-075 · CW-076 · CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-078 · CW-076 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -201,90 +201,8 @@ someone with database access.
 
 ---
 
-### CW-075 · Social security uses the 2025 wage ceiling in 2026
-`P0` · payroll · **S–M** · before Pilot B · ready (regulation read 2026-10-10)
-
-Found by the dev on 2026-10-10 while checking CW-069. Several secondary
-sources (Baker McKenzie, กรุงเทพธุรกิจ, ไทยโพสต์, ประชาชาติ, ไทยรัฐ) report a
-ministerial regulation of 11 December 2025, published in the Royal Gazette on
-12 December 2025, that replaces regulation No. 7 (1995) and raises the
-contribution ceiling for section 33 insured persons in steps: ฿17,500 a month
-for 2026–2028 (at most ฿875), ฿20,000 for 2029–2031 (฿1,000), ฿23,000 from
-2032 (฿1,150). The floor stays ฿1,650.
-
-**Verified 2026-10-10 (PO) against the Royal Gazette itself**:
-กฎกระทรวงกำหนดค่าจ้างขั้นต่ำและขั้นสูงที่ใช้เป็นฐานในการคำนวณเงินสมทบของ
-ผู้ประกันตนตามมาตรา ๓๓ พ.ศ. ๒๕๖๘, ราชกิจจานุเบกษา เล่ม ๑๔๒ ตอนที่ ๘๑ ก,
-12 December 2025, pages 5–6, signed 11 December 2025
-(<https://ratchakitcha.soc.go.th/documents/98728.pdf>, linked from the Social
-Security Office's own news page). Clause 1: in force from 1 January 2026.
-Clause 2: repeals regulation No. 7 (1995). Clause 3, per person per month:
-(1) 1 Jan 2026 – 31 Dec 2028: not below ฿1,650, not above ฿17,500;
-(2) 1 Jan 2029 – 31 Dec 2031: ฿1,650 to ฿20,000;
-(3) from 1 Jan 2032: ฿1,650 to ฿23,000.
-The 5% rate is not in this regulation; Cwork's existing rate stays.
-
-Cwork still uses ฿15,000 (`THAI_TAX_RULES_2026.socialSecurity.maxMonthlyWage`)
-and stops contributions at ฿9,000 a year (`socialSecurityCap`), which the
-same value also caps as the income tax deduction. Every 2026 run has
-under-deducted up to ฿125 a month, employee and employer each, for anyone
-earning above ฿15,000, and the annual stop would cut contributions off before
-December at the new rate.
-
-**Before starting** (the owner)
-- ~~Read the regulation in the Royal Gazette.~~ Done by the PO 2026-10-10,
-  see above. The figures and dates match what the dev found.
-- ~~Decide what happens to January–October 2026 runs already paid.~~ Decided
-  2026-10-10: report the shortfall for HR to settle. Locked and paid runs are
-  not recalculated or changed.
-
-**Scope**
-- The ceiling comes from the rules for the period's year; the 2026 rules carry
-  ฿17,500, and the later steps are in place for their years.
-- The annual contribution stop is removed or derived from the monthly
-  ceiling, not a fixed ฿9,000. The income tax deduction for social security is
-  checked against the Revenue Department's own rule as a separate figure.
-- `docs/payroll-thailand.md` names the regulation and the steps.
-- **Shortfall report** (read-only). For every payslip in a LOCKED or PAID
-  period of a year whose ceiling changed, it shows the employee, the month,
-  the wage used for social security, the amount deducted, the amount the new
-  ceiling gives, and the difference for the employee and for the employer.
-  Half-month periods are added up per calendar month before comparing, since
-  the contribution is monthly. Totals per month and for the year. HR admin and
-  payroll officer only, exported as CSV, and the export is audit-logged. Rows
-  with no difference are left out. It reads the stored payslips and the rules;
-  it writes nothing to payroll.
-- The report says on its face that it is a calculation to help HR settle with
-  the Social Security Office, not a filing, and that Cwork has not changed any
-  paid run.
-
-**Acceptance**
-- A ฿30,000 salary in 2026 deducts ฿875, employee and employer, in every month
-  including December.
-- ฿15,000, ฿17,500 and ฿17,501 are tested at the edges, from the rules and not
-  from literals in the test.
-- A period in 2029 uses ฿20,000 without a code change, only the rules.
-- A PAID 2026 month at ฿30,000 calculated with ฿15,000 shows a ฿125 shortfall
-  for the employee and ฿125 for the employer; the payslip and the run are
-  unchanged afterwards (every stored amount, the status and `updatedAt`
-  compared before and after).
-- Two PAID halves of one month are compared as one month.
-- An organisation with no locked or paid 2026 run gets an empty report that
-  says so, not an error.
-
-**Note** No pilot company has run payroll in Cwork yet (Pilot A starts with
-attendance and employee data; Pilot B shadows November beside Excel). Today
-the report has nothing to show. It matters for anyone who installed Cwork
-themselves and ran 2026 payroll, and it is the pattern for the next time a
-rate changes after runs are paid.
-
-**Files** `backend/src/modules/payroll/domain/thai-tax.ts`,
-`docs/payroll-thailand.md`
-
----
-
 ### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
-`P0` · payroll · **S–M** · before Pilot B · ready after CW-075 (text read 2026-10-10)
+`P0` · payroll · **S–M** · before Pilot B · ready (text read 2026-10-10, CW-075 closed)
 
 Two gaps the dev left open in CW-069 phase A and wrote down in
 `docs/payroll-thailand.md`, "Daily wages paid twice a month":
@@ -1452,6 +1370,7 @@ Kept so the reasoning survives.
 | **CW-058** · Thai screens wrote the year in the Gregorian era, and date fields were the browser's own | Thai offices count years in พ.ศ.; a competitor opens its landing page with exactly this. The first part (db7b284) made `formatDate` write the Buddhist-era year. The rest (a1dd8bf): a `DateInput` built in the repo replaces all 15 native date fields, so in Thai a date is typed or picked day first in พ.ศ. and stored as the ISO date, while English keeps the browser's own field; pay periods show as months; the app's `Fmt.period` and date picker use พ.ศ.; the employment certificate writes "15 มกราคม 2567"; Thai notifications and errors that carried an ISO date write a Thai one. `expectNoAxeViolations` now fails on a Gregorian year on any Thai screen, and source guards in both clients refuse native date inputs and raw years. Choices made by the dev and accepted by the PO on 2026-10-10: the field is built rather than taken from a library, since none writes พ.ศ. and the console has no UI library; a two-digit year is the end of a พ.ศ. year and a four-digit year under 2400 is read as Gregorian, an unreadable date is marked and the old value kept; `min` greys out calendar days only, typed dates are left to the server as before; a new pay period's year and month are picked from lists; there is no payslip PDF, so the in-app payslip writes its pay date in words; the backend messages above were changed beyond the ticket's files because the app shows them. A UTC issue date the dev found on the way is CW-074 (#79). Closed 2026-10-10. |
 | **CW-074** · A certificate issued before 07:00 was dated the day before | Found by the dev while finishing CW-058: the issue date was the UTC date, a day behind Bangkok until 07:00, and verification read it the same way. Both now take the organisation's calendar day (`organizationToday`, by the rule `workDateFor` uses for punches), tested with the clock fixed at 06:30 Bangkok time on 1 October 2026; the same test gave 2026-09-30 before the fix. The same UTC "today" was replaced in leave notice days and cancellation, resignation dates and notice, the daily close-out of separations (which finished people a day late), structural-change effective dates and the compensation a certificate quotes. **Left as they are:** a few places still take the current *year* from UTC (the leave-balance year default, document reference numbers, expense years, file paths); they can be wrong only between 00:00 and 07:00 on 1 January. 94e96dc, closed 2026-10-10. |
 | **CW-070** · The pilot's labourers draw cash before payday, and nothing recorded it or took it back | Someone with `payroll:run` records an advance once it is paid (who, how much, the day, cash or transfer), never dated in the future. What is owed is worked out from deductions, never stored. A regular run takes back every advance owed up to the period's last day, after tax, social security and every other deduction, oldest first, one payslip line each, and never more than the payslip would pay; the rest is carried with `ADVANCE_CARRIED_OVER`, whose Thai text says that recovering it later may fall under section 76 and is not yet checked. An advance taken back by an approved or paid run is locked; one changed under a calculated run blocks approval until it is calculated again; a cancelled run gives back what it took. A Cash advances page lists what each person owes and which run took it back. Accepted from the dev: an advance recorded after a run was calculated waits for a recalculation or the next run, and does not block approval. Still open: the final-settlement run does not take advances (HR settles them by hand); section 76 is CW-078. 3b00760, closed 2026-10-10. |
+| **CW-075** · Social security used the 2025 wage ceiling in 2026 | Verified against the Royal Gazette (vol. 142, part 81 Kor, 12 December 2025, pages 5–6): the section 33 ceiling is ฿17,500 for 2026–2028, ฿20,000 for 2029–2031 and ฿23,000 from 2032, floor ฿1,650. The ceiling now comes from the period's year (`taxRulesFor`, `SOCIAL_SECURITY_CEILINGS`), so a later step is a new row, not a code change. The ฿9,000 yearly stop is gone: it was 12 × ฿750 of the old ceiling, not a rule in the Act, and kept it would have skipped December at the new rate. Income tax relief for social security is its own table (`SOCIAL_SECURITY_RELIEF_CAPS`, ฿9,000 to 2025, ฿10,500 for 2026, the last figure kept until the Revenue Department announces another), checked against secondary sources only, and the docs say so. A read-only shortfall report (Payroll → ส่วนต่างประกันสังคม, `GET /payroll/reports/sso-shortfall`, `payroll:export`) compares paid runs with the year's ceiling per employee per month, halves added up first, with totals per month and year, a CSV in Thai or English that is audit-logged, and a note that it is not a filing; it writes nothing to payroll. Thai guide `docs/guide/sso-shortfall.th.md`. Accepted from the dev: payslips from before CW-069 have their social security wage rebuilt from BASE and earnings counted towards it, labelled as such; paid runs count in any period and other non-void runs in LOCKED or CLOSED periods, never OPEN; payslips outside social security are skipped; CSV cells starting with = + - @ are escaped; years outside 2000–2100 are refused with INVALID_YEAR; three e2e files moved their years because they relied on one ceiling for every year, none skipped. Owner's decision: January–October 2026 runs already paid are reported for HR to settle, not recalculated. 87540c5, closed 2026-10-11. |
 | **CW-069** · The pilot pays its labourers a daily wage every 15 days, and Cwork could only pay a monthly salary | A compensation can carry a `dailyRate` paid `SEMI_MONTHLY`, and a month can be paid in two periods, `YYYY-MM-H1` and `YYYY-MM-H2`, with one monthly period and one of each half per month enforced by the database. Days paid come from attendance, paid leave by its portion and paid holidays on working days. Social security is 5% of H1 with no floor, then the whole month less H1; withholding is half the estimated month, then the month less H1; neither goes negative, and any excess is a warning. H2 needs H1 marked paid. Each work location holds the minimum daily wage with its source. In the console: a pay card on the employee page that carries overtime, social security and provident fund over to a new rate, half-month periods with locked dates and labels such as "1–15 พฤศจิกายน 2569", the nine payslip warnings in Thai on the run page, and on an H2 run whose H1 is unpaid, the reason and a link to H1. Every figure in the tests is computed by hand; the comparison with the pilot's Excel is still to come at Pilot B. The legal basis of sections 56 and 62 is checked only from secondary sources, and 29 and 68 not at all (CW-076). 037e108, 8662703, closed 2026-10-10. |
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
 | **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |
