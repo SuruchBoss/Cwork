@@ -6,11 +6,11 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** empty after CW-048. CW-085 (the e-Services upload file and
-  the November check, Pilot B) waits on the owner's sample file and on the
-  pilot's November month. CW-082 (#85) and CW-083 (#86) are P1, not queued;
-  CW-082 is the PO's next pick for the dev room. Closed on 2026-10-11:
-  CW-079, CW-078, CW-076, CW-081, CW-071, CW-084 and CW-048.
+- **Dev queue:** CW-082 (#85, monthly proration from the work calendar) is
+  with the dev room. CW-085 (#88, the e-Services upload file and the November
+  check, Pilot B) waits on the owner's sample file and the pilot's November
+  month. CW-083 (#86) is P1, not queued. Closed on 2026-10-11: CW-079,
+  CW-078, CW-076, CW-081, CW-071, CW-084 and CW-048.
 - **Pilot A (by 31 October):** waits on the pilot company's files, not on
   code. CW-061 needs one real month exported from the TA-001EX scanner;
   CW-062 needs the NAS make, model, CPU, memory, what runs on it and how the

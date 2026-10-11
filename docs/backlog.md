@@ -465,7 +465,7 @@ Pilot B, which is unpaid; all of them come before the first invoice.
 ones that need code or docs are their own tickets.
 
 ### CW-082 · A monthly salary prorated in December counts the substitute day as a working day
-`P1` · payroll · **S** · before a monthly run with joiners or leavers in a month with a substitute day · not queued
+`P1` · payroll · **S** · before a monthly run with joiners or leavers in a month with a substitute day · queued 2026-10-11 (#85)
 
 Left by CW-081. A salaried employee who joins or leaves mid-month is paid by
 working days, and those are still counted as Monday to Friday less the
