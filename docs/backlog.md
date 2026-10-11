@@ -411,6 +411,14 @@ or labour law changes, in the free edition for good (CW-075 already shipped
 there). Pro features that depend on the law — filing formats, for instance —
 are kept current as part of Pro; the payroll arithmetic underneath stays free.
 
+**Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
+installer for a company with no IT (a Windows installer, a VM image, or
+whatever cheaper form is chosen later) is in the free edition: installing it
+yourself is free, having it installed for you is paid. What is charged is
+`ee/`, online support and the remote installation. The installer's updater
+and backups never depend on a key. Ticket: CW-086. The same rule holds for
+PaynEat.
+
 Against the backlog, these are what the plan does not yet cover. None blocks
 Pilot B, which is unpaid; all of them come before the first invoice.
 
@@ -433,11 +441,12 @@ Pilot B, which is unpaid; all of them come before the first invoice.
 - **What support means.** Online only: a channel, hours and a response time,
   written down, what is in scope (Cwork itself) and what is not (the
   customer's server, network, Docker host), and who answers when the owner is
-  at the day job.
+  at the day job. CW-087.
 - **Updates when the law moves.** Free for everyone (see above). A paying
   customer still needs a stated promise of how soon a rule change is released,
   and that promise is the same for both editions.
-- **Installable by the customer's IT.** CW-080.
+- **Installable by the customer's IT.** CW-080. For a company with no IT,
+  CW-086 (free, owner 2026-10-11).
 - **The licence note.** CW-029 recorded that, with DCO and no CLA, the licence
   "cannot realistically be changed". There are no outside contributors yet, so
   an `ee/` folder under another licence for new code, as PaynEat-ERP did,
@@ -463,32 +472,6 @@ Pilot B, which is unpaid; all of them come before the first invoice.
 
 **Acceptance** Each point above has an owner's decision recorded here, and the
 ones that need code or docs are their own tickets.
-
-### CW-083 · A department limit on the payroll officer role does not limit pay
-`P1` · identity · payroll · **S** · before a customer hands out department-limited roles · queued 2026-10-11 (#86)
-
-Found by the PO while reviewing CW-071. `docs/security.md` says a department
-limit narrows `employee:read` only, and payroll reads (`payroll:read`: runs,
-payslips, and since CW-071 printed payslips and wage receipts) are
-organisation-wide by design. The console offers a department limit for
-`PAYROLL_OFFICER`, because the role carries `employee:read`, without saying
-so. An HR manager who limits a payroll officer to one department to keep the
-other departments' pay from them would be wrong about what they did.
-
-**Scope**
-- When a department limit is chosen for a role that also carries permissions
-  the limit does not narrow, the console says which, in plain Thai and
-  English (for `PAYROLL_OFFICER`: pay of every department stays visible).
-- Whether payroll should honour a department limit is a separate product
-  decision for the owner; this ticket does not change who sees pay.
-
-**Acceptance**
-- Granting `PAYROLL_OFFICER` limited to a department shows the note before
-  saving; granting `MANAGER` limited to a department does not.
-
-**Files** `web/src/features/employees/`, `docs/security.md`
-
----
 
 ### CW-080 · A customer's IT installs Cwork without the maintainer
 `P1` · operations · docs · **M** · after Pilot A; part of CW-077, not queued
@@ -520,6 +503,86 @@ person will hit:
 guide and images on a clean machine, reaches a working install over HTTPS,
 takes a backup, restores it, and upgrades one version — and that run is
 written up here.
+
+---
+
+### CW-086 · A company with no IT installs Cwork itself
+`P2` · operations · **L** · after CW-080 and Pilots A and B; part of CW-077, not queued
+
+**Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
+installer for a company with no IT is part of the free edition, in Cwork and
+PaynEat alike: installing it yourself is free; having it installed for you is
+what is paid (the remote installation, with `ee/` and online support). CW-080
+makes Cwork installable by someone else's IT; this ticket is for the office
+with nobody to call. Both pilot companies run on a NAS, so neither needs it
+yet, and the form is chosen when a real customer of this kind asks.
+
+The installed copy keeps updating and backing up without a licence key. The
+Editions section promises that a lapsed subscription leaves the free edition
+fully working and that a change in the law reaches both editions at the same
+time; for an office with no IT the installer's update button is the only way
+those updates arrive, so it can never sit behind a key.
+
+What the compose file runs today, and what makes this large: `postgres`
+(`pgvector/pgvector:pg16`), `api`, `migrate`, `web` and `clamav`.
+
+**Scope, decided when a customer asks**
+- **The form:** a native Windows installer (PostgreSQL with pgvector and
+  ClamAV on Windows), a script over Docker Desktop (needs WSL2 and
+  virtualisation switched on, and Docker Desktop's own licence terms for
+  companies checked first), a ready-made VM image, or a small machine sold
+  ready to run. Compare them on the customer's real hardware and on what can
+  go wrong without IT.
+- **Code signing:** without a certificate Windows SmartScreen warns on the
+  installer, which is what an office with no IT is least able to judge. The
+  owner decides, with the yearly cost.
+
+**Acceptance**
+- Backups run on their own and go somewhere off the machine (a disk that
+  fails takes the payroll with it otherwise), with a restore someone without
+  IT can follow.
+- One-click update that keeps working with no key or an expired one.
+- The machine is kept from sleeping while Cwork serves, and says so when it
+  cannot be.
+- Other staff and the mobile app reach it over the office network, over HTTPS.
+- The guide asks for BitLocker (or the platform's disk encryption) and keeps
+  `FIELD_ENCRYPTION_KEY` away from the data and the backups, readable only by
+  the service.
+- Someone without IT, using only the installer and its Thai guide on a clean
+  machine, reaches a working install, takes a backup, restores it and updates
+  one version, and that run is written up here.
+
+**Files** packaging and `docs/` (new); `docker-compose.yml` as the reference
+
+---
+
+### CW-087 · What Cwork's support covers, written down
+`P1` · business · docs · **S** · before the first invoice; part of CW-077, not queued
+
+The "what support means" point of CW-077, as its own ticket, the counterpart
+of SuruchBoss/PaynEat#168. One person answers support online, beside a day
+job, so its cost has to be held by a written scope rather than by locking
+features or the installer away.
+
+**Scope**
+- One page, Thai and English: what support covers (Cwork itself: install
+  questions, errors, payroll results), what it does not (the customer's
+  server, network, Docker host or Windows, data entry, payroll advice), the
+  channel, the hours and the response time, and who answers when the owner is
+  away.
+- How a session works when live data could be seen (CW-077's remote access
+  point): the customer present, no copies taken, logs and the support bundle
+  (CW-080) asked for instead of database dumps.
+- The liability wording is a draft for a qualified reviewer, not final text.
+
+**Acceptance**
+- The page is linked from the installation guide and, once the owner has
+  confirmed it in the PO room like any change to the Editions section, from
+  the README; the owner has confirmed the channel, hours and response time.
+- The liability wording is marked as awaiting review until someone qualified
+  has read it.
+
+**Files** `docs/` (new page), `README.md`, `README.th.md`
 
 ---
 
@@ -1319,3 +1382,4 @@ Kept so the reasoning survives.
 | **CW-084** · Social security was rounded to the satang and was nothing below the floor; the official form says otherwise | Verified against the Social Security Office's announcement on contribution forms (No. 2) B.E. 2568, Royal Gazette vol. 142, special part 405 Ng, 30 December 2025, pages 23-27, notes 1, 3, 4 and 6. `computeSocialSecurity` is the one monthly figure per person: the wage, the 1,650 floor and the ceiling of the period's year, rounded to the baht half up, the employer's share equal; a month with no wage contributes nothing. A half-month run takes 5% of H1 (capped, whole baht, no floor) and H2 is the month less H1, so the pair equals a monthly run; the CW-075 shortfall report uses the same function. Hand-computed: 5,010 gives 251 and 251, 1,200 gives 83, 20,000 in 2026 gives 875, a half-month pair of 5,010 gives 125 + 126. Approved and paid runs are not recalculated; months already paid keep their satang, which the shortfall report shows. Three questions for an accountant on #36. d5b35a4, closed 2026-10-11. |
 | **CW-048** · The monthly social security filing (สปส.1-10) had no way out of payroll | Payroll → monthly social security filing, and `GET /payroll/reports/sso-filing?year=&month=&format=json|csv|xlsx|pdf`, give the form's part 1 (total wage, employee and employer contributions, their sum, the number of insured) and part 2 (one row per person in employee-code order: sequence, national ID, or the social security card number for a foreign worker, name, wage, contribution). Contributions are `computeSocialSecurity` (CW-084) on the month's wage with both halves added first, so the form and the payslips use one rule; each row also shows what the payslips deducted and is marked where it differs. Tested in the e2e at the period year's ceiling (23,000 in 2037 gives 1,150), under the floor (1,470 gives 83) and with a month of no wage listed as nil (note 6). Someone with no valid number is named and every download is refused (`SSO_FILING_HAS_PROBLEMS`); a month with a period not yet approved or paid, or a half-month month missing a half, is refused (`SSO_MONTH_NOT_FINISHED`). Needs `payroll:export` (it carries ID numbers); every read and download is audited as an export, without the numbers. Accepted from the dev: a foreign worker is anyone with a passport or work-permit number on the record, as Cwork stores no nationality; "wage actually paid" is the wage social security is worked on, overtime left out, asked as question 4 on #36; the console defaults to the month just finished, dates in พ.ศ. Guide: `docs/guide/sso-filing.th.md`. Left: the e-Services upload file and the November check (CW-085). 8bb7757, closed 2026-10-11. |
 | **CW-082** · A monthly salary prorated in a month with a substitute day counted that day as a working day | A salaried joiner's or leaver's pay, and the value of an unpaid day, are now worked out over the employee's own work calendar (`WorkCalendarService`: their schedule, the organisation's and the work location's holidays, substitute days as days off), not Monday to Friday less the organisation's holidays. The method in `docs/payroll-thailand.md` is unchanged: base × days paid ÷ the period's working days, counted as if employed all period, so a holiday before someone joined still takes its substitute out of the month. Checked by hand in the e2e for December 2026 at 20,000 (20 working days after 7, 10 and 31 December): a joiner on the 9th gets 15,000.00 (was 14,285.71), a leaver after the 4th 4,000.00, one absent day 19,000.00, a full month 20,000.00 as before; the test fails with the old figures when the substitute day is taken out. Accepted from the dev: a full-month employee with unpaid days in such a month is docked at the corrected day's value, which is the fix; a schedule with Saturday as a working day now counts Saturdays; approved and paid payslips are not recalculated. 6fffdeb, closed 2026-10-11. |
+| **CW-083** · A department limit on the payroll officer did not limit pay, and the console did not say so | When a department limit is chosen for a role, the account-roles card on the employee page now names, before saving, what the limit does not narrow, in Thai and English: pay (payroll runs, payslips, printed payslips, wage receipts, compensation), resignations and the audit log. The list is data, not role names: `OUTSIDE_THE_DEPARTMENT_LIMIT` and `unlimitedAreas()` in `organization/role-grants.ts`, returned per role by `GET /employees/:id/roles` as `unlimitedByDepartment`, so a new role or permission is covered by adding it there. Saving is not blocked and who sees pay is unchanged. `docs/security.md` and `docs/guide/account-roles.th.md` say the same. Accepted from the dev: MANAGER holds only `employee:read:team`, so no department limit can be chosen for it and no note appears (tested in unit, e2e and web); resignations and the audit log were found outside the filter while tracing the code and added to the list, so PAYROLL_OFFICER, HR_OFFICER and AUDITOR now show the note. Whether payroll should honour a department limit stays an owner's decision. c764fca, closed 2026-10-11. |
