@@ -166,6 +166,36 @@ secondary sources so far, not in a Revenue Department notice. A later year
 keeps the last known figure until the Revenue Department publishes its own;
 the relief is still the lower of what was actually paid and the cap.
 
+### The monthly filing (สปส.1-10)
+
+**Payroll → Social security filing** (`payroll:export`) gives a month's form data
+(CW-048): part 1 (the wage, both shares, their sum and how many are insured) and
+part 2 (one row per insured person), as JSON on screen and as CSV, Excel or PDF.
+Each read and each file is audited, since it holds national ID numbers.
+
+- the contribution is `computeSocialSecurity`, the function the payslips use, so
+  what is withheld equals what is filed; a person's two halves are added up
+  before it is applied;
+- the month must be finished: every period of the month has a run that is
+  approved or paid, and a half-month month has both halves (`SSO_MONTH_NOT_FINISHED`);
+- a Thai is filed under the national ID (13 digits) and a foreign worker, meaning
+  an employee with a passport or work permit on the record, under the social
+  security card number, as note 3 of the form says. Anyone without the number
+  they need is reported by name and nothing is exported
+  (`SSO_FILING_HAS_PROBLEMS`); the data is never left blank or skipped;
+- an insured person paid nothing in the month is listed with nil (note 6);
+- each row shows what the payslips deducted and marks any difference, which
+  appears for months paid before CW-084.
+
+What this is not: the **upload file** the Social Security Office's e-Services
+takes (.txt, .dat, .csv, .xls, .xlsx or a .gpg encrypted file, per its manual).
+The layout is only given inside e-Services (the "download upload file" icon on a
+past transaction); no public document gives it, and it is not guessed. The
+formatter is a small step once the owner supplies a sample. "Wage paid" on the
+form is the wage social security is worked on (`snapshot.ssoWage`); whether the
+form wants total pay including overtime there is a question for the accountant
+(#36).
+
 ### Runs paid before Cwork knew the new ceiling
 
 Cwork 0.4 and earlier deducted on ฿15,000 for 2026, so every 2026 payslip

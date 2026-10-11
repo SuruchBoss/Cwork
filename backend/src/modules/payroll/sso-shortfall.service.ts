@@ -2,16 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Injectable } from '@nestjs/common';
-import {
-  AuditAction,
-  PayComponentType,
-  PayrollPeriodStatus,
-  PayrollRunStatus,
-} from '@prisma/client';
+import { AuditAction, PayrollPeriodStatus, PayrollRunStatus } from '@prisma/client';
 import { BusinessRuleError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
-import { Decimal, round2 } from '../../core/utils/money.util';
 import { AuditService } from '../audit/audit.service';
 import {
   socialSecurityShortfall,
@@ -19,6 +13,7 @@ import {
   type ShortfallReport,
 } from './domain/sso-shortfall';
 import { taxRulesFor } from './domain/thai-tax';
+import { ssoSlips } from './sso-slips';
 
 /** Runs whose payslips never counted. */
 const VOID_RUNS: PayrollRunStatus[] = [PayrollRunStatus.CANCELLED, PayrollRunStatus.FAILED];
@@ -99,85 +94,26 @@ export class SsoShortfallService {
     }
     const rules = taxRulesFor(year);
 
-    const payslips = await this.prisma.payslip.findMany({
-      where: {
-        run: {
-          organizationId,
-          status: { notIn: VOID_RUNS },
-          period: { year },
-          OR: [{ status: PayrollRunStatus.PAID }, { period: { status: { in: CLOSED_PERIODS } } }],
-        },
-      },
-      select: {
-        employeeId: true,
-        ssoEmployee: true,
-        ssoEmployer: true,
-        snapshot: true,
-        employee: { select: { employeeCode: true, firstNameTh: true, lastNameTh: true } },
-        run: { select: { period: { select: { month: true } } } },
-        items: { select: { code: true, type: true, amount: true } },
-      },
+    const { slips: rows, checked } = await ssoSlips(this.prisma, organizationId, {
+      status: { notIn: VOID_RUNS },
+      period: { year },
+      OR: [{ status: PayrollRunStatus.PAID }, { period: { status: { in: CLOSED_PERIODS } } }],
     });
-
-    // Payslips from before CW-069 do not store the wage social security was
-    // worked out on; it is rebuilt from their lines the way the calculator
-    // builds it: the base pay plus earnings that count towards it.
-    const ssoComponents = new Set(
-      (
-        await this.prisma.payComponent.findMany({
-          where: { organizationId, type: PayComponentType.EARNING, includeInSsoBase: true },
-          select: { code: true },
-        })
-      ).map((c) => c.code),
-    );
-
-    const compensationIds = payslips
-      .map((slip) => compensationIdOf(slip.snapshot))
-      .filter((id): id is string => id !== null);
-    const ineligible = new Set(
-      (
-        await this.prisma.employeeCompensation.findMany({
-          where: { id: { in: [...new Set(compensationIds)] }, isSsoEligible: false },
-          select: { id: true },
-        })
-      ).map((c) => c.id),
-    );
-
-    const slips: PaidSlip[] = [];
-    for (const slip of payslips) {
-      const compensationId = compensationIdOf(slip.snapshot);
-      // Someone the run did not cover for social security owes nothing new.
-      if (compensationId && ineligible.has(compensationId)) continue;
-      if (!compensationId && Number(slip.ssoEmployee) === 0) continue;
-
-      const stored = (slip.snapshot as { ssoWage?: unknown } | null)?.ssoWage;
-      const rebuilt = typeof stored !== 'number';
-      const wage = rebuilt
-        ? slip.items
-            .filter(
-              (item) =>
-                item.type === PayComponentType.EARNING &&
-                (item.code === 'BASE' || ssoComponents.has(item.code)),
-            )
-            .reduce((sum, item) => sum.plus(item.amount.toString()), new Decimal(0))
-        : new Decimal(stored);
-
-      slips.push({
-        employeeId: slip.employeeId,
-        employeeCode: slip.employee.employeeCode,
-        name: `${slip.employee.firstNameTh} ${slip.employee.lastNameTh}`.trim(),
-        month: slip.run.period.month,
-        ssoWage: round2(wage).toNumber(),
-        wageRebuilt: rebuilt,
-        ssoEmployee: Number(slip.ssoEmployee),
-        ssoEmployer: Number(slip.ssoEmployer),
-      });
-    }
+    const slips: PaidSlip[] = rows.map((slip) => ({
+      employeeId: slip.employeeId,
+      employeeCode: slip.employeeCode,
+      name: `${slip.firstNameTh} ${slip.lastNameTh}`.trim(),
+      month: slip.month,
+      ssoWage: slip.ssoWage,
+      wageRebuilt: slip.wageRebuilt,
+      ssoEmployee: slip.ssoEmployee,
+      ssoEmployer: slip.ssoEmployer,
+    }));
 
     return {
       year,
       ceiling: rules.socialSecurity.maxMonthlyWage,
-      payslipsChecked: payslips.length,
+      payslipsChecked: checked,
       ...socialSecurityShortfall(slips, rules),
     };
   }
@@ -254,9 +190,4 @@ export class SsoShortfallService {
       rowCount: report.rows.length,
     };
   }
-}
-
-function compensationIdOf(snapshot: unknown): string | null {
-  const id = (snapshot as { compensationId?: unknown } | null)?.compensationId;
-  return typeof id === 'string' ? id : null;
 }

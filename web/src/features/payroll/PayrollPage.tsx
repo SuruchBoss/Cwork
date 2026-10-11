@@ -118,9 +118,14 @@ export default function PayrollPage() {
           (canRun || canExport) && (
             <>
               {canExport && (
-                <Link to="/payroll/sso-shortfall" className="btn btn--secondary">
-                  {t('Social security shortfall')}
-                </Link>
+                <>
+                  <Link to="/payroll/sso-filing" className="btn btn--secondary">
+                    {t('Social security filing')}
+                  </Link>
+                  <Link to="/payroll/sso-shortfall" className="btn btn--secondary">
+                    {t('Social security shortfall')}
+                  </Link>
+                </>
               )}
               {canRun && (
                 <>

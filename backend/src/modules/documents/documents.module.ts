@@ -8,6 +8,7 @@ import { CertificateRenderer } from './certificate-renderer';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
 import { PayslipRenderer, WageReceiptRenderer } from './payslip-renderer';
+import { SsoFilingRenderer } from './sso-filing-renderer';
 
 @Module({
   imports: [FilesModule],
@@ -17,8 +18,9 @@ import { PayslipRenderer, WageReceiptRenderer } from './payslip-renderer';
     CertificateRenderer,
     PayslipRenderer,
     WageReceiptRenderer,
+    SsoFilingRenderer,
     SequenceService,
   ],
-  exports: [DocumentsService, PayslipRenderer, WageReceiptRenderer],
+  exports: [DocumentsService, PayslipRenderer, WageReceiptRenderer, SsoFilingRenderer],
 })
 export class DocumentsModule {}

@@ -64,6 +64,7 @@ import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { PayslipPrintService, type PrintedFile } from './payslip-print.service';
 import { PayrollService } from './payroll.service';
 import type { SlipsPerPage } from '../documents/payslip-renderer';
+import { SsoFilingService } from './sso-filing.service';
 import { SsoShortfallService } from './sso-shortfall.service';
 
 function parsePerPage(value: string | undefined, fallback: SlipsPerPage): SlipsPerPage {
@@ -91,6 +92,7 @@ export class PayrollController {
     private readonly advances: AdvancesService,
     private readonly ssoShortfall: SsoShortfallService,
     private readonly printing: PayslipPrintService,
+    private readonly ssoFiling: SsoFilingService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -250,6 +252,40 @@ export class PayrollController {
   @ApiOperation({ summary: 'Payslip detail' })
   getPayslip(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.payroll.getPayslip(user, id, user.permissions.includes(Permission.PAYROLL_READ));
+  }
+
+  // ------------------------------------------------------------- social security
+
+  @Get('reports/sso-filing')
+  @RequirePermissions(Permission.PAYROLL_EXPORT)
+  @ApiOperation({
+    summary:
+      "A month's social security filing (สปส.1-10) from approved and paid runs: the form's data, as JSON, CSV, XLSX or PDF (CW-048)",
+  })
+  @ApiQuery({ name: 'year', required: true, type: Number })
+  @ApiQuery({ name: 'month', required: true, type: Number })
+  @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv', 'xlsx', 'pdf'] })
+  async ssoFilingReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+    @Query('year', ParseIntPipe) year: number,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('format') format?: string,
+  ) {
+    if (format !== 'csv' && format !== 'xlsx' && format !== 'pdf') {
+      return this.ssoFiling.read(user, year, month);
+    }
+    // The file leaves the system, so the service refuses it while anyone cannot
+    // be identified on the form, and records it in the audit log.
+    const file = await this.ssoFiling.exportFile(user, year, month, format);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(file.filename)}"`,
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    return new StreamableFile(file.content);
   }
 
   // ----------------------------------------------------------------- printing
