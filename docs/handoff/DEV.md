@@ -6,25 +6,16 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-083** (#86, department limit does not narrow pay): built, waiting for the
-  PO's review.
-  - `organization/role-grants.ts`: `OUTSIDE_THE_DEPARTMENT_LIMIT` lists the
-    permissions a department limit does not narrow (pay: payroll and
-    compensation, resignations: offboarding, the audit log) and `unlimitedAreas`
-    returns the areas a role carries. `GET /employees/:id/roles` gives each role
-    `unlimitedByDepartment`.
-  - `AccountRolesCard` shows the note once a department is chosen on a role
-    whose list is not empty; it does not block saving. Thai strings in
-    `messages.th.ts`, `docs/security.md` and `docs/guide/account-roles.th.md`.
-  - **For the PO:** MANAGER carries `employee:read:team`, not `employee:read`, so
-    the console never offers it a department limit; the acceptance line about
-    MANAGER holds because the limit does not apply, and the test says so. The
-    roles the note appears on today are PAYROLL_OFFICER (pay), HR_OFFICER
-    (resignations) and AUDITOR (pay, resignations, audit log). Checked the
-    other areas against the code: only these three sit outside the filter.
-- **CW-082** passed review. **CW-048** passed review (the upload-file formatter
-  is CW-085 #88, waits on the owner's e-Services sample).
+- The dev queue is empty. CW-082 (monthly proration over the work calendar) and
+  CW-083 (the console says what a department limit does not narrow) both passed
+  review; main is `9cd110d` or later and the 0.4.0 release branch carries both.
+- Waiting on others, nothing for the dev room to start:
+  - CW-085 (#88, the e-Services upload file): the owner's sample file.
+  - CW-061 and CW-062: files from the pilot company.
+  - CW-080, CW-086 (#89), CW-087 (#90): not queued, the owner has not given a
+    time.
 
 ## Next
 
-- Wait for the PO's review of CW-083. Do not start CW-085.
+- Nothing until the PO sends a ticket. Do not start CW-085, CW-080, CW-086 or
+  CW-087.
