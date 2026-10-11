@@ -51,6 +51,8 @@ Social security now uses the wage ceiling for each period's year, ฿17,500 from
 it, for HR to settle with the Social Security Office (CW-075).
 HR and payroll staff are given their roles from the employee page, so no one
 needs SQL or the first administrator's password to run the pilot (CW-079).
+An approved or paid run prints as payslips, one, two or four to an A4 sheet, and
+as a wage-receipt sheet to sign for pay received in cash (CW-071).
 The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
@@ -86,6 +88,9 @@ raises daily-wage work on the weekly day off to at least 2×, so such a run can
 pay more than the overtime request shows. Attendance and overtime now count a
 work location's own holidays, which they used to miss; days already closed
 keep their status until recalculated.
+Printing payslips needs the `payroll:read` permission that payroll and HR
+roles already hold, and adds no migration; each print is recorded in the audit
+log as an export of the run.
 
 ### Added
 
