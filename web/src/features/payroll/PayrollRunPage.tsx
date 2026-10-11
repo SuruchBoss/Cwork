@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import {
@@ -10,12 +11,14 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  Field,
   PageHeader,
   Person,
+  Select,
   Stat,
   TableSkeleton,
 } from '@/components/ui';
-import { api } from '@/lib/api-client';
+import { api, saveBlob } from '@/lib/api-client';
 import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
@@ -157,6 +160,94 @@ function RunExplanationPanel({ runId }: { runId: string }) {
             'Compares this run with the previous period and explains what moved the totals — every figure comes from the real run, not an estimate',
           )}
         </p>
+      )}
+    </Card>
+  );
+}
+
+type SlipsPerPage = '1' | '2' | '4';
+
+/**
+ * Opens a PDF in a new tab to print from, and falls back to saving it when the
+ * browser will not open one. The object URL is released after a minute, long
+ * enough for the viewer to have read it.
+ */
+function openPdf(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, '_blank');
+  if (opened) {
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } else {
+    URL.revokeObjectURL(url);
+    saveBlob(blob, filename);
+  }
+}
+
+/**
+ * Printable payslips and the wage-receipt sheet (CW-071). Only an approved or
+ * paid run can be printed; the server enforces it and refuses a slip whose
+ * lines do not add up, so the reason surfaces here rather than a bad page.
+ */
+function PrintCard({ run }: { run: RunDetail }) {
+  const t = useT();
+  const [perPage, setPerPage] = useState<SlipsPerPage>('2');
+  const printable = ['APPROVED', 'PAID'].includes(run.status);
+
+  const print = useMutation({
+    mutationFn: async (kind: 'payslips' | 'receipts') => {
+      const { blob, filename } =
+        kind === 'payslips'
+          ? await api.download(`/payroll/runs/${run.id}/print/payslips`, { query: { perPage } })
+          : await api.download(`/payroll/runs/${run.id}/print/receipts`);
+      openPdf(blob, filename);
+    },
+  });
+
+  return (
+    <Card title={t('Print payslips and wage receipts')}>
+      <div className="row">
+        <Field
+          label={t('Payslips per A4 sheet')}
+          hint={t('Two or four to a sheet are cut along the dashed lines')}
+        >
+          <Select
+            value={perPage}
+            disabled={!printable}
+            onChange={(event) => setPerPage(event.target.value as SlipsPerPage)}
+          >
+            <option value="1">{t('{count} per sheet', { count: 1 })}</option>
+            <option value="2">{t('{count} per sheet', { count: 2 })}</option>
+            <option value="4">{t('{count} per sheet', { count: 4 })}</option>
+          </Select>
+        </Field>
+        <Button
+          variant="secondary"
+          disabled={!printable}
+          loading={print.isPending && print.variables === 'payslips'}
+          aria-describedby="print-note"
+          onClick={() => print.mutate('payslips')}
+        >
+          {t('Print payslips')}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={!printable}
+          loading={print.isPending && print.variables === 'receipts'}
+          aria-describedby="print-note"
+          onClick={() => print.mutate('receipts')}
+        >
+          {t('Print wage receipts')}
+        </Button>
+      </div>
+      <p className="subtle" id="print-note">
+        {printable
+          ? t('Every print is recorded in the audit log')
+          : t('Payslips can be printed once the run is approved')}
+      </p>
+      {print.isError && (
+        <div className="alert alert--danger" role="alert">
+          {print.error instanceof Error ? print.error.message : t('Could not complete the action')}
+        </div>
       )}
     </Card>
   );
@@ -305,6 +396,8 @@ export default function PayrollRunPage() {
       </div>
 
       <PayslipWarnings payslips={data.payslips} />
+
+      {can(P.PAYROLL_READ) && data.payslips.length > 0 && <PrintCard run={data} />}
 
       <Card title={t('Payslips ({count})', { count: data.payslips.length })} flush>
         {data.payslips.length > 0 ? (

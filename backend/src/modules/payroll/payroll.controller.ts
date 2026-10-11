@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -60,8 +61,24 @@ import {
 } from './dto/payroll.dto';
 import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
+import { PayslipPrintService, type PrintedFile } from './payslip-print.service';
 import { PayrollService } from './payroll.service';
+import type { SlipsPerPage } from '../documents/payslip-renderer';
 import { SsoShortfallService } from './sso-shortfall.service';
+
+function parsePerPage(value: string | undefined, fallback: SlipsPerPage): SlipsPerPage {
+  if (value === undefined || value === '') return fallback;
+  if (value === '1' || value === '2' || value === '4') return Number(value) as SlipsPerPage;
+  throw new BadRequestException('perPage must be 1, 2 or 4');
+}
+
+function sendPdf(res: Response, file: PrintedFile): void {
+  res.setHeader('Content-Type', file.contentType);
+  res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.filename)}"`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+  res.send(file.content);
+}
 
 @ApiTags('Payroll')
 @ApiBearerAuth()
@@ -73,6 +90,7 @@ export class PayrollController {
     private readonly openingBalances: OpeningBalanceImportService,
     private readonly advances: AdvancesService,
     private readonly ssoShortfall: SsoShortfallService,
+    private readonly printing: PayslipPrintService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -232,6 +250,49 @@ export class PayrollController {
   @ApiOperation({ summary: 'Payslip detail' })
   getPayslip(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.payroll.getPayslip(user, id, user.permissions.includes(Permission.PAYROLL_READ));
+  }
+
+  // ----------------------------------------------------------------- printing
+
+  @Get('runs/:id/print/payslips')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({
+    summary: 'Printable payslips of an approved or paid run, 1, 2 or 4 to an A4 sheet (CW-071)',
+  })
+  @ApiQuery({ name: 'perPage', required: false, enum: [1, 2, 4] })
+  async printRunPayslips(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @Query('perPage') perPage?: string,
+  ): Promise<void> {
+    sendPdf(res, await this.printing.printRunPayslips(user, id, parsePerPage(perPage, 2)));
+  }
+
+  @Get('runs/:id/print/receipts')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({
+    summary: 'Wage-receipt sheet of an approved or paid run, to sign for pay (CW-071)',
+  })
+  async printRunReceipts(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    sendPdf(res, await this.printing.printRunReceipts(user, id));
+  }
+
+  @Get('payslips/:id/print')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({ summary: 'Printable copy of one payslip (CW-071)' })
+  @ApiQuery({ name: 'perPage', required: false, enum: [1, 2, 4] })
+  async printPayslip(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @Query('perPage') perPage?: string,
+  ): Promise<void> {
+    sendPdf(res, await this.printing.printPayslip(user, id, parsePerPage(perPage, 1)));
   }
 
   // ------------------------------------------------------------------ advances

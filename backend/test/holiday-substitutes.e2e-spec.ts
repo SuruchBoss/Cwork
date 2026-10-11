@@ -277,6 +277,9 @@ describe('Substitute holidays across the system (e2e)', () => {
       substituteFor: { id: fathersDay },
       substituteOnWeekdays: null,
     });
+    // The holiday itself no longer carries the automatic day: HR has chosen one.
+    const fifth = holidays.body.find((h: { id: string }) => h.id === fathersDay);
+    expect(fifth.substituteOnWeekdays).toBeNull();
 
     // Another request on the 7th is still holiday work.
     const more = await askOvertime(15, 1);

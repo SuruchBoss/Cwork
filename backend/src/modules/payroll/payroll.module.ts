@@ -3,6 +3,7 @@
 
 import { Module } from '@nestjs/common';
 import { SequenceService } from '../../core/utils/sequence.service';
+import { DocumentsModule } from '../documents/documents.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { AdvancesService } from './advances.service';
 import { BenefitsService } from './benefits.service';
@@ -11,10 +12,11 @@ import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { BenefitsController, ExpensesController, PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
+import { PayslipPrintService } from './payslip-print.service';
 import { SsoShortfallService } from './sso-shortfall.service';
 
 @Module({
-  imports: [OrganizationModule],
+  imports: [OrganizationModule, DocumentsModule],
   controllers: [PayrollController, BenefitsController, ExpensesController],
   providers: [
     PayrollService,
@@ -24,6 +26,7 @@ import { SsoShortfallService } from './sso-shortfall.service';
     ExpensesService,
     OpeningBalanceImportService,
     SsoShortfallService,
+    PayslipPrintService,
     SequenceService,
   ],
   exports: [PayrollService, CompensationService, BenefitsService, ExpensesService],

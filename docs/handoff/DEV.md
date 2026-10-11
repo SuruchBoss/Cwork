@@ -6,34 +6,39 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-081** (#84, one answer for substitute holidays): done, waiting for the
-  PO's review. `organization/domain/work-calendar.ts` decides each employee's
-  day (working, day off, holiday, substitute); `WorkCalendarService` feeds it
-  the schedule, roster changes and holidays, and attendance, leave, overtime
-  and the daily-wage run all call it. `holidays.substituteForId` lets HR mark a
-  substitute; the organisation page shows and sets it.
-- Left as known gaps in `docs/payroll-thailand.md`: a monthly run's proration
-  still counts Monday to Friday less holidays, and days derived before the
-  upgrade keep their old answer until recalculated.
-- CW-076, CW-079 and CW-078 closed on 2026-10-11. Next in the PO's queue:
-  CW-071, CW-048.
+- **CW-071** (#74, printable payslips and a wage receipt): done, waiting for
+  the PO's review.
+  - `documents/payslip-sheet.ts` is the pure model (what a slip and the receipt
+    say, `payslipDiscrepancy`, `payslipNotes`); `documents/payslip-renderer.ts`
+    draws it with pdfkit and Sarabun: 1/2/4 to an A4 sheet, a font ladder
+    (10 → 7pt), a slip that will not fit its cell gets a page of its own.
+  - `payroll/payslip-print.service.ts` loads the run, refuses unless the run is
+    APPROVED or PAID and every slip adds up, and audits each print as `EXPORT`
+    on the `PayrollRun`. Routes are on `PayrollController` under
+    `runs/:id/print/payslips`, `runs/:id/print/receipts`, `payslips/:id/print`,
+    all `payroll:read`.
+  - Web: a print card on the run page (layout choice, two buttons, disabled
+    until approval). Thai guide `docs/guide/printing-payslips.th.md`.
+- Walked on a fresh `db:init` install in a real browser: the holidays page and
+  the run page. The walk found two defects on the holiday page (cramped side
+  column; the automatic Monday-to-Friday note shown beside HR's own substitute),
+  both fixed in this unit.
+- Earlier: CW-081 (#84) and CW-076 (#81) passed review; CW-082 (#85, monthly
+  proration on the work calendar) is open and not queued.
 
-## How the dev room works
+## Decisions for the PO to check
 
-- Push every change to `main`, merge `main` into `claude/hris-system-setup-kfl3rq`
-  (release; CHANGELOG entries for 0.4.0 go under `[0.4.0]` there) and push the
-  room's own branch. Never force-push; check `main` has not moved first.
-- Before pushing, run the backend CI steps in order (`typecheck`, `lint`,
-  `verify:compose`, `db:verify`, `verify:migrations`, `verify:sql`, unit tests
-  without the env, the full e2e suite with CI's secrets, `verify:docs`), and the
-  web suite. A new raw SQL statement needs an entry in `scripts/verify-raw-sql.ts`.
-- A restarted container has Postgres stopped: `service postgresql start`
-  before any e2e run.
-- An e2e spec that creates people or accounts removes them in `afterAll`:
-  other specs count the demo company.
-- Report each ticket to the PO room (`session_01TrgzY8y4M1xJPrQ3XNsbDu`) with
-  the commits, the tests and every decision the dev made alone.
+- Only `payroll:read` prints. An employee cannot print their own slip; if the
+  pilot wants that it is a separate ticket (the slip is theirs, but a print is
+  audited as an export).
+- The payslip's `warnings` are for HR, so only `SUBSTITUTE_HOLIDAY` is printed,
+  as a note. Rest-day rate notes and the like stay off the slip.
+- "Matches the screen" is tested against the payslip record the API returns
+  (`GET /payroll/payslips/:id`): the console has no payslip detail page, only the
+  run's summary table.
+- The receipt's statement line is a template; the accountant should confirm the
+  wording (asked in #36).
 
-## Waiting on
+## Next
 
-- The PO: review of CW-081, and the next ticket.
+- Wait for the PO's review of CW-071; then whatever the PO queues.

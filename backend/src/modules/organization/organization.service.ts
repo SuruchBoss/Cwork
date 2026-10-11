@@ -301,9 +301,12 @@ export class OrganizationService {
         date: true,
         isPaid: true,
         workLocationId: true,
+        substituteForId: true,
         substituteFor: { select: { date: true } },
       },
     });
+    // A holiday HR has given a substitute day is not left to the automatic rule.
+    const marked = new Set(around.flatMap((h) => (h.substituteForId ? [h.substituteForId] : [])));
     const automaticByScope = new Map<string | null, Map<string, string>>();
     const automaticFor = (workLocationId: string | null) => {
       if (!automaticByScope.has(workLocationId)) {
@@ -334,7 +337,7 @@ export class OrganizationService {
     return rows.map((row) => ({
       ...row,
       substituteOnWeekdays:
-        row.substituteForId === null
+        row.substituteForId === null && !marked.has(row.id)
           ? (automaticFor(row.workLocationId).get(formatDateOnly(row.date)) ?? null)
           : null,
     }));
