@@ -54,7 +54,8 @@ Office's own form says, and a read-only report lists what locked and paid runs
 deducted short of it, for HR to settle with the Social Security Office (CW-075,
 CW-084).
 HR and payroll staff are given their roles from the employee page, so no one
-needs SQL or the first administrator's password to run the pilot (CW-079).
+needs SQL or the first administrator's password to run the pilot (CW-079); a
+department limit on a role says what it does not narrow, such as pay (CW-083).
 A month's social security filing, form สปส.1-10, can be read and downloaded as
 Excel, CSV or PDF, the figures the payslips withheld, ready to check and file
 (CW-048); the file e-Services takes for upload waits for a sample.
