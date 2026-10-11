@@ -1061,8 +1061,14 @@ export const thMessages: Record<string, string> = {
     'นับ {days} วันที่ลงเวลาไม่ครบเป็นวันทำงาน: {dates}',
   'Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}':
     'ไม่จ่าย {days} วันทำงานที่ไม่มีบันทึกเวลาและไม่มีการลา: {dates}',
-  'A public holiday fell on the weekly day off ({dates}): add the substitute day to the holiday calendar for it to be paid':
-    'วันหยุดตามประเพณีตรงกับวันหยุดประจำสัปดาห์ ({dates}) ให้เพิ่มวันหยุดชดเชยในปฏิทินวันหยุดก่อน ระบบจึงจะจ่ายให้',
+  'A public holiday fell on the weekly day off ({dates}) and the employee leaves before a working day it could move to: it is owed, so pay it by hand':
+    'วันหยุดตามประเพณีตรงกับวันหยุดประจำสัปดาห์ ({dates}) แต่พนักงานพ้นสภาพก่อนถึงวันทำงานที่จะหยุดชดเชย วันนี้ยังต้องจ่าย ให้เพิ่มเองในรอบเงินเดือน',
+  'Paid {days} public holiday(s) that fell on the weekly day off on the next working day instead: {dates}. Do not add these days to the holiday calendar as well':
+    'จ่ายวันหยุดตามประเพณีที่ตรงกับวันหยุดประจำสัปดาห์ {days} วัน เป็นวันหยุดชดเชยในวันทำงานถัดไปแล้ว: {dates} ไม่ต้องเพิ่มวันเหล่านี้ในปฏิทินวันหยุดซ้ำ',
+  'Worked on {days} substitute holiday(s): {dates}. The day is paid as a holiday; record the hours as work on a public holiday for the work itself to be paid':
+    'มาทำงานในวันหยุดชดเชย {days} วัน: {dates} ระบบจ่ายวันนั้นเป็นวันหยุดแล้ว ส่วนชั่วโมงที่ทำงานให้บันทึกเป็นการทำงานในวันหยุดตามประเพณี จึงจะได้ค่าทำงาน',
+  'Paid {hours} h of rest-day work at the least the law allows a daily-wage employee (section 62): {rates}':
+    'จ่ายค่าทำงานในวันหยุด {hours} ชม. ตามอัตราขั้นต่ำของลูกจ้างรายวัน (มาตรา 62): {rates}',
   'The daily rate {rate} is below the minimum wage {minimum} at {location} ({source})':
     'ค่าจ้างวันละ {rate} ต่ำกว่าค่าแรงขั้นต่ำ {minimum} ของ {location} ({source})',
   '{location} has no minimum wage set, so the daily rate was not checked':

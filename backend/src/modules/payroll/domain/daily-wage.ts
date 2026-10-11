@@ -74,6 +74,17 @@ export interface DailyWageDay {
   paidLeave: number;
   /** Approved unpaid leave on the day, in days. */
   unpaidLeave: number;
+  /**
+   * A working day that stands in for a holiday on the weekly day off: the
+   * holiday's ISO date. Null on any other day.
+   */
+  substituteFor?: string | null;
+  /**
+   * On a paid holiday that falls on the weekly day off, the working day it
+   * moves to (it may be in a later period), or null when the employee leaves
+   * before one comes.
+   */
+  substitutedOn?: string | null;
 }
 
 export interface DaysPaid {
@@ -95,9 +106,10 @@ export interface DaysPaid {
  * - A day off, an absence and unpaid leave are not paid.
  * - A scheduled day with no attendance and no leave is not paid, and is
  *   flagged: it is usually a day not closed yet, not a day off.
- * - A public holiday on the weekly day off pays nothing here: the employee is
- *   owed a substitute day, which Cwork does not add by itself, so it is
- *   flagged for HR to enter (docs/payroll-thailand.md, "Daily wages").
+ * - A public holiday on the weekly day off pays nothing on the day itself: it
+ *   moves to the next working day (section 29), which is paid as a holiday
+ *   and listed for HR (see `substituteHolidays`). If the employee leaves
+ *   before that day comes, it is flagged instead: it is owed but not paid.
  */
 export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
   let worked = new Decimal(0);
@@ -106,11 +118,19 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
   const incomplete: string[] = [];
   const noRecord: string[] = [];
   const holidayOnDayOff: string[] = [];
+  const substitutes: string[] = [];
+  const substitutesWorked: string[] = [];
 
   for (const day of days) {
     if (day.paidHoliday) {
       if (day.scheduled) holidays += 1;
-      else holidayOnDayOff.push(day.date);
+      else if (!day.substitutedOn) holidayOnDayOff.push(day.date);
+      continue;
+    }
+    if (day.substituteFor) {
+      holidays += 1;
+      substitutes.push(`${day.substituteFor} → ${day.date}`);
+      if (day.attendance !== null && WORKED.has(day.attendance)) substitutesWorked.push(day.date);
       continue;
     }
     if (day.attendance !== null && WORKED.has(day.attendance)) {
@@ -148,6 +168,18 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
       params: { days: holidayOnDayOff.length, dates: holidayOnDayOff.join(', ') },
     });
   }
+  if (substitutes.length > 0) {
+    warnings.push({
+      code: 'SUBSTITUTE_HOLIDAY',
+      params: { days: substitutes.length, dates: substitutes.join(', ') },
+    });
+  }
+  if (substitutesWorked.length > 0) {
+    warnings.push({
+      code: 'SUBSTITUTE_HOLIDAY_WORKED',
+      params: { days: substitutesWorked.length, dates: substitutesWorked.join(', ') },
+    });
+  }
 
   return {
     days: worked.plus(paidLeave).plus(holidays).toNumber(),
@@ -155,5 +187,81 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
     paidLeave: paidLeave.toNumber(),
     holidays,
     warnings,
+  };
+}
+
+export interface CalendarDay {
+  /** ISO date. */
+  date: string;
+  /** The employee's schedule has work on this weekday. */
+  scheduled: boolean;
+  /** A paid public holiday for this employee's location. */
+  paidHoliday: boolean;
+}
+
+/**
+ * Where each holiday on the weekly day off is paid instead (section 29,
+ * third paragraph): the next working day of the employee's own schedule that
+ * is not itself a holiday. Two such holidays in a row take the next two
+ * working days. A holiday on a working day needs no substitute and does not
+ * receive one.
+ *
+ * The calendar must be in date order and cover the days the employee is
+ * employed for; a holiday whose substitute would fall after its last day is
+ * left out of the result. Returns substitute date → holiday date.
+ */
+export function substituteHolidays(calendar: readonly CalendarDay[]): Map<string, string> {
+  const substitutes = new Map<string, string>();
+  const owed: string[] = [];
+  for (const day of calendar) {
+    if (day.paidHoliday) {
+      if (!day.scheduled) owed.push(day.date);
+      continue;
+    }
+    if (day.scheduled && owed.length > 0) substitutes.set(day.date, owed.shift()!);
+  }
+  return substitutes;
+}
+
+/**
+ * The least each kind of work on a rest day pays a daily-wage employee, as a
+ * multiple of the hourly rate (section 62). Not paid for the weekly day off
+ * (section 56), work on it pays at least twice; paid for a traditional
+ * holiday, work on it pays at least once more on top of the day.
+ */
+export const DAILY_WAGE_REST_DAY_MINIMUM: Readonly<Record<string, number>> = {
+  DAY_OFF: 2,
+  HOLIDAY: 1,
+};
+
+/**
+ * Raises any rest-day overtime below the statutory minimum for a daily-wage
+ * employee, and says so on the payslip. The overtime request keeps the
+ * organisation's rate, which is set for salaried staff: a monthly salary
+ * already pays the weekly day off, so one more times is enough for them.
+ */
+export function dailyWageOvertime<T extends { type: string; hours: number; multiplier: number }>(
+  lines: readonly T[],
+): { lines: T[]; warnings: PayslipWarning[] } {
+  const raised: string[] = [];
+  let hours = new Decimal(0);
+  const result = lines.map((line) => {
+    const minimum = DAILY_WAGE_REST_DAY_MINIMUM[line.type];
+    if (minimum === undefined || line.hours <= 0 || line.multiplier >= minimum) return line;
+    raised.push(`${line.type} ${line.multiplier}x → ${minimum}x`);
+    hours = hours.plus(line.hours);
+    return { ...line, multiplier: minimum };
+  });
+  return {
+    lines: result,
+    warnings:
+      raised.length > 0
+        ? [
+            {
+              code: 'REST_DAY_RATE_RAISED',
+              params: { hours: hours.toNumber(), rates: [...new Set(raised)].join(', ') },
+            },
+          ]
+        : [],
   };
 }

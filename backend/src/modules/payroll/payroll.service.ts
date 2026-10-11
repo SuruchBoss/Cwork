@@ -41,7 +41,9 @@ import {
 } from './domain/payroll-calculator';
 import {
   countDaysPaid,
+  dailyWageOvertime,
   minimumWageWarnings,
+  substituteHolidays,
   type DailyWageDay,
   type PayslipWarning,
 } from './domain/daily-wage';
@@ -953,7 +955,7 @@ export class PayrollService {
     const effectivePayableDays =
       daysPaid?.days ?? Math.max(0, employeeWorkingDays - unpaidLeaveDays - absentDays);
 
-    const overtime: OvertimeLine[] = overtimeRequests.map((ot) => ({
+    let overtime: OvertimeLine[] = overtimeRequests.map((ot) => ({
       type: ot.type,
       hours: Number(ot.approvedHours ?? ot.requestedHours),
       multiplier: Number(ot.rateMultiplier ?? DEFAULT_OT_MULTIPLIERS[ot.type]),
@@ -962,22 +964,12 @@ export class PayrollService {
     if (dailyRate !== null && daysPaid) {
       warnings.push(...daysPaid.warnings);
       warnings.push(...(await this.minimumWageWarningsFor(employeeId, dailyRate)));
-      // Work on a weekly day off or a holiday is paid at statutory rates that
-      // differ for an employee who is not paid for the day off. The
-      // overtime engine has one rate per type for everybody, so HR is asked to
-      // check it rather than told it is right (documented gap, CW-069).
-      const restDayWork = overtime.filter(
-        (ot) => ot.hours > 0 && (ot.type === 'DAY_OFF' || ot.type === 'HOLIDAY'),
-      );
-      if (restDayWork.length > 0) {
-        warnings.push({
-          code: 'REST_DAY_WORK_RATE',
-          params: {
-            hours: restDayWork.reduce((acc, ot) => acc + ot.hours, 0),
-            rates: restDayWork.map((ot) => `${ot.type} ${ot.multiplier}x`).join(', '),
-          },
-        });
-      }
+      // The organisation's rest-day rates are set for salaried staff, who are
+      // already paid for the weekly day off; a daily-wage employee is owed at
+      // least the statutory multiple (section 62, CW-076).
+      const restDay = dailyWageOvertime(overtime);
+      overtime = restDay.lines;
+      warnings.push(...restDay.warnings);
     }
 
     // Monthly amounts are charged once a month: benefit premiums and standing
@@ -1172,6 +1164,18 @@ export class PayrollService {
         : period.periodEnd;
     if (to < from) return [];
 
+    // A holiday on the weekly day off is paid on the next working day, which
+    // can fall in this period for a holiday in the last one, or in the next
+    // for one in this. The calendar looks a month each way, within the days
+    // the employee is employed for.
+    const lookBack = addUtcDays(period.periodStart, -SUBSTITUTE_SEARCH_DAYS);
+    const lookAhead = addUtcDays(period.periodEnd, SUBSTITUTE_SEARCH_DAYS);
+    const calendarFrom = employee.hireDate > lookBack ? employee.hireDate : lookBack;
+    const calendarTo =
+      employee.lastWorkingDate && employee.lastWorkingDate < lookAhead
+        ? employee.lastWorkingDate
+        : lookAhead;
+
     const [person, assignments, leaveDays] = await Promise.all([
       this.prisma.employee.findUniqueOrThrow({
         where: { id: employee.id },
@@ -1180,8 +1184,8 @@ export class PayrollService {
       this.prisma.scheduleAssignment.findMany({
         where: {
           employeeId: employee.id,
-          effectiveFrom: { lte: to },
-          OR: [{ effectiveTo: null }, { effectiveTo: { gte: from } }],
+          effectiveFrom: { lte: calendarTo },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: calendarFrom } }],
         },
         orderBy: { effectiveFrom: 'desc' },
         select: {
@@ -1206,7 +1210,7 @@ export class PayrollService {
       where: {
         organizationId,
         isPaid: true,
-        date: { gte: from, lte: to },
+        date: { gte: calendarFrom, lte: calendarTo },
         OR: [
           { workLocationId: null },
           ...(person.workLocationId ? [{ workLocationId: person.workLocationId }] : []),
@@ -1216,6 +1220,22 @@ export class PayrollService {
     });
 
     const paidHolidays = new Set(holidays.map((h) => formatDateOnly(h.date)));
+    const scheduledOn = (date: Date) => {
+      const assignment = assignments.find(
+        (a) => a.effectiveFrom <= date && (a.effectiveTo === null || a.effectiveTo >= date),
+      );
+      // The same default the overtime engine uses for someone with no schedule.
+      const workingDays = assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
+      return workingDays.includes(isoWeekday(date));
+    };
+    const substitutes = substituteHolidays(
+      eachDateInRange(calendarFrom, calendarTo).map((date) => ({
+        date: formatDateOnly(date),
+        scheduled: scheduledOn(date),
+        paidHoliday: paidHolidays.has(formatDateOnly(date)),
+      })),
+    );
+    const substitutedOn = new Map([...substitutes].map(([day, holiday]) => [holiday, day]));
     const statusOn = new Map(attendance.map((r) => [formatDateOnly(r.workDate), r.status]));
     const leaveOn = new Map<string, { paid: Decimal; unpaid: Decimal }>();
     for (const day of leaveDays) {
@@ -1228,19 +1248,16 @@ export class PayrollService {
 
     return eachDateInRange(from, to).map((date) => {
       const key = formatDateOnly(date);
-      const assignment = assignments.find(
-        (a) => a.effectiveFrom <= date && (a.effectiveTo === null || a.effectiveTo >= date),
-      );
-      // The same default the overtime engine uses for someone with no schedule.
-      const workingDays = assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
       const leave = leaveOn.get(key);
       return {
         date: key,
-        scheduled: workingDays.includes(isoWeekday(date)),
+        scheduled: scheduledOn(date),
         paidHoliday: paidHolidays.has(key),
         attendance: statusOn.get(key) ?? null,
         paidLeave: leave?.paid.toNumber() ?? 0,
         unpaidLeave: leave?.unpaid.toNumber() ?? 0,
+        substituteFor: substitutes.get(key) ?? null,
+        substitutedOn: substitutedOn.get(key) ?? null,
       };
     });
   }
@@ -1316,6 +1333,13 @@ export class PayrollService {
     if (!period) throw new NotFoundError('PayrollPeriod', periodId);
     return period;
   }
+}
+
+/** How far either side of a period to look for a holiday's substitute day. */
+const SUBSTITUTE_SEARCH_DAYS = 31;
+
+function addUtcDays(date: Date, days: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
 }
 
 /**

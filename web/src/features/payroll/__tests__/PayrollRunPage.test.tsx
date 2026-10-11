@@ -178,6 +178,40 @@ describe('Payslip warnings on the run page (CW-069)', () => {
     await expectNoAxeViolations(container);
   });
 
+  it('lists a substitute holiday and a raised rest-day rate in Thai (CW-076)', async () => {
+    serve({
+      ...secondHalf,
+      status: 'CALCULATED',
+      calculatedAt: '2026-11-30T03:00:00.000Z',
+      employeeCount: 1,
+      firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+      payslips: [
+        {
+          ...slip,
+          warnings: [
+            { code: 'SUBSTITUTE_HOLIDAY', params: { days: 1, dates: '2026-12-05 → 2026-12-07' } },
+            { code: 'SUBSTITUTE_HOLIDAY_WORKED', params: { days: 1, dates: '2026-12-07' } },
+            { code: 'REST_DAY_RATE_RAISED', params: { hours: 4, rates: 'DAY_OFF 1x → 2x' } },
+          ],
+        },
+      ],
+    });
+    const { container } = render();
+
+    expect(
+      await screen.findByText(
+        'จ่ายวันหยุดตามประเพณีที่ตรงกับวันหยุดประจำสัปดาห์ 1 วัน เป็นวันหยุดชดเชยในวันทำงานถัดไปแล้ว: 5 ธ.ค. 2569 → 7 ธ.ค. 2569 ไม่ต้องเพิ่มวันเหล่านี้ในปฏิทินวันหยุดซ้ำ',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^มาทำงานในวันหยุดชดเชย 1 วัน: 7 ธ\.ค\. 2569/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /^จ่ายค่าทำงานในวันหยุด 4 ชม\. ตามอัตราขั้นต่ำของลูกจ้างรายวัน \(มาตรา 62\): .+ 1× → 2×$/,
+      ),
+    ).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+  });
+
   it('says in English what sections 76 and 77 mean for a carried advance (CW-078)', async () => {
     useUiStore.setState({ language: 'en' });
     serve({

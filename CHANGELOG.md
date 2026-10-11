@@ -40,6 +40,9 @@ and the console's date fields are typed and picked day first in it (CW-058).
 Daily wages can be paid twice a month, in two half-month periods, with the
 minimum wage set and checked on each work location; HR sets the pay on the
 employee page, and the run page says what to check on each payslip (CW-069).
+A daily-wage employee is paid for a holiday that falls on their day off on the
+next working day without HR adding it, and at least twice the hourly rate for
+work on the weekly day off (CW-076).
 Cash advances are recorded once paid and taken back by the next regular run,
 after tax and social security, never below zero net pay (CW-070).
 Social security now uses the wage ceiling for each period's year, ฿17,500 from
@@ -69,7 +72,12 @@ earning above ฿15,000; locked and paid runs are not changed, and **Payroll →
 Social security shortfall** shows what they owe. Giving or taking away a role
 from the console signs that account out of every device. An account whose role
 grant was limited to a department in the database now sees every employee if
-another of its roles that reads employees has no such limit.
+another of its roles that reads employees has no such limit. A half-month run
+calculated after the upgrade pays the substitute day for a holiday on the day
+off, including one that fell in the previous half: if HR already entered that
+substitute in the holiday calendar or paid it by hand, check the run before
+approving it. It also raises daily-wage work on the weekly day off to at least
+2×, so such a run can pay more than the overtime request shows.
 
 ### Added
 
@@ -606,6 +614,22 @@ another of its roles that reads employees has no such limit.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **Daily-wage staff were underpaid for holidays on their day off and for
+  work on it** (CW-076). A traditional holiday that falls on the weekly day off
+  moves to the next working day (Labour Protection Act s.29), but Cwork paid a
+  daily-wage employee nothing for it unless HR entered the substitute day by
+  hand. A half's run now works out each employee's substitute days from their
+  own schedule, pays them as holidays, and lists them on the payslip
+  (`SUBSTITUTE_HOLIDAY`) so they are not entered twice; a substitute day the
+  employee came in on, or one that falls after they leave, is flagged. Work on
+  the weekly day off was paid at the organisation's day-off rate, 1×, which is
+  meant for salaried staff already paid for that day: a daily-wage employee is
+  owed at least 2× (s.62(2)), and at least 1× on top of the day for a
+  traditional holiday (s.62(1)). The run raises a lower multiplier and says so
+  (`REST_DAY_RATE_RAISED`). Monthly employees' pay does not change. Sections
+  29, 56 and 61–63 are checked against the Council of State's consolidated text
+  to 2019 (`docs/payroll-thailand.md`).
 
 - **A department-limited role narrowed everything the person could see**
   (CW-079). Any grant limited to a department narrowed the account's
