@@ -589,6 +589,20 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A monthly salary is prorated over the employee's own work calendar**
+  (CW-082). Payroll still counted a month's working days as Monday to Friday
+  less the organisation's holidays, so a substitute day (7 December 2026, for
+  Saturday the 5th) counted as a working day there although attendance and
+  leave already treated it as a day off. A day's value was worked out over one
+  working day too many, and a joiner, a leaver or a day of unpaid leave was paid
+  a few satang to a few baht short. The days now come from the work calendar
+  attendance and leave use: the employee's schedule, the holidays of the
+  organisation and of their work location, and the substitute days. The method
+  is unchanged (`baseSalary × payableDays ÷ working days`); only the days
+  counted are. Someone who works the full month with nothing deducted is paid
+  the same to the satang. A schedule with Saturday work now counts its Saturdays
+  too, where it had been Monday to Friday for everybody.
+
 - **Social security is rounded to the baht, and a wage under the floor is
   worked on the floor** (CW-084). The Social Security Office's own form,
   สปส.1-10 part 2, says in its notes that a wage under the floor is worked out

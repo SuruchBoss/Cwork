@@ -261,6 +261,24 @@ payableDays = employeeWorkingDays − unpaidLeaveDays − absentDays
 where `employeeWorkingDays` clips the payroll period to the employee's actual
 employment dates, so a mid-month joiner or leaver is prorated on the calendar.
 
+A salary is prorated as `baseSalary × payableDays ÷ workingDaysInPeriod`, and
+an unpaid day is deducted at `baseSalary ÷ workingDaysInPeriod`. Both counts
+come from the employee's own work calendar (CW-082), the one attendance and
+leave use: their schedule (Monday to Friday when none is assigned), the
+holidays of the whole organisation and of their work location, and the
+substitute days. A holiday that fell on the weekly day off is not a working day
+on the day it moves to. `workingDaysInPeriod` is the whole period, counted as
+if the employee were employed all of it, so a holiday before a joiner started
+still takes its substitute day out of the month; `employeeWorkingDays` is the
+part of it from their hire date to their last working day. A person working the
+full month with nothing deducted is paid the salary unchanged.
+
+Example, December 2026 on Monday to Friday, with Father's Day (Saturday the 5th,
+moved to Monday the 7th), Constitution Day (the 10th) and New Year's Eve (the
+31st): 23 weekdays less the 7th, the 10th and the 31st make 20 working days. On
+a salary of 20,000 a day is worth 1,000, and someone who joins on the 9th works
+15 of the 20 and is paid 15,000.
+
 Note what this deliberately does *not* do: it does not prorate by how many
 attendance records exist. Days that simply have not been closed out yet — future
 dates in the period, or a clock-in rollout still in progress — must not reduce
@@ -454,11 +472,6 @@ after 2019, if there are any, are not checked.
 
 ### Known gaps
 
-- **Working days for a salaried run's proration.** A monthly run still counts
-  the period's working days as Monday to Friday less the organisation's
-  holidays, for prorating a joiner or a leaver and for the value of an unpaid
-  day; it does not use each employee's work calendar, so a substitute day
-  counts as a working day there. Attendance (and so absences) does use it.
 - **Days already derived.** Attendance closed before the upgrade, and leave
   requested before it, keep the answer they were given; recalculating a day or
   re-submitting the leave applies the work calendar.

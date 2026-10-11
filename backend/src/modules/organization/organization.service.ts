@@ -448,27 +448,6 @@ export class OrganizationService {
     }
   }
 
-  /**
-   * Holiday dates in a range, as `yyyy-MM-dd` strings. Leave and attendance both
-   * need this, so it lives here rather than being duplicated.
-   */
-  async holidayDateSet(
-    organizationId: string,
-    from: Date,
-    to: Date,
-    workLocationId?: string | null,
-  ): Promise<Set<string>> {
-    const holidays = await this.prisma.holiday.findMany({
-      where: {
-        organizationId,
-        date: { gte: toDateOnly(from), lte: toDateOnly(to) },
-        OR: [{ workLocationId: null }, ...(workLocationId ? [{ workLocationId }] : [])],
-      },
-      select: { date: true },
-    });
-    return new Set(holidays.map((h) => h.date.toISOString().slice(0, 10)));
-  }
-
   // --------------------------------------------------------------------- roles
 
   listRoles(organizationId: string) {
