@@ -12,3 +12,10 @@ Claude Code resends the whole conversation on every turn, so context that isn't 
 
 * Before ending a turn to wait on something that will not wake this session by itself (CI on GitHub, a reply from another room, a review), arm a wake-up first: subscribe to the PR's activity, or schedule a check-in with send_later. Background tasks started in this session already wake it when they finish, so they need nothing extra.
 * When the wait is on the user, say exactly what you need from them in the closing message instead of stopping silently.
+
+## Session handoff
+
+* Each room keeps its current state in one short file in this repo, under about 60 lines. Use an existing file when one is already that short (the UX room's `docs/handoff-uxui.th.md`); otherwise use `docs/handoff/ROLE.md`. The backlog is the PO's record of every ticket, not a short state file.
+* Overwrite it with the current state instead of appending history: what is in progress, the next step, open questions, and who is waiting on whom. Git history keeps the past.
+* Update it at the end of each unit of work and before suggesting /clear or /compact.
+* A new or cleared session reads that file first, then only the files it points to, instead of re-reading broadly to rebuild context.

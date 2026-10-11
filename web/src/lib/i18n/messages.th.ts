@@ -1136,8 +1136,8 @@ export const thMessages: Record<string, string> = {
   'An approved or paid run has taken this advance back, so it can no longer change.':
     'เงินเบิกนี้ถูกหักในรอบที่อนุมัติหรือจ่ายแล้ว จึงแก้ไขหรือยกเลิกไม่ได้',
   'This advance has already been cancelled.': 'เงินเบิกนี้ถูกยกเลิกไปแล้ว',
-  "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Taking it from a later period may count as a deduction from wages under section 76, which needs the employee's written consent and has a limit; that has not been checked yet":
-    'เงินเบิก {amount} เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป การหักจากงวดหลังอาจนับเป็นการหักค่าจ้างตามมาตรา 76 ซึ่งต้องมีหนังสือยินยอมจากลูกจ้างและมีเพดาน เรื่องนี้ยังไม่ได้ตรวจกับตัวบท',
+  "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Section 76 of the Labour Protection Act does not list repaying an advance among the deductions from wages it allows, so taking it from a later pay run may need the employee's consent in writing, signed and naming this purpose (section 77); Cwork does not keep that consent, HR must":
+    'เงินเบิก {amount} เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป มาตรา 76 ของ พ.ร.บ.คุ้มครองแรงงานไม่ได้ระบุการหักคืนเงินเบิกไว้ในรายการที่หักจากค่าจ้างได้ การหักจากรอบหลังจึงอาจต้องมีหนังสือยินยอมของลูกจ้างที่ลงชื่อและระบุเรื่องนี้ชัดเจน (มาตรา 77) Cwork ไม่ได้เก็บหนังสือยินยอมนี้ ฝ่ายบุคคลต้องเก็บเอง',
 
   // Social security shortfall report (CW-075)
   'Social security shortfall': 'ส่วนต่างประกันสังคม',

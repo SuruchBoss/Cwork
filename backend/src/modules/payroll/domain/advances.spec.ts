@@ -39,7 +39,7 @@ const slip = (advances: PayslipInput['advances'], extra: Partial<PayslipInput> =
   });
 
 const advanceLines = (draft: ReturnType<typeof buildPayslip>) =>
-  draft.lines.filter((line) => line.code === 'ADVANCE');
+  draft.lines.filter((line) => line.code === 'CASH_ADVANCE');
 
 describe('Cash advances on a payslip', () => {
   const sso = 5200 * rate;
@@ -105,5 +105,32 @@ describe('Cash advances on a payslip', () => {
       code: 'ADVANCE_CARRIED_OVER',
       params: { amount: 200 },
     });
+  });
+
+  it("keeps a standing deduction coded ADVANCE apart from a cash advance's line", () => {
+    const draft = slip([{ id: 'a1', paidOn: '2026-11-03', outstanding: 500 }], {
+      recurring: [
+        {
+          code: 'ADVANCE',
+          name: 'หักเงินยืมทดรอง',
+          type: PayComponentType.DEDUCTION,
+          amount: 1000,
+          isTaxable: false,
+          includeInSsoBase: false,
+          isProratable: false,
+          orderIndex: 0,
+        },
+      ],
+    });
+
+    const deductions = draft.lines
+      .filter((line) => line.type === PayComponentType.DEDUCTION)
+      .map((line) => [line.code, line.amount.toNumber()]);
+    expect(deductions).toEqual(
+      expect.arrayContaining([
+        ['ADVANCE', 1000],
+        ['CASH_ADVANCE', 500],
+      ]),
+    );
   });
 });

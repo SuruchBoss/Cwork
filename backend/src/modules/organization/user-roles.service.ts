@@ -309,7 +309,7 @@ function assertCanHandOut(actor: AuthenticatedUser, rolePermissions: readonly st
 
 /** One role change at a time per organisation, so two can't remove the last super administrator. */
 async function lockRolesOf(tx: Prisma.TransactionClient, organizationId: string): Promise<void> {
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`user-roles:${organizationId}`}))`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('user-roles:' || ${organizationId}))`;
 }
 
 async function signOutEverywhere(

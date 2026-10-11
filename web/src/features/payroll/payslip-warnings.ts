@@ -87,7 +87,7 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
       );
     case 'ADVANCE_CARRIED_OVER':
       return t(
-        "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Taking it from a later period may count as a deduction from wages under section 76, which needs the employee's written consent and has a limit; that has not been checked yet",
+        "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Section 76 of the Labour Protection Act does not list repaying an advance among the deductions from wages it allows, so taking it from a later pay run may need the employee's consent in writing, signed and naming this purpose (section 77); Cwork does not keep that consent, HR must",
         { amount: money(p.amount) },
       );
     default:

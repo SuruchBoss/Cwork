@@ -513,7 +513,9 @@ function takeBackAdvances(
       available = available.minus(amount);
       taken.push({ advanceId: advance.id, amount });
       lines.push({
-        code: 'ADVANCE',
+        // Not `ADVANCE`: the demo seed, and so possibly a customer, uses that
+        // code for a standing deduction (CW-078).
+        code: 'CASH_ADVANCE',
         name: `หักเงินเบิกล่วงหน้า (${formatThaiDate(advance.paidOn)})`,
         type: PayComponentType.DEDUCTION,
         amount,

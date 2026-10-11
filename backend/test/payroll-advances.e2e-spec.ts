@@ -70,7 +70,7 @@ describe('Cash advances (e2e)', () => {
 
   const advanceLines = async (runId: string) =>
     (await slip(runId)).items
-      .filter((item) => item.code === 'ADVANCE')
+      .filter((item) => item.code === 'CASH_ADVANCE')
       .map((item) => [item.name, Number(item.amount)]);
 
   async function period(half: 1 | 2) {

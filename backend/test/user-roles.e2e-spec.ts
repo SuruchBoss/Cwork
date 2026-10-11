@@ -26,6 +26,9 @@ const PASSWORD = `Roles-${randomUUID()}`;
  */
 const nextSecond = () => new Promise((resolve) => setTimeout(resolve, 1100));
 
+/** A test that signs in with a code may wait out a 30-second step each time. */
+const TWO_CODE_SIGN_INS = 150_000;
+
 interface Grant {
   id: string;
   roleKey: string;
@@ -192,21 +195,25 @@ describe('Roles given from the console (e2e)', () => {
     expect(res.body.code).toBe('ROLE_ALREADY_GRANTED');
   });
 
-  it('takes payroll officer away, and with it the advances page, at once', async () => {
-    const session = await signIn();
-    await nextSecond();
-    const payroll = await grantOf('PAYROLL_OFFICER');
-    const removed = await api.delete(`${rolesPath()}/${payroll.id}`, ceoToken);
-    expect(removed.status).toBe(200);
-    expect(removed.body).toEqual({ signedOut: true });
-    expect((await api.get('/payroll/advances', session.accessToken)).status).toBe(401);
+  it(
+    'takes payroll officer away, and with it the advances page, at once',
+    async () => {
+      const session = await signIn();
+      await nextSecond();
+      const payroll = await grantOf('PAYROLL_OFFICER');
+      const removed = await api.delete(`${rolesPath()}/${payroll.id}`, ceoToken);
+      expect(removed.status).toBe(200);
+      expect(removed.body).toEqual({ signedOut: true });
+      expect((await api.get('/payroll/advances', session.accessToken)).status).toBe(401);
 
-    const again = await signIn();
-    expect((await api.get('/payroll/advances', again.accessToken)).status).toBe(403);
-    expect((await api.get('/auth/me', again.accessToken)).body.roles).not.toContain(
-      'PAYROLL_OFFICER',
-    );
-  });
+      const again = await signIn();
+      expect((await api.get('/payroll/advances', again.accessToken)).status).toBe(403);
+      expect((await api.get('/auth/me', again.accessToken)).body.roles).not.toContain(
+        'PAYROLL_OFFICER',
+      );
+    },
+    TWO_CODE_SIGN_INS,
+  );
 
   it('limits a role to a department only where the limit means something', async () => {
     const department = await prisma.department.findFirstOrThrow({
@@ -222,44 +229,51 @@ describe('Roles given from the console (e2e)', () => {
     expect(recruiter.body.code).toBe('ROLE_EXPIRY_IN_PAST');
   });
 
-  it('keeps the last permanent super administrator, and keeps role:manage from removing itself', async () => {
-    const ceo = await prisma.user.findFirstOrThrow({ where: { email: CEO }, select: { id: true } });
-    const ceoEmployee = await prisma.employee.findFirstOrThrow({
-      where: { userId: ceo.id },
-      select: { id: true },
-    });
-    const ceoPath = `/employees/${ceoEmployee.id}/roles`;
-    const ceoGrant = (await api.get(ceoPath, ceoToken)).body.grants.find(
-      (g: Grant) => g.roleKey === 'SUPER_ADMIN' && g.department === null,
-    );
-    const permanent = await prisma.userRole.count({
-      where: { departmentId: null, expiresAt: null, role: { key: 'SUPER_ADMIN' } },
-    });
-    expect(permanent).toBe(1);
+  it(
+    'keeps the last permanent super administrator, and keeps role:manage from removing itself',
+    async () => {
+      const ceo = await prisma.user.findFirstOrThrow({
+        where: { email: CEO },
+        select: { id: true },
+      });
+      const ceoEmployee = await prisma.employee.findFirstOrThrow({
+        where: { userId: ceo.id },
+        select: { id: true },
+      });
+      const ceoPath = `/employees/${ceoEmployee.id}/roles`;
+      const ceoGrant = (await api.get(ceoPath, ceoToken)).body.grants.find(
+        (g: Grant) => g.roleKey === 'SUPER_ADMIN' && g.department === null,
+      );
+      const permanent = await prisma.userRole.count({
+        where: { departmentId: null, expiresAt: null, role: { key: 'SUPER_ADMIN' } },
+      });
+      expect(permanent).toBe(1);
 
-    const own = await api.delete(`${ceoPath}/${ceoGrant.id}`, ceoToken);
-    expect(own.status).toBe(422);
-    expect(own.body.code).toBe('CANNOT_REMOVE_OWN_ROLE_MANAGE');
-    const byHrManager = await api.delete(`${ceoPath}/${ceoGrant.id}`, hrManagerToken);
-    expect(byHrManager.status).toBe(403);
+      const own = await api.delete(`${ceoPath}/${ceoGrant.id}`, ceoToken);
+      expect(own.status).toBe(422);
+      expect(own.body.code).toBe('CANNOT_REMOVE_OWN_ROLE_MANAGE');
+      const byHrManager = await api.delete(`${ceoPath}/${ceoGrant.id}`, hrManagerToken);
+      expect(byHrManager.status).toBe(403);
 
-    // A super administrator until the end of next year is still not a permanent one.
-    const nextYear = new Date().getUTCFullYear() + 1;
-    const temporary = await grant(ceoToken, {
-      roleKey: 'SUPER_ADMIN',
-      expiresOn: `${nextYear}-12-31`,
-    });
-    expect(temporary.status).toBe(201);
-    expect(temporary.body.grant.expiresOn).toBe(`${nextYear}-12-31`);
-    const session = await signIn();
-    const last = await api.delete(`${ceoPath}/${ceoGrant.id}`, session.accessToken);
-    expect(last.status).toBe(422);
-    expect(last.body.code).toBe('LAST_SUPER_ADMIN');
-    expect((await api.get(ceoPath, ceoToken)).body.grants.map((g: Grant) => g.roleKey)).toContain(
-      'SUPER_ADMIN',
-    );
+      // A super administrator until the end of next year is still not a permanent one.
+      const nextYear = new Date().getUTCFullYear() + 1;
+      const temporary = await grant(ceoToken, {
+        roleKey: 'SUPER_ADMIN',
+        expiresOn: `${nextYear}-12-31`,
+      });
+      expect(temporary.status).toBe(201);
+      expect(temporary.body.grant.expiresOn).toBe(`${nextYear}-12-31`);
+      const session = await signIn();
+      const last = await api.delete(`${ceoPath}/${ceoGrant.id}`, session.accessToken);
+      expect(last.status).toBe(422);
+      expect(last.body.code).toBe('LAST_SUPER_ADMIN');
+      expect((await api.get(ceoPath, ceoToken)).body.grants.map((g: Grant) => g.roleKey)).toContain(
+        'SUPER_ADMIN',
+      );
 
-    const cleanup = await api.delete(`${rolesPath()}/${temporary.body.grant.id}`, ceoToken);
-    expect(cleanup.status).toBe(200);
-  });
+      const cleanup = await api.delete(`${rolesPath()}/${temporary.body.grant.id}`, ceoToken);
+      expect(cleanup.status).toBe(200);
+    },
+    TWO_CODE_SIGN_INS,
+  );
 });

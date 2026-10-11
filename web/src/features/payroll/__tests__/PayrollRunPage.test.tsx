@@ -168,11 +168,34 @@ describe('Payslip warnings on the run page (CW-069)', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/ทำงานในวันหยุด \(8 ชม\. ที่ .* 1×\)/)).toBeInTheDocument();
     expect(
-      screen.getByText(/^เงินเบิก ฿1,620\.00 เกินกว่าที่งวดนี้หักได้ .*ตามมาตรา 76 /),
+      screen.getByText(
+        'เงินเบิก ฿1,620.00 เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป มาตรา 76 ของ พ.ร.บ.คุ้มครองแรงงานไม่ได้ระบุการหักคืนเงินเบิกไว้ในรายการที่หักจากค่าจ้างได้ การหักจากรอบหลังจึงอาจต้องมีหนังสือยินยอมของลูกจ้างที่ลงชื่อและระบุเรื่องนี้ชัดเจน (มาตรา 77) Cwork ไม่ได้เก็บหนังสือยินยอมนี้ ฝ่ายบุคคลต้องเก็บเอง',
+      ),
     ).toBeInTheDocument();
     // A code this screen does not know yet is still shown, not dropped.
     expect(screen.getByText('SOMETHING_NEW')).toBeInTheDocument();
     expect(screen.getByText('ตรวจ 5 เรื่อง')).toBeInTheDocument();
     await expectNoAxeViolations(container);
+  });
+
+  it('says in English what sections 76 and 77 mean for a carried advance (CW-078)', async () => {
+    useUiStore.setState({ language: 'en' });
+    serve({
+      ...secondHalf,
+      status: 'CALCULATED',
+      calculatedAt: '2026-11-30T03:00:00.000Z',
+      employeeCount: 1,
+      firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+      payslips: [
+        { ...slip, warnings: [{ code: 'ADVANCE_CARRIED_OVER', params: { amount: 1620 } }] },
+      ],
+    });
+    render();
+
+    expect(
+      await screen.findByText(
+        "Advances of THB 1,620.00 were more than this period could take back; the rest comes off the next pay run. Section 76 of the Labour Protection Act does not list repaying an advance among the deductions from wages it allows, so taking it from a later pay run may need the employee's consent in writing, signed and naming this purpose (section 77); Cwork does not keep that consent, HR must",
+      ),
+    ).toBeInTheDocument();
   });
 });
