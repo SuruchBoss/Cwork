@@ -6,9 +6,11 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-048 (#45, the monthly social security file, free by the
-  owner's decision of 2026-10-11) is with the dev room. CW-082 (#85) and
-  CW-083 are P1, not queued. CW-079, CW-078, CW-076, CW-081 and CW-071
+- **Dev queue:** CW-084 (social security rounded to the baht and
+  contributed on the floor, per the official สปส.1-10 form) is with the dev
+  room, then the rest of CW-048 (#45, the monthly file, free by the owner's
+  decision; its upload format waits on a sample file). CW-082 (#85) and
+  CW-083 (#86) are P1, not queued. CW-079, CW-078, CW-076, CW-081 and CW-071
   closed on 2026-10-11.
 - **Pilot A (by 31 October):** waits on the pilot company's files, not on
   code. CW-061 needs one real month exported from the TA-001EX scanner;
@@ -28,6 +30,8 @@ this file only says where the PO room stands.
 - A qualified reviewer for the payroll rules on #36, including the two
   section 76 questions. Until it is answered, carried advances should not be
   taken from a later payday without the employee's signed consent.
+- A sample สปส.1-10 upload file from SSO e-Services, names and ID numbers
+  blanked, for CW-048's file format.
 - Prices and timing for the CW-077 items.
 
 ## How the PO room works

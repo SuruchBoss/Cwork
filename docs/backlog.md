@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-084 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -156,6 +156,44 @@ seeing any of it.
 ## P0 — blocks a real deployment
 
 
+### CW-084 · Social security is rounded to the satang and is zero below the floor; the official form says otherwise
+`P0` · payroll · **S** · before Pilot B · ready
+
+Found by the dev while reading the official สปส.1-10 part 2 form for CW-048
+(sso.go.th, the PDF the dev cited; the PO read its notes on 2026-10-11).
+Notes 3 and 4 under the form:
+
+- a wage under the floor is contributed on the floor (the form prints
+  1,650); Cwork returns no contribution at all below the floor
+  (`computeSocialSecurity` in `payroll/domain/thai-tax.ts`);
+- each insured person's contribution is rounded to the baht, 50 satang and
+  over up, under 50 satang down, and the employer pays the same rounded
+  amount; Cwork rounds to the satang (a wage of 5,010 gives 250.50, the form
+  251).
+
+The form still prints the old 15,000 ceiling; the ceilings by year from
+CW-075 stand. What is withheld must equal what is filed, so the payslip and
+the CW-048 file both have to follow the form, every month.
+
+**Scope**
+- One function gives a person's monthly contribution: the wage, the floor
+  and ceiling of the period's year, then rounding to the baht as the form
+  says; the employer's share equals it. Payslips, the half-month split
+  (CW-069: the month's figure is fixed by this function, H2 is the month
+  less H1), the shortfall report (CW-075) and CW-048 all use it.
+- A wage of nil in a month (nobody paid) contributes nothing; that case and
+  the two rules above go on #36 for the accountant to confirm.
+- `docs/payroll-thailand.md` cites the form's notes 3 and 4.
+
+**Acceptance**
+- Hand-computed in tests: wage 5,010 gives 251 and 251; wage 1,200 gives
+  83 (1,650 × 5% = 82.50, rounded up); wage 20,000 in 2026 gives 875; a
+  half-month pair whose month is 5,010 sums to 251.
+- No payslip already approved or paid is recalculated.
+
+**Files** `backend/src/modules/payroll/domain/`, `docs/payroll-thailand.md`
+
+---
 
 ### CW-064 · An employee's first sign-in
 `P2` · auth · mobile · **M** · not needed by the pilot
@@ -843,6 +881,14 @@ and nothing else.
 is the company's own payroll data going out, which the Editions section
 keeps free; submitting it to the Social Security Office online is the Pro
 candidate, as the README already says.
+
+**File format (2026-10-11):** no public SSO document the dev could open
+gives the e-Services upload layout (field widths, separator, encoding); the
+e-Services manual only lists the accepted file types and a download of the
+upload file behind the login. The owner is asked for a sample upload file
+from e-Services, names and ID numbers blanked. Until it comes, the monthly
+totals per person and the สปส.1-10 part 2 content (CSV/Excel and a printable
+PDF) are built; the upload formatter waits. Contributions come from CW-084.
 
 **Acceptance**
 - The seeded demo company's export matches hand-computed employee and employer
