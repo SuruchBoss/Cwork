@@ -6,12 +6,10 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-084 (social security rounded to the baht and
-  contributed on the floor, per the official สปส.1-10 form) is with the dev
-  room, then the rest of CW-048 (#45, the monthly file, free by the owner's
-  decision; its upload format waits on a sample file). CW-082 (#85) and
-  CW-083 (#86) are P1, not queued. CW-079, CW-078, CW-076, CW-081 and CW-071
-  closed on 2026-10-11.
+- **Dev queue:** CW-048 (#45, the monthly สปส.1-10 file and report, free by
+  the owner's decision; its upload format waits on a sample file) is with the
+  dev room. CW-082 (#85) and CW-083 (#86) are P1, not queued. Closed on
+  2026-10-11: CW-079, CW-078, CW-076, CW-081, CW-071 and CW-084.
 - **Pilot A (by 31 October):** waits on the pilot company's files, not on
   code. CW-061 needs one real month exported from the TA-001EX scanner;
   CW-062 needs the NAS make, model, CPU, memory, what runs on it and how the
