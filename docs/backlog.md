@@ -583,6 +583,20 @@ before the first invoice.
   an `ee/` folder under another licence for new code, as PaynEat-ERP did,
   stays open to the owner; it should be decided before the first outside
   contribution, not after.
+  **Decided by the owner (2026-10-10, confirmed in writing 2026-10-11):** Cwork
+  gets a Pro edition in `ee/` under the Elastic License 2.0. Everything already
+  in the repository, and everything outside `ee/` afterwards, stays Apache-2.0
+  for good; payroll correctness and the law updates behind it, leave,
+  attendance, PDPA tools, export, security and bug fixes, and one company with
+  no employee limit stay free. Code outside `ee/` never imports from it; a Pro
+  key is checked offline and an expired key never locks data or stops a payroll
+  run; `ee/` takes no outside contributions. The README (both languages, new
+  Editions section), CONTRIBUTING, `docs/spec.md` and
+  `docs/labour-data-contract.md` were updated to match. Not done yet, each its
+  own ticket when the first Pro code is due: `ee/LICENSE` copied verbatim from
+  the official Elastic License 2.0 text, the SPDX check accepting `Elastic-2.0`
+  only under `ee/`, a CI guard against imports from `ee/`, and the offline
+  licence key.
 - **The README** says plainly that self-hosting is free and what the paid
   service adds.
 

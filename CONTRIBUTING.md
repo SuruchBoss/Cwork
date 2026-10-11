@@ -185,9 +185,10 @@ ones that are missing it.
 **There is no CLA**, deliberately. A contributor licence agreement is a barrier
 in front of a one-line fix, and the DCO covers the question a CLA is usually
 reached for: whether the contributor had the right to contribute. The accepted
-consequence is that the licence cannot realistically be changed later — doing so
-would need every contributor's agreement — and Apache-2.0 is the answer, for
-good.
+consequence is that contributions outside `ee/` are Apache-2.0 for good: without
+a CLA they cannot be relicensed, and they will not be. `ee/` holds Cwork Pro
+under the Elastic License 2.0 and takes no outside contributions — see the
+README's [Editions](./README.md#editions) section.
 
 ## Developer Certificate of Origin (DCO)
 
