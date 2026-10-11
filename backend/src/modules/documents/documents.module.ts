@@ -7,11 +7,18 @@ import { FilesModule } from '../files/files.module';
 import { CertificateRenderer } from './certificate-renderer';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
+import { PayslipRenderer, WageReceiptRenderer } from './payslip-renderer';
 
 @Module({
   imports: [FilesModule],
   controllers: [DocumentsController],
-  providers: [DocumentsService, CertificateRenderer, SequenceService],
-  exports: [DocumentsService],
+  providers: [
+    DocumentsService,
+    CertificateRenderer,
+    PayslipRenderer,
+    WageReceiptRenderer,
+    SequenceService,
+  ],
+  exports: [DocumentsService, PayslipRenderer, WageReceiptRenderer],
 })
 export class DocumentsModule {}

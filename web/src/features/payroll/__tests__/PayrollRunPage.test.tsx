@@ -1,10 +1,11 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api } from '@/lib/api-client';
+import { api, saveBlob } from '@/lib/api-client';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUiStore } from '@/stores/ui.store';
@@ -12,7 +13,14 @@ import { expectNoAxeViolations, renderWithProviders } from '@/test/a11y';
 import PayrollRunPage from '../PayrollRunPage';
 
 vi.mock('@/lib/api-client', () => ({
-  api: { get: vi.fn(), post: vi.fn(), configure: vi.fn(), onDemoReset: vi.fn() },
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    download: vi.fn(),
+    configure: vi.fn(),
+    onDemoReset: vi.fn(),
+  },
+  saveBlob: vi.fn(),
 }));
 
 const get = vi.mocked(api.get);
@@ -229,5 +237,100 @@ describe('Payslip warnings on the run page (CW-069)', () => {
         "Advances of THB 1,620.00 were more than this period could take back; the rest comes off the next pay run. Section 76 of the Labour Protection Act does not list repaying an advance among the deductions from wages it allows, so taking it from a later pay run may need the employee's consent in writing, signed and naming this purpose (section 77); Cwork does not keep that consent, HR must",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe('Printing payslips and wage receipts (CW-071)', () => {
+  const approved = {
+    ...secondHalf,
+    id: 'run-h2',
+    status: 'APPROVED',
+    employeeCount: 1,
+    payslips: [slip],
+    firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+  };
+  const blob = new Blob(['%PDF-'], { type: 'application/pdf' });
+
+  beforeEach(() => {
+    useAuthStore.setState({
+      can: (...permissions: string[]) => permissions.includes(P.PAYROLL_READ),
+    });
+    vi.mocked(api.download).mockResolvedValue({ blob, filename: 'payslips-PR.pdf' });
+    URL.createObjectURL = vi.fn(() => 'blob:slips');
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  it('asks the server for the layout chosen and opens the PDF', async () => {
+    serve(approved);
+    const open = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    const user = userEvent.setup();
+    const { container } = render();
+
+    await user.selectOptions(await screen.findByLabelText('จำนวนสลิปต่อหน้า A4'), '4');
+    await user.click(screen.getByRole('button', { name: 'พิมพ์สลิปเงินเดือน' }));
+
+    await waitFor(() =>
+      expect(api.download).toHaveBeenCalledWith('/payroll/runs/run-h2/print/payslips', {
+        query: { perPage: '4' },
+      }),
+    );
+    await waitFor(() => expect(open).toHaveBeenCalledWith('blob:slips', '_blank'));
+    expect(screen.getByText('การพิมพ์ทุกครั้งถูกบันทึกไว้ในประวัติการใช้งาน')).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+    open.mockRestore();
+  });
+
+  it('prints the wage-receipt sheet', async () => {
+    serve(approved);
+    const open = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'พิมพ์ใบรับเงิน' }));
+    await waitFor(() =>
+      expect(api.download).toHaveBeenCalledWith('/payroll/runs/run-h2/print/receipts'),
+    );
+    open.mockRestore();
+  });
+
+  it('saves the file when the browser will not open a tab', async () => {
+    serve(approved);
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'พิมพ์ใบรับเงิน' }));
+    await waitFor(() => expect(saveBlob).toHaveBeenCalledWith(blob, 'payslips-PR.pdf'));
+    open.mockRestore();
+  });
+
+  it('shows the reason when the server refuses to print', async () => {
+    serve(approved);
+    vi.mocked(api.download).mockRejectedValue(
+      new Error('Payslip of D001 in run PR does not add up'),
+    );
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'พิมพ์สลิปเงินเดือน' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not add up');
+  });
+
+  it('keeps printing off until the run is approved', async () => {
+    serve({ ...approved, status: 'CALCULATED' });
+    render();
+
+    expect(await screen.findByRole('button', { name: 'พิมพ์สลิปเงินเดือน' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'พิมพ์ใบรับเงิน' })).toBeDisabled();
+    expect(screen.getByText('พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว')).toBeInTheDocument();
+  });
+
+  it('does not offer printing to someone who cannot see pay', async () => {
+    useAuthStore.setState({ can: () => false });
+    serve(approved);
+    render();
+
+    await screen.findByText(/PR-2026-11-H2-01/);
+    expect(screen.queryByRole('button', { name: 'พิมพ์สลิปเงินเดือน' })).toBeNull();
   });
 });

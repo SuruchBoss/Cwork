@@ -89,6 +89,24 @@ keep their status until recalculated.
 
 ### Added
 
+- **Printable payslips and a wage-receipt sheet** (CW-071). A pilot that pays
+  daily wages in cash had no paper to hand out or to have signed: payslips
+  existed only on screen. An approved or paid run now prints as PDF from its
+  page, through `GET /payroll/runs/:id/print/payslips?perPage=1|2|4`,
+  `GET /payroll/runs/:id/print/receipts` and `GET /payroll/payslips/:id/print`.
+  A slip carries every earning and deduction line the payslip record holds,
+  with its totals, the daily wage as days times rate, the cash advance, and the
+  substitute day paid for a holiday on the weekly day off as a note, all in
+  Thai with Buddhist-era dates and a foreign worker's name as HR entered it. Two
+  or four slips share an A4 sheet with dashed cut lines, shrinking the type
+  before a long slip is given a page of its own; nothing is dropped to make it
+  fit. The receipt sheet has a row, the net pay and a signature cell for each
+  employee, a total, and numbered pages. Only `payroll:read` can print, a run
+  that is not approved is refused (`PAYROLL_RUN_NOT_PRINTABLE`), a slip whose
+  lines do not add up to its totals is refused and nothing is printed
+  (`PAYSLIP_DOES_NOT_ADD_UP`), and every print is audited as an `EXPORT` of the
+  run. A Thai guide is in `docs/guide/printing-payslips.th.md`.
+
 - **Roles are given from the employee's page** (CW-079). Setup's first
   administrator was the only account that could ever hold more than `EMPLOYEE`:
   nothing in the API or console handed out a role, so a pilot's HR person could
@@ -622,6 +640,14 @@ keep their status until recalculated.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **The holiday page was cramped, and showed two answers for one holiday**
+  (CW-081). The substitute selector sat in a fixed side column that squeezed
+  each holiday's notes into a strip a few words wide, and a holiday HR had given
+  a substitute day still carried the automatic Monday-to-Friday note as well, so
+  the page said both "taken on the 7th as HR marked" and "unless a later row is
+  marked". The selector now sits under the notes, and `substituteOnWeekdays` is
+  null once HR has marked a substitute.
 
 - **A substitute holiday was a different day to payroll and to attendance**
   (CW-081). Only a daily-wage run knew that a holiday on the weekly day off

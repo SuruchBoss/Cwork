@@ -107,43 +107,43 @@ export function HolidaysCard({ year, canManage }: { year: number; canManage: boo
                           )}
                         </div>
                       )}
-                    </td>
-                    {canManage && (
-                      <td style={{ width: 240 }}>
-                        {holiday.substituteForId ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            loading={mark.isPending && mark.variables?.id === holiday.id}
-                            onClick={() => {
-                              setProblem(null);
-                              mark.mutate({ id: holiday.id, substituteForId: null });
-                            }}
-                          >
-                            {t('Not a substitute')}
-                          </Button>
-                        ) : (
-                          options.length > 0 && (
-                            <Select
-                              aria-label={t('Substitute for {name}', { name: holiday.name })}
-                              value=""
-                              disabled={mark.isPending}
-                              onChange={(e) => {
+                      {canManage && (holiday.substituteForId !== null || options.length > 0) && (
+                        <div style={{ marginTop: 6 }}>
+                          {holiday.substituteForId ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              loading={mark.isPending && mark.variables?.id === holiday.id}
+                              onClick={() => {
                                 setProblem(null);
-                                mark.mutate({ id: holiday.id, substituteForId: e.target.value });
+                                mark.mutate({ id: holiday.id, substituteForId: null });
                               }}
                             >
-                              <option value="">{t('Mark as a substitute for…')}</option>
-                              {options.map((other) => (
-                                <option key={other.id} value={other.id}>
-                                  {formatDate(other.date)} {other.name}
-                                </option>
-                              ))}
-                            </Select>
-                          )
-                        )}
-                      </td>
-                    )}
+                              {t('Not a substitute')}
+                            </Button>
+                          ) : (
+                            options.length > 0 && (
+                              <Select
+                                aria-label={t('Substitute for {name}', { name: holiday.name })}
+                                value=""
+                                disabled={mark.isPending}
+                                onChange={(e) => {
+                                  setProblem(null);
+                                  mark.mutate({ id: holiday.id, substituteForId: e.target.value });
+                                }}
+                              >
+                                <option value="">{t('Mark as a substitute for…')}</option>
+                                {options.map((other) => (
+                                  <option key={other.id} value={other.id}>
+                                    {formatDate(other.date)} {other.name}
+                                  </option>
+                                ))}
+                              </Select>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

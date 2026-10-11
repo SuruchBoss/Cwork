@@ -6,10 +6,10 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-081 (#84, one answer for substitute holidays across
-  attendance, leave, overtime and payroll; 5 December 2026 is a Saturday) is
-  with the dev room, then CW-071 and CW-048 for Pilot B. CW-079, CW-078 and
-  CW-076 closed on 2026-10-11.
+- **Dev queue:** CW-071 (#74, printed payslips and a signed wage receipt) is
+  with the dev room, then CW-048 for Pilot B. CW-082 (monthly proration on
+  the employee's calendar) is P1, not queued. CW-079, CW-078, CW-076 and
+  CW-081 closed on 2026-10-11.
 - **Pilot A (by 31 October):** waits on the pilot company's files, not on
   code. CW-061 needs one real month exported from the TA-001EX scanner;
   CW-062 needs the NAS make, model, CPU, memory, what runs on it and how the
