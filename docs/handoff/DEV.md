@@ -6,28 +6,25 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-048** (#45, monthly social security filing): built, waiting for the PO's
-  review; the upload-file formatter is deliberately not built.
-  - `payroll/domain/sso-filing.ts` works the form out from the month's payslips
-    (a person's halves added up, then `computeSocialSecurity`); `SsoFilingService`
-    checks the month is finished (every period has an approved or paid run, both
-    halves of a half-month month), identifies each person (a Thai by national ID,
-    an employee with a passport or work permit by social security card number),
-    names anyone without the number, audits every read and file, and writes
-    CSV, XLSX and (through `documents/sso-filing-renderer.ts`) PDF.
-  - Route `GET /payroll/reports/sso-filing?year=&month=&format=`, `payroll:export`.
-    Web page Payroll -> Social security filing. Thai guide
-    `docs/guide/sso-filing.th.md`. `payroll/sso-slips.ts` is the payslip loader now
-    shared with the shortfall report.
-  - **Waits on the owner:** a sample upload file from e-Services (the "download
-    upload file" icon on a past transaction). No public layout exists, so the
-    formatter is not guessed; once there is a sample it is a small step.
-  - Open for the accountant (#36): is "wage paid" the SSO wage or total pay
-    including overtime. CW-048's last acceptance line (the pilot's November file)
-    waits for their file.
-- **CW-084** passed review earlier today (whole-baht contribution, floor applies).
-- Earlier: CW-071 passed review; CW-082 (#85) is open, not queued.
+- **CW-082** (#85, monthly proration over the work calendar): built, waiting for
+  the PO's review.
+  - `PayrollService.workingDaysFor` asks `WorkCalendarService.daysFor` (new
+    `wholePeriod` option: resolve the days as if the employee were employed all of
+    them) and counts the days that are not `isDayOff`. `workingDaysInPeriod` (the
+    divisor of a day's value) is per employee now; `employeeWorkingDays` is the
+    part from hire date to last working day. The method is unchanged.
+  - The organisation-wide Monday-to-Friday count and `holidayDateSet` are gone.
+  - e2e `payroll-proration-calendar.e2e-spec.ts` (December 2026: 20 working days
+    with the 7th, 10th and 31st out; joiner on the 9th 15,000; leaver after the 4th
+    4,000; one absence 19,000; full month 20,000). Mutation-checked: counting the
+    substitute day as a working day gives the old 14,285.71 / 3,809.52 / 19,047.62.
+  - A schedule with Saturday work now counts its Saturdays in the divisor; it was
+    Monday to Friday for everybody. Worth the PO knowing.
+- **CW-048** passed review (the upload-file formatter is CW-085 #88, waits on the
+  owner's e-Services sample). Open for the accountant (#36): "wage paid" for the
+  filing, rounding, floor, nil month.
 
 ## Next
 
-- Wait for the PO's review of CW-048 and for the owner's e-Services sample.
+- Wait for the PO's review of CW-082.
+- Do not start CW-083 or CW-085.

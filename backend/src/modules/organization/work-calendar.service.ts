@@ -28,12 +28,20 @@ const DEFAULT_WORKING_WEEKDAYS = [1, 2, 3, 4, 5];
 export class WorkCalendarService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Each day from `from` to `to`, keyed by ISO date. */
+  /**
+   * Each day from `from` to `to`, keyed by ISO date.
+   *
+   * `wholePeriod` resolves the days as if the employee were employed on all of
+   * them, which is what the month's working days are for prorating a joiner or
+   * a leaver (CW-082): a holiday before they joined still takes its substitute
+   * day out of the month, though it owed them nothing.
+   */
   async daysFor(
     organizationId: string,
     employeeId: string,
     from: Date,
     to: Date,
+    options: { wholePeriod?: boolean } = {},
   ): Promise<Map<string, WorkDay>> {
     const first = toDateOnly(from);
     const last = toDateOnly(to);
@@ -81,8 +89,9 @@ export class WorkCalendarService {
 
     const rostered = new Map(overrides.map((o) => [formatDateOnly(o.date), !o.isDayOff]));
     const employed = (date: Date) =>
-      date >= employee.hireDate &&
-      (employee.lastWorkingDate === null || date <= employee.lastWorkingDate);
+      options.wholePeriod === true ||
+      (date >= employee.hireDate &&
+        (employee.lastWorkingDate === null || date <= employee.lastWorkingDate));
     const scheduled = (date: Date) => {
       const roster = rostered.get(formatDateOnly(date));
       if (roster !== undefined) return roster;

@@ -22,16 +22,12 @@ import {
 } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
-import {
-  eachDateInRange,
-  formatDateOnly,
-  isoWeekday,
-  toDateOnly,
-} from '../../core/utils/date.util';
+import { eachDateInRange, formatDateOnly, toDateOnly } from '../../core/utils/date.util';
 import { Decimal, round2, toPrismaDecimal } from '../../core/utils/money.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
+import { isDayOff } from '../organization/domain/work-calendar';
 import { WorkCalendarService } from '../organization/work-calendar.service';
 import { DEFAULT_OT_MULTIPLIERS } from '../attendance/overtime.service';
 import {
@@ -243,12 +239,6 @@ export class PayrollService {
     try {
       const employees = await this.employeesInPeriod(user.organizationId, run.period);
 
-      const workingDaysInPeriod = await this.countWorkingDays(
-        user.organizationId,
-        run.period.periodStart,
-        run.period.periodEnd,
-      );
-
       // Replace, don't patch: stale payslips from a previous attempt must go.
       await this.prisma.payslip.deleteMany({ where: { runId } });
 
@@ -256,7 +246,6 @@ export class PayrollService {
         user.organizationId,
         run,
         employees,
-        workingDaysInPeriod,
         firstHalf,
       );
 
@@ -412,7 +401,6 @@ export class PayrollService {
     organizationId: string,
     run: { id: string; type: PayrollRunType; period: PayrollPeriodWindow },
     employees: PayrollSubject[],
-    workingDaysInPeriod: number,
     firstHalf: FirstHalfRun,
   ) {
     const totals = {
@@ -430,7 +418,6 @@ export class PayrollService {
         run.id,
         run.period,
         employee,
-        workingDaysInPeriod,
         firstHalf,
         // Advances come back in the regular runs only (CW-070).
         run.type === PayrollRunType.REGULAR,
@@ -808,7 +795,6 @@ export class PayrollService {
     runId: string,
     period: PayrollPeriodWindow,
     employee: { id: string; hireDate: Date; lastWorkingDate: Date | null },
-    workingDaysInPeriod: number,
     firstHalfRun: FirstHalfRun = null,
     takesBackAdvances = false,
   ) {
@@ -942,11 +928,10 @@ export class PayrollService {
     // records would underpay anyone whose days have not been closed out yet
     // (future dates in the period, a clock-in rollout still in progress), which
     // is the kind of bug that silently shorts people's pay.
-    const employeeWorkingDays = await this.countEmployeeWorkingDays(
+    const { workingDaysInPeriod, employeeWorkingDays } = await this.workingDaysFor(
       organizationId,
       period,
       employee,
-      workingDaysInPeriod,
     );
     const warnings: PayslipWarning[] = [];
     const daysPaid =
@@ -1232,33 +1217,38 @@ export class PayrollService {
   }
 
   /**
-   * Working days the employee was actually employed for, so a mid-month joiner
-   * or leaver is prorated on the calendar rather than on attendance coverage.
+   * The working days a monthly salary is prorated over (CW-082), from the
+   * employee's own work calendar: their schedule, the holidays of the whole
+   * organisation and of their work location, and the substitute days. A
+   * substitute day is a day off, as it is to attendance and leave.
+   *
+   * `workingDaysInPeriod` is the whole period's, as if they were employed all
+   * of it, and is the divisor of a day's value. `employeeWorkingDays` is the
+   * part of it between their hire date and last working day, so a mid-month
+   * joiner or leaver is prorated on the calendar rather than on attendance
+   * coverage.
    */
-  private async countEmployeeWorkingDays(
+  private async workingDaysFor(
     organizationId: string,
     period: { periodStart: Date; periodEnd: Date },
-    employee: { hireDate: Date; lastWorkingDate: Date | null },
-    workingDaysInPeriod: number,
-  ): Promise<number> {
-    const startsLate = employee.hireDate > period.periodStart;
-    const endsEarly =
-      employee.lastWorkingDate !== null && employee.lastWorkingDate < period.periodEnd;
-    if (!startsLate && !endsEarly) return workingDaysInPeriod;
-
-    const from = startsLate ? employee.hireDate : period.periodStart;
-    const to = endsEarly ? employee.lastWorkingDate! : period.periodEnd;
-    if (to < from) return 0;
-
-    return this.countWorkingDays(organizationId, from, to);
-  }
-
-  /** Working days in a period: schedule weekdays minus public holidays. */
-  private async countWorkingDays(organizationId: string, from: Date, to: Date): Promise<number> {
-    const holidays = await this.organization.holidayDateSet(organizationId, from, to);
-    return eachDateInRange(from, to).filter(
-      (date) => isoWeekday(date) <= 5 && !holidays.has(formatDateOnly(date)),
-    ).length;
+    employee: { id: string; hireDate: Date; lastWorkingDate: Date | null },
+  ): Promise<{ workingDaysInPeriod: number; employeeWorkingDays: number }> {
+    const days = await this.workCalendar.daysFor(
+      organizationId,
+      employee.id,
+      period.periodStart,
+      period.periodEnd,
+      { wholePeriod: true },
+    );
+    const working = [...days.values()].filter((day) => !isDayOff(day));
+    const first = formatDateOnly(employee.hireDate);
+    const last = employee.lastWorkingDate ? formatDateOnly(employee.lastWorkingDate) : null;
+    return {
+      workingDaysInPeriod: working.length,
+      employeeWorkingDays: working.filter(
+        (day) => day.date >= first && (last === null || day.date <= last),
+      ).length,
+    };
   }
 
   private async countUnpaidLeaveDays(employeeId: string, from: Date, to: Date): Promise<number> {

@@ -48,8 +48,8 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-048 |
-| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
+| **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
 
@@ -465,7 +465,7 @@ Pilot B, which is unpaid; all of them come before the first invoice.
 ones that need code or docs are their own tickets.
 
 ### CW-082 · A monthly salary prorated in December counts the substitute day as a working day
-`P1` · payroll · **S** · before a monthly run with joiners or leavers in a month with a substitute day · not queued
+`P1` · payroll · **S** · before a monthly run with joiners or leavers in a month with a substitute day · queued 2026-10-11 (#85)
 
 Left by CW-081. A salaried employee who joins or leaves mid-month is paid by
 working days, and those are still counted as Monday to Friday less the
@@ -825,48 +825,36 @@ signature block, so this is a template over it.
 
 ---
 
-### CW-048 · ประกันสังคม monthly filing (สปส. 1-10)
-`P1` · payroll · **M** · Pilot B
+### CW-085 · The สปส.1-10 upload file for e-Services, and the November check
+`P1` · payroll · **S** · Pilot B
 
-**Moved into the pilot on 2026-09-30.** The pilot company files this every
-month, by hand from Excel, and some of its insured staff are foreign workers.
-Its export is compared with the file they actually submit for November.
+Left by CW-048, which builds the form's data (part 1 totals, part 2 rows) as
+CSV, Excel and a printable PDF. Two things could not be done without the
+pilot or the owner:
 
-Payroll computes both halves of the มาตรา 33 contribution and stores them on
-every payslip. There is no way to get them out.
+- **The upload file.** No public Social Security Office document gives the
+  e-Services upload layout (field widths, separator, encoding); it is handed
+  out behind the e-Services login. The owner is asked for a sample upload
+  file, names and ID numbers blanked. With it, add the upload format to
+  `GET /payroll/reports/sso-filing` from the same sheet, not a second
+  calculation.
+- **The November check.** The pilot's November export is compared with the
+  file they actually submit; every difference is fixed or explained. Two
+  known places to look: "wage actually paid" is the wage social security is
+  worked on, overtime left out (question 4 on #36), and a foreign worker is
+  recognised by a passport or work-permit number on the record, since Cwork
+  stores no nationality.
 
-Runs alongside the ภ.ง.ด. chain rather than after it — it shares the export seam
-and nothing else.
-
-**Decided by the owner (2026-10-11):** free. The file HR uploads by hand
-is the company's own payroll data going out, which the Editions section
-keeps free; submitting it to the Social Security Office online is the Pro
-candidate, as the README already says.
-
-**File format (2026-10-11):** no public SSO document the dev could open
-gives the e-Services upload layout (field widths, separator, encoding); the
-e-Services manual only lists the accepted file types and a download of the
-upload file behind the login. The owner is asked for a sample upload file
-from e-Services, names and ID numbers blanked. Until it comes, the monthly
-totals per person and the สปส.1-10 part 2 content (CSV/Excel and a printable
-PDF) are built; the upload formatter waits. Contributions come from CW-084.
-The printed form to follow is the 2025 announcement cited in CW-084 (part 1
-totals, part 2 columns 1-5; a foreign worker's social security card number
-goes in the ID column, note 3).
+Free, as decided for CW-048: the file HR uploads by hand is the company's own
+data; filing online is the Pro candidate in CW-077.
 
 **Acceptance**
-- The seeded demo company's export matches hand-computed employee and employer
-  totals.
-- The contribution ceiling is applied per employee per month, tested at the
-  boundary.
-- An employee with no social security number is reported as an error naming
-  them, not silently omitted or exported blank.
-- Foreign workers insured under มาตรา 33 appear with the identifier the
-  Social Security Office expects for them.
+- The upload file opens in SSO e-Services without errors for the pilot's
+  November month, or the owner confirms it against the sample.
 - The pilot's November export matches the file they submit, or every
   difference is explained.
 
-**Files** `backend/src/modules/payroll/`
+**Files** `backend/src/modules/payroll/sso-filing.service.ts`
 
 ---
 
@@ -1356,3 +1344,4 @@ Kept so the reasoning survives.
 | **CW-081** · A substitute holiday was two different days to payroll and to attendance | `resolveWorkCalendar` decides, per employee and day, whether it is a working day, a weekly day off, a holiday or a substitute, from the employee's schedule and daily shift changes and both the organisation's and the work location's holidays; attendance, leave, overtime type and the daily-wage run all use it. A holiday row can name the holiday it stands in for (`substituteForId`, nullable, one substitute per holiday, after it, same location, no substitute of a substitute; a holiday with a substitute cannot be deleted), set from the organisation page, which also shows the automatic substitute for a Monday–Friday schedule. Tested on 5 December 2026 with and without 7 December entered: the salaried employee is on holiday, not absent, on the 7th; leave on the 7th alone is refused and 7–8 counts one day; overtime on the 7th is holiday overtime at 2×; the daily-wage worker is paid the 7th once (10 days, 5,000, plus 500 overtime). `SUBSTITUTE_HOLIDAY_WORKED` is gone. Accepted from the dev: an entered substitute applies only to employees whose holiday fell on their day off and for whom it is a working day, otherwise the automatic one; existing rows entered as substitutes count as their own holiday until linked (0.4.0 upgrade notes); daily shift changes to a day off count as a day off everywhere; attendance and overtime now see work-location holidays. Left: monthly proration (CW-082) and days closed before the upgrade. 3621a32, closed 2026-10-11. |
 | **CW-071** · The pilot pays in cash to staff without smartphones, and a payslip on a screen reached nobody | An approved or paid run prints as PDF from the run page: payslips one, two or four to an A4 sheet (cut lines; a long slip shrinks its type, then takes its own page, never drops a line) and a wage-receipt sheet with one row per employee, net pay, a space to sign, totals and page numbers. Dates in พ.ศ., Sarabun embedded and checked for missing glyphs, a foreign worker's name as HR entered it; a daily wage prints as days × rate, `CASH_ADVANCE` on its own line, a substitute holiday as a note. Every line of a printed slip is tested against the payslip record the API returns. Printing needs `payroll:read`, refuses a run not yet approved (`PAYROLL_RUN_NOT_PRINTABLE`) or a slip whose lines do not add up (`PAYSLIP_DOES_NOT_ADD_UP`), and is audited as an export of the run. Accepted from the dev: only `SUBSTITUTE_HOLIDAY` prints, other warnings stay HR's; "matches the screen" means the API payslip record, as the console has no payslip page yet; employees printing their own slip is not in this ticket; the receipt's wording is a template, with three questions for an accountant on #36. Two holiday-page fixes from the browser walk of CW-081 ride along (the substitute picker's layout, and no automatic note under a holiday with an entered substitute). Guide: `docs/guide/printing-payslips.th.md`. a26329b, closed 2026-10-11. |
 | **CW-084** · Social security was rounded to the satang and was nothing below the floor; the official form says otherwise | Verified against the Social Security Office's announcement on contribution forms (No. 2) B.E. 2568, Royal Gazette vol. 142, special part 405 Ng, 30 December 2025, pages 23-27, notes 1, 3, 4 and 6. `computeSocialSecurity` is the one monthly figure per person: the wage, the 1,650 floor and the ceiling of the period's year, rounded to the baht half up, the employer's share equal; a month with no wage contributes nothing. A half-month run takes 5% of H1 (capped, whole baht, no floor) and H2 is the month less H1, so the pair equals a monthly run; the CW-075 shortfall report uses the same function. Hand-computed: 5,010 gives 251 and 251, 1,200 gives 83, 20,000 in 2026 gives 875, a half-month pair of 5,010 gives 125 + 126. Approved and paid runs are not recalculated; months already paid keep their satang, which the shortfall report shows. Three questions for an accountant on #36. d5b35a4, closed 2026-10-11. |
+| **CW-048** · The monthly social security filing (สปส.1-10) had no way out of payroll | Payroll → monthly social security filing, and `GET /payroll/reports/sso-filing?year=&month=&format=json|csv|xlsx|pdf`, give the form's part 1 (total wage, employee and employer contributions, their sum, the number of insured) and part 2 (one row per person in employee-code order: sequence, national ID, or the social security card number for a foreign worker, name, wage, contribution). Contributions are `computeSocialSecurity` (CW-084) on the month's wage with both halves added first, so the form and the payslips use one rule; each row also shows what the payslips deducted and is marked where it differs. Tested in the e2e at the period year's ceiling (23,000 in 2037 gives 1,150), under the floor (1,470 gives 83) and with a month of no wage listed as nil (note 6). Someone with no valid number is named and every download is refused (`SSO_FILING_HAS_PROBLEMS`); a month with a period not yet approved or paid, or a half-month month missing a half, is refused (`SSO_MONTH_NOT_FINISHED`). Needs `payroll:export` (it carries ID numbers); every read and download is audited as an export, without the numbers. Accepted from the dev: a foreign worker is anyone with a passport or work-permit number on the record, as Cwork stores no nationality; "wage actually paid" is the wage social security is worked on, overtime left out, asked as question 4 on #36; the console defaults to the month just finished, dates in พ.ศ. Guide: `docs/guide/sso-filing.th.md`. Left: the e-Services upload file and the November check (CW-085). 8bb7757, closed 2026-10-11. |
