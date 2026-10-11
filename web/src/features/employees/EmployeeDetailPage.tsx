@@ -20,6 +20,7 @@ import { employeeStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail, LeaveBalance } from '@/types/api';
+import { AccountRolesCard } from './AccountRolesCard';
 import { CompensationCard } from './CompensationCard';
 import { ForeignWorkerDocuments } from './ForeignWorkerDocuments';
 
@@ -148,6 +149,7 @@ export default function EmployeeDetailPage() {
             <CompensationCard employeeId={person.id} canManage={canAny(P.COMPENSATION_MANAGE)} />
           )}
           <ForeignWorkerDocuments person={person} canEdit={canAny(P.EMPLOYEE_UPDATE)} />
+          {canAny(P.ROLE_MANAGE) && <AccountRolesCard employeeId={person.id} />}
 
           {balances.data && (
             <Card title={t('Leave balances')} flush>

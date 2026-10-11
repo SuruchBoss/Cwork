@@ -5,9 +5,10 @@ Every decision this document once listed as open was made on 2026-09-25.
 
 **Who consumes it.** The ERP feature that folds labour into production cost is
 part of its paid Enterprise edition (the ERP's ADR-0015), scheduled after ERP
-v1. **Cwork is and remains entirely Apache 2.0** — the ERP's edition split
-applies to the ERP, not here, and nothing in Cwork moves behind a paywall. This
-is said plainly rather than left to be discovered: a contributor to CW-051
+v1. **This contract and everything that produces it stay in Cwork's free
+edition (Apache 2.0).** Cwork has had a Pro edition in `ee/` since 2026-10-10
+(see the README's Editions section), but nothing already in Cwork moves behind a
+paywall. This is said plainly rather than left to be discovered: a contributor to CW-051
 should know from the start that the first consumer of their work is a paid
 product, that Apache 2.0 has always permitted exactly that for anyone including
 the maintainer, and that this contract is a documented public interface any

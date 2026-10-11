@@ -45,6 +45,8 @@ after tax and social security, never below zero net pay (CW-070).
 Social security now uses the wage ceiling for each period's year, ฿17,500 from
 2026, and a read-only report lists what locked and paid runs deducted short of
 it, for HR to settle with the Social Security Office (CW-075).
+HR and payroll staff are given their roles from the employee page, so no one
+needs SQL or the first administrator's password to run the pilot (CW-079).
 The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
@@ -64,9 +66,26 @@ migration adds the tables for cash advances; nothing existing changes. Social
 security for 2026 is now worked out on ฿17,500 rather than ฿15,000, so a run
 calculated after the upgrade deducts up to ฿125 more from each side for anyone
 earning above ฿15,000; locked and paid runs are not changed, and **Payroll →
-Social security shortfall** shows what they owe.
+Social security shortfall** shows what they owe. Giving or taking away a role
+from the console signs that account out of every device. An account whose role
+grant was limited to a department in the database now sees every employee if
+another of its roles that reads employees has no such limit.
 
 ### Added
+
+- **Roles are given from the employee's page** (CW-079). Setup's first
+  administrator was the only account that could ever hold more than `EMPLOYEE`:
+  nothing in the API or console handed out a role, so a pilot's HR person could
+  only become an officer through SQL. An account with `role:manage` now gives
+  or takes away system roles on the employee's **Account roles** card, through
+  `GET`, `POST /employees/:id/roles` and `DELETE /employees/:id/roles/:grantId`,
+  optionally limited to one department or to a last day. Every change is audited
+  as `PERMISSION_CHANGE` and signs the account out of every device, so the new
+  set applies at once and a role that needs a second factor has one enrolled at
+  the next sign-in. A role can only be handed out or taken away by someone who
+  holds all of its permissions, so the HR manager cannot make anyone a system
+  administrator; no one removes their own `role:manage`, and the last permanent
+  system administrator stays. A Thai guide is in `docs/guide/account-roles.th.md`.
 
 - **Both clients speak English as well as Thai** (CW-016). The web console and
   the employee mobile app were Thai-only, which shut out a director or auditor
@@ -585,6 +604,14 @@ Social security shortfall** shows what they owe.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **A department-limited role narrowed everything the person could see**
+  (CW-079). Any grant limited to a department narrowed the account's
+  `employee:read` to that department, even when another of its roles covered
+  the whole organisation, so an HR officer who was also a manager of one
+  department would see only that department. Only grants that carry
+  `employee:read` count now, and one of them without a department lifts the
+  limit.
 
 - **Social security was deducted on the old ฿15,000 ceiling in 2026** (CW-075).
   The ministerial regulation of 11 December 2025 (Royal Gazette vol. 142, part

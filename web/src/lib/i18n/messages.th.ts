@@ -1161,4 +1161,47 @@ export const thMessages: Record<string, string> = {
   'Worked out from the payslip lines': 'คำนวณจากรายการในสลิป',
   'Total for {month}': 'รวม {month}',
   'Total for {year}': 'รวมปี {year}',
+
+  // CW-079 — account roles on the employee page
+  'Account roles': 'บทบาทของบัญชี',
+  'Give a role': 'ให้บทบาท',
+  'Give role': 'ให้บทบาท',
+  'Could not load the roles.': 'โหลดบทบาทไม่ได้',
+  'This employee has no account, so there is nothing to give a role to.':
+    'พนักงานคนนี้ยังไม่มีบัญชีผู้ใช้ จึงยังให้บทบาทไม่ได้',
+  'No roles. This account can sign in but do nothing.':
+    'ยังไม่มีบทบาท บัญชีนี้เข้าสู่ระบบได้แต่ทำอะไรไม่ได้',
+  'Only {department}': 'เฉพาะ {department}',
+  'until {date}': 'ถึง {date}',
+  'Remove role': 'ถอนบทบาท',
+  '{role} removed.': 'ถอนบทบาท{role}แล้ว',
+  '{role} given.': 'ให้บทบาท{role}แล้ว',
+  'They have been signed out of every device.': 'ระบบออกจากระบบให้เขาทุกเครื่องแล้ว',
+  'They will set up two-factor sign-in when they next sign in.':
+    'เขาจะต้องตั้งค่ายืนยันตัวตนสองชั้นเมื่อเข้าสู่ระบบครั้งถัดไป',
+  'Remove {role} from your own account?': 'ถอนบทบาท{role}ออกจากบัญชีของตัวเองใช่ไหม',
+  'Remove {role} from {email}? They will be signed out of every device.':
+    'ถอนบทบาท{role}ออกจาก {email} ใช่ไหม ระบบจะออกจากระบบให้เขาทุกเครื่อง',
+  Role: 'บทบาท',
+  'Choose a role': 'เลือกบทบาท',
+  'Choose a role.': 'เลือกบทบาทก่อน',
+  'Limit it to one department: they see only its employees.':
+    'จำกัดไว้แผนกเดียว เขาจะเห็นเฉพาะพนักงานในแผนกนั้น',
+  'Every department': 'ทุกแผนก',
+  'Last day (optional)': 'วันสุดท้าย (ไม่บังคับ)',
+  'Leave empty for no end.': 'เว้นว่างไว้ถ้าไม่มีวันสิ้นสุด',
+  'This role can see national IDs, move money or hand out roles, so it needs two-factor sign-in. They will be asked to set it up when they next sign in.':
+    'บทบาทนี้เห็นเลขบัตรประชาชน จ่ายเงิน หรือให้บทบาทคนอื่นได้ จึงต้องยืนยันตัวตนสองชั้น เขาจะถูกขอให้ตั้งค่าเมื่อเข้าสู่ระบบครั้งถัดไป',
+  'They will be signed out of every device, so the change applies at once.':
+    'ระบบจะออกจากระบบให้เขาทุกเครื่อง การเปลี่ยนแปลงจึงมีผลทันที',
+  'The account already holds this role.': 'บัญชีนี้มีบทบาทนี้อยู่แล้ว',
+  'You can only give or take away a role whose permissions you hold yourself.':
+    'ให้หรือถอนได้เฉพาะบทบาทที่คุณมีสิทธิ์ครบทุกข้ออยู่แล้วเท่านั้น',
+  'This is the last system administrator. Make someone else one first.':
+    'นี่คือผู้ดูแลระบบคนสุดท้าย ต้องตั้งคนอื่นเป็นผู้ดูแลระบบก่อน',
+  'You cannot take away your own right to manage roles.':
+    'ถอนสิทธิ์จัดการบทบาทของตัวเองไม่ได้',
+  'The last day has already passed.': 'วันสุดท้ายผ่านไปแล้ว',
+  'This role cannot be limited to a department.': 'บทบาทนี้จำกัดไว้แผนกเดียวไม่ได้',
+  'This account is disabled.': 'บัญชีนี้ถูกปิดใช้งานแล้ว',
 };

@@ -557,37 +557,113 @@ many of the pilot's employees use one.
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
-The owner's income plan of 2026-10-10 makes Cwork the first product to earn,
-sold as a service (hosting, setup, import, keeping the rules current, support)
-with the code staying Apache-2.0. Against the backlog, these are what the plan
-does not yet cover. None blocks Pilot B, which is unpaid; all of them come
-before the first invoice.
+The owner's income plan of 2026-10-10 makes Cwork the first product to earn.
+**Revised 2026-10-11 by the owner:** one person cannot install or look after
+customers on site, so after Pilot A (which the owner installs personally)
+Cwork is sold the way Odoo or a Windows Server product is: the customer's own
+IT installs and runs it, support is online only, and a paid remote
+installation is offered — never on-site. A Cwork Cloud hosted by the owner is
+not planned: uptime, off-site backups and acting as the PDPA processor are
+more than one person can carry. Prices are to be researched from real vendor
+pages later; none are set here.
+
+**Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** Cwork
+Pro is an annual self-hosted subscription — the licence key unlocks the `ee/`
+features for the year (candidates: Social Security Office and Revenue
+Department filing files, bank transfer files) and includes online support; a
+remote installation is offered as a paid extra. Letting it lapse leaves the
+free edition fully working. Payroll calculation and the law updates behind it
+stay free, and a rule change is released for both editions at the same time.
+No prices yet; no hosted service. What Pro must
+**not** be sold as is "the yearly law updates": the README's Editions section
+promises payroll correctness, including the updates when social security, tax
+or labour law changes, in the free edition for good (CW-075 already shipped
+there). Pro features that depend on the law — filing formats, for instance —
+are kept current as part of Pro; the payroll arithmetic underneath stays free.
+
+Against the backlog, these are what the plan does not yet cover. None blocks
+Pilot B, which is unpaid; all of them come before the first invoice.
 
 - **A qualified review of the payroll rules** (#36, open since September).
   Every figure is computed by hand by the dev and checked by the PO; nobody
   qualified has reviewed them, as `docs/payroll-thailand.md` says. Charging for
   payroll on that basis is the largest risk in the plan.
-- **A data processing agreement.** When the owner hosts Cwork, the owner is
-  the customer's processor of employees' national IDs, salaries and health
-  data under the PDPA. `privacy.md` and `privacy-notice.th.md` cover the
-  employer's side only.
-- **Backups for a hosted instance.** CW-062 covers the pilot's own NAS. A
-  hosted customer needs nightly backups off the host, a restore that has been
-  tried, and `FIELD_ENCRYPTION_KEY` kept apart from them.
-- **What support means.** A channel, hours and a response time, written down,
-  and who answers when the owner is at the day job.
-- **Updates when the law moves.** CW-075 is the first example. A paying
-  customer needs a stated promise of how soon a rule change reaches them.
+- **Remote access and the PDPA.** With no hosting, the owner is not the
+  customer's processor by default. A remote installation or a support session
+  that can see live employee data (national IDs, salaries, health data) may
+  still make the owner one for that session. Needed: a short written term for
+  remote sessions (customer present, no copies taken, preferably working on a
+  database without real data), and support that asks for logs rather than
+  dumps. `privacy.md` and `privacy-notice.th.md` cover the employer's side
+  only.
+- **Backups are the customer's.** `docs/operations.md` already documents
+  backups, upgrading and restoring; the support terms must say plainly that
+  the customer's IT runs them and that `FIELD_ENCRYPTION_KEY` is kept apart
+  from the backups. CW-062 covers the pilot's NAS.
+- **What support means.** Online only: a channel, hours and a response time,
+  written down, what is in scope (Cwork itself) and what is not (the
+  customer's server, network, Docker host), and who answers when the owner is
+  at the day job.
+- **Updates when the law moves.** Free for everyone (see above). A paying
+  customer still needs a stated promise of how soon a rule change is released,
+  and that promise is the same for both editions.
+- **Installable by the customer's IT.** CW-080.
 - **The licence note.** CW-029 recorded that, with DCO and no CLA, the licence
   "cannot realistically be changed". There are no outside contributors yet, so
   an `ee/` folder under another licence for new code, as PaynEat-ERP did,
   stays open to the owner; it should be decided before the first outside
   contribution, not after.
-- **The README** says plainly that self-hosting is free and what the paid
-  service adds.
+  **Decided by the owner (2026-10-10, confirmed in writing 2026-10-11):** Cwork
+  gets a Pro edition in `ee/` under the Elastic License 2.0. Everything already
+  in the repository, and everything outside `ee/` afterwards, stays Apache-2.0
+  for good; payroll correctness and the law updates behind it, leave,
+  attendance, PDPA tools, export, security and bug fixes, and one company with
+  no employee limit stay free. Code outside `ee/` never imports from it; a Pro
+  key is checked offline and an expired key never locks data or stops a payroll
+  run; `ee/` takes no outside contributions. The README (both languages, new
+  Editions section), CONTRIBUTING, `docs/spec.md` and
+  `docs/labour-data-contract.md` were updated to match. Not done yet, each its
+  own ticket when the first Pro code is due: `ee/LICENSE` copied verbatim from
+  the official Elastic License 2.0 text, the SPDX check accepting `Elastic-2.0`
+  only under `ee/`, a CI guard against imports from `ee/`, and the offline
+  licence key.
+- **The README** says plainly that self-hosting is free and what Pro and the
+  paid remote installation add — done in the Editions section; prices to be
+  added when set.
 
 **Acceptance** Each point above has an owner's decision recorded here, and the
 ones that need code or docs are their own tickets.
+
+### CW-080 · A customer's IT installs Cwork without the maintainer
+`P1` · operations · docs · **M** · after Pilot A; part of CW-077, not queued
+
+From the owner's revised plan (CW-077): after Pilot A, Cwork is installed by
+the customer's own IT, with online support only. Today a real install works —
+`docker compose` plus `docs/operations.md` (deploying, first run, backups,
+upgrading, restoring) — but it assumes someone who builds from source and
+already knows how to put a web service behind HTTPS. Gaps an outside IT
+person will hit:
+
+- **Published, versioned images.** `docker compose up --build` builds from the
+  repository. A release should be pullable images with a version tag, so an
+  install is repeatable and an upgrade is a tag change.
+- **HTTPS in front.** No guide covers a reverse proxy and certificates; the
+  only mention is `PUBLIC_WEB_URL`. One documented, tested way (for example a
+  Caddy service in compose) is enough.
+- **What the machine needs.** CPU, memory and disk for a given number of
+  employees, supported OS, and that the NAS-style ARM case is or is not
+  supported (CW-062 will tell).
+- **One installation guide in Thai,** start to finish, written for an IT
+  person who has not seen the project: requirements, secrets, first run,
+  HTTPS, backups, upgrading, what to send support when something fails.
+- **A support-bundle command** that collects version, configuration with
+  secrets removed, and recent logs, so online support never needs a database
+  dump.
+
+**Acceptance** Someone other than the maintainer, using only the published
+guide and images on a clean machine, reaches a working install over HTTPS,
+takes a backup, restores it, and upgrades one version — and that run is
+written up here.
 
 ---
 

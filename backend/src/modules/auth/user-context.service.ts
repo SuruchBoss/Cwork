@@ -6,6 +6,7 @@ import { UserStatus } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import type { PermissionKey } from '../../core/security/permissions';
+import { readScopeDepartments } from '../organization/role-grants';
 
 interface CacheEntry {
   value: Omit<AuthenticatedUser, 'sessionId'>;
@@ -49,15 +50,19 @@ export class UserContextService {
 
     const permissions = new Set<PermissionKey>();
     const roles: string[] = [];
-    const scopedDepartmentIds = new Set<string>();
 
     for (const grant of user.roles) {
       roles.push(grant.role.key);
       for (const permission of grant.role.permissions) {
         permissions.add(permission as PermissionKey);
       }
-      if (grant.departmentId) scopedDepartmentIds.add(grant.departmentId);
     }
+    const scopedDepartmentIds = readScopeDepartments(
+      user.roles.map((grant) => ({
+        departmentId: grant.departmentId,
+        permissions: grant.role.permissions,
+      })),
+    );
 
     const value: Omit<AuthenticatedUser, 'sessionId'> = {
       userId: user.id,
@@ -66,7 +71,7 @@ export class UserContextService {
       email: user.email,
       roles,
       permissions: [...permissions],
-      scopedDepartmentIds: [...scopedDepartmentIds],
+      scopedDepartmentIds,
     };
 
     this.cache.set(userId, { value, expiresAt: Date.now() + UserContextService.CACHE_TTL_MS });

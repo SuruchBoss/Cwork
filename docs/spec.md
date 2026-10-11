@@ -69,7 +69,7 @@ what it does not do without reading the source.
 
 | | |
 |---|---|
-| Licence | Apache-2.0, kept. Contributions under DCO (`Signed-off-by`), no CLA — which also means the licence cannot realistically be changed later (CW-029). |
+| Licence | Apache-2.0 outside `ee/`; Elastic License 2.0 for Cwork Pro in `ee/` (owner decision 2026-10-10, recorded in CW-077; see the README's Editions section). Contributions under DCO (`Signed-off-by`), no CLA — so contributions outside `ee/` can never be relicensed (CW-029), and `ee/` takes no outside contributions. |
 | Versioning | 0.x. Breaking changes are allowed and recorded in `CHANGELOG.md`. No LTS before 1.0 (CW-028). |
 | Deployment | One organisation per deployment. One instance is the default and what the pilot will run on; several are supported rather than forbidden, since CW-003 and CW-007 made replicas a matter of configuration. |
 | Language | Thai is the interface default. English is a translation: keys are English, Thai ships as a translation file. Content an organisation types in — leave type names, departments, positions — is not translated (CW-016). The README is already bilingual (CW-035). |
@@ -226,7 +226,7 @@ be able to see the whole of Cwork's outward surface in one place.
 | **Telemetry** | Cwork conforms to the ecosystem's telemetry contract v1.2 (CW-050): string `severity`, a `labels` object, the five metrics on a port of their own so `/metrics` is never published with the API, `app.log` for lines the catalogue does not name, and nothing from its "never in logs" list — which matters more here than anywhere else in the ecosystem, since Cwork holds the salaries and the national IDs. Cwork's objection to v1 was accepted upstream: labels are plain by default and only take Google Cloud's key names under `LOG_FORMAT=gcp`. Cwork's outbox rows fan out to handlers by event type rather than being addressed to a system, so the `destination` label on the two outbox gauges carries the event type — `notification.raised`, and `labour.cost.period_closed` once CW-051 exists. |
 | **Labour data** | Two aggregates, no employee identity and no individual pay, ever. Suppressed below five people. Revisioned, because the consumer cannot amend what it has already posted. Versioned `labour-data/1.0`, on its own and not on Cwork's 0.x ([the contract](./labour-data-contract.md), CW-051). |
 | **Not adopted** | A shared database, reading another system's tables, or any change to payroll or tax calculation for an ecosystem's convenience. |
-| **Who consumes it** | The ERP feature that folds labour into production cost belongs to its paid edition. **Cwork is entirely Apache 2.0 and stays that way** — said plainly rather than left to be discovered, because Apache 2.0 has always permitted it and a contributor should not have to work that out for themselves. |
+| **Who consumes it** | The ERP feature that folds labour into production cost belongs to its paid edition. The contract itself stays in Cwork's free edition (Apache 2.0) — said plainly rather than left to be discovered, because Apache 2.0 has always permitted a paid consumer and a contributor should not have to work that out for themselves. Cwork's own Pro edition (`ee/`) is described in the README's Editions section. |
 
 Nothing is outstanding between the two systems, and nothing in Cwork's own
 roadmap waits on either of them.
@@ -763,7 +763,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 524 backend, 154 web, 101 mobile. A 350-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 530 backend, 160 web, 101 mobile. A 358-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

@@ -57,8 +57,8 @@ screenshots.
 Per-seat pricing means every hire raises the bill, the contract renews every
 year, and your employee data lives on somebody else's servers.
 
-- **No licence fee, no per-seat fee.** Apache-2.0: twenty employees or two
-  thousand cost the same — the server.
+- **No licence fee, no per-seat fee.** The free edition is Apache-2.0: twenty
+  employees or two thousand cost the same — the server.
 - **One machine.** Three Docker commands. PostgreSQL alone does the work of a
   queue, a lock service and a rate-limit store, so there is no Redis or Kafka to run.
 - **Your data, in your database.** Back it up, move it, or leave; nothing locks you in.
@@ -528,12 +528,12 @@ events. A site has the same location code in all of them
 ([ADR-0006](./docs/adr/0006-location-code.md)).
 
 The ERP has a free edition and a paid one; the feature that will consume Cwork's
-labour aggregates is in the paid one. **Cwork is entirely Apache 2.0 and stays
-that way** — that split belongs to the ERP. Worth knowing before you contribute
-rather than after: Apache 2.0 has always allowed anyone, the maintainer
-included, to build a commercial product on this, and the
-[labour data contract](./docs/labour-data-contract.md) is a documented public
-interface any other consumer may implement against.
+labour aggregates is in the paid one. Since 2026-10-10 Cwork has the same kind of
+split — see [Editions](#editions). The
+[labour data contract](./docs/labour-data-contract.md) stays in the free
+edition: it is a documented public interface any other consumer may implement
+against, and Apache 2.0 has always allowed anyone, the maintainer included, to
+build a commercial product on it.
 
 None of this is a dependency. **Installing Cwork on its own gives you the whole
 product**, and every convention adopted for the ecosystem has to earn its place
@@ -582,8 +582,8 @@ means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 524 backend unit
-tests, 154 web, 101 mobile, plus a 350-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 530 backend unit
+tests, 160 web, 101 mobile, plus a 358-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -642,8 +642,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 524 backend unit tests, 154 web,
-  101 mobile, 350 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 530 backend unit tests, 160 web,
+  101 mobile, 358 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the
@@ -651,6 +651,38 @@ What it implies about review:
 
 The history has not been rewritten to look otherwise, and it will not be.
 Rewriting it would be the actual dishonesty.
+
+## Editions
+
+**This changed on 2026-10-10.** Until then this README said Cwork was entirely
+Apache 2.0 and would stay that way. The maintainer reversed that before any
+company ran Cwork in production, and says so here rather than leaving it to be
+discovered: charging for something people already use would be breaking a
+promise; offering paid features on top of a free edition that does the job is
+not, and the place to draw that line is before anyone depends on it. There were
+no outside contributors at the time, so nobody else's work changes licence.
+
+- **Everything already here stays Apache 2.0, for good.** All code in this
+  repository up to the commit that published this section, and everything
+  outside `ee/` after it.
+- **Free, always:** payroll that is correct for Thailand, *including the updates
+  when social security, tax or labour law changes* — employees are harmed when a
+  deduction is wrong, so that never sits behind a licence; leave, attendance,
+  the PDPA tools, data export, security fixes and bug fixes; one company with no
+  limit on the number of employees.
+- **Cwork Pro** is new code in `ee/` under the Elastic License 2.0. Candidates,
+  not promises: online filing to the Social Security Office and the Revenue
+  Department, bank transfer files, several companies in one install, single
+  sign-on, deeper analytics, LINE notifications.
+- **How Pro is sold.** An annual subscription for an installation you run
+  yourself: your own IT installs and operates Cwork, support is online, and a
+  remote installation can be bought; there is no on-site service and no hosted
+  edition. Letting the subscription lapse leaves the free edition fully
+  working, and a change in the law is released to both editions at the same
+  time. Prices are not set yet.
+- **How the two meet.** Code outside `ee/` never imports from it. A Pro licence
+  key is checked offline, and an expired key never locks anyone's data or stops
+  a payroll run.
 
 ## Contributing
 
@@ -663,16 +695,20 @@ Commits in a pull request from a fork need a sign-off (`git commit -s`) under th
 [Developer Certificate of Origin](./DCO) — a statement that you had the right to
 submit the change, checked in CI. **There is no CLA**: a contributor licence
 agreement is a barrier in front of a one-line fix, and the DCO answers the
-question a CLA is usually reached for. The accepted consequence is that the
-licence cannot realistically be changed later, since that would need every
-contributor's agreement. Apache-2.0 is the answer, for good.
+question a CLA is usually reached for. The accepted consequence is that
+contributions outside `ee/` are Apache-2.0 for good: without a CLA they cannot be
+relicensed, and they will not be. `ee/` takes no outside contributions — see
+[Editions](#editions).
 
 ## Licence
 
-[Apache 2.0](./LICENSE). Copyright 2026 Suruch Chakrapeesirisuk; see also
-[NOTICE](./NOTICE).
+[Apache 2.0](./LICENSE) for everything outside `ee/`; the Elastic License 2.0
+for code in `ee/` (Cwork Pro), with its own licence file in that directory once
+the first Pro code lands.
+Copyright 2026 Suruch Chakrapeesirisuk; see also [NOTICE](./NOTICE).
 
-Every source file starts with its copyright line and an SPDX identifier
-(`SPDX-License-Identifier: Apache-2.0`), checked in CI; applied database
+Every source file starts with its copyright line and an SPDX identifier —
+`SPDX-License-Identifier: Apache-2.0` outside `ee/`, `Elastic-2.0` inside it —
+checked in CI; applied database
 migrations are exempt. Outside contributions are signed off under the Developer
 Certificate of Origin — see [CONTRIBUTING.md](./CONTRIBUTING.md#developer-certificate-of-origin-dco).

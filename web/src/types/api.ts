@@ -429,6 +429,35 @@ export interface SsoShortfallReport {
 }
 
 /** One record of an employee's pay. Amounts arrive as decimal strings. */
+/** An employee's account and its roles (CW-079), from `GET /employees/:id/roles`. */
+export interface AccountRoleGrant {
+  id: string;
+  roleKey: string;
+  roleName: string;
+  department: { id: string; name: string; code: string } | null;
+  grantedAt: string;
+  /** The last day the role applies; null when it does not lapse. */
+  expiresOn: string | null;
+  expired: boolean;
+}
+
+export interface GrantableRole {
+  key: string;
+  name: string;
+  description: string | null;
+  requiresSecondFactor: boolean;
+  departmentScopeApplies: boolean;
+  /** False when the caller does not hold every permission in it. */
+  grantable: boolean;
+}
+
+export interface AccountRoles {
+  account: { id: string; email: string; status: string; mfaEnabled: boolean } | null;
+  isSelf: boolean;
+  grants: AccountRoleGrant[];
+  roles: GrantableRole[];
+}
+
 export interface EmployeeCompensation {
   id: string;
   effectiveFrom: string;

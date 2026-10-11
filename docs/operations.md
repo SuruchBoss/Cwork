@@ -70,7 +70,8 @@ Other things worth knowing:
   its own.
 - **The account has no employee record.** It is an operator, not a member of
   staff. Create employees from the console afterwards; give the person their own
-  employee account then if they need one.
+  employee account then if they need one, and give HR and payroll staff their
+  roles from the employee's page (**Account roles**).
 
 ### Demo data is a separate thing
 
@@ -198,6 +199,9 @@ enrol one — see CW-021 in the backlog — so turning this on organisation-wide
 while field staff have no console access will strand them.
 
 ## Giving a role a permission
+
+To give a person a role, use the console: open the employee and use **Account
+roles** (CW-079). This section is only for changing what a role itself may do.
 
 Roles are copied into the organisation when it is set up, and Cwork has no
 screen or API to change what a role may do yet. To give one a permission, add

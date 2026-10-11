@@ -28,9 +28,10 @@ and rotate on every use:
 - Both clients collapse concurrent 401s into a single refresh, so parallel
   requests cannot trip that detection by racing each other.
 
-**Session invalidation.** `User.sessionsValidFrom` is bumped on password change
-and forced logout; any access token issued before that instant is rejected
-immediately, without waiting for it to expire.
+**Session invalidation.** `User.sessionsValidFrom` is bumped on password change,
+forced logout, and when someone else gives or takes away one of the account's
+roles; any access token issued before that instant is rejected immediately,
+without waiting for it to expire, and the account's refresh tokens are revoked.
 
 **Permissions are read from the database, not the token.** Revoking a role takes
 effect within 30 seconds (a small in-process cache) rather than when the access
@@ -79,7 +80,35 @@ The specifics:
 ## Authorisation
 
 Permissions are strings (`leave:approve`, `employee:read:sensitive`). Roles are
-named bundles of them, so a customer can build a role without a code change.
+named bundles of them.
+
+What a customer can do from the console, and what still needs the database:
+
+- **Who holds which role** is managed from the employee's page by an account
+  with `role:manage` (CW-079): give one of the eight system roles, optionally
+  limited to one department or to a last day, or take one away. Each change is
+  audited (`PERMISSION_CHANGE`, naming the role and the account) and signs the
+  account out of every device, so its next session carries the new set, and a
+  new role that needs a second factor gets one enrolled at that sign-in.
+- **What a role may do** — its permissions — and **new roles** still need the
+  database: see "Giving a role a permission" in `docs/operations.md`. There is
+  no screen or API for it yet, so a custom role is not something a customer
+  without database access can build.
+
+Guard-rails on handing out roles, all enforced by the API:
+
+- A role can only be given or taken away by someone who holds every permission
+  in it. `role:manage` alone is not enough: the HR manager holds it, but cannot
+  make anyone, themselves included, a system administrator.
+- No one takes `role:manage` away from themselves, and the last permanent,
+  organisation-wide `SUPER_ADMIN` grant on an active account cannot be removed.
+  Role changes in one organisation run one at a time under an advisory lock, so
+  two administrators cannot remove each other at once.
+- A department limit narrows `employee:read` to that department. Only grants
+  carrying `employee:read` count, and one of them without a department lifts
+  the limit, so a department-limited manager role does not shrink what the same
+  person sees as an HR officer. Roles that manage roles or the organisation
+  cannot be limited to a department.
 
 - `JwtAuthGuard` is global: a route is authenticated unless it declares
   `@Public()`. Forgetting a guard fails closed.

@@ -400,9 +400,11 @@ describe('Pay before Cwork (e2e)', () => {
         taxableIncome: 120_000,
         withholdingTax: 2_000,
       });
+      // Sums of baht amounts, rounded to satang as the service rounds them.
+      const baht = (amount: number) => Math.round(amount * 100) / 100;
       expect(yearToDate.forThisMonth).toEqual({
-        taxableIncome: figures.taxableIncome + 120_000,
-        withholdingTax: figures.withholdingTax + 2_000,
+        taxableIncome: baht(figures.taxableIncome + 120_000),
+        withholdingTax: baht(figures.withholdingTax + 2_000),
         ssoEmployee: figures.ssoEmployee,
       });
       // More income in the year projects more tax.
