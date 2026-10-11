@@ -43,7 +43,9 @@ employee page, and the run page says what to check on each payslip (CW-069).
 A holiday that falls on the weekly day off is taken on a working day, which
 attendance, leave, overtime and payroll all agree on, whether HR marks the
 substitute day or leaves it to Cwork (CW-076, CW-081); a daily-wage employee is
-paid at least twice the hourly rate for work on the weekly day off.
+paid at least twice the hourly rate for work on the weekly day off. A monthly
+salary prorated for a joiner, a leaver or a day off unpaid is worked out over the
+employee's own working days, a substitute day not among them (CW-082).
 Cash advances are recorded once paid and taken back by the next regular run,
 after tax and social security, never below zero net pay (CW-070).
 Social security now uses the wage ceiling for each period's year, ฿17,500 from
@@ -100,6 +102,12 @@ calculated after the upgrade follows this; approved and paid runs are not
 recalculated and keep their satang figures, which the shortfall report shows
 as small differences. A half-month month's two halves still add up to the
 month's figure.
+A monthly run calculated after the upgrade prorates a joiner, a leaver and a
+day of unpaid leave over the employee's own working days, which leaves out a
+substitute day; in a month with one the day is worth slightly more, so such a
+payslip pays a few satang to a few baht more than before. Someone who works the
+full month with nothing deducted is paid the same, and approved and paid runs
+are not recalculated. A schedule with Saturday work counts its Saturdays too.
 The monthly social security filing needs `payroll:export` and adds no migration;
 a month must have an approved or paid run for every period before it can be
 filed, and anyone without a national ID (or, for a foreign worker, a social
