@@ -6,39 +6,27 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-071** (#74, printable payslips and a wage receipt): done, waiting for
-  the PO's review.
-  - `documents/payslip-sheet.ts` is the pure model (what a slip and the receipt
-    say, `payslipDiscrepancy`, `payslipNotes`); `documents/payslip-renderer.ts`
-    draws it with pdfkit and Sarabun: 1/2/4 to an A4 sheet, a font ladder
-    (10 → 7pt), a slip that will not fit its cell gets a page of its own.
-  - `payroll/payslip-print.service.ts` loads the run, refuses unless the run is
-    APPROVED or PAID and every slip adds up, and audits each print as `EXPORT`
-    on the `PayrollRun`. Routes are on `PayrollController` under
-    `runs/:id/print/payslips`, `runs/:id/print/receipts`, `payslips/:id/print`,
-    all `payroll:read`.
-  - Web: a print card on the run page (layout choice, two buttons, disabled
-    until approval). Thai guide `docs/guide/printing-payslips.th.md`.
-- Walked on a fresh `db:init` install in a real browser: the holidays page and
-  the run page. The walk found two defects on the holiday page (cramped side
-  column; the automatic Monday-to-Friday note shown beside HR's own substitute),
-  both fixed in this unit.
-- Earlier: CW-081 (#84) and CW-076 (#81) passed review; CW-082 (#85, monthly
-  proration on the work calendar) is open and not queued.
-
-## Decisions for the PO to check
-
-- Only `payroll:read` prints. An employee cannot print their own slip; if the
-  pilot wants that it is a separate ticket (the slip is theirs, but a print is
-  audited as an export).
-- The payslip's `warnings` are for HR, so only `SUBSTITUTE_HOLIDAY` is printed,
-  as a note. Rest-day rate notes and the like stay off the slip.
-- "Matches the screen" is tested against the payslip record the API returns
-  (`GET /payroll/payslips/:id`): the console has no payslip detail page, only the
-  run's summary table.
-- The receipt's statement line is a template; the accountant should confirm the
-  wording (asked in #36).
+- **CW-084** (#87, social security as the official form says): done, waiting
+  for the PO's review. `computeSocialSecurity` in `payroll/domain/thai-tax.ts`
+  is the one function for a person's monthly contribution: wage, floor and
+  ceiling for the period's year, rounded half up to the baht, employer the same,
+  nil when nothing was paid. A first half takes 5% of its own wage in whole baht
+  with no floor; a second half is the month less the first. Approved and paid
+  runs are never recalculated (`PAYROLL_RUN_LOCKED` already refuses it), so a
+  month paid before this stays in satang and the shortfall report shows the
+  difference. Source cited in `docs/payroll-thailand.md`: the 2025 gazette
+  announcement on the form (vol. 142, special 405 Ngor, pp. 23-27). Three
+  questions for the accountant are in #36.
+- **CW-048** (#45, monthly social security filing) is next and part built, on the
+  local branch `wip-cw048` (not pushed): the pure filing domain, the service
+  (`sso-filing.service.ts`, month-finished check, identifier rules, audit, CSV
+  and XLSX), the route `GET /payroll/reports/sso-filing`, an e2e spec and the web
+  page. It still has to be rebased onto CW-084 so it uses `computeSocialSecurity`
+  (a month with no wage is listed with nil, per note 6 of the form), then
+  gates, docs and a report. The upload-file formatter waits for the owner's
+  sample file from e-Services; no public layout was found.
+- Earlier: CW-071 passed review (printing); CW-082 (#85) is open, not queued.
 
 ## Next
 
-- Wait for the PO's review of CW-071; then whatever the PO queues.
+- Wait for the PO's review of CW-084, then finish CW-048 from `wip-cw048`.
