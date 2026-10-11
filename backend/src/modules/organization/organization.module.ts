@@ -6,10 +6,11 @@ import { OrganizationController } from './organization.controller';
 import { OrganizationService } from './organization.service';
 import { UserRolesController } from './user-roles.controller';
 import { UserRolesService } from './user-roles.service';
+import { WorkCalendarService } from './work-calendar.service';
 
 @Module({
   controllers: [OrganizationController, UserRolesController],
-  providers: [OrganizationService, UserRolesService],
-  exports: [OrganizationService],
+  providers: [OrganizationService, UserRolesService, WorkCalendarService],
+  exports: [OrganizationService, WorkCalendarService],
 })
 export class OrganizationModule {}

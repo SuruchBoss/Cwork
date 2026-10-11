@@ -17,13 +17,14 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import {
   formatDateOnly,
-  isoWeekday,
   minutesBetween,
   toDateOnly,
   workDateFor,
 } from '../../core/utils/date.util';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
+import { isHoliday } from '../organization/domain/work-calendar';
 import { OrganizationService } from '../organization/organization.service';
+import { WorkCalendarService } from '../organization/work-calendar.service';
 import {
   AnomalyFlag,
   deriveAttendance,
@@ -55,6 +56,7 @@ export class AttendanceService {
     private readonly prisma: PrismaService,
     private readonly organization: OrganizationService,
     private readonly latePunch: LatePunchConfirmationService,
+    private readonly calendar: WorkCalendarService,
   ) {}
 
   /**
@@ -457,13 +459,14 @@ export class AttendanceService {
   ): Promise<void> {
     const day = toDateOnly(workDate);
 
-    const [punchRows, shift, holidays, leaveDay, scheduleWeekdays] = await Promise.all([
+    const [punchRows, shift, calendarDay, leaveDay] = await Promise.all([
       this.prisma.attendancePunch.findMany({
         where: { employeeId, workDate: day },
         orderBy: { punchedAt: 'asc' },
       }),
       this.resolveShift(employeeId, day),
-      this.organization.holidayDateSet(organizationId, day, day),
+      // A holiday's substitute day is a holiday here too (CW-081).
+      this.calendar.dayFor(organizationId, employeeId, day),
       this.prisma.leaveRequestDay.findFirst({
         where: {
           date: day,
@@ -471,7 +474,6 @@ export class AttendanceService {
         },
         select: { dayValue: true, leaveRequestId: true },
       }),
-      this.resolveWorkingWeekdays(employeeId, day),
     ]);
 
     // A correction supersedes the automatic punches of the same type.
@@ -484,8 +486,8 @@ export class AttendanceService {
       anomalyFlags: p.anomalyFlags,
     }));
 
-    const isHoliday = holidays.has(formatDateOnly(day));
-    const isWorkingDay = scheduleWeekdays.includes(isoWeekday(day));
+    const holiday = isHoliday(calendarDay);
+    const isWorkingDay = calendarDay.scheduled;
 
     const derived = deriveAttendance({
       workDate: day,
@@ -493,7 +495,7 @@ export class AttendanceService {
       punches,
       shift: shift ? toShiftDefinition(shift) : null,
       isWorkingDay,
-      isHoliday,
+      isHoliday: holiday,
       leaveDayValue: leaveDay ? Number(leaveDay.dayValue) : 0,
     });
 
@@ -847,26 +849,6 @@ export class AttendanceService {
     });
 
     return assignment?.schedule.defaultShift ?? null;
-  }
-
-  private async resolveWorkingWeekdays(employeeId: string, workDate: Date): Promise<number[]> {
-    const override = await this.prisma.shiftAssignment.findUnique({
-      where: { employeeId_date: { employeeId, date: workDate } },
-      select: { isDayOff: true },
-    });
-    if (override) return override.isDayOff ? [] : [isoWeekday(workDate)];
-
-    const assignment = await this.prisma.scheduleAssignment.findFirst({
-      where: {
-        employeeId,
-        effectiveFrom: { lte: workDate },
-        OR: [{ effectiveTo: null }, { effectiveTo: { gte: workDate } }],
-      },
-      orderBy: { effectiveFrom: 'desc' },
-      include: { schedule: { select: { workingDays: true } } },
-    });
-
-    return assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
   }
 }
 

@@ -15,10 +15,11 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { formatDate, formatMoney, formatYear } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
+import { HolidaysCard } from './HolidaysCard';
 import {
   OrgEditorCard,
   type DepartmentRecord,
@@ -45,13 +46,6 @@ interface Organization {
   timezone: string;
   currency: string;
   defaultLocale: string;
-}
-
-interface Holiday {
-  id: string;
-  date: string;
-  name: string;
-  nameEn: string | null;
 }
 
 export default function OrganizationPage() {
@@ -91,10 +85,6 @@ export default function OrganizationPage() {
   };
 
   const year = new Date().getFullYear();
-  const holidays = useQuery({
-    queryKey: qk.holidays(year),
-    queryFn: () => api.get<Holiday[]>('/holidays', { query: { year } }),
-  });
 
   return (
     <div className="page">
@@ -161,27 +151,7 @@ export default function OrganizationPage() {
           )}
         </Card>
 
-        <Card title={t('Public holidays {year}', { year: formatYear(year) })} flush>
-          {holidays.data && holidays.data.length > 0 ? (
-            <div className="table-wrap">
-              <table className="table">
-                <tbody>
-                  {holidays.data.map((holiday) => (
-                    <tr key={holiday.id}>
-                      <td style={{ width: 130 }}>{formatDate(holiday.date)}</td>
-                      <td>
-                        {holiday.name}
-                        {holiday.nameEn && <div className="subtle">{holiday.nameEn}</div>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState icon="⌗" title={t('No holidays set yet')} />
-          )}
-        </Card>
+        <HolidaysCard year={year} canManage={canManage} />
       </div>
 
       <div className="grid grid--2">

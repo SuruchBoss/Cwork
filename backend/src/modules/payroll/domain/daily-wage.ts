@@ -107,9 +107,10 @@ export interface DaysPaid {
  * - A scheduled day with no attendance and no leave is not paid, and is
  *   flagged: it is usually a day not closed yet, not a day off.
  * - A public holiday on the weekly day off pays nothing on the day itself: it
- *   moves to the next working day (section 29), which is paid as a holiday
- *   and listed for HR (see `substituteHolidays`). If the employee leaves
- *   before that day comes, it is flagged instead: it is owed but not paid.
+ *   moves to a working day (section 29), which is paid as a holiday and
+ *   listed for HR; the work calendar decides which (CW-081). If the employee
+ *   leaves before that day comes, it is flagged instead: it is owed but not
+ *   paid. Work on a substitute day is holiday overtime, like any holiday.
  */
 export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
   let worked = new Decimal(0);
@@ -119,7 +120,6 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
   const noRecord: string[] = [];
   const holidayOnDayOff: string[] = [];
   const substitutes: string[] = [];
-  const substitutesWorked: string[] = [];
 
   for (const day of days) {
     if (day.paidHoliday) {
@@ -130,7 +130,6 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
     if (day.substituteFor) {
       holidays += 1;
       substitutes.push(`${day.substituteFor} → ${day.date}`);
-      if (day.attendance !== null && WORKED.has(day.attendance)) substitutesWorked.push(day.date);
       continue;
     }
     if (day.attendance !== null && WORKED.has(day.attendance)) {
@@ -174,12 +173,6 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
       params: { days: substitutes.length, dates: substitutes.join(', ') },
     });
   }
-  if (substitutesWorked.length > 0) {
-    warnings.push({
-      code: 'SUBSTITUTE_HOLIDAY_WORKED',
-      params: { days: substitutesWorked.length, dates: substitutesWorked.join(', ') },
-    });
-  }
 
   return {
     days: worked.plus(paidLeave).plus(holidays).toNumber(),
@@ -188,39 +181,6 @@ export function countDaysPaid(days: DailyWageDay[]): DaysPaid {
     holidays,
     warnings,
   };
-}
-
-export interface CalendarDay {
-  /** ISO date. */
-  date: string;
-  /** The employee's schedule has work on this weekday. */
-  scheduled: boolean;
-  /** A paid public holiday for this employee's location. */
-  paidHoliday: boolean;
-}
-
-/**
- * Where each holiday on the weekly day off is paid instead (section 29,
- * third paragraph): the next working day of the employee's own schedule that
- * is not itself a holiday. Two such holidays in a row take the next two
- * working days. A holiday on a working day needs no substitute and does not
- * receive one.
- *
- * The calendar must be in date order and cover the days the employee is
- * employed for; a holiday whose substitute would fall after its last day is
- * left out of the result. Returns substitute date → holiday date.
- */
-export function substituteHolidays(calendar: readonly CalendarDay[]): Map<string, string> {
-  const substitutes = new Map<string, string>();
-  const owed: string[] = [];
-  for (const day of calendar) {
-    if (day.paidHoliday) {
-      if (!day.scheduled) owed.push(day.date);
-      continue;
-    }
-    if (day.scheduled && owed.length > 0) substitutes.set(day.date, owed.shift()!);
-  }
-  return substitutes;
 }
 
 /**

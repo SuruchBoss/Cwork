@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-076 · CW-071 · CW-048 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-081 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -156,57 +156,59 @@ seeing any of it.
 ## P0 — blocks a real deployment
 
 
-### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
-`P0` · payroll · **S–M** · before Pilot B · ready (text read 2026-10-10, CW-075 closed)
+### CW-081 · A substitute holiday is two different days to payroll and to attendance
+`P0` · payroll · attendance · **S–M** · before the first paid December run · ready
 
-Two gaps the dev left open in CW-069 phase A and wrote down in
-`docs/payroll-thailand.md`, "Daily wages paid twice a month":
+Found by the dev while finishing CW-076. Daily-wage runs now work out a
+substitute day by themselves (section 29: a traditional holiday on the
+weekly day off moves to the next working day), but nothing else does.
+Attendance, leave and overtime only know the holiday table, which has no
+notion of a substitute day. So a company has to enter the substitute day as
+a holiday for its salaried staff, and that same row then counts as a second
+holiday for its daily-wage staff, whose automatic substitute moves on a day:
 
-- **Substitute holidays.** A traditional holiday that falls on a weekly day
-  off moves to the next working day. Cwork's holiday table has no substitute
-  day, so the daily employee is not paid for it; the payslip only shows
-  `HOLIDAY_ON_DAY_OFF` and HR has to add the day by hand.
-- **Holiday work.** Overtime has one rate per day type, `DAY_OFF` at 1×. A
-  daily employee is not paid for a weekly day off, so work on it should be
-  paid at least twice the hourly rate (section 62, from secondary sources).
-  Cwork underpays and only shows `REST_DAY_WORK_RATE`.
+- **5 December 2026 is a Saturday.** For a five-day week its substitute is
+  Monday 7 December. If HR enters 7 December, a daily-wage worker is paid
+  both 7 and 8 December as holidays, and work on the 8th is flagged as work
+  on a substitute day. If HR does not, a salaried employee who stays home on
+  the 7th is counted absent and loses a day's pay, and a leave request on
+  that day uses up leave. Either way the money is wrong without anyone being
+  told, in the first half of December, the first run after the November
+  shadow payroll.
 
-**Text read 2026-10-10 (PO).** The owner supplied the Act as first published:
-ราชกิจจานุเบกษา เล่ม ๑๑๕ ตอนที่ ๘ ก, 20 February 1998, 44 scanned pages (no text
-layer), kept outside this repo in the owner's notes. As enacted:
-- section 56 (page 13–14): wages for weekly days off are owed *except* to
-  employees paid by the day, the hour or the piece; traditional holidays and
-  annual leave are paid to everyone;
-- section 62 (page 14): work on a day off under sections 28, 29 or 30 pays
-  (1) at least 1× more on top of the day's wage for an employee entitled to
-  wages that day, (2) **at least 2×** the hourly rate for one who is not;
-- section 68 (page 16): the hourly rate of a *monthly* employee is the
-  monthly wage ÷ (30 × normal daily hours).
-
-The secondary sources the dev used say the same, so the 2× for daily staff on
-a weekly day off is not in doubt.
-
-The owner then supplied the Office of the Council of State's consolidated
-text, amended up to No. 7 (2019), 49 pages, also kept in the owner's notes
-(its text layer is garbled by a watermark; read the page images). None of
-sections 29, 56, 62, 68 and 76 carries an amendment footnote there, so the
-1998 wording stands up to 2019. Section 29 (pages 8–9): at least 13
-traditional holidays a year including Labour Day, and one that falls on a
-weekly day off moves to the next working day. Sections 76–77 (pages 17–18):
-see CW-078. **When starting**, the dev reads section 29 itself, and
-`docs/payroll-thailand.md` records each rule as checked against the
-consolidated text to 2019; amendments after 2019, if any, are not checked.
+**Scope**
+- A holiday row can say which holiday it stands in for (an optional
+  reference to another holiday row of the same calendar). Existing rows are
+  unchanged.
+- One place decides, per employee and day, whether it is a working day, a
+  weekly day off, a paid holiday or a substitute for one, from the holiday
+  table and the employee's own schedule. A substitute HR entered takes the
+  place of the automatic one for that holiday; otherwise the automatic rule
+  from CW-076 applies.
+- Attendance, leave, overtime and both kinds of payroll run use that one
+  answer: no absence and no leave taken on a substitute day, overtime on it
+  is holiday overtime, a daily-wage run pays it once.
+- The holiday page lets HR mark a row as the substitute of another and shows
+  the automatic substitutes it would otherwise use.
+- `SUBSTITUTE_HOLIDAY_WORKED` goes away if overtime handles the day;
+  `SUBSTITUTE_HOLIDAY` stays on the payslip.
+- The Known gaps entry in `docs/payroll-thailand.md` is removed or narrowed,
+  and the 0.4.0 upgrade notes say what HR no longer needs to enter.
 
 **Acceptance**
-- A traditional holiday on a Sunday pays a daily employee for the next
-  working day, without HR adding it.
-- Four hours worked by a daily employee on a weekly day off are paid at the
-  multiple the confirmed text gives, and on a traditional holiday likewise.
-- Monthly employees' pay does not change.
+- With 5 December 2026 (Saturday) as a holiday and 7 December entered as its
+  substitute: a daily-wage worker on a Monday–Friday schedule is paid
+  7 December once and 8 December as a normal working day; a salaried
+  employee with no attendance on the 7th is not absent; a day of leave
+  requested on the 7th takes no leave.
+- The same without the entered row gives the same three results.
+- Overtime approved on 7 December is paid at the holiday rate (and at least
+  the daily-wage minimum from CW-076).
+- Every figure is checked by hand in the tests.
 
 **Files** `backend/src/modules/payroll/`, `backend/src/modules/attendance/`,
+`backend/src/modules/leave/`, the holiday model and page,
 `docs/payroll-thailand.md`
-
 ---
 
 
@@ -1366,3 +1368,4 @@ Kept so the reasoning survives.
 | **CW-072** · A fresh install had no departments, and the console could not add one | The employee import needs departments, positions and work locations to exist already, so an Odoo export failed with one `NOT_FOUND` per row. Organisation now adds and renames departments and positions, and adds work locations, through the endpoints that were already there. A work location's code follows ADR-0006 and is never offered for renaming. The form also refuses a duplicate name, which the API allows but the import would call ambiguous. Walked by the dev on a fresh `db:init` install through to an import with no `NOT_FOUND`. eeaa3c9, closed 2026-10-09. |
 | **CW-079** · Only the first administrator could ever hold more than the employee role | Found by the dev while writing CW-070: nothing in the API or console gave an account a role. An account's roles are now listed, granted and removed from the employee's page by someone with `role:manage`, system roles only, with an optional department and expiry. A role can only be handed out by someone who already holds every permission in it; a department limit applies to roles that read employees without managing roles or the organisation, and is worked out per grant. No one removes their own `role:manage`, and the last `SUPER_ADMIN` cannot be removed, checked under a transaction-scoped advisory lock. Every grant and removal is audited and signs the account out (`sessionsValidFrom`, refresh tokens revoked); the console warns that a privileged role means enrolling a second factor at next sign-in. The account lookup is limited to employees the actor can see. `docs/security.md` and `docs/operations.md` say what the console does and what still needs the database. 06330b4, 65ba360, 09099de, 471d9ed, closed 2026-10-11. |
 | **CW-078** · The carry-over warning for cash advances said section 76 was unread | The PO read sections 76 and 77 in the consolidated text to 2019. `ADVANCE_CARRIED_OVER` (Thai and English), `docs/payroll-thailand.md` and the Thai guide now say that repaying an advance is not among the deductions section 76 allows, that taking a carried balance from a later payday may need the employee's written, signed consent naming that purpose (section 77), and that Cwork does not keep that consent, so HR must. The question is on #36 for a qualified reviewer. The advance payslip line is coded `CASH_ADVANCE`, apart from the demo seed's standing `ADVANCE` deduction, tested together. Accepted from the dev: "Who records them" points to giving an HR officer the payroll officer role from the employee's page (CW-079). 0874e40, closed 2026-10-11. |
+| **CW-076** · A daily-wage worker was paid nothing for a holiday on the weekly day off, and rest-day work at the salaried rate | Verified against the consolidated Labour Protection Act to 2019 (Krisdika), sections 29, 56, 61, 62, 63 and 68, none amended in that text; amendments after 2019 are not checked. A half-month run for a daily-wage employee moves a traditional holiday on the weekly day off to the next working day of the employee's own schedule that is not a holiday (two in a row take the next two), looking a month back and ahead, so a substitute in the next half is paid there; the payslip lists each substitute (`SUBSTITUTE_HOLIDAY`). Rest-day overtime below the daily-wage minimum is raised on the payslip, at least 2× on the weekly day off and 1× on a traditional holiday (`REST_DAY_RATE_RAISED`); the overtime request keeps the organisation's rate. Salaried pay is unchanged. Accepted from the dev: a holiday HR entered always counts as its own holiday (the double payment this causes is CW-081); work on a substitute day is paid as the holiday and flagged for HR to record as overtime (`SUBSTITUTE_HOLIDAY_WORKED`); an employee who leaves before the substitute day is flagged as owed (`HOLIDAY_ON_DAY_OFF`); 1.5× (s.61) and 3× (s.63) stay as the organisation sets them. 948396d, closed 2026-10-11. |

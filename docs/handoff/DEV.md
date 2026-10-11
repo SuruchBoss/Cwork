@@ -6,16 +6,17 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-076** (#81, daily-wage holidays): done, waiting for the PO's review. A
-  half's run works out substitute days from each employee's schedule
-  (`substituteHolidays` in `payroll/domain/daily-wage.ts`) and raises rest-day
-  overtime to the s.62 minimum (`dailyWageOvertime`). Sections 29, 56 and
-  61–63, 68 cited in `docs/payroll-thailand.md` against the consolidated text
-  to 2019; the law PDFs are not in the repo.
-- Raised with the PO, not built: attendance, leave and overtime requests do not
-  know substitute days for anyone, so a salaried employee who stays home on an
-  unlisted substitute day is marked absent (see Known gaps there).
-- CW-079 and CW-078 closed on 2026-10-11. Next in the PO's queue: CW-071, CW-048.
+- **CW-081** (#84, one answer for substitute holidays): done, waiting for the
+  PO's review. `organization/domain/work-calendar.ts` decides each employee's
+  day (working, day off, holiday, substitute); `WorkCalendarService` feeds it
+  the schedule, roster changes and holidays, and attendance, leave, overtime
+  and the daily-wage run all call it. `holidays.substituteForId` lets HR mark a
+  substitute; the organisation page shows and sets it.
+- Left as known gaps in `docs/payroll-thailand.md`: a monthly run's proration
+  still counts Monday to Friday less holidays, and days derived before the
+  upgrade keep their old answer until recalculated.
+- CW-076, CW-079 and CW-078 closed on 2026-10-11. Next in the PO's queue:
+  CW-071, CW-048.
 
 ## How the dev room works
 
@@ -35,4 +36,4 @@ this file only says where the dev room stands.
 
 ## Waiting on
 
-- The PO: review of CW-076, and the next ticket.
+- The PO: review of CW-081, and the next ticket.

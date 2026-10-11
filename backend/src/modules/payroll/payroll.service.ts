@@ -32,6 +32,7 @@ import { Decimal, round2, toPrismaDecimal } from '../../core/utils/money.util';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationService } from '../organization/organization.service';
+import { WorkCalendarService } from '../organization/work-calendar.service';
 import { DEFAULT_OT_MULTIPLIERS } from '../attendance/overtime.service';
 import {
   buildPayslip,
@@ -43,7 +44,6 @@ import {
   countDaysPaid,
   dailyWageOvertime,
   minimumWageWarnings,
-  substituteHolidays,
   type DailyWageDay,
   type PayslipWarning,
 } from './domain/daily-wage';
@@ -95,6 +95,7 @@ export class PayrollService {
     private readonly sequences: SequenceService,
     private readonly audit: AuditService,
     private readonly advances: AdvancesService,
+    private readonly workCalendar: WorkCalendarService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -1148,8 +1149,9 @@ export class PayrollService {
 
   /**
    * Each day of the period a daily-wage employee was employed for, with what
-   * decides whether it is paid (CW-069): their schedule, the paid public
-   * holidays where they work, the day's attendance and any approved leave.
+   * decides whether it is paid (CW-069): their work calendar (schedule,
+   * holidays and substitute days, CW-081), the day's attendance and any
+   * approved leave.
    */
   private async dailyWageDays(
     organizationId: string,
@@ -1164,36 +1166,10 @@ export class PayrollService {
         : period.periodEnd;
     if (to < from) return [];
 
-    // A holiday on the weekly day off is paid on the next working day, which
-    // can fall in this period for a holiday in the last one, or in the next
-    // for one in this. The calendar looks a month each way, within the days
-    // the employee is employed for.
-    const lookBack = addUtcDays(period.periodStart, -SUBSTITUTE_SEARCH_DAYS);
-    const lookAhead = addUtcDays(period.periodEnd, SUBSTITUTE_SEARCH_DAYS);
-    const calendarFrom = employee.hireDate > lookBack ? employee.hireDate : lookBack;
-    const calendarTo =
-      employee.lastWorkingDate && employee.lastWorkingDate < lookAhead
-        ? employee.lastWorkingDate
-        : lookAhead;
-
-    const [person, assignments, leaveDays] = await Promise.all([
-      this.prisma.employee.findUniqueOrThrow({
-        where: { id: employee.id },
-        select: { workLocationId: true },
-      }),
-      this.prisma.scheduleAssignment.findMany({
-        where: {
-          employeeId: employee.id,
-          effectiveFrom: { lte: calendarTo },
-          OR: [{ effectiveTo: null }, { effectiveTo: { gte: calendarFrom } }],
-        },
-        orderBy: { effectiveFrom: 'desc' },
-        select: {
-          effectiveFrom: true,
-          effectiveTo: true,
-          schedule: { select: { workingDays: true } },
-        },
-      }),
+    const [workDays, leaveDays] = await Promise.all([
+      // Holidays, their substitute days and the schedule, as attendance,
+      // leave and overtime see them (CW-081).
+      this.workCalendar.daysFor(organizationId, employee.id, from, to),
       this.prisma.leaveRequestDay.findMany({
         where: {
           date: { gte: from, lte: to },
@@ -1206,36 +1182,7 @@ export class PayrollService {
         },
       }),
     ]);
-    const holidays = await this.prisma.holiday.findMany({
-      where: {
-        organizationId,
-        isPaid: true,
-        date: { gte: calendarFrom, lte: calendarTo },
-        OR: [
-          { workLocationId: null },
-          ...(person.workLocationId ? [{ workLocationId: person.workLocationId }] : []),
-        ],
-      },
-      select: { date: true },
-    });
 
-    const paidHolidays = new Set(holidays.map((h) => formatDateOnly(h.date)));
-    const scheduledOn = (date: Date) => {
-      const assignment = assignments.find(
-        (a) => a.effectiveFrom <= date && (a.effectiveTo === null || a.effectiveTo >= date),
-      );
-      // The same default the overtime engine uses for someone with no schedule.
-      const workingDays = assignment?.schedule.workingDays ?? [1, 2, 3, 4, 5];
-      return workingDays.includes(isoWeekday(date));
-    };
-    const substitutes = substituteHolidays(
-      eachDateInRange(calendarFrom, calendarTo).map((date) => ({
-        date: formatDateOnly(date),
-        scheduled: scheduledOn(date),
-        paidHoliday: paidHolidays.has(formatDateOnly(date)),
-      })),
-    );
-    const substitutedOn = new Map([...substitutes].map(([day, holiday]) => [holiday, day]));
     const statusOn = new Map(attendance.map((r) => [formatDateOnly(r.workDate), r.status]));
     const leaveOn = new Map<string, { paid: Decimal; unpaid: Decimal }>();
     for (const day of leaveDays) {
@@ -1249,15 +1196,16 @@ export class PayrollService {
     return eachDateInRange(from, to).map((date) => {
       const key = formatDateOnly(date);
       const leave = leaveOn.get(key);
+      const day = workDays.get(key)!;
       return {
         date: key,
-        scheduled: scheduledOn(date),
-        paidHoliday: paidHolidays.has(key),
+        scheduled: day.scheduled,
+        paidHoliday: day.holiday?.isPaid === true,
         attendance: statusOn.get(key) ?? null,
         paidLeave: leave?.paid.toNumber() ?? 0,
         unpaidLeave: leave?.unpaid.toNumber() ?? 0,
-        substituteFor: substitutes.get(key) ?? null,
-        substitutedOn: substitutedOn.get(key) ?? null,
+        substituteFor: day.substituteFor,
+        substitutedOn: day.substitutedOn,
       };
     });
   }
@@ -1333,13 +1281,6 @@ export class PayrollService {
     if (!period) throw new NotFoundError('PayrollPeriod', periodId);
     return period;
   }
-}
-
-/** How far either side of a period to look for a holiday's substitute day. */
-const SUBSTITUTE_SEARCH_DAYS = 31;
-
-function addUtcDays(date: Date, days: number): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
 }
 
 /**

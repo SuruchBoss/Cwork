@@ -209,6 +209,21 @@ export const thMessages: Record<string, string> = {
   'No departments yet': 'ยังไม่มีแผนก',
   'Public holidays {year}': 'วันหยุดนักขัตฤกษ์ {year}',
   'No holidays set yet': 'ยังไม่ได้ตั้งวันหยุด',
+  'Substitute for {name}, {date}': 'วันหยุดชดเชยของ{name} {date}',
+  'On the weekly day off: taken on {date}, marked by HR':
+    'ตรงกับวันหยุดประจำสัปดาห์ หยุดชดเชยวันที่ {date} ตามที่ฝ่ายบุคคลระบุ',
+  'On a weekend: taken on {date} for a Monday-to-Friday week, unless a later holiday row is marked as its substitute':
+    'ตรงกับวันเสาร์หรืออาทิตย์ คนที่ทำงานจันทร์ถึงศุกร์จะหยุดชดเชยวันที่ {date} เว้นแต่จะระบุวันหยุดแถวอื่นเป็นวันชดเชยของวันนี้',
+  'Not a substitute': 'ไม่ใช่วันชดเชย',
+  'Substitute for {name}': 'เป็นวันชดเชยของ {name}',
+  'Mark as a substitute for…': 'ระบุเป็นวันชดเชยของ…',
+  'That holiday already has a substitute day.': 'วันหยุดนั้นมีวันชดเชยแล้ว',
+  'A substitute day cannot stand in for another substitute, or have one.':
+    'วันชดเชยจะเป็นวันชดเชยของวันชดเชยอีกวันไม่ได้ และมีวันชดเชยของตัวเองไม่ได้',
+  'A substitute day comes after the holiday it stands in for.':
+    'วันชดเชยต้องอยู่หลังวันหยุดที่ชดเชยให้',
+  'A substitute applies to the same work location as its holiday.':
+    'วันชดเชยต้องใช้กับสถานที่ทำงานเดียวกับวันหยุดของมัน',
   people: 'คน',
 
   // Activity log
@@ -1065,8 +1080,6 @@ export const thMessages: Record<string, string> = {
     'วันหยุดตามประเพณีตรงกับวันหยุดประจำสัปดาห์ ({dates}) แต่พนักงานพ้นสภาพก่อนถึงวันทำงานที่จะหยุดชดเชย วันนี้ยังต้องจ่าย ให้เพิ่มเองในรอบเงินเดือน',
   'Paid {days} public holiday(s) that fell on the weekly day off on the next working day instead: {dates}. Do not add these days to the holiday calendar as well':
     'จ่ายวันหยุดตามประเพณีที่ตรงกับวันหยุดประจำสัปดาห์ {days} วัน เป็นวันหยุดชดเชยในวันทำงานถัดไปแล้ว: {dates} ไม่ต้องเพิ่มวันเหล่านี้ในปฏิทินวันหยุดซ้ำ',
-  'Worked on {days} substitute holiday(s): {dates}. The day is paid as a holiday; record the hours as work on a public holiday for the work itself to be paid':
-    'มาทำงานในวันหยุดชดเชย {days} วัน: {dates} ระบบจ่ายวันนั้นเป็นวันหยุดแล้ว ส่วนชั่วโมงที่ทำงานให้บันทึกเป็นการทำงานในวันหยุดตามประเพณี จึงจะได้ค่าทำงาน',
   'Paid {hours} h of rest-day work at the least the law allows a daily-wage employee (section 62): {rates}':
     'จ่ายค่าทำงานในวันหยุด {hours} ชม. ตามอัตราขั้นต่ำของลูกจ้างรายวัน (มาตรา 62): {rates}',
   'The daily rate {rate} is below the minimum wage {minimum} at {location} ({source})':

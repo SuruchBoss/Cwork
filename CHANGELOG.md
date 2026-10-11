@@ -40,9 +40,10 @@ and the console's date fields are typed and picked day first in it (CW-058).
 Daily wages can be paid twice a month, in two half-month periods, with the
 minimum wage set and checked on each work location; HR sets the pay on the
 employee page, and the run page says what to check on each payslip (CW-069).
-A daily-wage employee is paid for a holiday that falls on their day off on the
-next working day without HR adding it, and at least twice the hourly rate for
-work on the weekly day off (CW-076).
+A holiday that falls on the weekly day off is taken on a working day, which
+attendance, leave, overtime and payroll all agree on, whether HR marks the
+substitute day or leaves it to Cwork (CW-076, CW-081); a daily-wage employee is
+paid at least twice the hourly rate for work on the weekly day off.
 Cash advances are recorded once paid and taken back by the next regular run,
 after tax and social security, never below zero net pay (CW-070).
 Social security now uses the wage ceiling for each period's year, ฿17,500 from
@@ -72,12 +73,19 @@ earning above ฿15,000; locked and paid runs are not changed, and **Payroll →
 Social security shortfall** shows what they owe. Giving or taking away a role
 from the console signs that account out of every device. An account whose role
 grant was limited to a department in the database now sees every employee if
-another of its roles that reads employees has no such limit. A half-month run
-calculated after the upgrade pays the substitute day for a holiday on the day
-off, including one that fell in the previous half: if HR already entered that
-substitute in the holiday calendar or paid it by hand, check the run before
-approving it. It also raises daily-wage work on the weekly day off to at least
-2×, so such a run can pay more than the overtime request shows.
+another of its roles that reads employees has no such limit. A migration lets
+a holiday row name the holiday it is the substitute for; existing rows are
+ordinary holidays. HR no longer needs to enter substitute days: Cwork works them
+out per employee. A substitute HR already entered in the holiday calendar is
+still counted as a holiday of its own until it is marked, on the organisation
+page, as the substitute for its holiday; mark it, or a daily-wage worker is paid
+two days off. A half-month run calculated after the upgrade pays the substitute
+day for a holiday on the day off, including one that fell in the previous half:
+if HR already paid it by hand, check the run before approving it. It also
+raises daily-wage work on the weekly day off to at least 2×, so such a run can
+pay more than the overtime request shows. Attendance and overtime now count a
+work location's own holidays, which they used to miss; days already closed
+keep their status until recalculated.
 
 ### Added
 
@@ -615,14 +623,31 @@ approving it. It also raises daily-wage work on the weekly day off to at least
 
 ### Fixed
 
+- **A substitute holiday was a different day to payroll and to attendance**
+  (CW-081). Only a daily-wage run knew that a holiday on the weekly day off
+  moves to a working day; attendance, leave and overtime knew only the holiday
+  table. A company that entered the substitute day for its salaried staff paid
+  its daily-wage staff a second day off, and one that did not docked salaried
+  staff who stayed home and charged leave taken that day. One work calendar
+  now decides, per employee and day, whether it is a working day, a day off, a
+  holiday or a holiday's substitute, from the holiday table, their schedule and
+  any roster change, and attendance, leave, overtime and both kinds of payroll
+  run use it: a substitute day is never an absence, takes no leave, makes
+  overtime holiday work, and is paid once. HR can mark a holiday row as the
+  substitute for another (`substituteForId` on `POST /holidays`, or
+  `PATCH /holidays/:id`), which then replaces the automatic day; the holiday
+  page offers this and shows where each weekend holiday lands for a
+  Monday-to-Friday week. A holiday with a substitute cannot be deleted before
+  it. Attendance and overtime now also see a work location's own holidays,
+  which they used to miss.
+
 - **Daily-wage staff were underpaid for holidays on their day off and for
   work on it** (CW-076). A traditional holiday that falls on the weekly day off
   moves to the next working day (Labour Protection Act s.29), but Cwork paid a
   daily-wage employee nothing for it unless HR entered the substitute day by
   hand. A half's run now works out each employee's substitute days from their
   own schedule, pays them as holidays, and lists them on the payslip
-  (`SUBSTITUTE_HOLIDAY`) so they are not entered twice; a substitute day the
-  employee came in on, or one that falls after they leave, is flagged. Work on
+  (`SUBSTITUTE_HOLIDAY`); one that falls after they leave is flagged. Work on
   the weekly day off was paid at the organisation's day-off rate, 1×, which is
   meant for salaried staff already paid for that day: a daily-wage employee is
   owed at least 2× (s.62(2)), and at least 1× on top of the day for a
