@@ -20,7 +20,7 @@ import { AuditService } from '../audit/audit.service';
 import { MFA_REQUIRED_PERMISSIONS } from '../auth/mfa.service';
 import { UserContextService } from '../auth/user-context.service';
 import type { GrantRoleDto } from './dto/user-roles.dto';
-import { canHandOut, departmentScopeApplies } from './role-grants';
+import { canHandOut, departmentScopeApplies, unlimitedAreas } from './role-grants';
 
 export interface RoleChangeMeta {
   ipAddress?: string;
@@ -86,6 +86,9 @@ export class UserRolesService {
         description: role.description,
         requiresSecondFactor: requiresSecondFactor(role.permissions),
         departmentScopeApplies: departmentScopeApplies(role.permissions),
+        // What a department limit leaves open on this role (CW-083), so the
+        // console can say so before the limit is saved.
+        unlimitedByDepartment: unlimitedAreas(role.permissions),
         grantable: canHandOut(actor.permissions, role.permissions),
       })),
     };

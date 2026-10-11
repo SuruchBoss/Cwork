@@ -1252,6 +1252,12 @@ export const thMessages: Record<string, string> = {
   'Limit it to one department: they see only its employees.':
     'จำกัดไว้แผนกเดียว เขาจะเห็นเฉพาะพนักงานในแผนกนั้น',
   'Every department': 'ทุกแผนก',
+  'A department limit narrows employee records, leave, attendance, overtime, expenses, performance and documents. It does not narrow the following, which they still see for every department:':
+    'การจำกัดแผนกกรองเฉพาะข้อมูลพนักงาน การลา เวลาทำงาน ล่วงเวลา ค่าใช้จ่าย ผลงาน และเอกสาร ส่วนเรื่องต่อไปนี้ไม่ถูกกรอง เขายังเห็นของทุกแผนก:',
+  'Pay: payroll runs, payslips, printed payslips, wage receipts and compensation':
+    'เงินเดือน: รอบจ่ายเงินเดือน สลิปเงินเดือน สลิปที่พิมพ์ ใบรับเงิน และค่าตอบแทนรายคน',
+  Resignations: 'ใบลาออก',
+  'The audit log': 'บันทึกการใช้งานระบบ (audit log)',
   'Last day (optional)': 'วันสุดท้าย (ไม่บังคับ)',
   'Leave empty for no end.': 'เว้นว่างไว้ถ้าไม่มีวันสิ้นสุด',
   'This role can see national IDs, move money or hand out roles, so it needs two-factor sign-in. They will be asked to set it up when they next sign in.':

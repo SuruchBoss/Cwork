@@ -12,9 +12,16 @@ import { formatDate, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { roleLabels } from '@/lib/labels';
 import { useAuthStore } from '@/stores/auth.store';
-import type { AccountRoleGrant, AccountRoles, GrantableRole } from '@/types/api';
+import type { AccountRoleGrant, AccountRoles, GrantableRole, UnlimitedArea } from '@/types/api';
 
 type T = ReturnType<typeof useT>;
+
+/** What a department limit does not reach, in the words HR reads (CW-083). */
+const unlimitedAreaLabels: Record<UnlimitedArea, string> = {
+  PAY: 'Pay: payroll runs, payslips, printed payslips, wage receipts and compensation',
+  RESIGNATIONS: 'Resignations',
+  AUDIT_LOG: 'The audit log',
+};
 
 function roleLabel(key: string, t: T): string {
   return t(roleLabels[key] ?? key);
@@ -281,6 +288,20 @@ function GrantForm({
           <DateInput value={expiresOn} onChange={setExpiresOn} min={todayIso()} />
         </Field>
       </div>
+      {role && departmentId && role.unlimitedByDepartment.length > 0 && (
+        <div className="alert alert--warning" role="status">
+          <p style={{ margin: 0 }}>
+            {t(
+              'A department limit narrows employee records, leave, attendance, overtime, expenses, performance and documents. It does not narrow the following, which they still see for every department:',
+            )}
+          </p>
+          <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+            {role.unlimitedByDepartment.map((area) => (
+              <li key={area}>{t(unlimitedAreaLabels[area])}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {role?.requiresSecondFactor && !mfaEnabled && (
         <div className="alert alert--warning" role="status">
           {t(

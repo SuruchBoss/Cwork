@@ -37,6 +37,49 @@ export function departmentScopeApplies(rolePermissions: readonly string[]): bool
   );
 }
 
+/**
+ * What a department limit does not narrow (CW-083). The limit is a filter on
+ * employee queries, so it reaches employees and what hangs off them (leave,
+ * attendance, overtime, expenses, performance, documents). These are read for
+ * the whole organisation by whoever holds the permission, department limit or
+ * not, so a role carrying one still shows the other departments' data. The
+ * console names the areas when a limit is chosen; the list is the one place to
+ * add to when a permission is found to sit outside the filter.
+ */
+export const OUTSIDE_THE_DEPARTMENT_LIMIT = [
+  {
+    area: 'PAY',
+    permissions: [
+      Permission.PAYROLL_READ,
+      Permission.PAYROLL_RUN,
+      Permission.PAYROLL_APPROVE,
+      Permission.PAYROLL_EXPORT,
+      Permission.COMPENSATION_READ,
+      Permission.COMPENSATION_MANAGE,
+    ],
+  },
+  {
+    area: 'RESIGNATIONS',
+    permissions: [Permission.OFFBOARDING_READ, Permission.OFFBOARDING_MANAGE],
+  },
+  { area: 'AUDIT_LOG', permissions: [Permission.AUDIT_READ] },
+] as const;
+
+export type UnlimitedArea = (typeof OUTSIDE_THE_DEPARTMENT_LIMIT)[number]['area'];
+
+/**
+ * The areas a role with these permissions still reads across every department
+ * when it is limited to one, in a fixed order. Empty for a role the limit does
+ * not apply to, or one that carries nothing outside it.
+ */
+export function unlimitedAreas(rolePermissions: readonly string[]): UnlimitedArea[] {
+  if (!departmentScopeApplies(rolePermissions)) return [];
+  const held = new Set(rolePermissions);
+  return OUTSIDE_THE_DEPARTMENT_LIMIT.filter(({ permissions }) =>
+    permissions.some((permission) => held.has(permission)),
+  ).map(({ area }) => area);
+}
+
 export interface ScopedGrant {
   departmentId: string | null;
   permissions: readonly string[];

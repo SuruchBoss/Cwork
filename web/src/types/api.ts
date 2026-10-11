@@ -481,12 +481,19 @@ export interface AccountRoleGrant {
   expired: boolean;
 }
 
+export type UnlimitedArea = 'PAY' | 'RESIGNATIONS' | 'AUDIT_LOG';
+
 export interface GrantableRole {
   key: string;
   name: string;
   description: string | null;
   requiresSecondFactor: boolean;
   departmentScopeApplies: boolean;
+  /**
+   * What a department limit leaves open on this role: the areas it still reads
+   * for every department, however it is limited. Empty when there are none.
+   */
+  unlimitedByDepartment: UnlimitedArea[];
   /** False when the caller does not hold every permission in it. */
   grantable: boolean;
 }

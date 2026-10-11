@@ -26,6 +26,7 @@ const role = (key: string, extra: Partial<GrantableRole> = {}): GrantableRole =>
   description: null,
   requiresSecondFactor: false,
   departmentScopeApplies: false,
+  unlimitedByDepartment: [],
   grantable: true,
   ...extra,
 });
@@ -56,7 +57,12 @@ const roles: AccountRoles = {
   roles: [
     role('SUPER_ADMIN', { requiresSecondFactor: true, grantable: false }),
     role('HR_OFFICER', { departmentScopeApplies: true }),
-    role('PAYROLL_OFFICER', { requiresSecondFactor: true }),
+    role('PAYROLL_OFFICER', {
+      requiresSecondFactor: true,
+      departmentScopeApplies: true,
+      unlimitedByDepartment: ['PAY'],
+    }),
+    role('MANAGER'),
     role('EMPLOYEE'),
   ],
 };
@@ -81,7 +87,9 @@ describe('Account roles on the employee page (CW-079)', () => {
   });
 
   it('gives payroll officer, warning that it needs two-factor sign-in, and offers only roles the caller holds', async () => {
-    get.mockResolvedValue(roles);
+    get.mockImplementation((path: string) =>
+      Promise.resolve(path === '/departments' ? [{ id: 'd-2', name: 'บัญชี' }] : roles),
+    );
     post.mockResolvedValue({ signedOut: true, secondFactorRequired: true });
     const user = userEvent.setup();
     const { container } = renderWithProviders(<AccountRolesCard employeeId="emp-1" />);
@@ -91,7 +99,8 @@ describe('Account roles on the employee page (CW-079)', () => {
     expect(within(select).queryByRole('option', { name: 'ผู้ดูแลระบบ' })).toBeNull();
     await user.selectOptions(select, 'PAYROLL_OFFICER');
     expect(screen.getByRole('status')).toHaveTextContent('ต้องยืนยันตัวตนสองชั้น');
-    expect(screen.queryByLabelText('แผนก')).toBeNull();
+    // Not limited to a department, so nothing to warn about yet.
+    expect(screen.queryByText(/การจำกัดแผนกกรองเฉพาะ/)).toBeNull();
     await expectNoAxeViolations(container);
 
     await user.click(screen.getByRole('button', { name: 'ให้บทบาท' }));
@@ -160,5 +169,74 @@ describe('Account roles on the employee page (CW-079)', () => {
     renderWithProviders(<AccountRolesCard employeeId="emp-1" />);
     expect(await screen.findByText(/ยังไม่มีบัญชีผู้ใช้/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'ให้บทบาท' })).toBeNull();
+  });
+
+  it('warns, before saving, that a payroll officer limited to a department still sees pay everywhere (CW-083)', async () => {
+    get.mockImplementation((path: string) =>
+      Promise.resolve(path === '/departments' ? [{ id: 'd-2', name: 'บัญชี' }] : roles),
+    );
+    post.mockResolvedValue({ signedOut: true, secondFactorRequired: true });
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<AccountRolesCard employeeId="emp-1" />);
+
+    await user.click(await screen.findByRole('button', { name: 'ให้บทบาท' }));
+    await user.selectOptions(screen.getByLabelText('บทบาท'), 'PAYROLL_OFFICER');
+    // A limit not chosen yet, nothing is narrowed and nothing to say.
+    expect(screen.queryByText(/การจำกัดแผนกกรองเฉพาะ/)).toBeNull();
+
+    await user.selectOptions(await screen.findByLabelText('แผนก'), 'd-2');
+    const note = (await screen.findByText(/การจำกัดแผนกกรองเฉพาะ/)).closest('div')!;
+    expect(note).toHaveTextContent('เขายังเห็นของทุกแผนก');
+    expect(within(note).getByText(/^เงินเดือน: รอบจ่ายเงินเดือน/)).toBeInTheDocument();
+    expect(within(note).queryByText('ใบลาออก')).toBeNull();
+    await expectNoAxeViolations(container);
+
+    // It is a note, not a block: the limit can still be saved.
+    await user.click(screen.getByRole('button', { name: 'ให้บทบาท' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/employees/emp-1/roles', {
+        roleKey: 'PAYROLL_OFFICER',
+        departmentId: 'd-2',
+      }),
+    );
+  });
+
+  it('says nothing about a department limit on a role the limit does not apply to', async () => {
+    get.mockResolvedValue(roles);
+    const user = userEvent.setup();
+    renderWithProviders(<AccountRolesCard employeeId="emp-1" />);
+
+    await user.click(await screen.findByRole('button', { name: 'ให้บทบาท' }));
+    await user.selectOptions(screen.getByLabelText('บทบาท'), 'MANAGER');
+    expect(screen.queryByLabelText('แผนก')).toBeNull();
+    expect(screen.queryByText(/การจำกัดแผนกกรองเฉพาะ/)).toBeNull();
+  });
+
+  it('warns about every area a limited role leaves open, from the list the API gives', async () => {
+    get.mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/departments'
+          ? [{ id: 'd-2', name: 'บัญชี' }]
+          : {
+              ...roles,
+              roles: [
+                role('AUDITOR', {
+                  departmentScopeApplies: true,
+                  unlimitedByDepartment: ['PAY', 'RESIGNATIONS', 'AUDIT_LOG'],
+                }),
+              ],
+            },
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<AccountRolesCard employeeId="emp-1" />);
+
+    await user.click(await screen.findByRole('button', { name: 'ให้บทบาท' }));
+    await user.selectOptions(screen.getByLabelText('บทบาท'), 'AUDITOR');
+    await user.selectOptions(await screen.findByLabelText('แผนก'), 'd-2');
+    const note = (await screen.findByText(/การจำกัดแผนกกรองเฉพาะ/)).closest('div')!;
+    expect(within(note).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(note).getByText('ใบลาออก')).toBeInTheDocument();
+    expect(within(note).getByText('บันทึกการใช้งานระบบ (audit log)')).toBeInTheDocument();
   });
 });
