@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Module } from '@nestjs/common';
+import { CryptoService } from '../../core/security/crypto.service';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { DocumentsModule } from '../documents/documents.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -13,6 +14,7 @@ import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { BenefitsController, ExpensesController, PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
 import { PayslipPrintService } from './payslip-print.service';
+import { SsoFilingService } from './sso-filing.service';
 import { SsoShortfallService } from './sso-shortfall.service';
 
 @Module({
@@ -26,7 +28,9 @@ import { SsoShortfallService } from './sso-shortfall.service';
     ExpensesService,
     OpeningBalanceImportService,
     SsoShortfallService,
+    SsoFilingService,
     PayslipPrintService,
+    CryptoService,
     SequenceService,
   ],
   exports: [PayrollService, CompensationService, BenefitsService, ExpensesService],

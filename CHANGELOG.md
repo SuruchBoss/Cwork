@@ -21,6 +21,22 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **A month's social security filing, สปส.1-10** (CW-048). Payroll computed
+  both halves of the contribution and stored them on every payslip, with no way
+  to get them out. **Payroll → Social security filing** (`GET
+  /payroll/reports/sso-filing?year=&month=`, `payroll:export`) now gives the
+  form's data for a month: part 1 (the wage, both shares, their sum, how many
+  are insured) and part 2 (one row per insured person, a Thai under the national
+  ID and a foreign worker under the social security card number), as JSON, CSV,
+  Excel or PDF. The contribution is the one the payslips withhold, a person's two
+  halves added up first. A month that is not finished (a period without an
+  approved or paid run, or a half-month month missing a half) is refused, and so
+  is a file while anyone has no number to be filed under: they are named, never
+  left blank or skipped. Every read and file is audited. The upload file the
+  Social Security Office's e-Services takes has a layout only given inside
+  e-Services, so it waits for a sample; nothing is guessed. A Thai guide is in
+  `docs/guide/sso-filing.th.md`.
+
 - **Printable payslips and a wage-receipt sheet** (CW-071). A pilot that pays
   daily wages in cash had no paper to hand out or to have signed: payslips
   existed only on screen. An approved or paid run now prints as PDF from its

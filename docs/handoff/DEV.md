@@ -6,27 +6,28 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- **CW-084** (#87, social security as the official form says): done, waiting
-  for the PO's review. `computeSocialSecurity` in `payroll/domain/thai-tax.ts`
-  is the one function for a person's monthly contribution: wage, floor and
-  ceiling for the period's year, rounded half up to the baht, employer the same,
-  nil when nothing was paid. A first half takes 5% of its own wage in whole baht
-  with no floor; a second half is the month less the first. Approved and paid
-  runs are never recalculated (`PAYROLL_RUN_LOCKED` already refuses it), so a
-  month paid before this stays in satang and the shortfall report shows the
-  difference. Source cited in `docs/payroll-thailand.md`: the 2025 gazette
-  announcement on the form (vol. 142, special 405 Ngor, pp. 23-27). Three
-  questions for the accountant are in #36.
-- **CW-048** (#45, monthly social security filing) is next and part built, on the
-  local branch `wip-cw048` (not pushed): the pure filing domain, the service
-  (`sso-filing.service.ts`, month-finished check, identifier rules, audit, CSV
-  and XLSX), the route `GET /payroll/reports/sso-filing`, an e2e spec and the web
-  page. It still has to be rebased onto CW-084 so it uses `computeSocialSecurity`
-  (a month with no wage is listed with nil, per note 6 of the form), then
-  gates, docs and a report. The upload-file formatter waits for the owner's
-  sample file from e-Services; no public layout was found.
-- Earlier: CW-071 passed review (printing); CW-082 (#85) is open, not queued.
+- **CW-048** (#45, monthly social security filing): built, waiting for the PO's
+  review; the upload-file formatter is deliberately not built.
+  - `payroll/domain/sso-filing.ts` works the form out from the month's payslips
+    (a person's halves added up, then `computeSocialSecurity`); `SsoFilingService`
+    checks the month is finished (every period has an approved or paid run, both
+    halves of a half-month month), identifies each person (a Thai by national ID,
+    an employee with a passport or work permit by social security card number),
+    names anyone without the number, audits every read and file, and writes
+    CSV, XLSX and (through `documents/sso-filing-renderer.ts`) PDF.
+  - Route `GET /payroll/reports/sso-filing?year=&month=&format=`, `payroll:export`.
+    Web page Payroll -> Social security filing. Thai guide
+    `docs/guide/sso-filing.th.md`. `payroll/sso-slips.ts` is the payslip loader now
+    shared with the shortfall report.
+  - **Waits on the owner:** a sample upload file from e-Services (the "download
+    upload file" icon on a past transaction). No public layout exists, so the
+    formatter is not guessed; once there is a sample it is a small step.
+  - Open for the accountant (#36): is "wage paid" the SSO wage or total pay
+    including overtime. CW-048's last acceptance line (the pilot's November file)
+    waits for their file.
+- **CW-084** passed review earlier today (whole-baht contribution, floor applies).
+- Earlier: CW-071 passed review; CW-082 (#85) is open, not queued.
 
 ## Next
 
-- Wait for the PO's review of CW-084, then finish CW-048 from `wip-cw048`.
+- Wait for the PO's review of CW-048 and for the owner's e-Services sample.

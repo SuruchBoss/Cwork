@@ -428,6 +428,46 @@ export interface SsoShortfallReport {
   total: { employee: number; employer: number };
 }
 
+/** A month's social security filing, สปส.1-10 (CW-048). Amounts arrive as decimal strings. */
+export interface SsoFilingSheet {
+  year: number;
+  month: number;
+  ratePercent: string;
+  floor: number;
+  ceiling: number;
+  rows: Array<{
+    sequence: number;
+    employeeId: string;
+    employeeCode: string;
+    identifierKind: 'NATIONAL_ID' | 'SOCIAL_SECURITY_CARD';
+    identifier: string;
+    name: string;
+    wage: string;
+    contributoryWage: string;
+    employee: string;
+    employer: string;
+    deductedEmployee: string;
+    deductedEmployer: string;
+    differsFromPayslips: boolean;
+  }>;
+  totals: {
+    insured: number;
+    wage: string;
+    employee: string;
+    employer: string;
+    total: string;
+    deductedEmployee: string;
+    deductedEmployer: string;
+  };
+  problems: Array<{
+    employeeId: string;
+    employeeCode: string;
+    name: string;
+    code: string;
+    message: string;
+  }>;
+}
+
 /** One record of an employee's pay. Amounts arrive as decimal strings. */
 /** An employee's account and its roles (CW-079), from `GET /employees/:id/roles`. */
 export interface AccountRoleGrant {

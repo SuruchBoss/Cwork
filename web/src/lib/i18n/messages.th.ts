@@ -1166,6 +1166,43 @@ export const thMessages: Record<string, string> = {
   "Advances of {amount} were more than this period could take back; the rest comes off the next pay run. Section 76 of the Labour Protection Act does not list repaying an advance among the deductions from wages it allows, so taking it from a later pay run may need the employee's consent in writing, signed and naming this purpose (section 77); Cwork does not keep that consent, HR must":
     'เงินเบิก {amount} เกินกว่าที่งวดนี้หักได้ ส่วนที่เหลือจะหักในรอบถัดไป มาตรา 76 ของ พ.ร.บ.คุ้มครองแรงงานไม่ได้ระบุการหักคืนเงินเบิกไว้ในรายการที่หักจากค่าจ้างได้ การหักจากรอบหลังจึงอาจต้องมีหนังสือยินยอมของลูกจ้างที่ลงชื่อและระบุเรื่องนี้ชัดเจน (มาตรา 77) Cwork ไม่ได้เก็บหนังสือยินยอมนี้ ฝ่ายบุคคลต้องเก็บเอง',
 
+  // Social security filing, สปส.1-10 (CW-048)
+  'Social security filing': 'ไฟล์ประกันสังคมรายเดือน (สปส.1-10)',
+  'The month’s contributions for form สปส.1-10, one row for each insured person':
+    'เงินสมทบประจำเดือนสำหรับแบบ สปส.1-10 หนึ่งแถวต่อผู้ประกันตนหนึ่งคน',
+  'This is the form’s data, to read, check against your own file and type or paste into e-Services. It is not the upload file e-Services takes: that layout is only given inside e-Services.':
+    'นี่คือข้อมูลตามแบบ ไว้อ่าน เทียบกับไฟล์ของบริษัท และพิมพ์หรือวางลงใน e-Services ไม่ใช่ไฟล์อัปโหลดที่ e-Services รับ เพราะรูปแบบไฟล์นั้นให้เฉพาะในระบบ e-Services',
+  'Download Excel': 'ดาวน์โหลด Excel',
+  'Download PDF': 'ดาวน์โหลด PDF',
+  'Rate {rate}%, wage from {floor} to {ceiling} a month':
+    'อัตรา {rate}% ค่าจ้างตั้งแต่ {floor} ถึง {ceiling} ต่อเดือน',
+  'Cannot be put on the form: {count}': 'ใส่ลงแบบไม่ได้ {count} คน',
+  'Fix these on the employee’s page. Nothing can be downloaded until they are.':
+    'แก้ที่หน้าพนักงาน จนกว่าจะแก้ครบจะดาวน์โหลดไม่ได้',
+  'Insured people': 'ผู้ประกันตน',
+  'No national ID number is recorded': 'ยังไม่มีเลขประจำตัวประชาชน',
+  'The national ID number is not 13 digits': 'เลขประจำตัวประชาชนไม่ครบ 13 หลัก',
+  'A foreign worker is filed under the social security card number, and none is recorded':
+    'แรงงานต่างด้าวต้องใช้เลขที่บัตรประกันสังคม แต่ยังไม่มีบันทึกไว้',
+  'The social security card number is not digits only': 'เลขที่บัตรประกันสังคมต้องเป็นตัวเลขล้วน',
+  'No payroll for this month': 'เดือนนี้ไม่มีเงินเดือน',
+  'There is no pay period for it yet.': 'ยังไม่มีงวดเงินเดือนของเดือนนี้',
+  'This month is not finished': 'เดือนนี้ยังไม่ครบ',
+  'Every pay period of the month needs an approved or paid run, and both halves of a half-month pay. {reason}':
+    'ทุกงวดของเดือนต้องมีรอบที่อนุมัติหรือจ่ายแล้ว และเงินเดือนแบบครึ่งเดือนต้องมีทั้งสองครึ่ง {reason}',
+  'Nobody was insured in {month}': 'ไม่มีผู้ประกันตนในเดือน {month}',
+  'No approved or paid payslip counted for social security.':
+    'ไม่มีสลิปที่อนุมัติหรือจ่ายแล้วที่นับเป็นประกันสังคม',
+  'Row no.': 'ลำดับที่',
+  'ID number': 'เลขประจำตัวประชาชน',
+  '(foreign worker: social security card number)': '(คนต่างด้าว: เลขที่บัตรประกันสังคม)',
+  'Wage paid': 'ค่าจ้างที่จ่ายจริง',
+  'Employee contribution': 'เงินสมทบผู้ประกันตน',
+  'Employer contribution': 'เงินสมทบนายจ้าง',
+  'Deducted on the payslips': 'หักตามสลิป',
+  'Differs from the form': 'ต่างจากแบบ',
+  'Total, {count} insured': 'รวม {count} คน',
+  'Contributions to send in all': 'รวมเงินสมทบที่นำส่งทั้งสิ้น',
   // Social security shortfall report (CW-075)
   'Social security shortfall': 'ส่วนต่างประกันสังคม',
   'What locked and paid runs deducted, against the ceiling in force for their year':
