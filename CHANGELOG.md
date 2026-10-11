@@ -47,8 +47,10 @@ paid at least twice the hourly rate for work on the weekly day off.
 Cash advances are recorded once paid and taken back by the next regular run,
 after tax and social security, never below zero net pay (CW-070).
 Social security now uses the wage ceiling for each period's year, ฿17,500 from
-2026, and a read-only report lists what locked and paid runs deducted short of
-it, for HR to settle with the Social Security Office (CW-075).
+2026, is rounded to the baht and worked on the floor as the Social Security
+Office's own form says, and a read-only report lists what locked and paid runs
+deducted short of it, for HR to settle with the Social Security Office (CW-075,
+CW-084).
 HR and payroll staff are given their roles from the employee page, so no one
 needs SQL or the first administrator's password to run the pilot (CW-079).
 An approved or paid run prints as payslips, one, two or four to an A4 sheet, and
@@ -88,6 +90,13 @@ raises daily-wage work on the weekly day off to at least 2×, so such a run can
 pay more than the overtime request shows. Attendance and overtime now count a
 work location's own holidays, which they used to miss; days already closed
 keep their status until recalculated.
+Social security is now worked out in whole baht, 50 satang and over up, with a
+wage under ฿1,650 worked on ฿1,650 (฿83) rather than giving nothing: a wage of
+฿5,010 deducts ฿251 where 0.4.0's earlier builds deducted ฿250.50. A run
+calculated after the upgrade follows this; approved and paid runs are not
+recalculated and keep their satang figures, which the shortfall report shows
+as small differences. A half-month month's two halves still add up to the
+month's figure.
 Printing payslips needs the `payroll:read` permission that payroll and HR
 roles already hold, and adds no migration; each print is recorded in the audit
 log as an export of the run.
