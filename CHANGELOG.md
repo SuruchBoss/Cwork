@@ -53,6 +53,9 @@ deducted short of it, for HR to settle with the Social Security Office (CW-075,
 CW-084).
 HR and payroll staff are given their roles from the employee page, so no one
 needs SQL or the first administrator's password to run the pilot (CW-079).
+A month's social security filing, form สปส.1-10, can be read and downloaded as
+Excel, CSV or PDF, the figures the payslips withheld, ready to check and file
+(CW-048); the file e-Services takes for upload waits for a sample.
 An approved or paid run prints as payslips, one, two or four to an A4 sheet, and
 as a wage-receipt sheet to sign for pay received in cash (CW-071).
 The console and the app also work in English; benefits, shifts and issued
@@ -97,6 +100,10 @@ calculated after the upgrade follows this; approved and paid runs are not
 recalculated and keep their satang figures, which the shortfall report shows
 as small differences. A half-month month's two halves still add up to the
 month's figure.
+The monthly social security filing needs `payroll:export` and adds no migration;
+a month must have an approved or paid run for every period before it can be
+filed, and anyone without a national ID (or, for a foreign worker, a social
+security card number) is named and blocks the download until fixed.
 Printing payslips needs the `payroll:read` permission that payroll and HR
 roles already hold, and adds no migration; each print is recorded in the audit
 log as an export of the run.
