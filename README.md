@@ -674,6 +674,12 @@ no outside contributors at the time, so nobody else's work changes licence.
   not promises: online filing to the Social Security Office and the Revenue
   Department, bank transfer files, several companies in one install, single
   sign-on, deeper analytics, LINE notifications.
+- **How Pro is sold.** An annual subscription for an installation you run
+  yourself: your own IT installs and operates Cwork, support is online, and a
+  remote installation can be bought; there is no on-site service and no hosted
+  edition. Letting the subscription lapse leaves the free edition fully
+  working, and a change in the law is released to both editions at the same
+  time. Prices are not set yet.
 - **How the two meet.** Code outside `ee/` never imports from it. A Pro licence
   key is checked offline, and an expired key never locks anyone's data or stops
   a payroll run.

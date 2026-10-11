@@ -567,11 +567,14 @@ not planned: uptime, off-site backups and acting as the PDPA processor are
 more than one person can carry. Prices are to be researched from real vendor
 pages later; none are set here.
 
-**Option under consideration, not yet decided:** Cwork Pro as an annual
-self-hosted subscription — the licence key unlocks the `ee/` features for the
-year (candidates: Social Security Office and Revenue Department filing files,
-bank transfer files), with online support and the paid remote installation on
-top. Letting it lapse leaves the free edition fully working. What Pro must
+**Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** Cwork
+Pro is an annual self-hosted subscription — the licence key unlocks the `ee/`
+features for the year (candidates: Social Security Office and Revenue
+Department filing files, bank transfer files) and includes online support; a
+remote installation is offered as a paid extra. Letting it lapse leaves the
+free edition fully working. Payroll calculation and the law updates behind it
+stay free, and a rule change is released for both editions at the same time.
+No prices yet; no hosted service. What Pro must
 **not** be sold as is "the yearly law updates": the README's Editions section
 promises payroll correctness, including the updates when social security, tax
 or labour law changes, in the free edition for good (CW-075 already shipped
@@ -625,7 +628,8 @@ Pilot B, which is unpaid; all of them come before the first invoice.
   only under `ee/`, a CI guard against imports from `ee/`, and the offline
   licence key.
 - **The README** says plainly that self-hosting is free and what Pro and the
-  paid remote installation add, once the option above is decided.
+  paid remote installation add — done in the Editions section; prices to be
+  added when set.
 
 **Acceptance** Each point above has an owner's decision recorded here, and the
 ones that need code or docs are their own tickets.
