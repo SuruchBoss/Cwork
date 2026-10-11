@@ -109,6 +109,20 @@ Guard-rails on handing out roles, all enforced by the API:
   the limit, so a department-limited manager role does not shrink what the same
   person sees as an HR officer. Roles that manage roles or the organisation
   cannot be limited to a department.
+- A department limit does **not** narrow pay, resignations or the audit log. It
+  is a filter on employee queries, so it reaches employee records and what hangs
+  off them (leave, attendance, overtime, expenses, performance, documents).
+  `payroll:read`, `payroll:run`, `payroll:approve`, `payroll:export`,
+  `compensation:read` and `compensation:manage` (payroll runs, payslips, printed
+  payslips, wage receipts, compensation), `offboarding:read` and
+  `offboarding:manage` (resignations) and `audit:read` are read for the whole
+  organisation by whoever holds them. A payroll officer limited to one
+  department therefore still sees every department's pay. The console says so
+  when a limit is chosen on a role that carries any of them (CW-083); the list
+  is `OUTSIDE_THE_DEPARTMENT_LIMIT` in `organization/role-grants.ts`, and
+  `GET /employees/:id/roles` returns the areas as `unlimitedByDepartment` for
+  each role. Whether payroll should honour a department limit is a product
+  decision for the owner and is not made here.
 
 - `JwtAuthGuard` is global: a route is authenticated unless it declares
   `@Public()`. Forgetting a guard fails closed.

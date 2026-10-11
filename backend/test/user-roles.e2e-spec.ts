@@ -146,6 +146,16 @@ describe('Roles given from the console (e2e)', () => {
     expect(byKey.SUPER_ADMIN).toMatchObject({ grantable: false, requiresSecondFactor: true });
     expect(byKey.PAYROLL_OFFICER).toMatchObject({ grantable: true, requiresSecondFactor: true });
     expect(byKey.HR_OFFICER).toMatchObject({ grantable: true, departmentScopeApplies: true });
+    // What a department limit leaves open (CW-083): a payroll officer still
+    // reads pay everywhere, a manager cannot be limited and so says nothing.
+    expect(byKey.PAYROLL_OFFICER).toMatchObject({
+      departmentScopeApplies: true,
+      unlimitedByDepartment: ['PAY'],
+    });
+    expect(byKey.MANAGER).toMatchObject({
+      departmentScopeApplies: false,
+      unlimitedByDepartment: [],
+    });
   });
 
   it('stops an HR manager from making anyone a super administrator', async () => {

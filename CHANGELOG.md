@@ -566,6 +566,21 @@ log as an export of the run.
 
 ### Changed
 
+- **The console says what a department limit does not narrow** (CW-083). A
+  limit to one department is a filter on employee queries, so it narrows
+  employee records and what hangs off them (leave, attendance, overtime,
+  expenses, performance, documents) and nothing else: a payroll officer limited
+  to one department still sees every department's pay, payslips, printed
+  payslips, wage receipts and compensation, and a role with the resignation
+  list or the audit log still sees those for everyone. The role page offered the
+  limit without saying so, which could lead an HR manager to think they had kept
+  another department's pay from someone. Choosing a department on such a role
+  now shows what stays visible, before saving. The list comes from the role's
+  permissions (`unlimitedByDepartment` on `GET /employees/:id/roles`), so a new
+  role is covered without touching the page. Who can see pay is unchanged;
+  whether payroll should honour a limit is left to the owner. `docs/security.md`
+  and the Thai roles guide say the same.
+
 - **Thai dates count years in the Buddhist era, everywhere** (CW-058). The
   console and the app wrote "28 ก.ย. 2026": a Thai month with a Gregorian year,
   and some places did not localise dates at all. In Thai every year shown is now
