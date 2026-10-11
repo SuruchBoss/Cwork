@@ -47,8 +47,8 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-079 · CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-078 · CW-076 · CW-071 · CW-048 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-076 · CW-071 · CW-048 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-048 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -156,51 +156,6 @@ seeing any of it.
 ## P0 — blocks a real deployment
 
 
-### CW-079 · Only the first administrator can ever hold more than the employee role
-`P0` · identity · **M** · Pilot A · ready
-
-Found by the dev on 2026-10-10 while writing who may record advances (CW-070),
-then checked by the PO in the code. Setup gives the first administrator
-`SUPER_ADMIN`, and an employee's account gets `EMPLOYEE`. Nothing else in the
-API or the console gives a user a role: `GET /organization/roles` only lists
-them, although `role:manage` exists and makes a second factor mandatory. So
-the pilot's HR person cannot be made `HR_OFFICER`, `HR_ADMIN` or
-`PAYROLL_OFFICER`, nor a supervisor `MANAGER`, without SQL or sharing the
-first administrator's password. Today the only written way is the SQL in
-`docs/operations.md` ("Giving a role a permission"), and `docs/security.md`
-says a customer can build a role without a code change, which only holds for
-someone with database access.
-
-**Scope**
-- An account's roles can be listed, granted and removed by someone with
-  `role:manage`, from the employee's page in the console, through new
-  endpoints. `UserRole` already has `departmentId` (a role limited to one
-  department) and `expiresAt`; both are offered.
-- System roles only. Editing which permissions a role holds, or creating a
-  role, stays out of this ticket and stays in `docs/operations.md` for now.
-- No one removes their own `role:manage`, and the last account holding
-  `SUPER_ADMIN` cannot lose it.
-- A grant or removal is audited and takes effect on the account's next token
-  (or at once, by setting `sessionsValidFrom` when a role is removed).
-- Granting a role that carries a privileged permission means the account must
-  enrol a second factor at its next sign-in, as the MFA rule already says; the
-  console says so when granting.
-- `docs/security.md` is corrected to say what a customer can do from the
-  console and what still needs the database.
-
-**Acceptance**
-- On a fresh install, the first administrator makes an employee's account
-  `HR_OFFICER` and `PAYROLL_OFFICER` from the console; that person signs in,
-  is asked to enrol a second factor, and can then record a cash advance.
-- Removing `PAYROLL_OFFICER` from them takes the advances page away at once.
-- The last `SUPER_ADMIN` cannot be removed; an account without `role:manage`
-  gets 403 on every new endpoint.
-
-**Files** `backend/src/modules/organization/`, `backend/src/modules/auth/`,
-`web/src/features/employees/`, `docs/security.md`, `docs/operations.md`
-
----
-
 ### CW-076 · Daily-wage staff on holidays: substitute days and holiday work
 `P0` · payroll · **S–M** · before Pilot B · ready (text read 2026-10-10, CW-075 closed)
 
@@ -254,48 +209,6 @@ consolidated text to 2019; amendments after 2019, if any, are not checked.
 
 ---
 
-
-### CW-078 · Advances against sections 76 and 77, and their payslip code
-`P0` · payroll · **S** · before Pilot B · ready
-
-CW-070 shipped with its carry-over warning saying section 76 was unread. The
-PO read sections 76 and 77 in the consolidated text to 2019 on 2026-10-10:
-- section 76 forbids deducting from wages, overtime and holiday pay except
-  (1) income tax and other sums a law requires, (2) union dues, (3) debts to a
-  savings cooperative or a welfare scheme, with the employee's consent,
-  (4) a guarantee deposit under section 10 or damages from wilful or grossly
-  negligent harm, with consent, (5) provident fund contributions. (2)–(5) are
-  each capped at 10%, and together at one fifth, of what is due on a payday
-  under section 70, unless the employee consents;
-- section 77: where consent is needed, it is made in writing, signed by the
-  employee, and states its purpose specifically.
-
-Repaying a cash advance is not in that list. Taking it back on the payday it
-belongs to is arguably the same wage paid early; recovering a carried balance
-from a later payday looks more like collecting a debt, and whether that is
-allowed, under which item, and with what cap is a question for a qualified
-person, not for Cwork to settle.
-
-**Scope**
-- `ADVANCE_CARRIED_OVER` (Thai and English) and `docs/payroll-thailand.md`
-  say what sections 76 and 77 actually say, as above, in one or two sentences;
-  that taking a carried balance from a later payday may need the employee's
-  signed consent for that purpose; and that Cwork does not keep that consent,
-  so HR must. No "not yet checked against the text" any more.
-- The question goes on #36's list for the qualified reviewer.
-- The payslip line for an advance uses the code `CASH_ADVANCE` instead of
-  `ADVANCE`, which the demo seed already gives to a standing deduction
-  (หักเงินยืมทดรอง). 0.4.0 is not released, so no stored payslip needs moving.
-
-**Acceptance**
-- The run page shows the new warning in both languages, tested.
-- A payslip with a standing ADVANCE deduction and a cash advance shows two
-  different codes.
-
-**Files** `backend/src/modules/payroll/domain/payroll-calculator.ts`,
-`web/src/lib/i18n/`, `docs/payroll-thailand.md`
-
----
 
 ### CW-071 · Payslips and a wage receipt on paper
 `P0` · payroll · documents · **M** · Pilot B, November 2026
@@ -1451,3 +1364,5 @@ Kept so the reasoning survives.
 | **CW-067** · Only the employee could file their own leave, and at the pilot nobody but HR uses Cwork | HR now records leave for any employee they can see, including one with no account, under a permission of its own (`leave:record`, granted to the system HR roles by migration; a custom role needs it added by hand). Recorded as approved by default, or sent to the manager. The same rules refuse it with the same codes. Two choices made by the dev and confirmed by the PO on 2026-10-09: leave recorded as approved skips the notice and supporting-document rules, because HR records what already happened, while leave sent to the manager keeps both, so a past day cannot go to the manager, just as the employee could not file it; and HR cannot record their own leave as approved (`CANNOT_RECORD_OWN_LEAVE`), since that would remove the only other pair of eyes. The record keeps who entered it, and the audit entry names both. **Found and fixed on the way:** approving leave after its days began, or cancelling approved leave, did not re-derive attendance, so payroll deducted a paid sick day closed out as absent. Days payroll has locked are left alone. f254b50, closed 2026-10-09. |
 | **CW-068** · Foreign workers could not be imported, and their documents had nowhere to go | The pilot employs foreign workers, and the import required a Thai name and had no column for their documents. An employee now carries a passport number and a work permit number, both encrypted like the national ID, readable only with `employee:read:sensitive`, redacted in the audit log and purged with the other identifiers, and the expiry date of each, which is not secret. The import takes the four columns and a row with an English name only and no national ID; a row with neither name is `NAME_REQUIRED`. Choices made by the dev and accepted by the PO on 2026-10-10: the employee page gets a card for the four fields, because the console has no form to create or edit an employee; an English-only name is also stored in the Thai name fields, which are the ones Cwork displays; someone who may edit but not read the numbers sees only whether one is on file and leaves the field blank to keep it; a passport number is 5 to 20 letters and digits after spaces and dashes are dropped. Expiry alerts were split out as CW-073 (#78); the page only marks a date already passed. d89dd40, closed 2026-10-10. |
 | **CW-072** · A fresh install had no departments, and the console could not add one | The employee import needs departments, positions and work locations to exist already, so an Odoo export failed with one `NOT_FOUND` per row. Organisation now adds and renames departments and positions, and adds work locations, through the endpoints that were already there. A work location's code follows ADR-0006 and is never offered for renaming. The form also refuses a duplicate name, which the API allows but the import would call ambiguous. Walked by the dev on a fresh `db:init` install through to an import with no `NOT_FOUND`. eeaa3c9, closed 2026-10-09. |
+| **CW-079** · Only the first administrator could ever hold more than the employee role | Found by the dev while writing CW-070: nothing in the API or console gave an account a role. An account's roles are now listed, granted and removed from the employee's page by someone with `role:manage`, system roles only, with an optional department and expiry. A role can only be handed out by someone who already holds every permission in it; a department limit applies to roles that read employees without managing roles or the organisation, and is worked out per grant. No one removes their own `role:manage`, and the last `SUPER_ADMIN` cannot be removed, checked under a transaction-scoped advisory lock. Every grant and removal is audited and signs the account out (`sessionsValidFrom`, refresh tokens revoked); the console warns that a privileged role means enrolling a second factor at next sign-in. The account lookup is limited to employees the actor can see. `docs/security.md` and `docs/operations.md` say what the console does and what still needs the database. 06330b4, 65ba360, 09099de, 471d9ed, closed 2026-10-11. |
+| **CW-078** · The carry-over warning for cash advances said section 76 was unread | The PO read sections 76 and 77 in the consolidated text to 2019. `ADVANCE_CARRIED_OVER` (Thai and English), `docs/payroll-thailand.md` and the Thai guide now say that repaying an advance is not among the deductions section 76 allows, that taking a carried balance from a later payday may need the employee's written, signed consent naming that purpose (section 77), and that Cwork does not keep that consent, so HR must. The question is on #36 for a qualified reviewer. The advance payslip line is coded `CASH_ADVANCE`, apart from the demo seed's standing `ADVANCE` deduction, tested together. Accepted from the dev: "Who records them" points to giving an HR officer the payroll officer role from the employee's page (CW-079). 0874e40, closed 2026-10-11. |
