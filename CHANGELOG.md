@@ -21,6 +21,20 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Roles are given from the employee's page** (CW-079). Setup's first
+  administrator was the only account that could ever hold more than `EMPLOYEE`:
+  nothing in the API or console handed out a role, so a pilot's HR person could
+  only become an officer through SQL. An account with `role:manage` now gives
+  or takes away system roles on the employee's **Account roles** card, through
+  `GET`, `POST /employees/:id/roles` and `DELETE /employees/:id/roles/:grantId`,
+  optionally limited to one department or to a last day. Every change is audited
+  as `PERMISSION_CHANGE` and signs the account out of every device, so the new
+  set applies at once and a role that needs a second factor has one enrolled at
+  the next sign-in. A role can only be handed out or taken away by someone who
+  holds all of its permissions, so the HR manager cannot make anyone a system
+  administrator; no one removes their own `role:manage`, and the last permanent
+  system administrator stays. A Thai guide is in `docs/guide/account-roles.th.md`.
+
 - **Both clients speak English as well as Thai** (CW-016). The web console and
   the employee mobile app were Thai-only, which shut out a director or auditor
   who cannot read Thai. Each now has a dependency-free i18n layer where the
@@ -538,6 +552,14 @@ entry, tags it and publishes the notes.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **A department-limited role narrowed everything the person could see**
+  (CW-079). Any grant limited to a department narrowed the account's
+  `employee:read` to that department, even when another of its roles covered
+  the whole organisation, so an HR officer who was also a manager of one
+  department would see only that department. Only grants that carry
+  `employee:read` count now, and one of them without a department lifts the
+  limit.
 
 - **Social security was deducted on the old ฿15,000 ceiling in 2026** (CW-075).
   The ministerial regulation of 11 December 2025 (Royal Gazette vol. 142, part
