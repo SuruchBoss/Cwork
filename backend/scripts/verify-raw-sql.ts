@@ -70,6 +70,14 @@ const REVIEWED: { file: string; marker: string; scoping: Scoping; why: string }[
     why: 'an advisory lock keyed by job name — a lock, not a row',
   },
   {
+    file: 'modules/organization/user-roles.service.ts',
+    marker: 'pg_advisory_xact_lock',
+    scoping: 'tenant-scoped',
+    why:
+      "an advisory lock, not a row, keyed by the organisation's id so role changes " +
+      'in one organisation run one at a time and never wait on another (CW-079)',
+  },
+  {
     file: 'modules/setup/setup.service.ts',
     marker: 'pg_try_advisory_xact_lock',
     scoping: 'not-tenant-data',
