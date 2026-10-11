@@ -241,7 +241,8 @@ For each day of the half the employee was employed:
 | A paid public holiday on a scheduled working day | 1 day |
 | The weekly day off, an absence, unpaid leave | 0 |
 | A scheduled day with no attendance and no leave | 0, **and flagged**: usually a day not closed yet |
-| A public holiday on the weekly day off | 0, **and flagged**: see substitute days below |
+| A public holiday on the weekly day off | 0 on the day itself: it is paid on its substitute day (below) |
+| A substitute day | 1 day, as a holiday, **and listed** for HR; if attended, **flagged** too |
 
 The working days are the employee's schedule; with no schedule assigned, Monday
 to Friday, the same default the overtime engine uses. Holidays are those marked
@@ -250,8 +251,52 @@ paid for the whole organisation or for the employee's work location.
 Pay is the daily rate times the days paid. It is not prorated: the days are
 the proration.
 
+### Substitute holidays
+
+A traditional holiday that falls on the employee's weekly day off moves to
+their next working day (section 29, third paragraph). Cwork works this out by
+itself for each daily-wage employee, from their own schedule and the paid
+holidays where they work: the substitute is the next scheduled day that is not
+itself a holiday, and two holidays on days off in a row take the next two
+working days. HR does not add the substitute to the holiday calendar.
+
+- The substitute day pays one day as a holiday, whether or not the employee
+  came in. The payslip lists each holiday and its substitute
+  (`SUBSTITUTE_HOLIDAY`), so HR can see it was paid and does not enter it again:
+  a holiday entered on that day is taken as a holiday of its own, and the
+  substitute moves on to the day after.
+- The substitute can fall in the next half, or come from a holiday in the last;
+  each half looks a month either side for it.
+- If the employee came in on their substitute day, it is still paid once as the
+  holiday and the payslip says so (`SUBSTITUTE_HOLIDAY_WORKED`): the hours are
+  holiday work, which HR records as overtime on a public holiday.
+- If the employee leaves before a working day comes, the holiday is owed but
+  not paid, and flagged (`HOLIDAY_ON_DAY_OFF`) for the final pay.
+
+### Overtime and rest-day work
+
 Overtime is paid on the hourly rate of the day: daily rate ÷ standard hours per
-day (8). A salaried employee's is still salary ÷ 30 ÷ 8.
+day (8). A salaried employee's is still salary ÷ 30 ÷ 8 (section 68 sets this
+for monthly wages; it says nothing of daily ones).
+
+Each overtime request carries the organisation's multiplier for its type,
+which is set for salaried staff. A monthly salary already pays the weekly day
+off, so section 62(1) asks only one more times the hourly rate for work on it.
+A daily-wage employee is not paid for the weekly day off (section 56(1)), so
+section 62(2) asks at least **twice** the hourly rate; a traditional holiday is
+paid to them (section 56(2)), so work on it is at least one more times, on top
+of the day. A half's run raises any lower multiplier to these and says so on
+the payslip (`REST_DAY_RATE_RAISED`); the request keeps its own rate.
+
+| Daily-wage employee's work | At least | Cwork |
+|---|---|---|
+| On the weekly day off, within normal hours | 2× the hourly rate (s.62(2)) | raised to 2× if the request is lower |
+| On a traditional holiday, within normal hours | the day's wage + 1× (s.62(1)) | the holiday is in the days paid; the request's rate, raised to 1× if lower |
+| Overtime on a working day | 1.5× (s.61) | the organisation's rate |
+| Overtime on a holiday | 3× (s.63) | the organisation's rate |
+
+So four hours on a Saturday off at 500 a day are 4 × 62.50 × 2 = 500, not the
+250 a 1× request would have paid. Monthly employees' pay does not change.
 
 ### Social security in two halves
 
@@ -307,36 +352,51 @@ under it (`BELOW_MINIMUM_WAGE`), if the location has none set
 ### What HR sees
 
 Every payslip carries `warnings`: `{ code, params }` objects the run page shows
-beside the employee. The codes above, plus `INCOMPLETE_PUNCH_COUNTED`,
-`NO_ATTENDANCE_RECORD`, `HOLIDAY_ON_DAY_OFF` and `REST_DAY_WORK_RATE` (below).
+beside the employee. The codes above, plus `INCOMPLETE_PUNCH_COUNTED` and
+`NO_ATTENDANCE_RECORD`. Payslips calculated before CW-076 may still carry
+`REST_DAY_WORK_RATE`, which asked HR to check a rest-day rate by hand, and
+`HOLIDAY_ON_DAY_OFF` in its older sense, which asked HR to add the substitute
+day; recalculating the run replaces both.
 
 ### Legal basis, and how far it has been checked
 
 The rules above were set by the product owner from the Labour Protection Act
-B.E. 2541. The build environment could not reach the Council of State's
-database or the Royal Gazette, so the sections were checked against secondary
-sources only, and still need reading in the official text:
+B.E. 2541 and checked against two texts the owner supplied, kept outside this
+repository:
 
-| Rule | Section | Checked |
-|---|---|---|
-| A daily-wage employee is paid for traditional holidays and annual leave, not for the weekly day off | s.56 | secondary sources agree |
-| Work on a holiday: one more times the hourly rate for an employee paid for the day, at least twice for one who is not | s.62 | secondary sources agree |
-| A traditional holiday on the weekly day off is replaced by the next working day | s.29 | not yet found in a source |
-| The hourly rate for overtime of a daily-wage employee | s.68 | not yet found in a source |
-| Repaying a cash advance is not among the deductions from wages s.76 allows; consent to a deduction must be written, signed and name its purpose (CW-078) | s.76, s.77 | consolidated text to 2019 (Krisdika), read by the PO on 2026-10-10 |
+- **As first published:** ราชกิจจานุเบกษา เล่ม ๑๑๕ ตอนที่ ๘ ก, 20 February 1998
+  (2541), read by the PO on 2026-10-10.
+- **Consolidated to amendment No. 7 (2019):** the Office of the Council of
+  State's text (สำนักงานคณะกรรมการกฤษฎีกา), 49 pages, read from its page images.
+  A section amended by a later Act carries a footnote there; the sections
+  below carry none, so their 1998 wording stands to 2019.
+
+The rules are checked against the consolidated text to 2019 only. Amendments
+after 2019, if there are any, are not checked.
+
+| Rule | Section | Consolidated text, page | Checked |
+|---|---|---|---|
+| A traditional holiday on the weekly day off moves to the next working day | s.29 | 8–9 | read by the dev on 2026-10-11 |
+| A daily-wage employee is paid for traditional holidays and annual leave, not for the weekly day off | s.56 | 14 | read by the PO on 2026-10-10 (1998 text p.13–14) and the dev on 2026-10-11 |
+| Overtime on a working day: at least 1.5× | s.61 | 14 | read by the dev on 2026-10-11 |
+| Work on a holiday: at least 1× more for an employee paid for the day, at least 2× for one who is not | s.62 | 14–15 | read by the PO on 2026-10-10 (1998 text p.14) and the dev on 2026-10-11 |
+| Overtime on a holiday: at least 3× | s.63 | 15 | read by the dev on 2026-10-11 |
+| A monthly employee's hourly rate is the month ÷ (30 × normal daily hours) | s.68 | 16 | read by the PO on 2026-10-10 (1998 text p.16) and the dev on 2026-10-11 |
+| Repaying a cash advance is not among the deductions from wages s.76 allows; consent to a deduction must be written, signed and name its purpose (CW-078) | s.76, s.77 | 17–18 | read by the PO on 2026-10-10 |
 
 ### Known gaps
 
-- **Substitute holidays.** The holiday table has no notion of a substitute
-  day. When a public holiday falls on an employee's weekly day off, Cwork pays
-  nothing for it and flags it (`HOLIDAY_ON_DAY_OFF`); HR has to enter the
-  substitute day as a holiday for it to be paid.
-- **Holiday and day-off work by daily staff.** The overtime engine has one
-  multiplier per type for everybody (day off 1×, holiday 2×). A daily-wage
-  employee is not paid for the weekly day off, so work on it is owed at least
-  twice the hourly rate, and holiday pay plus holiday work is owed differently
-  again. Cwork does not apply a separate rate; a payslip with such hours is
-  flagged (`REST_DAY_WORK_RATE`) for HR to check.
+- **Substitute days outside a daily wage.** Only a daily-wage half works out
+  substitute days. Attendance, leave and the overtime engine do not know them,
+  for anyone: a salaried employee who stays home on a substitute day the
+  holiday calendar does not list is marked absent and docked, leave taken on
+  it is charged, and an overtime request on it is a working-day request. Until
+  that changes, a company that observes substitute days for salaried staff
+  enters them in the holiday calendar; a daily-wage half then takes the entry
+  as a holiday of its own (see "Substitute holidays").
+- **Statutory floors for everyone.** Only a daily-wage employee's rest-day
+  work is raised to the statutory minimum. Every other overtime rate, and every
+  rate for salaried staff, is the organisation's setting, trusted as entered.
 - A salary paid in two halves is not supported; only daily wages are.
 - Opening balances are monthly. A company cannot start in Cwork with the
   second half of a month: the second half needs a paid first half.

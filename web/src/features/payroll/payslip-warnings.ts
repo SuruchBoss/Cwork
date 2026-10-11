@@ -23,6 +23,18 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
       .filter(Boolean)
       .map((date) => formatDate(date, 'd MMM yyyy'))
       .join(', ');
+  // "DAY_OFF 1x" or "DAY_OFF 1x → 2x", comma-separated.
+  const rates = (value: unknown) =>
+    String(value ?? '')
+      .split(',')
+      .map((rate) => rate.trim())
+      .filter(Boolean)
+      .map((rate) => {
+        const [type, ...multipliers] = rate.split(' ');
+        const label = overtimeTypeLabels[type];
+        return `${label ? t(label) : type} ${multipliers.join(' ').replace(/x/g, '×')}`.trim();
+      })
+      .join(', ');
 
   switch (warning.code) {
     case 'INCOMPLETE_PUNCH_COUNTED':
@@ -37,8 +49,34 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
       });
     case 'HOLIDAY_ON_DAY_OFF':
       return t(
-        'A public holiday fell on the weekly day off ({dates}): add the substitute day to the holiday calendar for it to be paid',
+        'A public holiday fell on the weekly day off ({dates}) and the employee leaves before a working day it could move to: it is owed, so pay it by hand',
         { dates: dates() },
+      );
+    case 'SUBSTITUTE_HOLIDAY':
+      return t(
+        'Paid {days} public holiday(s) that fell on the weekly day off on the next working day instead: {dates}. Do not add these days to the holiday calendar as well',
+        {
+          days: Number(p.days ?? 0),
+          dates: String(p.dates ?? '')
+            .split(',')
+            .map((pair) =>
+              pair
+                .split('→')
+                .map((date) => formatDate(date.trim(), 'd MMM yyyy'))
+                .join(' → '),
+            )
+            .join(', '),
+        },
+      );
+    case 'SUBSTITUTE_HOLIDAY_WORKED':
+      return t(
+        'Worked on {days} substitute holiday(s): {dates}. The day is paid as a holiday; record the hours as work on a public holiday for the work itself to be paid',
+        { days: Number(p.days ?? 0), dates: dates() },
+      );
+    case 'REST_DAY_RATE_RAISED':
+      return t(
+        'Paid {hours} h of rest-day work at the least the law allows a daily-wage employee (section 62): {rates}',
+        { hours: Number(p.hours ?? 0), rates: rates(p.rates) },
       );
     case 'BELOW_MINIMUM_WAGE':
       return t(
@@ -71,19 +109,7 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
     case 'REST_DAY_WORK_RATE':
       return t(
         'Work on a day off or a holiday ({hours} h at {rates}): check the rate owed to a daily-wage employee',
-        {
-          hours: Number(p.hours ?? 0),
-          rates: String(p.rates ?? '')
-            .split(',')
-            .map((rate) => rate.trim())
-            .filter(Boolean)
-            .map((rate) => {
-              const [type, multiplier] = rate.split(' ');
-              const label = overtimeTypeLabels[type];
-              return `${label ? t(label) : type} ${multiplier?.replace('x', '×') ?? ''}`.trim();
-            })
-            .join(', '),
-        },
+        { hours: Number(p.hours ?? 0), rates: rates(p.rates) },
       );
     case 'ADVANCE_CARRIED_OVER':
       return t(

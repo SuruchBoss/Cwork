@@ -3,7 +3,13 @@
 
 import { AttendanceStatus } from '@prisma/client';
 import { buildPayslip, type FirstHalfPaid, type PayslipInput } from './payroll-calculator';
-import { countDaysPaid, minimumWageWarnings, type DailyWageDay } from './daily-wage';
+import {
+  countDaysPaid,
+  dailyWageOvertime,
+  minimumWageWarnings,
+  substituteHolidays,
+  type DailyWageDay,
+} from './daily-wage';
 import { computeSocialSecurity, THAI_TAX_RULES_2026 } from './thai-tax';
 
 /**
@@ -216,7 +222,37 @@ describe('The days a daily-wage employee is paid for (PO decision Q3)', () => {
     ]);
   });
 
-  it('flags a public holiday on the weekly day off, which is owed a substitute day', () => {
+  it('pays a holiday on the weekly day off on its substitute day, and lists it for HR (CW-076)', () => {
+    const result = countDaysPaid([
+      // Saturday 5 December, Father's Day, is paid on Monday the 7th.
+      day('2026-12-05', {
+        scheduled: false,
+        paidHoliday: true,
+        attendance: null,
+        substitutedOn: '2026-12-07',
+      }),
+      day('2026-12-06', { scheduled: false, attendance: AttendanceStatus.DAY_OFF }),
+      day('2026-12-07', { attendance: AttendanceStatus.ABSENT, substituteFor: '2026-12-05' }),
+      day('2026-12-08', {}),
+    ]);
+
+    expect(result).toMatchObject({ worked: 1, holidays: 1, days: 2 });
+    expect(result.warnings).toEqual([
+      { code: 'SUBSTITUTE_HOLIDAY', params: { days: 1, dates: '2026-12-05 → 2026-12-07' } },
+    ]);
+  });
+
+  it('pays a substitute day worked once, and asks HR to record the work as holiday work', () => {
+    const result = countDaysPaid([day('2026-12-07', { substituteFor: '2026-12-05' })]);
+
+    expect(result).toMatchObject({ worked: 0, holidays: 1, days: 1 });
+    expect(result.warnings).toContainEqual({
+      code: 'SUBSTITUTE_HOLIDAY_WORKED',
+      params: { days: 1, dates: '2026-12-07' },
+    });
+  });
+
+  it('flags a holiday on the weekly day off whose substitute comes after the employee leaves', () => {
     const result = countDaysPaid([
       day('2026-12-05', { scheduled: false, paidHoliday: true, attendance: null }),
     ]);
@@ -224,6 +260,81 @@ describe('The days a daily-wage employee is paid for (PO decision Q3)', () => {
     expect(result.days).toBe(0);
     expect(result.warnings).toEqual([
       { code: 'HOLIDAY_ON_DAY_OFF', params: { days: 1, dates: '2026-12-05' } },
+    ]);
+  });
+});
+
+describe('Substitute days for holidays on the weekly day off (section 29, CW-076)', () => {
+  /** Days of December 2026 for someone working Monday to Friday (the 5th is a Saturday). */
+  const week = (from: number, to: number, holidays: number[]) =>
+    Array.from({ length: to - from + 1 }, (_, i) => {
+      const date = new Date(Date.UTC(2026, 11, from + i));
+      return {
+        date: date.toISOString().slice(0, 10),
+        scheduled: date.getUTCDay() !== 0 && date.getUTCDay() !== 6,
+        paidHoliday: holidays.includes(from + i),
+      };
+    });
+
+  it('moves a holiday on a Saturday to the Monday after', () => {
+    expect(substituteHolidays(week(4, 9, [5]))).toEqual(new Map([['2026-12-07', '2026-12-05']]));
+  });
+
+  it('gives two holidays on days off the next two working days, past a holiday on a working day', () => {
+    // Saturday 5, Sunday 6 and Monday 7 are all holidays: Tuesday and Wednesday stand in.
+    expect(substituteHolidays(week(4, 11, [5, 6, 7]))).toEqual(
+      new Map([
+        ['2026-12-08', '2026-12-05'],
+        ['2026-12-09', '2026-12-06'],
+      ]),
+    );
+  });
+
+  it("follows the employee's own schedule, and needs none for a holiday they would work", () => {
+    const calendar = [
+      { date: '2026-12-05', scheduled: true, paidHoliday: true }, // works Saturdays
+      { date: '2026-12-06', scheduled: false, paidHoliday: false },
+      { date: '2026-12-07', scheduled: true, paidHoliday: false },
+    ];
+    expect(substituteHolidays(calendar).size).toBe(0);
+  });
+
+  it('leaves out a holiday whose substitute is past the end of the calendar', () => {
+    expect(substituteHolidays(week(4, 6, [5])).size).toBe(0);
+  });
+});
+
+describe('Rest-day work by a daily-wage employee (section 62, CW-076)', () => {
+  it('pays four hours on the weekly day off at twice the hourly rate, and says it was raised', () => {
+    const { lines, warnings } = dailyWageOvertime([
+      { type: 'DAY_OFF', hours: 4, multiplier: 1 },
+      { type: 'HOLIDAY', hours: 4, multiplier: 2 },
+      { type: 'NORMAL_DAY', hours: 2, multiplier: 1.5 },
+    ]);
+
+    expect(lines.map((l) => l.multiplier)).toEqual([2, 2, 1.5]);
+    expect(warnings).toEqual([
+      { code: 'REST_DAY_RATE_RAISED', params: { hours: 4, rates: 'DAY_OFF 1x → 2x' } },
+    ]);
+
+    // 500 a day over 8 hours is 62.50 an hour: four hours at 2× is 500, at 1×
+    // the overtime request's own rate it would have been 250.
+    const slip = buildPayslip({ ...daily(500, 10), overtime: lines.slice(0, 2) });
+    const ot = slip.lines.filter((l) => l.code.startsWith('OT_'));
+    expect(ot.map((l) => [l.code, l.amount.toNumber()])).toEqual([
+      ['OT_DAY_OFF', 500],
+      ['OT_HOLIDAY', 500],
+    ]);
+  });
+
+  it('pays work on a traditional holiday at least once more, and leaves a higher rate alone', () => {
+    const { lines, warnings } = dailyWageOvertime([
+      { type: 'HOLIDAY', hours: 4, multiplier: 0.5 },
+      { type: 'DAY_OFF', hours: 4, multiplier: 2.5 },
+    ]);
+    expect(lines.map((l) => l.multiplier)).toEqual([1, 2.5]);
+    expect(warnings).toEqual([
+      { code: 'REST_DAY_RATE_RAISED', params: { hours: 4, rates: 'HOLIDAY 0.5x → 1x' } },
     ]);
   });
 });

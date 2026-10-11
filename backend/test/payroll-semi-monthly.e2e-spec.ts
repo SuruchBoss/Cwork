@@ -6,11 +6,18 @@
  *
  * Two daily-wage employees are paid November 2031 in a first and a second half,
  * with nothing mocked: attendance, a holiday where one of them works, an
- * opening balance for the other. The figures are worked by hand in the
+ * opening balance for the other, a holiday's substitute day and rest-day
+ * overtime (CW-076). The figures are worked by hand in the
  * comments; none come from the pilot's Excel file, which has not arrived yet.
  * No other spec touches 2031.
  */
-import { AttendanceStatus, EmployeeStatus, PayrollRunStatus } from '@prisma/client';
+import {
+  AttendanceStatus,
+  EmployeeStatus,
+  OvertimeStatus,
+  OvertimeType,
+  PayrollRunStatus,
+} from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { computeSocialSecurity, taxRulesFor } from 'src/modules/payroll/domain/thai-tax';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
@@ -304,12 +311,39 @@ describe('Daily wages paid twice a month (e2e)', () => {
           { organizationId, workLocationId: locationId, date: utc(date(15)), name: 'วันหยุดเสาร์' },
         ],
       });
-      // Second half: every weekday present.
-      await attend(
-        factoryWorker,
-        [17, 18, 19, 20, 21, 24, 25, 26, 27, 28],
-        AttendanceStatus.PRESENT,
-      );
+      // Second half: the factory is closed on Mon 17, the substitute for the
+      // holiday on Saturday the 15th, which nobody entered (section 29,
+      // CW-076). Wed 26 is a factory holiday; every other weekday present.
+      await attend(factoryWorker, [18, 19, 20, 21, 24, 25, 27, 28], AttendanceStatus.PRESENT);
+      await prisma.holiday.create({
+        data: {
+          organizationId,
+          workLocationId: locationId,
+          date: utc(date(26)),
+          name: 'วันหยุดโรงงาน',
+        },
+      });
+      // Four hours on Saturday the 22nd, the weekly day off, approved at the
+      // organisation's day-off rate of 1×, and four on the holiday at 2×.
+      await prisma.overtimeRequest.createMany({
+        data: [
+          { day: 22, type: OvertimeType.DAY_OFF, multiplier: 1 },
+          { day: 26, type: OvertimeType.HOLIDAY, multiplier: 2 },
+        ].map(({ day, type, multiplier }) => ({
+          organizationId,
+          requestNo: `OT-CW076-${day}`,
+          employeeId: factoryWorker,
+          workDate: utc(date(day)),
+          startAt: new Date(`${date(day)}T02:00:00Z`),
+          endAt: new Date(`${date(day)}T06:00:00Z`),
+          requestedHours: 4,
+          approvedHours: 4,
+          type,
+          rateMultiplier: multiplier,
+          reason: 'สต็อกปลายเดือน',
+          status: OvertimeStatus.APPROVED,
+        })),
+      });
 
       // The other one was paid January to October before Cwork, 52,000 a
       // month: 520,000 taxable, 1,916.67 withheld a month, 750 social security.
@@ -360,10 +394,11 @@ describe('Daily wages paid twice a month (e2e)', () => {
       expect(Number(slip.workedDays)).toBe(8);
       expect(Number(slip.grossEarnings)).toBe(4_000);
       expect(Number(slip.ssoEmployee)).toBe(200); // 5% of 4,000, no floor
+      // Saturday the 15th is paid on its substitute day, Monday the 17th, in
+      // the second half.
       expect(slip.warnings).toEqual([
         { code: 'INCOMPLETE_PUNCH_COUNTED', params: { days: 1, dates: date(5) } },
         { code: 'NO_ATTENDANCE_RECORD', params: { days: 1, dates: date(14) } },
-        { code: 'HOLIDAY_ON_DAY_OFF', params: { days: 1, dates: date(15) } },
       ]);
 
       // The run page reads the warnings with the payslips.
@@ -371,7 +406,7 @@ describe('Daily wages paid twice a month (e2e)', () => {
       const onPage = run.body.payslips.find(
         (p: { employeeId: string }) => p.employeeId === factoryWorker,
       );
-      expect(onPage.warnings).toHaveLength(3);
+      expect(onPage.warnings).toHaveLength(2);
       const other = run.body.payslips.find(
         (p: { employeeId: string }) => p.employeeId === movedOver,
       );
@@ -390,12 +425,27 @@ describe('Daily wages paid twice a month (e2e)', () => {
       const calculated = await api.post(`/payroll/runs/${runId}/calculate`, payrollToken);
       expect(calculated.status).toBe(201);
 
-      // Ten days × 500 = 5,000. The month, 9,000, contributes 450; the first
-      // half took 200, so the second takes 250: what a monthly run would take.
+      // Ten days × 500 = 5,000: eight worked, the holiday on the 26th, and the
+      // 17th standing in for the 15th, which HR did not have to add. The hour
+      // is 500 ÷ 8 = 62.50: four on the day off at 2× (not the request's 1×)
+      // is 500, four on the holiday at 2× is 500. Social security is on the
+      // wage without overtime: the month, 9,000, contributes 450; the first
+      // half took 200, so the second takes 250.
       const factory = await slipOf(runId, factoryWorker);
-      expect(Number(factory.grossEarnings)).toBe(5_000);
+      expect(Number(factory.workedDays)).toBe(10);
+      expect(Number(factory.grossEarnings)).toBe(6_000);
       expect(Number(factory.ssoEmployee)).toBe(250);
-      expect(factory.warnings).toEqual([]);
+      expect(factory.warnings).toEqual([
+        { code: 'SUBSTITUTE_HOLIDAY', params: { days: 1, dates: `${date(15)} → ${date(17)}` } },
+        { code: 'REST_DAY_RATE_RAISED', params: { hours: 4, rates: 'DAY_OFF 1x → 2x' } },
+      ]);
+      const overtime = factory.items
+        .filter((item) => item.code.startsWith('OT_'))
+        .sort((a, b) => a.code.localeCompare(b.code));
+      expect(overtime.map((l) => [l.code, Number(l.rate), Number(l.amount)])).toEqual([
+        ['OT_DAY_OFF', 125, 500],
+        ['OT_HOLIDAY', 125, 500],
+      ]);
 
       // The opening balance is the year so far. November projects 520,000 +
       // 52,000 × 2 = 624,000: net 624,000 − 100,000 − 60,000 − 10,500 (the

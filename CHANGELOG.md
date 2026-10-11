@@ -555,6 +555,22 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Daily-wage staff were underpaid for holidays on their day off and for
+  work on it** (CW-076). A traditional holiday that falls on the weekly day off
+  moves to the next working day (Labour Protection Act s.29), but Cwork paid a
+  daily-wage employee nothing for it unless HR entered the substitute day by
+  hand. A half's run now works out each employee's substitute days from their
+  own schedule, pays them as holidays, and lists them on the payslip
+  (`SUBSTITUTE_HOLIDAY`) so they are not entered twice; a substitute day the
+  employee came in on, or one that falls after they leave, is flagged. Work on
+  the weekly day off was paid at the organisation's day-off rate, 1×, which is
+  meant for salaried staff already paid for that day: a daily-wage employee is
+  owed at least 2× (s.62(2)), and at least 1× on top of the day for a
+  traditional holiday (s.62(1)). The run raises a lower multiplier and says so
+  (`REST_DAY_RATE_RAISED`). Monthly employees' pay does not change. Sections
+  29, 56 and 61–63 are checked against the Council of State's consolidated text
+  to 2019 (`docs/payroll-thailand.md`).
+
 - **A department-limited role narrowed everything the person could see**
   (CW-079). Any grant limited to a department narrowed the account's
   `employee:read` to that department, even when another of its roles covered
