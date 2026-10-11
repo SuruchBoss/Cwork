@@ -464,35 +464,8 @@ Pilot B, which is unpaid; all of them come before the first invoice.
 **Acceptance** Each point above has an owner's decision recorded here, and the
 ones that need code or docs are their own tickets.
 
-### CW-082 · A monthly salary prorated in December counts the substitute day as a working day
-`P1` · payroll · **S** · before a monthly run with joiners or leavers in a month with a substitute day · queued 2026-10-11 (#85)
-
-Left by CW-081. A salaried employee who joins or leaves mid-month is paid by
-working days, and those are still counted as Monday to Friday less the
-organisation's holidays, not from the employee's own work calendar. Absence
-already uses the calendar, so nobody is docked for a substitute day, but the
-day's value is worked out over one working day too many when a substitute
-day falls in the month (7 December 2026, for 5 December). The error is a few
-satang to a few baht per prorated payslip, paid short.
-
-**Scope**
-- Proration counts working days from `resolveWorkCalendar` for the employee:
-  their schedule, both kinds of holiday, and substitute days.
-- The method stays the one `docs/payroll-thailand.md` documents; only the
-  days counted change.
-
-**Acceptance**
-- A salaried employee on a Monday–Friday schedule who joins on
-  9 December 2026 is paid over the working days of December less 7 and
-  10 December, checked by hand in a test.
-- Nobody with a full month changes by a satang.
-
-**Files** `backend/src/modules/payroll/`
-
----
-
 ### CW-083 · A department limit on the payroll officer role does not limit pay
-`P1` · identity · payroll · **S** · before a customer hands out department-limited roles · not queued
+`P1` · identity · payroll · **S** · before a customer hands out department-limited roles · queued 2026-10-11 (#86)
 
 Found by the PO while reviewing CW-071. `docs/security.md` says a department
 limit narrows `employee:read` only, and payroll reads (`payroll:read`: runs,
@@ -1345,3 +1318,4 @@ Kept so the reasoning survives.
 | **CW-071** · The pilot pays in cash to staff without smartphones, and a payslip on a screen reached nobody | An approved or paid run prints as PDF from the run page: payslips one, two or four to an A4 sheet (cut lines; a long slip shrinks its type, then takes its own page, never drops a line) and a wage-receipt sheet with one row per employee, net pay, a space to sign, totals and page numbers. Dates in พ.ศ., Sarabun embedded and checked for missing glyphs, a foreign worker's name as HR entered it; a daily wage prints as days × rate, `CASH_ADVANCE` on its own line, a substitute holiday as a note. Every line of a printed slip is tested against the payslip record the API returns. Printing needs `payroll:read`, refuses a run not yet approved (`PAYROLL_RUN_NOT_PRINTABLE`) or a slip whose lines do not add up (`PAYSLIP_DOES_NOT_ADD_UP`), and is audited as an export of the run. Accepted from the dev: only `SUBSTITUTE_HOLIDAY` prints, other warnings stay HR's; "matches the screen" means the API payslip record, as the console has no payslip page yet; employees printing their own slip is not in this ticket; the receipt's wording is a template, with three questions for an accountant on #36. Two holiday-page fixes from the browser walk of CW-081 ride along (the substitute picker's layout, and no automatic note under a holiday with an entered substitute). Guide: `docs/guide/printing-payslips.th.md`. a26329b, closed 2026-10-11. |
 | **CW-084** · Social security was rounded to the satang and was nothing below the floor; the official form says otherwise | Verified against the Social Security Office's announcement on contribution forms (No. 2) B.E. 2568, Royal Gazette vol. 142, special part 405 Ng, 30 December 2025, pages 23-27, notes 1, 3, 4 and 6. `computeSocialSecurity` is the one monthly figure per person: the wage, the 1,650 floor and the ceiling of the period's year, rounded to the baht half up, the employer's share equal; a month with no wage contributes nothing. A half-month run takes 5% of H1 (capped, whole baht, no floor) and H2 is the month less H1, so the pair equals a monthly run; the CW-075 shortfall report uses the same function. Hand-computed: 5,010 gives 251 and 251, 1,200 gives 83, 20,000 in 2026 gives 875, a half-month pair of 5,010 gives 125 + 126. Approved and paid runs are not recalculated; months already paid keep their satang, which the shortfall report shows. Three questions for an accountant on #36. d5b35a4, closed 2026-10-11. |
 | **CW-048** · The monthly social security filing (สปส.1-10) had no way out of payroll | Payroll → monthly social security filing, and `GET /payroll/reports/sso-filing?year=&month=&format=json|csv|xlsx|pdf`, give the form's part 1 (total wage, employee and employer contributions, their sum, the number of insured) and part 2 (one row per person in employee-code order: sequence, national ID, or the social security card number for a foreign worker, name, wage, contribution). Contributions are `computeSocialSecurity` (CW-084) on the month's wage with both halves added first, so the form and the payslips use one rule; each row also shows what the payslips deducted and is marked where it differs. Tested in the e2e at the period year's ceiling (23,000 in 2037 gives 1,150), under the floor (1,470 gives 83) and with a month of no wage listed as nil (note 6). Someone with no valid number is named and every download is refused (`SSO_FILING_HAS_PROBLEMS`); a month with a period not yet approved or paid, or a half-month month missing a half, is refused (`SSO_MONTH_NOT_FINISHED`). Needs `payroll:export` (it carries ID numbers); every read and download is audited as an export, without the numbers. Accepted from the dev: a foreign worker is anyone with a passport or work-permit number on the record, as Cwork stores no nationality; "wage actually paid" is the wage social security is worked on, overtime left out, asked as question 4 on #36; the console defaults to the month just finished, dates in พ.ศ. Guide: `docs/guide/sso-filing.th.md`. Left: the e-Services upload file and the November check (CW-085). 8bb7757, closed 2026-10-11. |
+| **CW-082** · A monthly salary prorated in a month with a substitute day counted that day as a working day | A salaried joiner's or leaver's pay, and the value of an unpaid day, are now worked out over the employee's own work calendar (`WorkCalendarService`: their schedule, the organisation's and the work location's holidays, substitute days as days off), not Monday to Friday less the organisation's holidays. The method in `docs/payroll-thailand.md` is unchanged: base × days paid ÷ the period's working days, counted as if employed all period, so a holiday before someone joined still takes its substitute out of the month. Checked by hand in the e2e for December 2026 at 20,000 (20 working days after 7, 10 and 31 December): a joiner on the 9th gets 15,000.00 (was 14,285.71), a leaver after the 4th 4,000.00, one absent day 19,000.00, a full month 20,000.00 as before; the test fails with the old figures when the substitute day is taken out. Accepted from the dev: a full-month employee with unpaid days in such a month is docked at the corrected day's value, which is the fix; a schedule with Saturday as a working day now counts Saturdays; approved and paid payslips are not recalculated. 6fffdeb, closed 2026-10-11. |
