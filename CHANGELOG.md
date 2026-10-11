@@ -573,6 +573,20 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Social security is rounded to the baht, and a wage under the floor is
+  worked on the floor** (CW-084). The Social Security Office's own form,
+  สปส.1-10 part 2, says in its notes that a wage under the floor is worked out
+  on the floor and that each person's contribution is rounded to the baht, 50
+  satang and over up, with the employer sending in the same amount. Cwork
+  rounded to the satang and gave nothing at all below the floor, so a wage of
+  5,010 withheld 250.50 where the form says 251, and a wage of 1,200 withheld
+  nothing where the form says 83. One function now gives a person's monthly
+  contribution, and payslips, the half-month split (the second half is the
+  month's figure less the first half's), the shortfall report and the monthly
+  filing all use it. A month in which nothing was paid contributes nothing. A
+  run already approved or paid is never recalculated; its figures stay as they
+  were, in satang, and the shortfall report shows the difference.
+
 - **The holiday page was cramped, and showed two answers for one holiday**
   (CW-081). The substitute selector sat in a fixed side column that squeezed
   each holiday's notes into a strip a few words wide, and a holiday HR had given

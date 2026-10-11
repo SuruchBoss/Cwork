@@ -431,12 +431,20 @@ export interface SocialSecurityResult {
 }
 
 /**
- * Social Security Fund contribution (มาตรา 33).
+ * Social Security Fund contribution (มาตรา 33), as the Social Security Office's
+ * own form states it (สปส.1-10 part 2, คำชี้แจง ข้อ 3 and 4; CW-084).
  *
- * 5% of the month's wage, with the wage floored and capped by the rules for
- * the year (฿1,650 and ฿17,500 in 2026, so between ฿83 and ฿875). Employer
- * matches. The ceiling is monthly: there is no separate yearly stop, which an
- * earlier version took to be 12 × the old ceiling's contribution (CW-075).
+ * The month's wage is worked out on the floor if it is under it and on the
+ * ceiling if it is over it (฿1,650 and ฿17,500 in 2026, so between ฿83 and
+ * ฿875), at the rate, and rounded to a whole baht: 50 satang and over up,
+ * under 50 down. The employer pays the same rounded amount. The ceiling is
+ * monthly: there is no separate yearly stop, which an earlier version took to
+ * be 12 × the old ceiling's contribution (CW-075). A month in which nothing
+ * was paid contributes nothing.
+ *
+ * This is the one place a person's monthly contribution is worked out: payslips,
+ * the half-month split, the shortfall report and the monthly filing all use it,
+ * because what is withheld has to equal what is filed.
  */
 export function computeSocialSecurity(
   monthlyWage: number | Decimal,
@@ -445,8 +453,7 @@ export function computeSocialSecurity(
   const { rate, minMonthlyWage, maxMonthlyWage } = rules.socialSecurity;
   const wage = new Decimal(monthlyWage.toString());
 
-  if (wage.lessThan(minMonthlyWage)) {
-    // Below the floor there is no contributory wage at all.
+  if (!wage.greaterThan(0)) {
     return {
       contributoryWage: new Decimal(0),
       employeeContribution: new Decimal(0),
@@ -454,14 +461,22 @@ export function computeSocialSecurity(
     };
   }
 
-  const contributoryWage = Decimal.min(wage, new Decimal(maxMonthlyWage));
-  const contribution = round2(contributoryWage.times(rate));
+  const contributoryWage = Decimal.min(
+    Decimal.max(wage, new Decimal(minMonthlyWage)),
+    new Decimal(maxMonthlyWage),
+  );
+  const contribution = wholeBaht(contributoryWage.times(rate));
 
   return {
     contributoryWage: round2(contributoryWage),
     employeeContribution: contribution,
     employerContribution: contribution,
   };
+}
+
+/** Rounded to a whole baht, 50 satang and over up and under 50 down, as the form says. */
+export function wholeBaht(value: Decimal | number): Decimal {
+  return new Decimal(value.toString()).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 }
 
 /**

@@ -125,9 +125,32 @@ describe('computeSocialSecurity', () => {
     expect(result.employeeContribution.toNumber()).toBe(maxMonthlyWage * rate);
   });
 
-  it('contributes nothing below the wage floor', () => {
-    const result = computeSocialSecurity(1_000);
-    expect(result.employeeContribution.toNumber()).toBe(0);
+  // The Social Security Office's form, สปส.1-10 part 2, คำชี้แจง ข้อ 3 and 4 (CW-084).
+  it('works a wage below the floor on the floor: 1,650 × 5% = 82.50, up to 83', () => {
+    const result = computeSocialSecurity(1_200);
+    expect(result.contributoryWage.toNumber()).toBe(1_650);
+    expect(result.employeeContribution.toNumber()).toBe(83);
+    expect(result.employerContribution.toNumber()).toBe(83);
+  });
+
+  it('contributes nothing for a month in which nothing was paid', () => {
+    expect(computeSocialSecurity(0).employeeContribution.toNumber()).toBe(0);
+    expect(computeSocialSecurity(-5).employeeContribution.toNumber()).toBe(0);
+    expect(computeSocialSecurity(0.01).employeeContribution.toNumber()).toBe(83);
+  });
+
+  it('rounds to a whole baht, 50 satang and over up and under 50 down, the employer the same', () => {
+    // 5,010 × 5% = 250.50 → 251; 5,009 × 5% = 250.45 → 250.
+    expect(computeSocialSecurity(5_010).employeeContribution.toNumber()).toBe(251);
+    expect(computeSocialSecurity(5_010).employerContribution.toNumber()).toBe(251);
+    expect(computeSocialSecurity(5_009).employeeContribution.toNumber()).toBe(250);
+    expect(computeSocialSecurity(5_009).employerContribution.toNumber()).toBe(250);
+  });
+
+  it('gives 875 for a wage of 20,000 in 2026, the ceiling being 17,500', () => {
+    const result = computeSocialSecurity(20_000, taxRulesFor(2026));
+    expect(result.contributoryWage.toNumber()).toBe(17_500);
+    expect(result.employeeContribution.toNumber()).toBe(875);
   });
 });
 
