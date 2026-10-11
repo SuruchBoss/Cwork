@@ -159,21 +159,26 @@ seeing any of it.
 ### CW-084 · Social security is rounded to the satang and is zero below the floor; the official form says otherwise
 `P0` · payroll · **S** · before Pilot B · ready
 
-Found by the dev while reading the official สปส.1-10 part 2 form for CW-048
-(sso.go.th, the PDF the dev cited; the PO read its notes on 2026-10-11).
-Notes 3 and 4 under the form:
+Found by the dev while reading the official สปส.1-10 part 2 form for CW-048.
+The form in force from 1 January 2026 is in the Social Security Office's
+announcement on contribution forms (No. 2) B.E. 2568, Royal Gazette vol. 142,
+special part 405 Ng, 30 December 2025, pages 23-27 (read by the PO on
+2026-10-11; it replaces the 2018 forms, whose notes say the same but print a
+15,000 ceiling). The notes under part 2:
 
-- a wage under the floor is contributed on the floor (the form prints
-  1,650); Cwork returns no contribution at all below the floor
-  (`computeSocialSecurity` in `payroll/domain/thai-tax.ts`);
-- each insured person's contribution is rounded to the baht, 50 satang and
-  over up, under 50 satang down, and the employer pays the same rounded
-  amount; Cwork rounds to the satang (a wage of 5,010 gives 250.50, the form
-  251).
+- note 1: a wage under 1,650 is contributed on 1,650; over the ceiling, on
+  17,500 (2026-2028), 20,000 (2029-2031) and 23,000 (from 2032), the ceilings
+  CW-075 already applies; Cwork returns no contribution at all below the
+  floor (`computeSocialSecurity` in `payroll/domain/thai-tax.ts`);
+- note 4: each insured person's contribution is rounded to the baht, 50
+  satang and over up, under 50 satang down, and the employer pays the same
+  rounded amount; Cwork rounds to the satang (a wage of 5,010 gives 250.50,
+  the form 251). Column 5 prints whole baht;
+- note 6: an insured person paid nothing in the month is listed with columns
+  4 and 5 as 0.
 
-The form still prints the old 15,000 ceiling; the ceilings by year from
-CW-075 stand. What is withheld must equal what is filed, so the payslip and
-the CW-048 file both have to follow the form, every month.
+What is withheld must equal what is filed, so the payslip and the CW-048 file
+both follow the form, every month.
 
 **Scope**
 - One function gives a person's monthly contribution: the wage, the floor
@@ -181,9 +186,10 @@ the CW-048 file both have to follow the form, every month.
   says; the employer's share equals it. Payslips, the half-month split
   (CW-069: the month's figure is fixed by this function, H2 is the month
   less H1), the shortfall report (CW-075) and CW-048 all use it.
-- A wage of nil in a month (nobody paid) contributes nothing; that case and
-  the two rules above go on #36 for the accountant to confirm.
-- `docs/payroll-thailand.md` cites the form's notes 3 and 4.
+- A wage of nil in a month contributes nothing (note 6); the rules go on #36
+  for the accountant to confirm.
+- `docs/payroll-thailand.md` cites the 2025 announcement, notes 1, 4 and 6
+  (volume, part, date, pages); the PDF is not committed.
 
 **Acceptance**
 - Hand-computed in tests: wage 5,010 gives 251 and 251; wage 1,200 gives
@@ -889,6 +895,9 @@ upload file behind the login. The owner is asked for a sample upload file
 from e-Services, names and ID numbers blanked. Until it comes, the monthly
 totals per person and the สปส.1-10 part 2 content (CSV/Excel and a printable
 PDF) are built; the upload formatter waits. Contributions come from CW-084.
+The printed form to follow is the 2025 announcement cited in CW-084 (part 1
+totals, part 2 columns 1-5; a foreign worker's social security card number
+goes in the ID column, note 3).
 
 **Acceptance**
 - The seeded demo company's export matches hand-computed employee and employer
