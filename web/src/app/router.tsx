@@ -40,6 +40,7 @@ const AuditPage = lazy(() => import('@/features/settings/AuditPage'));
 const NotFoundPage = lazy(() => import('@/features/settings/NotFoundPage'));
 const MobileAppPage = lazy(() => import('@/features/mobile-app/MobileAppPage'));
 const InstallPage = lazy(() => import('@/features/mobile-app/InstallPage'));
+const ReportProblemPage = lazy(() => import('@/features/support/ReportProblemPage'));
 
 function RouteFallback() {
   return (
@@ -117,6 +118,10 @@ export const router = createBrowserRouter([
                   },
                   { path: ':id', element: <EmployeeDetailPage /> },
                 ],
+              },
+              {
+                path: 'support/report',
+                element: <ReportProblemPage />,
               },
               {
                 path: 'mobile-app',

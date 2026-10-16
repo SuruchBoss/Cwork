@@ -137,6 +137,11 @@ export const NAV: NavSection[] = [
       { to: '/audit', label: 'Activity log', icon: 'history', permissions: [P.AUDIT_READ] },
     ],
   },
+  {
+    // Everyone signed in, whatever their role: anyone may hit a problem (CW-087).
+    heading: 'Help',
+    items: [{ to: '/support/report', label: 'Report a problem', icon: 'inbox' }],
+  },
 ];
 
 /**

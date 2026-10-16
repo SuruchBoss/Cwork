@@ -3,6 +3,7 @@
 
 import { ApiError } from './api-error';
 import { env } from './env';
+import { describeFailure, recordFailure } from './failure-log';
 import type { AuthTokens } from '@/types/api';
 
 type TokenGetter = () => string | null;
@@ -79,9 +80,13 @@ class ApiClient {
    * A non-2xx is parsed as a JSON error and thrown, so a refused export shows
    * the server's reason rather than downloading an error page.
    */
-  async download(
+  download(path: string, options: RequestOptions = {}): Promise<{ blob: Blob; filename: string }> {
+    return this.remembering('GET', path, options, () => this.fetchFile(path, options));
+  }
+
+  private async fetchFile(
     path: string,
-    options: RequestOptions = {},
+    options: RequestOptions,
   ): Promise<{ blob: Blob; filename: string }> {
     const url = env.apiBaseUrl + path + buildQueryString(options.query);
     let response = await this.send('GET', url, options);
@@ -102,7 +107,40 @@ class ApiClient {
     return { blob: await response.blob(), filename: filenameFromResponse(response, 'download') };
   }
 
-  private async request<T>(method: string, path: string, options: RequestOptions): Promise<T> {
+  private request<T>(method: string, path: string, options: RequestOptions): Promise<T> {
+    return this.remembering(method, path, options, () => this.fetchJson<T>(method, path, options));
+  }
+
+  /**
+   * Notes a failed request for the "report a problem" form (CW-087) and lets the
+   * error carry on unchanged. Only the route, the parameter names, the status and
+   * the server's error code are kept; see `lib/failure-log.ts`.
+   */
+  private async remembering<T>(
+    method: string,
+    path: string,
+    options: RequestOptions,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      const known = error instanceof ApiError ? error : null;
+      recordFailure(
+        describeFailure({
+          method,
+          path,
+          query: options.query,
+          status: known?.status ?? 0,
+          code: known?.code ?? (error instanceof TypeError ? 'NETWORK_ERROR' : 'CLIENT_ERROR'),
+          requestId: known?.requestId,
+        }),
+      );
+      throw error;
+    }
+  }
+
+  private async fetchJson<T>(method: string, path: string, options: RequestOptions): Promise<T> {
     const url = env.apiBaseUrl + path + buildQueryString(options.query);
     const response = await this.send(method, url, options);
 

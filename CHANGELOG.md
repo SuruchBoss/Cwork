@@ -120,6 +120,26 @@ log as an export of the run.
 
 ### Added
 
+- **A "report a problem" form in the console** (CW-087). A customer who hit an
+  error had nothing to send but a description. **Help → Report a problem**
+  (everyone signed in) takes what happened and attaches what Cwork can tell
+  without personal data: the console's version, the screen, the time, the
+  browser, and for each of the last ten failed requests its route, the names of
+  its query parameters, its status, the server's error code and request id. It
+  builds one text to copy, or save as a file, and the person sends it
+  themselves by LINE or email: the page makes no request and has no send
+  button, and Cwork has no endpoint to receive one. What is kept of a failed
+  request is decided in one place, `web/src/lib/failure-log.ts`: any part of a
+  path that is not a plain lowercase word becomes `:id`, query values, request
+  and response bodies and error messages (which can name a person) are never
+  kept, and the list lives in memory until the tab closes. Tested by running a
+  seeded employee's name, code, e-mail, salary and national ID through the real
+  API client, in the path, the query, the body and the server's error, and
+  checking none of it reaches the report. Where to send the report is not
+  decided yet and the page says so; the page of what support covers (CW-087's
+  other half) waits for the owner. Free, no key. A Thai guide is in
+  `docs/guide/report-a-problem.th.md`.
+
 - **A cash-preparation sheet for a cash payday** (CW-088). A pilot that pays
   wages in cash counted the notes and coins for each envelope on paper. An
   approved or paid run now prints that count from its page, through `GET
