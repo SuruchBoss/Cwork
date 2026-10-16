@@ -571,7 +571,7 @@ What the compose file runs today, and what makes this large: `postgres`
 ---
 
 ### CW-087 · What Cwork's support covers, written down
-`P1` · business · docs · **S** · before the first invoice; part of CW-077. The problem-report form is queued 2026-10-16 (#90); the page waits on the owner's channel, hours and response time
+`P1` · business · docs · **S** · before the first invoice; part of CW-077, open (#90). The problem-report form is done (219878b, 2026-10-16); the page and the README link wait on the owner's channel, hours and response time
 
 The "what support means" point of CW-077, as its own ticket, the counterpart
 of SuruchBoss/PaynEat#168. One person answers support online, beside a day
@@ -605,6 +605,21 @@ features or the installer away.
 - The problem report contains no name, ID number, salary or other personal
   data, tested against a seeded employee's records, and nothing in it leaves
   the machine unless the customer copies it.
+
+**Done so far (2026-10-16, 219878b):** Help → "แจ้งปัญหา" at `/support/report`,
+open to everyone signed in and tied to no key. The report holds what the
+person wrote, then the console version, the screen (as a route), the time,
+the browser, the language and the last ten failed requests reduced in one
+place, `web/src/lib/failure-log.ts`: path segments other than plain lowercase
+words become `:id`, query parameter names without values, the status, the
+server's error code and request id; never a request body, a response body or
+an error message. Kept in the tab's memory only. Copied or saved as `.txt`;
+the page makes no request, has no send button, and its "send to" line reads
+"ยังไม่กำหนด" until the owner names a channel. Tested with the first seeded
+employee's name, code, email, salary and ID number in the path, query, body
+and the server's error, none of which reach the report. Guide:
+`docs/guide/report-a-problem.th.md`; what is kept is listed in
+`docs/security.md`. Not yet walked through in a real browser.
 
 **Files** `docs/` (new page), `README.md`, `README.th.md`
 

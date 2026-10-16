@@ -6,8 +6,9 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- CW-087, the problem-report form only (#90), is built and is with the PO for
-  review. **Help → Report a problem** (`/support/report`, everyone signed in):
+- CW-087, the problem-report form only (#90), passed review (CI green at
+  `219878b`); the issue stays open for the support-scope page, which waits on the
+  owner. **Help → Report a problem** (`/support/report`, everyone signed in):
   the page is `web/src/features/support/ReportProblemPage.tsx`, the text it
   builds is `problem-report.ts`, and what is kept of a failed request is decided
   in `web/src/lib/failure-log.ts`, fed by `lib/api-client.ts`. The page makes no
@@ -28,5 +29,5 @@ this file only says where the dev room stands.
 
 ## Next
 
-- Nothing until the PO reviews CW-087's form or sends a ticket. Do not start
+- The dev queue is empty. Nothing until the PO sends a ticket. Do not start
   CW-085, CW-080 or CW-086, nor the support-scope page.
