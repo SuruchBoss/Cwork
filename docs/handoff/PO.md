@@ -34,10 +34,11 @@ this file only says where the PO room stands.
   without the employee's signed consent.
 - A sample สปส.1-10 upload file from SSO e-Services, names and ID numbers
   blanked, for CW-085's file format.
-- CW-088: how the pilot pays the satang, which notes and coins it avoids,
-  its blank paper form, and what its accountant keeps as proof of a cash
-  payday. Whether bank transfer files stay Pro now the first customer pays
-  in cash.
+- CW-088: how the pilot pays a remainder under 25 satang, its blank paper
+  form, and what its accountant keeps as proof of a cash payday (the owner
+  is asking). How Pilot B pays wages (bank files stay Pro until then).
+- CW-087: the support channel, hours and response time (the in-app problem
+  report can be built before that).
 - Prices and timing for the CW-077 items.
 
 ## How the PO room works
