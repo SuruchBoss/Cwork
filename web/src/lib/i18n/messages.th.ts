@@ -341,6 +341,7 @@ export const thMessages: Record<string, string> = {
   '{count} per sheet': '{count} สลิปต่อหน้า',
   'Print payslips': 'พิมพ์สลิปเงินเดือน',
   'Print wage receipts': 'พิมพ์ใบรับเงิน',
+  'Print cash sheet': 'พิมพ์ใบเตรียมเงินสด',
   'Every print is recorded in the audit log': 'การพิมพ์ทุกครั้งถูกบันทึกไว้ในประวัติการใช้งาน',
   'Payslips can be printed once the run is approved': 'พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว',
   THB: 'บาท',

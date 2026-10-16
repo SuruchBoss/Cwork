@@ -175,6 +175,7 @@ describe('Printed payslips and wage receipts (e2e)', () => {
     for (const path of [
       `/payroll/runs/${h1.runId}/print/payslips`,
       `/payroll/runs/${h1.runId}/print/receipts`,
+      `/payroll/runs/${h1.runId}/print/cash`,
     ]) {
       const res = await api.get(path, payrollToken);
       expect(res.status).toBe(422);
@@ -254,11 +255,42 @@ describe('Printed payslips and wage receipts (e2e)', () => {
       expect(texts).toContain('ลายมือชื่อผู้รับเงิน');
     });
 
+    it('prints the cash sheet: the net pay split into notes and coins, and what to withdraw (CW-088)', async () => {
+      const slip = await onScreen(h1.runId);
+      // Worked independently of the model: whole satang, handed out in steps of 25 satang.
+      const satang = Math.round(Number(slip.netPay) * 100);
+      const cash = Math.floor(satang / 25) * 25;
+      const left = satang - cash;
+
+      const { result, texts } = await drawn(() =>
+        api.getRaw(`/payroll/runs/${h1.runId}/print/cash`, payrollToken),
+      );
+      expect(result.status).toBe(200);
+      expect(result.body.subarray(0, 5).toString()).toBe('%PDF-');
+      expect(pageCount(result.body)).toBe(1);
+      expect(texts).toContain('PRN-2036-1');
+      expect(texts).toContain(money(slip.netPay));
+      expect(texts).toContain(money(cash / 100));
+      expect(texts).toContain(money(left / 100));
+      expect(texts).toContain(`เงินที่ต้องถอนจากธนาคาร ${money(cash / 100)} บาท`);
+      expect(texts.some((t) => t.includes('ยังรอเทียบกับแบบฟอร์ม'))).toBe(true);
+      // The payslip itself is untouched: it still shows the exact net pay.
+      expect((await onScreen(h1.runId)).netPay).toBe(slip.netPay);
+    });
+
+    it('has no setting to skip a note or coin: the pilot hands out all of them', async () => {
+      const { texts } = await drawn(() =>
+        api.getRaw(`/payroll/runs/${h1.runId}/print/cash?smallestUnit=100`, payrollToken),
+      );
+      for (const label of ['1,000', '100', '1', '0.50', '0.25']) expect(texts).toContain(label);
+    });
+
     it('is for people who can see pay: an ordinary employee gets nothing', async () => {
       const employee = await api.token(NO_PAY_ACCESS);
       for (const path of [
         `/payroll/runs/${h1.runId}/print/payslips`,
         `/payroll/runs/${h1.runId}/print/receipts`,
+        `/payroll/runs/${h1.runId}/print/cash`,
         `/payroll/payslips/${await slipId(h1.runId)}/print`,
       ]) {
         expect((await api.get(path, employee)).status).toBe(403);
@@ -273,7 +305,7 @@ describe('Printed payslips and wage receipts (e2e)', () => {
       expect(entries.length).toBeGreaterThanOrEqual(5);
       expect(entries.every((e) => e.actorUserId)).toBe(true);
       const kinds = new Set(entries.map((e) => (e.changes as { kind: string }).kind));
-      expect(kinds).toEqual(new Set(['payslips', 'wage-receipts']));
+      expect(kinds).toEqual(new Set(['payslips', 'wage-receipts', 'cash-sheet']));
       expect(entries.every((e) => (e.changes as { count: number }).count === 1)).toBe(true);
     });
 

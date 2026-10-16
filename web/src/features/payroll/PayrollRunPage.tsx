@@ -184,8 +184,8 @@ function openPdf(blob: Blob, filename: string): void {
 }
 
 /**
- * Printable payslips and the wage-receipt sheet (CW-071). Only an approved or
- * paid run can be printed; the server enforces it and refuses a slip whose
+ * Printable payslips, the wage-receipt sheet (CW-071) and the cash-preparation
+ * sheet (CW-088). Only an approved or paid run can be printed; the server enforces it and refuses a slip whose
  * lines do not add up, so the reason surfaces here rather than a bad page.
  */
 function PrintCard({ run }: { run: RunDetail }) {
@@ -194,11 +194,13 @@ function PrintCard({ run }: { run: RunDetail }) {
   const printable = ['APPROVED', 'PAID'].includes(run.status);
 
   const print = useMutation({
-    mutationFn: async (kind: 'payslips' | 'receipts') => {
+    mutationFn: async (kind: 'payslips' | 'receipts' | 'cash') => {
       const { blob, filename } =
         kind === 'payslips'
           ? await api.download(`/payroll/runs/${run.id}/print/payslips`, { query: { perPage } })
-          : await api.download(`/payroll/runs/${run.id}/print/receipts`);
+          : kind === 'receipts'
+            ? await api.download(`/payroll/runs/${run.id}/print/receipts`)
+            : await api.download(`/payroll/runs/${run.id}/print/cash`);
       openPdf(blob, filename);
     },
   });
@@ -237,6 +239,15 @@ function PrintCard({ run }: { run: RunDetail }) {
           onClick={() => print.mutate('receipts')}
         >
           {t('Print wage receipts')}
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={!printable}
+          loading={print.isPending && print.variables === 'cash'}
+          aria-describedby="print-note"
+          onClick={() => print.mutate('cash')}
+        >
+          {t('Print cash sheet')}
         </Button>
       </div>
       <p className="subtle" id="print-note">

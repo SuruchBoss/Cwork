@@ -4,6 +4,7 @@
 import { Module } from '@nestjs/common';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { FilesModule } from '../files/files.module';
+import { CashSheetRenderer } from './cash-sheet-renderer';
 import { CertificateRenderer } from './certificate-renderer';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
@@ -18,9 +19,16 @@ import { SsoFilingRenderer } from './sso-filing-renderer';
     CertificateRenderer,
     PayslipRenderer,
     WageReceiptRenderer,
+    CashSheetRenderer,
     SsoFilingRenderer,
     SequenceService,
   ],
-  exports: [DocumentsService, PayslipRenderer, WageReceiptRenderer, SsoFilingRenderer],
+  exports: [
+    DocumentsService,
+    PayslipRenderer,
+    WageReceiptRenderer,
+    CashSheetRenderer,
+    SsoFilingRenderer,
+  ],
 })
 export class DocumentsModule {}

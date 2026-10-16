@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-088 · CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -411,6 +411,13 @@ or labour law changes, in the free edition for good (CW-075 already shipped
 there). Pro features that depend on the law — filing formats, for instance —
 are kept current as part of Pro; the payroll arithmetic underneath stays free.
 
+**Decided by the owner (2026-10-16, relayed from the Asuna Bot room):** bank
+transfer files stay a Pro candidate although the first pilot pays wages in
+cash: one customer is one data point, what this kind of customer pays for is
+installation and support, and the cash sheet (CW-088) is free. Review after
+Pilot B: if it pays in cash too, decide again what leads Pro. Open question:
+how Pilot B pays its wages.
+
 **Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
 installer for a company with no IT (a Windows installer, a VM image, or
 whatever cheaper form is chosen later) is in the free edition: installing it
@@ -509,6 +516,13 @@ written up here.
 ### CW-086 · A company with no IT installs Cwork itself
 `P2` · operations · **L** · after CW-080 and Pilots A and B; part of CW-077, not queued
 
+**Decided by the owner (2026-10-16, relayed from the Asuna Bot room):** bank
+transfer files stay a Pro candidate although the first pilot pays wages in
+cash: one customer is one data point, what this kind of customer pays for is
+installation and support, and the cash sheet (CW-088) is free. Review after
+Pilot B: if it pays in cash too, decide again what leads Pro. Open question:
+how Pilot B pays its wages.
+
 **Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
 installer for a company with no IT is part of the free edition, in Cwork and
 PaynEat alike: installing it yourself is free; having it installed for you is
@@ -573,6 +587,13 @@ features or the installer away.
 - How a session works when live data could be seen (CW-077's remote access
   point): the customer present, no copies taken, logs and the support bundle
   (CW-080) asked for instead of database dumps.
+- **A "report a problem" form in the console (owner, 2026-10-16).** The
+  customer describes what happened; Cwork attaches diagnostics with no
+  personal data (version, error codes, the request that failed) and builds a
+  text or file the customer copies and sends themselves, by LINE or email.
+  Cwork never sends anything off the customer's machine by itself. The form
+  can be designed and built now; it does not replace the channel, hours and
+  response time, which wait on the owner.
 - The liability wording is a draft for a qualified reviewer, not final text.
 
 **Acceptance**
@@ -581,6 +602,9 @@ features or the installer away.
   the README; the owner has confirmed the channel, hours and response time.
 - The liability wording is marked as awaiting review until someone qualified
   has read it.
+- The problem report contains no name, ID number, salary or other personal
+  data, tested against a seeded employee's records, and nothing in it leaves
+  the machine unless the customer copies it.
 
 **Files** `docs/` (new page), `README.md`, `README.th.md`
 
@@ -891,6 +915,56 @@ data; filing online is the Pro candidate in CW-077.
   difference is explained.
 
 **Files** `backend/src/modules/payroll/sso-filing.service.ts`
+
+---
+
+### CW-088 · Getting the cash ready for a cash payday
+`P1` · payroll · **S** · Pilot B, before the November payday
+
+The pilot company pays wages in cash, not by transfer, and prepares the money
+today on a paper sheet: how many notes and coins each person's envelope
+needs, and how much to withdraw from the bank. Cwork already prints the
+payslips and a wage-receipt sheet to sign (CW-071); what it does not do is
+the counting before that.
+
+**Free, decided by the PO (2026-10-16):** this is
+part of paying one company's wages correctly and builds on the CW-071 receipt
+sheet, which is free. Nothing already free moves to Pro. Bank transfer files
+stay a Pro candidate (owner, 2026-10-16; see CW-077).
+
+**Scope**
+- For an approved or paid run, split each person's net pay into Thai notes
+  and coins (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25), largest first.
+  The pilot hands out every one of them (owner, 2026-10-16), so there is no
+  setting to skip a denomination.
+- Whatever is left under 25 satang is shown on the person's row, never
+  rounded away: the payslip and the receipt keep the exact net pay.
+- Totals for the run: how many of each note and coin, and the amount to
+  withdraw.
+- Printed as PDF beside the payslips and the receipt sheet, under the same
+  rules as CW-071: `payroll:read`, refused for a run not yet approved,
+  audited as an export, Sarabun with the glyph check.
+- The column layout follows general practice until the pilot's blank paper
+  form is in hand; the page says so ("awaiting the pilot's form") and no
+  column is guessed from what the pilot might use.
+
+**Questions for the owner (not guessed)**
+- How does the pilot pay a remainder under 25 satang today?
+- Proof of payment for tax and social security when wages are paid in cash:
+  ask the pilot's accountant what they keep (the owner is asking, 2026-10-16);
+  Cwork adds nothing here until that answer exists.
+
+**Acceptance**
+- For a run whose net pays are worked by hand in the test, each person's
+  notes and coins add up to their net pay less the shown remainder, and the
+  run totals equal the sum of the rows.
+- The withdrawal total equals the run's total net pay less the remainders.
+- A run that is not approved cannot be printed.
+- The pilot's blank form, once received, is compared with the printout and
+  every difference is fixed or explained here.
+
+**Files** `backend/src/modules/payroll/` (beside `payslip-print.service.ts`),
+`backend/src/modules/documents/`, the run page in `web/src/features/payroll/`
 
 ---
 

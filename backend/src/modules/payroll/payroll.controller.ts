@@ -318,6 +318,20 @@ export class PayrollController {
     sendPdf(res, await this.printing.printRunReceipts(user, id));
   }
 
+  @Get('runs/:id/print/cash')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({
+    summary:
+      'Cash-preparation sheet of an approved or paid run: notes and coins per person and the amount to withdraw (CW-088)',
+  })
+  async printRunCash(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    sendPdf(res, await this.printing.printRunCash(user, id));
+  }
+
   @Get('payslips/:id/print')
   @RequirePermissions(Permission.PAYROLL_READ)
   @ApiOperation({ summary: 'Printable copy of one payslip (CW-071)' })
