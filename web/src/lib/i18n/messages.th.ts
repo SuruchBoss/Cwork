@@ -342,6 +342,30 @@ export const thMessages: Record<string, string> = {
   'Print payslips': 'พิมพ์สลิปเงินเดือน',
   'Print wage receipts': 'พิมพ์ใบรับเงิน',
   'Print cash sheet': 'พิมพ์ใบเตรียมเงินสด',
+  Help: 'ช่วยเหลือ',
+  'Report a problem': 'แจ้งปัญหา',
+  'Describe what happened, then copy the report and send it yourself':
+    'เล่าว่าเกิดอะไรขึ้น แล้วคัดลอกรายงานไปส่งเอง',
+  'Cwork does not send this report anywhere. You copy it or save it, and send it yourself, for example by LINE or email.':
+    'Cwork ไม่ส่งรายงานนี้ไปที่ไหนเอง คุณคัดลอกหรือบันทึกเป็นไฟล์ แล้วส่งเอง เช่นทาง LINE หรืออีเมล',
+  'What happened?': 'เกิดอะไรขึ้น',
+  'Describe the problem': 'เล่าปัญหา',
+  'What you were doing and what you saw. Please do not write names, ID numbers or salaries; what you write is sent exactly as it is.':
+    'กำลังทำอะไรอยู่ และเห็นอะไร กรุณาอย่าเขียนชื่อ เลขบัตรประชาชน หรือเงินเดือน สิ่งที่คุณเขียนจะถูกส่งไปตามที่เขียนทุกตัวอักษร',
+  'What Cwork attaches': 'สิ่งที่ Cwork แนบให้',
+  'The console version, the screen you were on, the time, your browser and the requests that failed, each with its error code. No names, ID numbers, salaries or other personal data.':
+    'เวอร์ชันของคอนโซล หน้าจอที่คุณอยู่ เวลา เบราว์เซอร์ และคำขอที่ล้มเหลวพร้อมรหัสข้อผิดพลาดของแต่ละอัน ไม่มีชื่อ เลขบัตรประชาชน เงินเดือน หรือข้อมูลส่วนบุคคลอื่น',
+  'Send it': 'ส่งรายงาน',
+  'Copy report': 'คัดลอกรายงาน',
+  'Save as a file': 'บันทึกเป็นไฟล์',
+  'Write what happened first, then copy or save the report.':
+    'เล่าว่าเกิดอะไรขึ้นก่อน แล้วค่อยคัดลอกหรือบันทึกรายงาน',
+  'Copied. Paste it into your message.': 'คัดลอกแล้ว วางลงในข้อความที่จะส่งได้เลย',
+  'This browser would not copy it. Save it as a file, or select the text below.':
+    'เบราว์เซอร์นี้คัดลอกให้ไม่ได้ บันทึกเป็นไฟล์ หรือเลือกข้อความด้านล่างไปคัดลอกเอง',
+  'The report': 'รายงาน',
+  'Where to send it: {channel}': 'ส่งไปที่: {channel}',
+  'not decided yet': 'ยังไม่กำหนด',
   'Every print is recorded in the audit log': 'การพิมพ์ทุกครั้งถูกบันทึกไว้ในประวัติการใช้งาน',
   'Payslips can be printed once the run is approved': 'พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว',
   THB: 'บาท',

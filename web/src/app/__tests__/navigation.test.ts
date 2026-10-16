@@ -48,10 +48,10 @@ describe('sidebar navigation', () => {
   it('drops a section once every item in it is hidden', () => {
     const sections = visibleSectionsFor(nothing, { assistantEnabled: false });
 
-    // Only the dashboard and the approvals inbox are open to everyone, and they
-    // are both in the first section.
-    expect(sections.map((section) => section.heading)).toEqual(['Overview']);
-    expect(links(sections)).toEqual(['/', '/approvals']);
+    // Only the dashboard and the approvals inbox, both in the first section, and
+    // the way to report a problem (CW-087), in its own, are open to everyone.
+    expect(sections.map((section) => section.heading)).toEqual(['Overview', 'Help']);
+    expect(links(sections)).toEqual(['/', '/approvals', '/support/report']);
   });
 
   it('gates every entry on a permission except the ones meant for everyone', () => {
@@ -59,6 +59,6 @@ describe('sidebar navigation', () => {
       .filter((item) => !item.permissions)
       .map((item) => item.to);
 
-    expect(open).toEqual(['/', '/approvals']);
+    expect(open).toEqual(['/', '/approvals', '/support/report']);
   });
 });

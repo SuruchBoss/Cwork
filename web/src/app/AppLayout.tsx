@@ -3,11 +3,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
+import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Avatar, Button } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { api } from '@/lib/api-client';
 import { env } from '@/lib/env';
+import { noteRoute } from '@/lib/failure-log';
 import { usePlatformConfig } from '@/lib/platform';
 import { useT } from '@/lib/i18n/useT';
 import { roleLabels } from '@/lib/labels';
@@ -25,6 +27,9 @@ export function AppLayout() {
     useUiStore();
   const location = useLocation();
   const t = useT();
+
+  // The report-a-problem form (CW-087) says which screen the person was on.
+  useEffect(() => noteRoute(location.pathname), [location.pathname]);
 
   const { data: pendingApprovals } = useQuery({
     queryKey: qk.approvalTasks('PENDING'),

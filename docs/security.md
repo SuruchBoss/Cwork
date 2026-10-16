@@ -44,6 +44,24 @@ procedure for erasing an individual on request — including the two tables that
 are append-only and therefore cannot be edited by the application — is in
 [Personal data](./privacy.md), with a draft employee notice beside it.
 
+### The problem report
+
+**Help → Report a problem** (CW-087) builds one text for a customer to copy or
+save and send to whoever supports their Cwork. Nothing in Cwork sends it: the
+page makes no request, there is no send button and no endpoint to receive one,
+and the list of failed requests it draws on lives in the browser's memory until
+the tab closes. What Cwork attaches is the console's version, the screen the
+person was on (a route such as `/payroll/runs/:id`), the time, the browser, and
+for each of the last ten failed requests the route, the *names* of its query
+parameters, the status, the server's error code and request id. It never
+holds a request or response body, an error message (a message can name a
+person), a query value, or an id, code or name from an address: any part of a
+path that is not a plain lowercase word becomes `:id`. The one free text in the
+report is what the person types, which the form asks them to keep free of
+names, ID numbers and salaries. `web/src/lib/failure-log.ts` decides what is
+kept, and its tests run seeded employee data through the real API client and
+check that none of it reaches the report.
+
 ## Claiming a fresh installation
 
 Between the moment a deployment starts answering requests and the moment its
