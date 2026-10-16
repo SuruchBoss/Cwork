@@ -411,6 +411,13 @@ or labour law changes, in the free edition for good (CW-075 already shipped
 there). Pro features that depend on the law — filing formats, for instance —
 are kept current as part of Pro; the payroll arithmetic underneath stays free.
 
+**Decided by the owner (2026-10-16, relayed from the Asuna Bot room):** bank
+transfer files stay a Pro candidate although the first pilot pays wages in
+cash: one customer is one data point, what this kind of customer pays for is
+installation and support, and the cash sheet (CW-088) is free. Review after
+Pilot B: if it pays in cash too, decide again what leads Pro. Open question:
+how Pilot B pays its wages.
+
 **Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
 installer for a company with no IT (a Windows installer, a VM image, or
 whatever cheaper form is chosen later) is in the free edition: installing it
@@ -509,6 +516,13 @@ written up here.
 ### CW-086 · A company with no IT installs Cwork itself
 `P2` · operations · **L** · after CW-080 and Pilots A and B; part of CW-077, not queued
 
+**Decided by the owner (2026-10-16, relayed from the Asuna Bot room):** bank
+transfer files stay a Pro candidate although the first pilot pays wages in
+cash: one customer is one data point, what this kind of customer pays for is
+installation and support, and the cash sheet (CW-088) is free. Review after
+Pilot B: if it pays in cash too, decide again what leads Pro. Open question:
+how Pilot B pays its wages.
+
 **Decided by the owner (2026-10-11, relayed from the Asuna Bot room):** an
 installer for a company with no IT is part of the free edition, in Cwork and
 PaynEat alike: installing it yourself is free; having it installed for you is
@@ -573,6 +587,13 @@ features or the installer away.
 - How a session works when live data could be seen (CW-077's remote access
   point): the customer present, no copies taken, logs and the support bundle
   (CW-080) asked for instead of database dumps.
+- **A "report a problem" form in the console (owner, 2026-10-16).** The
+  customer describes what happened; Cwork attaches diagnostics with no
+  personal data (version, error codes, the request that failed) and builds a
+  text or file the customer copies and sends themselves, by LINE or email.
+  Cwork never sends anything off the customer's machine by itself. The form
+  can be designed and built now; it does not replace the channel, hours and
+  response time, which wait on the owner.
 - The liability wording is a draft for a qualified reviewer, not final text.
 
 **Acceptance**
@@ -581,6 +602,9 @@ features or the installer away.
   the README; the owner has confirmed the channel, hours and response time.
 - The liability wording is marked as awaiting review until someone qualified
   has read it.
+- The problem report contains no name, ID number, salary or other personal
+  data, tested against a seeded employee's records, and nothing in it leaves
+  the machine unless the customer copies it.
 
 **Files** `docs/` (new page), `README.md`, `README.th.md`
 
@@ -906,16 +930,15 @@ the counting before that.
 **Free, decided by the PO (2026-10-16):** this is
 part of paying one company's wages correctly and builds on the CW-071 receipt
 sheet, which is free. Nothing already free moves to Pro. Bank transfer files
-stay a Pro candidate in CW-077; the owner is asked whether that still holds
-now that the first customer pays in cash.
+stay a Pro candidate (owner, 2026-10-16; see CW-077).
 
 **Scope**
 - For an approved or paid run, split each person's net pay into Thai notes
-  and coins (1,000, 500, 100, 50, 20; 10, 5, 2, 1), largest first, with the
-  smallest denomination HR is willing to hand out as a setting.
-- Whatever is left under that smallest unit (the satang of a net pay) is
-  shown on the person's row, never rounded away: the payslip and the receipt
-  keep the exact net pay.
+  and coins (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25), largest first.
+  The pilot hands out every one of them (owner, 2026-10-16), so there is no
+  setting to skip a denomination.
+- Whatever is left under 25 satang is shown on the person's row, never
+  rounded away: the payslip and the receipt keep the exact net pay.
 - Totals for the run: how many of each note and coin, and the amount to
   withdraw.
 - Printed as PDF beside the payslips and the receipt sheet, under the same
@@ -926,12 +949,10 @@ now that the first customer pays in cash.
   column is guessed from what the pilot might use.
 
 **Questions for the owner (not guessed)**
-- How does the pilot pay the satang of a net pay today?
-- Which notes and coins does the pilot avoid (for instance no coins under
-  one baht)?
+- How does the pilot pay a remainder under 25 satang today?
 - Proof of payment for tax and social security when wages are paid in cash:
-  ask the pilot's accountant what they keep; Cwork adds nothing here until
-  that answer exists.
+  ask the pilot's accountant what they keep (the owner is asking, 2026-10-16);
+  Cwork adds nothing here until that answer exists.
 
 **Acceptance**
 - For a run whose net pays are worked by hand in the test, each person's
