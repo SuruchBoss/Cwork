@@ -293,7 +293,7 @@ describe('Printing payslips and wage receipts (CW-071)', () => {
     open.mockRestore();
   });
 
-  it('prints the cash sheet with the smallest note or coin chosen (CW-088)', async () => {
+  it('prints the cash sheet (CW-088)', async () => {
     serve(approved);
     const open = vi.spyOn(window, 'open').mockReturnValue({} as Window);
     const user = userEvent.setup();
@@ -301,17 +301,7 @@ describe('Printing payslips and wage receipts (CW-071)', () => {
 
     await user.click(await screen.findByRole('button', { name: 'พิมพ์ใบเตรียมเงินสด' }));
     await waitFor(() =>
-      expect(api.download).toHaveBeenLastCalledWith('/payroll/runs/run-h2/print/cash', {
-        query: { smallestUnit: '1' },
-      }),
-    );
-
-    await user.selectOptions(screen.getByLabelText('ธนบัตรหรือเหรียญเล็กสุดที่จะจ่าย'), '20');
-    await user.click(screen.getByRole('button', { name: 'พิมพ์ใบเตรียมเงินสด' }));
-    await waitFor(() =>
-      expect(api.download).toHaveBeenLastCalledWith('/payroll/runs/run-h2/print/cash', {
-        query: { smallestUnit: '20' },
-      }),
+      expect(api.download).toHaveBeenCalledWith('/payroll/runs/run-h2/print/cash'),
     );
     open.mockRestore();
   });

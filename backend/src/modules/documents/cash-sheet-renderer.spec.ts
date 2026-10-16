@@ -3,7 +3,7 @@
 
 import { join } from 'node:path';
 import PDFDocument from 'pdfkit';
-import { cashSheet } from './cash-sheet';
+import { DENOMINATIONS, cashSheet } from './cash-sheet';
 import { CashSheetRenderer, cashColumns } from './cash-sheet-renderer';
 import type { PrintableRun } from './payslip-sheet';
 import { slip } from './payslip-sheet.spec';
@@ -63,17 +63,28 @@ const slips = (count: number) =>
 
 describe('cashColumns', () => {
   it('lays the columns edge to edge inside the margins and leaves the name room', () => {
-    const columns = cashColumns([1000, 500, 100, 50, 20, 10, 5, 2, 1], 841.89);
+    const columns = cashColumns(DENOMINATIONS, 841.89);
     const last = columns.remainder;
     expect(last.x + last.width).toBeCloseTo(841.89 - 36, 5);
-    expect(columns.name.width).toBeGreaterThan(160);
-    expect(columns.denominations).toHaveLength(9);
+    expect(columns.name.width).toBeGreaterThan(120);
+    expect(columns.denominations).toHaveLength(11);
   });
 
-  it('gives the name more room when fewer denominations are drawn', () => {
-    const all = cashColumns([1000, 500, 100, 50, 20, 10, 5, 2, 1], 841.89);
-    const few = cashColumns([1000, 500], 841.89);
-    expect(few.name.width).toBeGreaterThan(all.name.width);
+  it('has a column for every note and coin, the satang coins last', () => {
+    const columns = cashColumns(DENOMINATIONS, 841.89);
+    expect(columns.denominations.map((c) => c.text)).toEqual([
+      '1,000',
+      '500',
+      '100',
+      '50',
+      '20',
+      '10',
+      '5',
+      '2',
+      '1',
+      '0.50',
+      '0.25',
+    ]);
   });
 });
 
@@ -117,12 +128,13 @@ describe('CashSheetRenderer', () => {
     for (const row of sheet.rows) expect(texts).toContain(row.employeeCode);
   });
 
-  it('draws only the columns for the smallest unit chosen', async () => {
-    const { texts } = await drawn(() => renderer.render(cashSheet(run, slips(3), 100)));
-    expect(texts).toContain('1,000');
-    expect(texts).toContain('100');
-    expect(texts).not.toContain('20');
-    expect(texts).not.toContain('เหรียญ');
+  it('draws a heading for the notes and one for the coins, and every denomination', async () => {
+    const { texts } = await drawn(() => renderer.render(cashSheet(run, slips(3))));
+    expect(texts).toContain('ธนบัตร');
+    expect(texts).toContain('เหรียญ');
+    for (const label of ['1,000', '500', '100', '50', '20', '10', '5', '2', '1', '0.50', '0.25']) {
+      expect(texts).toContain(label);
+    }
   });
 
   it('draws nothing the embedded Thai font cannot show', async () => {

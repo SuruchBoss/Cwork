@@ -24,21 +24,20 @@ entry, tags it and publishes the notes.
 - **A cash-preparation sheet for a cash payday** (CW-088). A pilot that pays
   wages in cash counted the notes and coins for each envelope on paper. An
   approved or paid run now prints that count from its page, through `GET
-  /payroll/runs/:id/print/cash?smallestUnit=`: one row per person with the exact
-  net pay, how many of each Thai note and coin (1,000, 500, 100, 50, 20; 10, 5,
-  2, 1) go in the envelope, largest first, the cash for the envelope and what is
+  /payroll/runs/:id/print/cash`: one row per person with the exact net pay, how
+  many of each Thai note and coin (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50,
+  0.25) go in the envelope, largest first, the cash for the envelope and what is
   left over, then the run's total of each note and coin and the amount to
-  withdraw from the bank. HR chooses the smallest note or coin to hand out
-  (one baht unless told otherwise, any of the denominations); whatever is under
-  it, the satang of a net pay included, is printed on the person's row as the
-  remainder and is never rounded into the pay, and the payslip and the receipt
-  keep the exact net pay. A4 landscape, Sarabun, numbered pages, the heading
-  repeated. The columns follow common practice and every page says they still
-  await comparison with the pilot's own paper form. The same rules as the other
-  prints apply: `payroll:read`, a run that is not approved is refused
-  (`PAYROLL_RUN_NOT_PRINTABLE`), and every print is audited as an `EXPORT` of
-  the run. Free, in the same side as the receipt sheet. The Thai guide
-  `docs/guide/printing-payslips.th.md` has a section for it.
+  withdraw from the bank. Whatever is under 25 satang is printed on the person's
+  row as the remainder and is never rounded into the pay, and the payslip and
+  the receipt keep the exact net pay. The pilot hands out every note and coin,
+  so there is no setting to leave one out. A4 landscape, Sarabun, numbered
+  pages, the heading repeated. The columns follow common practice and every
+  page says they still await comparison with the pilot's own paper form. The
+  same rules as the other prints apply: `payroll:read`, a run that is not
+  approved is refused (`PAYROLL_RUN_NOT_PRINTABLE`), and every print is audited
+  as an `EXPORT` of the run. Free, on the same side as the receipt sheet. The
+  Thai guide `docs/guide/printing-payslips.th.md` has a section for it.
 
 - **A month's social security filing, สปส.1-10** (CW-048). Payroll computed
   both halves of the contribution and stored them on every payslip, with no way

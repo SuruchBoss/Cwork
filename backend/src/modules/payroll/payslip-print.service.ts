@@ -8,7 +8,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { AuditService } from '../audit/audit.service';
 import { CashSheetRenderer } from '../documents/cash-sheet-renderer';
-import { cashSheet, type Denomination } from '../documents/cash-sheet';
+import { cashSheet } from '../documents/cash-sheet';
 import {
   PayslipRenderer,
   WageReceiptRenderer,
@@ -109,19 +109,14 @@ export class PayslipPrintService {
 
   /**
    * The cash-preparation sheet (CW-088): each person's net pay split into notes
-   * and coins of `smallestUnit` or more, and the amount to withdraw.
+   * and coins, and the amount to withdraw.
    */
-  async printRunCash(
-    user: AuthenticatedUser,
-    runId: string,
-    smallestUnit: Denomination,
-  ): Promise<PrintedFile> {
+  async printRunCash(user: AuthenticatedUser, runId: string): Promise<PrintedFile> {
     const { run, payslips } = await this.loadRun(user.organizationId, runId);
-    const sheet = cashSheet(run, payslips, smallestUnit);
+    const sheet = cashSheet(run, payslips);
     const content = await this.cash.render(sheet);
     await this.record(user, runId, 'cash-sheet', payslips.length, {
       runNo: run.runNo,
-      smallestUnit,
       withdraw: sheet.totals.withdraw,
     });
     return { filename: `cash-sheet-${run.runNo}.pdf`, contentType: 'application/pdf', content };

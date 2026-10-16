@@ -17,7 +17,7 @@ const REGULAR = 'Sarabun';
 const BOLD = 'Sarabun-Bold';
 
 const MARGIN = 36;
-const DENOMINATION_WIDTH = 36;
+const DENOMINATION_WIDTH = 33;
 
 export type CashCell = {
   text: string;
@@ -37,10 +37,13 @@ export interface CashColumns {
 }
 
 /** Column geometry shared by the header, every row and the totals row. */
-export function cashColumns(denominations: Denomination[], pageWidth: number): CashColumns {
+export function cashColumns(
+  denominations: readonly Denomination[],
+  pageWidth: number,
+): CashColumns {
   const total = pageWidth - MARGIN * 2;
-  const index = 26;
-  const code = 56;
+  const index = 24;
+  const code = 54;
   const net = 66;
   const cash = 70;
   const remainder = 56;
@@ -67,9 +70,10 @@ export function cashColumns(denominations: Denomination[], pageWidth: number): C
   };
 }
 
-/** "1,000" for a note, the same figure for a coin; the header says which. */
+/** "1,000" for a note, "5" for a baht coin, "0.50" for a satang coin; the group heading says which. */
 export function denominationLabel(denomination: Denomination): string {
-  return denomination.toLocaleString('en-US');
+  if (denomination < 1) return denomination.toFixed(2);
+  return String(denomination).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function groupLabel(denomination: Denomination): string {
@@ -136,8 +140,7 @@ export class CashSheetRenderer {
         .font(REGULAR)
         .fontSize(10)
         .text(
-          `งวด ${sheet.periodLabel} · วันจ่าย ${sheet.payDateLabel} · เลขที่รอบ ${sheet.runNo}` +
-            ` · แบ่งเงินเป็นธนบัตร/เหรียญตั้งแต่ ${denominationLabel(sheet.smallestUnit)} บาทขึ้นไป`,
+          `งวด ${sheet.periodLabel} · วันจ่าย ${sheet.payDateLabel} · เลขที่รอบ ${sheet.runNo}`,
           MARGIN,
           y + 1,
           { width: tableWidth, align: 'center' },
@@ -254,7 +257,7 @@ export class CashSheetRenderer {
     });
     doc.font(REGULAR).fontSize(9).fillColor('#555555');
     doc.text(
-      'เศษไม่จ่ายคือส่วนของเงินสุทธิที่น้อยกว่าหน่วยเล็กสุดที่เลือก ไม่ปัดรวมเข้ากับเงินสด ใบสลิปและใบรับเงินแสดงเงินสุทธิตามจริง',
+      'เศษไม่จ่ายคือส่วนของเงินสุทธิที่น้อยกว่า 25 สตางค์ ไม่ปัดรวมเข้ากับเงินสด สลิปและใบรับเงินแสดงเงินสุทธิตามจริง',
       MARGIN,
       doc.y + 2,
       { width: tableWidth, align: 'left' },

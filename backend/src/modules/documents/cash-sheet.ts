@@ -12,17 +12,14 @@ import type { PrintablePayslip, PrintableRun } from './payslip-sheet';
  * is tested with hand-worked figures without drawing a PDF.
  *
  * The payslip and the receipt keep the exact net pay. Whatever cannot be handed
- * out in notes and coins of at least the smallest unit HR chose (the satang of a
- * net pay, and anything below a larger smallest unit) is shown on the person's
- * row as the remainder and is never rounded into the pay.
+ * out in notes and coins (what is under the smallest coin, 25 satang) is shown
+ * on the person's row as the remainder and is never rounded into the pay. The
+ * pilot hands out every denomination, so none can be switched off.
  */
 
-/** Thai notes then coins, largest first. */
-export const DENOMINATIONS = [1000, 500, 100, 50, 20, 10, 5, 2, 1] as const;
+/** Thai notes then coins, largest first, in baht; the last two are satang coins. */
+export const DENOMINATIONS = [1000, 500, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.25] as const;
 export type Denomination = (typeof DENOMINATIONS)[number];
-
-/** The smallest unit HR can choose: any of the denominations. One baht is the default. */
-export const SMALLEST_UNIT_CHOICES: readonly Denomination[] = DENOMINATIONS;
 
 /** Notes are 20 and up; below that the money is coins. */
 export function isNote(denomination: Denomination): boolean {
@@ -35,7 +32,7 @@ export interface CashSplit {
   counts: CashCounts;
   /** Sum of the notes and coins, in baht. */
   paid: Decimal;
-  /** Net pay less `paid`: the satang, or what is under the smallest unit. */
+  /** Net pay less `paid`: under 25 satang, or the whole pay when it is less than that. */
   remainder: Decimal;
 }
 
@@ -49,31 +46,36 @@ const emptyCounts = (): CashCounts => ({
   5: 0,
   2: 0,
   1: 0,
+  0.5: 0,
+  0.25: 0,
 });
 
+/** A denomination in whole satang, so the counting is integer arithmetic. */
+const satangOf = (denomination: Denomination): number => Math.round(denomination * 100);
+
 /**
- * Split a net pay into notes and coins of `smallestUnit` or more, largest first.
- * The Thai notes and coins make a system in which taking the largest first is
- * also the fewest pieces. A pay of nothing or less hands out nothing.
+ * Split a net pay into notes and coins, largest first. The Thai notes and coins
+ * make a system in which taking the largest first is also the fewest pieces,
+ * and it ends with less than 25 satang left. A pay of nothing or less hands out
+ * nothing.
  */
-export function splitCash(
-  net: Decimal | string | number,
-  smallestUnit: Denomination = 1,
-): CashSplit {
+export function splitCash(net: Decimal | string | number): CashSplit {
   const pay = new Decimal(net);
   const counts = emptyCounts();
   if (pay.lessThanOrEqualTo(0)) {
     return { counts, paid: new Decimal(0), remainder: pay };
   }
 
-  let rest = pay.floor();
+  // A net pay has two decimals; work in whole satang so nothing is rounded by float.
+  let rest = pay.times(100).toDecimalPlaces(0, Decimal.ROUND_DOWN).toNumber();
+  const total = rest;
   for (const denomination of DENOMINATIONS) {
-    if (denomination < smallestUnit) continue;
-    const count = rest.dividedToIntegerBy(denomination).toNumber();
+    const unit = satangOf(denomination);
+    const count = Math.floor(rest / unit);
     counts[denomination] = count;
-    rest = rest.minus(new Decimal(count).times(denomination));
+    rest -= count * unit;
   }
-  const paid = pay.floor().minus(rest);
+  const paid = new Decimal(total - rest).dividedBy(100);
   return { counts, paid, remainder: pay.minus(paid) };
 }
 
@@ -95,9 +97,8 @@ export interface CashSheet {
   runNo: string;
   periodLabel: string;
   payDateLabel: string;
-  smallestUnit: Denomination;
-  /** The denominations drawn as columns: the smallest unit and larger. */
-  columns: Denomination[];
+  /** The denominations drawn as columns: every note and coin, largest first. */
+  columns: readonly Denomination[];
   rows: CashRow[];
   totals: {
     net: string;
@@ -114,18 +115,14 @@ export interface CashSheet {
 export const CASH_SHEET_LAYOUT_NOTICE =
   'รูปแบบตารางตามที่ใช้กันทั่วไป ยังรอเทียบกับแบบฟอร์มกระดาษของบริษัทนำร่อง';
 
-export function cashSheet(
-  run: PrintableRun,
-  slips: PrintablePayslip[],
-  smallestUnit: Denomination = 1,
-): CashSheet {
+export function cashSheet(run: PrintableRun, slips: PrintablePayslip[]): CashSheet {
   const totalCounts = emptyCounts();
   let net = new Decimal(0);
   let withdraw = new Decimal(0);
   let remainder = new Decimal(0);
 
   const rows = slips.map((slip): CashRow => {
-    const split = splitCash(slip.netPay, smallestUnit);
+    const split = splitCash(slip.netPay);
     for (const denomination of DENOMINATIONS)
       totalCounts[denomination] += split.counts[denomination];
     net = net.plus(slip.netPay);
@@ -147,8 +144,7 @@ export function cashSheet(
     runNo: run.runNo,
     periodLabel: periodRangeLabel(run.period.periodStart, run.period.periodEnd),
     payDateLabel: formatThaiDocumentDate(run.period.payDate),
-    smallestUnit,
-    columns: DENOMINATIONS.filter((d) => d >= smallestUnit),
+    columns: DENOMINATIONS,
     rows,
     totals: {
       net: formatBaht(net),

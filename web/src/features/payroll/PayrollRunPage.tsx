@@ -19,7 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
-import { formatDate, formatDateTime, formatMoney, formatNumber, formatPeriod } from '@/lib/format';
+import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -167,10 +167,6 @@ function RunExplanationPanel({ runId }: { runId: string }) {
 
 type SlipsPerPage = '1' | '2' | '4';
 
-/** Notes and coins the cash sheet can be told to stop at; one baht is the default (CW-088). */
-const SMALLEST_UNITS = ['1', '2', '5', '10', '20', '50', '100', '500', '1000'] as const;
-type SmallestUnit = (typeof SMALLEST_UNITS)[number];
-
 /**
  * Opens a PDF in a new tab to print from, and falls back to saving it when the
  * browser will not open one. The object URL is released after a minute, long
@@ -195,7 +191,6 @@ function openPdf(blob: Blob, filename: string): void {
 function PrintCard({ run }: { run: RunDetail }) {
   const t = useT();
   const [perPage, setPerPage] = useState<SlipsPerPage>('2');
-  const [smallestUnit, setSmallestUnit] = useState<SmallestUnit>('1');
   const printable = ['APPROVED', 'PAID'].includes(run.status);
 
   const print = useMutation({
@@ -205,9 +200,7 @@ function PrintCard({ run }: { run: RunDetail }) {
           ? await api.download(`/payroll/runs/${run.id}/print/payslips`, { query: { perPage } })
           : kind === 'receipts'
             ? await api.download(`/payroll/runs/${run.id}/print/receipts`)
-            : await api.download(`/payroll/runs/${run.id}/print/cash`, {
-                query: { smallestUnit },
-              });
+            : await api.download(`/payroll/runs/${run.id}/print/cash`);
       openPdf(blob, filename);
     },
   });
@@ -247,24 +240,6 @@ function PrintCard({ run }: { run: RunDetail }) {
         >
           {t('Print wage receipts')}
         </Button>
-      </div>
-      <div className="row">
-        <Field
-          label={t('Smallest note or coin to hand out')}
-          hint={t('What is left under it is shown as the remainder, not rounded into the pay')}
-        >
-          <Select
-            value={smallestUnit}
-            disabled={!printable}
-            onChange={(event) => setSmallestUnit(event.target.value as SmallestUnit)}
-          >
-            {SMALLEST_UNITS.map((unit) => (
-              <option key={unit} value={unit}>
-                {t('{amount} baht', { amount: formatNumber(Number(unit)) })}
-              </option>
-            ))}
-          </Select>
-        </Field>
         <Button
           variant="secondary"
           disabled={!printable}
