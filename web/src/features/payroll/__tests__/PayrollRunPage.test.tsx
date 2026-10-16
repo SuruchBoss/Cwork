@@ -293,6 +293,29 @@ describe('Printing payslips and wage receipts (CW-071)', () => {
     open.mockRestore();
   });
 
+  it('prints the cash sheet with the smallest note or coin chosen (CW-088)', async () => {
+    serve(approved);
+    const open = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'พิมพ์ใบเตรียมเงินสด' }));
+    await waitFor(() =>
+      expect(api.download).toHaveBeenLastCalledWith('/payroll/runs/run-h2/print/cash', {
+        query: { smallestUnit: '1' },
+      }),
+    );
+
+    await user.selectOptions(screen.getByLabelText('ธนบัตรหรือเหรียญเล็กสุดที่จะจ่าย'), '20');
+    await user.click(screen.getByRole('button', { name: 'พิมพ์ใบเตรียมเงินสด' }));
+    await waitFor(() =>
+      expect(api.download).toHaveBeenLastCalledWith('/payroll/runs/run-h2/print/cash', {
+        query: { smallestUnit: '20' },
+      }),
+    );
+    open.mockRestore();
+  });
+
   it('saves the file when the browser will not open a tab', async () => {
     serve(approved);
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
@@ -322,6 +345,7 @@ describe('Printing payslips and wage receipts (CW-071)', () => {
 
     expect(await screen.findByRole('button', { name: 'พิมพ์สลิปเงินเดือน' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'พิมพ์ใบรับเงิน' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'พิมพ์ใบเตรียมเงินสด' })).toBeDisabled();
     expect(screen.getByText('พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว')).toBeInTheDocument();
   });
 

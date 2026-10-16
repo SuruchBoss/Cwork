@@ -7,6 +7,8 @@ import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.error
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { AuditService } from '../audit/audit.service';
+import { CashSheetRenderer } from '../documents/cash-sheet-renderer';
+import { cashSheet, type Denomination } from '../documents/cash-sheet';
 import {
   PayslipRenderer,
   WageReceiptRenderer,
@@ -29,6 +31,12 @@ export interface PrintedFile {
 /** Runs whose figures are settled: a draft or half-checked run is not something to hand out. */
 const PRINTABLE_STATUSES: PayrollRunStatus[] = [PayrollRunStatus.APPROVED, PayrollRunStatus.PAID];
 
+const PRINTED_LABEL = {
+  payslips: 'payslip(s)',
+  'wage-receipts': 'wage receipt row(s)',
+  'cash-sheet': 'cash sheet row(s)',
+} as const;
+
 /**
  * Printed payslips and the wage-receipt sheet (CW-071).
  *
@@ -44,6 +52,7 @@ export class PayslipPrintService {
     private readonly audit: AuditService,
     private readonly slips: PayslipRenderer,
     private readonly receipts: WageReceiptRenderer,
+    private readonly cash: CashSheetRenderer,
   ) {}
 
   /** All payslips of a run, `perPage` to an A4 sheet. */
@@ -96,6 +105,26 @@ export class PayslipPrintService {
     const content = await this.receipts.render(wageReceiptSheet(run, payslips));
     await this.record(user, runId, 'wage-receipts', payslips.length, { runNo: run.runNo });
     return { filename: `wage-receipts-${run.runNo}.pdf`, contentType: 'application/pdf', content };
+  }
+
+  /**
+   * The cash-preparation sheet (CW-088): each person's net pay split into notes
+   * and coins of `smallestUnit` or more, and the amount to withdraw.
+   */
+  async printRunCash(
+    user: AuthenticatedUser,
+    runId: string,
+    smallestUnit: Denomination,
+  ): Promise<PrintedFile> {
+    const { run, payslips } = await this.loadRun(user.organizationId, runId);
+    const sheet = cashSheet(run, payslips, smallestUnit);
+    const content = await this.cash.render(sheet);
+    await this.record(user, runId, 'cash-sheet', payslips.length, {
+      runNo: run.runNo,
+      smallestUnit,
+      withdraw: sheet.totals.withdraw,
+    });
+    return { filename: `cash-sheet-${run.runNo}.pdf`, contentType: 'application/pdf', content };
   }
 
   private async loadRun(
@@ -171,7 +200,7 @@ export class PayslipPrintService {
   private async record(
     user: AuthenticatedUser,
     runId: string,
-    kind: 'payslips' | 'wage-receipts',
+    kind: 'payslips' | 'wage-receipts' | 'cash-sheet',
     count: number,
     extra: Record<string, unknown>,
   ): Promise<void> {
@@ -181,7 +210,7 @@ export class PayslipPrintService {
       action: AuditAction.EXPORT,
       entityType: 'PayrollRun',
       entityId: runId,
-      summary: `Printed ${count} ${kind === 'payslips' ? 'payslip(s)' : 'wage receipt row(s)'} of run ${String(extra.runNo)}`,
+      summary: `Printed ${count} ${PRINTED_LABEL[kind]} of run ${String(extra.runNo)}`,
       changes: { kind, count, ...extra },
     });
   }

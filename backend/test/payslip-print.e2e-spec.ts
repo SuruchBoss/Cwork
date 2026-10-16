@@ -175,6 +175,7 @@ describe('Printed payslips and wage receipts (e2e)', () => {
     for (const path of [
       `/payroll/runs/${h1.runId}/print/payslips`,
       `/payroll/runs/${h1.runId}/print/receipts`,
+      `/payroll/runs/${h1.runId}/print/cash`,
     ]) {
       const res = await api.get(path, payrollToken);
       expect(res.status).toBe(422);
@@ -254,11 +255,55 @@ describe('Printed payslips and wage receipts (e2e)', () => {
       expect(texts).toContain('ลายมือชื่อผู้รับเงิน');
     });
 
+    it('prints the cash sheet: the net pay split into notes and coins, and what to withdraw (CW-088)', async () => {
+      const slip = await onScreen(h1.runId);
+      // Worked independently of the model: satang as integers, whole baht split largest first.
+      const satang = Math.round(Number(slip.netPay) * 100);
+      const baht = Math.floor(satang / 100);
+      const left = (satang % 100) / 100;
+
+      const { result, texts } = await drawn(() =>
+        api.getRaw(`/payroll/runs/${h1.runId}/print/cash`, payrollToken),
+      );
+      expect(result.status).toBe(200);
+      expect(result.body.subarray(0, 5).toString()).toBe('%PDF-');
+      expect(pageCount(result.body)).toBe(1);
+      expect(texts).toContain('PRN-2036-1');
+      expect(texts).toContain(money(slip.netPay));
+      expect(texts).toContain(money(baht));
+      expect(texts).toContain(money(left));
+      expect(texts).toContain(`เงินที่ต้องถอนจากธนาคาร ${money(baht)} บาท`);
+      expect(texts.some((t) => t.includes('ยังรอเทียบกับแบบฟอร์ม'))).toBe(true);
+      // The payslip itself is untouched: it still shows the exact net pay.
+      expect((await onScreen(h1.runId)).netPay).toBe(slip.netPay);
+    });
+
+    it('leaves what is under the smallest unit as the remainder, and refuses a unit that is not a note or coin', async () => {
+      const slip = await onScreen(h1.runId);
+      const satang = Math.round(Number(slip.netPay) * 100);
+      const cash = Math.floor(satang / 100 / 100) * 100;
+      const { result, texts } = await drawn(() =>
+        api.getRaw(`/payroll/runs/${h1.runId}/print/cash?smallestUnit=100`, payrollToken),
+      );
+      expect(result.status).toBe(200);
+      expect(texts).toContain(money(cash));
+      expect(texts).toContain(money(Number(slip.netPay) - cash));
+      expect(texts).toContain(`เงินที่ต้องถอนจากธนาคาร ${money(cash)} บาท`);
+      for (const bad of ['3', '0', '0.5', '-20', '1e3', 'abc']) {
+        const res = await api.get(
+          `/payroll/runs/${h1.runId}/print/cash?smallestUnit=${bad}`,
+          payrollToken,
+        );
+        expect({ bad, status: res.status }).toEqual({ bad, status: 400 });
+      }
+    });
+
     it('is for people who can see pay: an ordinary employee gets nothing', async () => {
       const employee = await api.token(NO_PAY_ACCESS);
       for (const path of [
         `/payroll/runs/${h1.runId}/print/payslips`,
         `/payroll/runs/${h1.runId}/print/receipts`,
+        `/payroll/runs/${h1.runId}/print/cash`,
         `/payroll/payslips/${await slipId(h1.runId)}/print`,
       ]) {
         expect((await api.get(path, employee)).status).toBe(403);
@@ -273,7 +318,7 @@ describe('Printed payslips and wage receipts (e2e)', () => {
       expect(entries.length).toBeGreaterThanOrEqual(5);
       expect(entries.every((e) => e.actorUserId)).toBe(true);
       const kinds = new Set(entries.map((e) => (e.changes as { kind: string }).kind));
-      expect(kinds).toEqual(new Set(['payslips', 'wage-receipts']));
+      expect(kinds).toEqual(new Set(['payslips', 'wage-receipts', 'cash-sheet']));
       expect(entries.every((e) => (e.changes as { count: number }).count === 1)).toBe(true);
     });
 

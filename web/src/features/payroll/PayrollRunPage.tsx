@@ -19,7 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
-import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
+import { formatDate, formatDateTime, formatMoney, formatNumber, formatPeriod } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -167,6 +167,10 @@ function RunExplanationPanel({ runId }: { runId: string }) {
 
 type SlipsPerPage = '1' | '2' | '4';
 
+/** Notes and coins the cash sheet can be told to stop at; one baht is the default (CW-088). */
+const SMALLEST_UNITS = ['1', '2', '5', '10', '20', '50', '100', '500', '1000'] as const;
+type SmallestUnit = (typeof SMALLEST_UNITS)[number];
+
 /**
  * Opens a PDF in a new tab to print from, and falls back to saving it when the
  * browser will not open one. The object URL is released after a minute, long
@@ -184,21 +188,26 @@ function openPdf(blob: Blob, filename: string): void {
 }
 
 /**
- * Printable payslips and the wage-receipt sheet (CW-071). Only an approved or
- * paid run can be printed; the server enforces it and refuses a slip whose
+ * Printable payslips, the wage-receipt sheet (CW-071) and the cash-preparation
+ * sheet (CW-088). Only an approved or paid run can be printed; the server enforces it and refuses a slip whose
  * lines do not add up, so the reason surfaces here rather than a bad page.
  */
 function PrintCard({ run }: { run: RunDetail }) {
   const t = useT();
   const [perPage, setPerPage] = useState<SlipsPerPage>('2');
+  const [smallestUnit, setSmallestUnit] = useState<SmallestUnit>('1');
   const printable = ['APPROVED', 'PAID'].includes(run.status);
 
   const print = useMutation({
-    mutationFn: async (kind: 'payslips' | 'receipts') => {
+    mutationFn: async (kind: 'payslips' | 'receipts' | 'cash') => {
       const { blob, filename } =
         kind === 'payslips'
           ? await api.download(`/payroll/runs/${run.id}/print/payslips`, { query: { perPage } })
-          : await api.download(`/payroll/runs/${run.id}/print/receipts`);
+          : kind === 'receipts'
+            ? await api.download(`/payroll/runs/${run.id}/print/receipts`)
+            : await api.download(`/payroll/runs/${run.id}/print/cash`, {
+                query: { smallestUnit },
+              });
       openPdf(blob, filename);
     },
   });
@@ -237,6 +246,33 @@ function PrintCard({ run }: { run: RunDetail }) {
           onClick={() => print.mutate('receipts')}
         >
           {t('Print wage receipts')}
+        </Button>
+      </div>
+      <div className="row">
+        <Field
+          label={t('Smallest note or coin to hand out')}
+          hint={t('What is left under it is shown as the remainder, not rounded into the pay')}
+        >
+          <Select
+            value={smallestUnit}
+            disabled={!printable}
+            onChange={(event) => setSmallestUnit(event.target.value as SmallestUnit)}
+          >
+            {SMALLEST_UNITS.map((unit) => (
+              <option key={unit} value={unit}>
+                {t('{amount} baht', { amount: formatNumber(Number(unit)) })}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Button
+          variant="secondary"
+          disabled={!printable}
+          loading={print.isPending && print.variables === 'cash'}
+          aria-describedby="print-note"
+          onClick={() => print.mutate('cash')}
+        >
+          {t('Print cash sheet')}
         </Button>
       </div>
       <p className="subtle" id="print-note">

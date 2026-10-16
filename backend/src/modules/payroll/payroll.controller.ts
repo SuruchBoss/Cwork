@@ -61,6 +61,7 @@ import {
 } from './dto/payroll.dto';
 import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
+import { SMALLEST_UNIT_CHOICES, type Denomination } from '../documents/cash-sheet';
 import { PayslipPrintService, type PrintedFile } from './payslip-print.service';
 import { PayrollService } from './payroll.service';
 import type { SlipsPerPage } from '../documents/payslip-renderer';
@@ -71,6 +72,18 @@ function parsePerPage(value: string | undefined, fallback: SlipsPerPage): SlipsP
   if (value === undefined || value === '') return fallback;
   if (value === '1' || value === '2' || value === '4') return Number(value) as SlipsPerPage;
   throw new BadRequestException('perPage must be 1, 2 or 4');
+}
+
+function parseSmallestUnit(value: string | undefined): Denomination {
+  if (value === undefined || value === '') return 1;
+  const unit = Number(value);
+  const match = SMALLEST_UNIT_CHOICES.find((choice) => String(choice) === value && choice === unit);
+  if (match === undefined) {
+    throw new BadRequestException(
+      `smallestUnit must be one of ${SMALLEST_UNIT_CHOICES.join(', ')}`,
+    );
+  }
+  return match;
 }
 
 function sendPdf(res: Response, file: PrintedFile): void {
@@ -316,6 +329,22 @@ export class PayrollController {
     @Res() res: Response,
   ): Promise<void> {
     sendPdf(res, await this.printing.printRunReceipts(user, id));
+  }
+
+  @Get('runs/:id/print/cash')
+  @RequirePermissions(Permission.PAYROLL_READ)
+  @ApiOperation({
+    summary:
+      'Cash-preparation sheet of an approved or paid run: notes and coins per person and the amount to withdraw (CW-088)',
+  })
+  @ApiQuery({ name: 'smallestUnit', required: false, enum: [...SMALLEST_UNIT_CHOICES] })
+  async printRunCash(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @Query('smallestUnit') smallestUnit?: string,
+  ): Promise<void> {
+    sendPdf(res, await this.printing.printRunCash(user, id, parseSmallestUnit(smallestUnit)));
   }
 
   @Get('payslips/:id/print')
