@@ -48,7 +48,7 @@ severity; this is the sequence work is actually taken in.
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
 | **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
-| **Pilot B** | Shadow payroll for November, beside their Excel | CW-088 · CW-085 |
+| **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
 | **E** | Ecosystem — runs alongside, does not displace | CW-052 · CW-051 |
@@ -571,7 +571,7 @@ What the compose file runs today, and what makes this large: `postgres`
 ---
 
 ### CW-087 · What Cwork's support covers, written down
-`P1` · business · docs · **S** · before the first invoice; part of CW-077, not queued
+`P1` · business · docs · **S** · before the first invoice; part of CW-077. The problem-report form is queued 2026-10-16 (#90); the page waits on the owner's channel, hours and response time
 
 The "what support means" point of CW-077, as its own ticket, the counterpart
 of SuruchBoss/PaynEat#168. One person answers support online, beside a day
@@ -917,58 +917,6 @@ data; filing online is the Pro candidate in CW-077.
 **Files** `backend/src/modules/payroll/sso-filing.service.ts`
 
 ---
-
-### CW-088 · Getting the cash ready for a cash payday
-`P1` · payroll · **S** · Pilot B, before the November payday
-
-The pilot company pays wages in cash, not by transfer, and prepares the money
-today on a paper sheet: how many notes and coins each person's envelope
-needs, and how much to withdraw from the bank. Cwork already prints the
-payslips and a wage-receipt sheet to sign (CW-071); what it does not do is
-the counting before that.
-
-**Free, decided by the PO (2026-10-16):** this is
-part of paying one company's wages correctly and builds on the CW-071 receipt
-sheet, which is free. Nothing already free moves to Pro. Bank transfer files
-stay a Pro candidate (owner, 2026-10-16; see CW-077).
-
-**Scope**
-- For an approved or paid run, split each person's net pay into Thai notes
-  and coins (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25), largest first.
-  The pilot hands out every one of them (owner, 2026-10-16), so there is no
-  setting to skip a denomination.
-- Whatever is left under 25 satang is shown on the person's row, never
-  rounded away: the payslip and the receipt keep the exact net pay.
-- Totals for the run: how many of each note and coin, and the amount to
-  withdraw.
-- Printed as PDF beside the payslips and the receipt sheet, under the same
-  rules as CW-071: `payroll:read`, refused for a run not yet approved,
-  audited as an export, Sarabun with the glyph check.
-- The column layout follows general practice until the pilot's blank paper
-  form is in hand; the page says so ("awaiting the pilot's form") and no
-  column is guessed from what the pilot might use.
-
-**Questions for the owner (not guessed)**
-- How does the pilot pay a remainder under 25 satang today?
-- Proof of payment for tax and social security when wages are paid in cash:
-  ask the pilot's accountant what they keep (the owner is asking, 2026-10-16);
-  Cwork adds nothing here until that answer exists.
-
-**Acceptance**
-- For a run whose net pays are worked by hand in the test, each person's
-  notes and coins add up to their net pay less the shown remainder, and the
-  run totals equal the sum of the rows.
-- The withdrawal total equals the run's total net pay less the remainders.
-- A run that is not approved cannot be printed.
-- The pilot's blank form, once received, is compared with the printout and
-  every difference is fixed or explained here.
-
-**Files** `backend/src/modules/payroll/` (beside `payslip-print.service.ts`),
-`backend/src/modules/documents/`, the run page in `web/src/features/payroll/`
-
----
-
-
 
 ### CW-052 · Say where Cwork sits in the ecosystem
 `P3` · docs · **S** · 🌱 · phase E
@@ -1457,3 +1405,4 @@ Kept so the reasoning survives.
 | **CW-048** · The monthly social security filing (สปส.1-10) had no way out of payroll | Payroll → monthly social security filing, and `GET /payroll/reports/sso-filing?year=&month=&format=json|csv|xlsx|pdf`, give the form's part 1 (total wage, employee and employer contributions, their sum, the number of insured) and part 2 (one row per person in employee-code order: sequence, national ID, or the social security card number for a foreign worker, name, wage, contribution). Contributions are `computeSocialSecurity` (CW-084) on the month's wage with both halves added first, so the form and the payslips use one rule; each row also shows what the payslips deducted and is marked where it differs. Tested in the e2e at the period year's ceiling (23,000 in 2037 gives 1,150), under the floor (1,470 gives 83) and with a month of no wage listed as nil (note 6). Someone with no valid number is named and every download is refused (`SSO_FILING_HAS_PROBLEMS`); a month with a period not yet approved or paid, or a half-month month missing a half, is refused (`SSO_MONTH_NOT_FINISHED`). Needs `payroll:export` (it carries ID numbers); every read and download is audited as an export, without the numbers. Accepted from the dev: a foreign worker is anyone with a passport or work-permit number on the record, as Cwork stores no nationality; "wage actually paid" is the wage social security is worked on, overtime left out, asked as question 4 on #36; the console defaults to the month just finished, dates in พ.ศ. Guide: `docs/guide/sso-filing.th.md`. Left: the e-Services upload file and the November check (CW-085). 8bb7757, closed 2026-10-11. |
 | **CW-082** · A monthly salary prorated in a month with a substitute day counted that day as a working day | A salaried joiner's or leaver's pay, and the value of an unpaid day, are now worked out over the employee's own work calendar (`WorkCalendarService`: their schedule, the organisation's and the work location's holidays, substitute days as days off), not Monday to Friday less the organisation's holidays. The method in `docs/payroll-thailand.md` is unchanged: base × days paid ÷ the period's working days, counted as if employed all period, so a holiday before someone joined still takes its substitute out of the month. Checked by hand in the e2e for December 2026 at 20,000 (20 working days after 7, 10 and 31 December): a joiner on the 9th gets 15,000.00 (was 14,285.71), a leaver after the 4th 4,000.00, one absent day 19,000.00, a full month 20,000.00 as before; the test fails with the old figures when the substitute day is taken out. Accepted from the dev: a full-month employee with unpaid days in such a month is docked at the corrected day's value, which is the fix; a schedule with Saturday as a working day now counts Saturdays; approved and paid payslips are not recalculated. 6fffdeb, closed 2026-10-11. |
 | **CW-083** · A department limit on the payroll officer did not limit pay, and the console did not say so | When a department limit is chosen for a role, the account-roles card on the employee page now names, before saving, what the limit does not narrow, in Thai and English: pay (payroll runs, payslips, printed payslips, wage receipts, compensation), resignations and the audit log. The list is data, not role names: `OUTSIDE_THE_DEPARTMENT_LIMIT` and `unlimitedAreas()` in `organization/role-grants.ts`, returned per role by `GET /employees/:id/roles` as `unlimitedByDepartment`, so a new role or permission is covered by adding it there. Saving is not blocked and who sees pay is unchanged. `docs/security.md` and `docs/guide/account-roles.th.md` say the same. Accepted from the dev: MANAGER holds only `employee:read:team`, so no department limit can be chosen for it and no note appears (tested in unit, e2e and web); resignations and the audit log were found outside the filter while tracing the code and added to the list, so PAYROLL_OFFICER, HR_OFFICER and AUDITOR now show the note. Whether payroll should honour a department limit stays an owner's decision. c764fca, closed 2026-10-11. |
+| **CW-088** · A cash payday had no way to count the notes and coins | Payroll → run page → "พิมพ์ใบเตรียมเงินสด", and `GET /payroll/runs/:id/print/cash`, print an A4 landscape PDF: one row per person with the exact net pay, how many of each note and coin (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25, largest first), the cash for the envelope and the remainder under 25 satang, which is shown and never rounded into the pay; then the run totals per denomination and the amount to withdraw. Counted in whole satang (`splitCash` in `documents/cash-sheet.ts`), so no float rounding; no setting to skip a denomination, as the pilot hands out all of them. Same rules as CW-071: `payroll:read`, a run not approved or paid is refused (`PAYROLL_RUN_NOT_PRINTABLE`), audited as an export (`cash-sheet`, with the withdrawal total), Sarabun with the glyph check. Tested by hand-worked figures (12,345.67 gives 12,345.50 in cash and 0.17 left; three people netting 20,345.66 withdraw 20,345.25) and in the e2e against an independently worked split. No schema change. Guide: `docs/guide/printing-payslips.th.md`. Still open, not code: the page says its layout awaits the pilot's blank paper form, to be compared when it arrives; how the pilot pays a remainder under 25 satang; what the pilot's accountant keeps as proof of a cash payday (the owner is asking). 8d15223 and 5bdd09c, closed 2026-10-16. |

@@ -6,13 +6,14 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-088 (#91, the cash sheet for a cash payday: notes and
-  coins per person, the withdrawal total; free) is with the dev room. CW-085
-  (#88, the e-Services upload file and the November check) waits on a sample
-  file and the pilot's November month; CW-061/062 wait on the pilot's files.
-  Not queued, owner decides when: CW-080, CW-086 (#89), CW-087 (#90, needs the
-  owner's support channel and hours). Closed on 2026-10-11: CW-079, CW-078,
-  CW-076, CW-081, CW-071, CW-084, CW-048, CW-082 and CW-083.
+- **Dev queue:** CW-087's in-app problem-report form (#90; diagnostics with
+  no personal data, copied out by the customer, nothing sent by Cwork) is with
+  the dev room; the support page itself waits on the owner. CW-085 (#88, the
+  e-Services upload file and the November check) waits on a sample file and
+  the pilot's November month; CW-061/062 wait on the pilot's files. Not
+  queued, owner decides when: CW-080, CW-086 (#89). Closed on 2026-10-11:
+  CW-079, CW-078, CW-076, CW-081, CW-071, CW-084, CW-048, CW-082, CW-083;
+  on 2026-10-16: CW-088 (cash sheet, release 0.4.0).
 - **Pilot A (by 31 October):** waits on the pilot company's files, not on
   code. CW-061 needs one real month exported from the TA-001EX scanner;
   CW-062 needs the NAS make, model, CPU, memory, what runs on it and how the
@@ -34,9 +35,10 @@ this file only says where the PO room stands.
   without the employee's signed consent.
 - A sample สปส.1-10 upload file from SSO e-Services, names and ID numbers
   blanked, for CW-085's file format.
-- CW-088: how the pilot pays a remainder under 25 satang, its blank paper
-  form, and what its accountant keeps as proof of a cash payday (the owner
-  is asking). How Pilot B pays wages (bank files stay Pro until then).
+- After CW-088 (closed): how the pilot pays a remainder under 25 satang, its
+  blank paper form to compare with the printout, and what its accountant
+  keeps as proof of a cash payday (the owner is asking). How Pilot B pays
+  wages (bank files stay Pro until then).
 - CW-087: the support channel, hours and response time (the in-app problem
   report can be built before that).
 - Prices and timing for the CW-077 items.
