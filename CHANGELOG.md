@@ -62,6 +62,9 @@ Excel, CSV or PDF, the figures the payslips withheld, ready to check and file
 An approved or paid run prints as payslips, one, two or four to an A4 sheet, and
 as a wage-receipt sheet to sign for pay received in cash (CW-071), and a
 sheet of the notes and coins each envelope needs and what to withdraw (CW-088).
+A customer who hits an error can build a report of what happened, with the
+console's version and the failed requests but no personal data, to copy and
+send themselves; Cwork sends nothing (CW-087).
 The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
