@@ -337,7 +337,8 @@ export const thMessages: Record<string, string> = {
   'Could not complete the action': 'ดำเนินการไม่สำเร็จ',
   'Print payslips and wage receipts': 'พิมพ์สลิปเงินเดือนและใบรับเงิน',
   'Payslips per A4 sheet': 'จำนวนสลิปต่อหน้า A4',
-  'Two or four to a sheet are cut along the dashed lines': 'แบบ 2 หรือ 4 สลิปต่อหน้า ให้ตัดตามเส้นประ',
+  'Two or four to a sheet are cut along the dashed lines':
+    'แบบ 2 หรือ 4 สลิปต่อหน้า ให้ตัดตามเส้นประ',
   '{count} per sheet': '{count} สลิปต่อหน้า',
   'Print payslips': 'พิมพ์สลิปเงินเดือน',
   'Print wage receipts': 'พิมพ์ใบรับเงิน',
@@ -367,14 +368,14 @@ export const thMessages: Record<string, string> = {
   'Where to send it: {channel}': 'ส่งไปที่: {channel}',
   'not decided yet': 'ยังไม่กำหนด',
   'Every print is recorded in the audit log': 'การพิมพ์ทุกครั้งถูกบันทึกไว้ในประวัติการใช้งาน',
-  'Payslips can be printed once the run is approved': 'พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว',
+  'Payslips can be printed once the run is approved':
+    'พิมพ์สลิปได้เมื่อรอบเงินเดือนได้รับอนุมัติแล้ว',
   THB: 'บาท',
   'Last day {date}': 'วันสุดท้าย {date}',
 
   // HR assistant
   'How many annual leave days do I have left?': 'ฉันเหลือวันลาพักร้อนกี่วัน',
-  'When do I need a medical certificate for sick leave?':
-    'ขอลาป่วยต้องแนบใบรับรองแพทย์เมื่อไหร่',
+  'When do I need a medical certificate for sick leave?': 'ขอลาป่วยต้องแนบใบรับรองแพทย์เมื่อไหร่',
   'How is holiday overtime pay calculated?': 'อัตราค่าโอทีวันหยุดคิดยังไง',
   'Request an employment certificate for a visa': 'ขอหนังสือรับรองการทำงานเพื่อยื่นวีซ่า',
   'How many times was I late this month?': 'เดือนนี้ฉันมาสายกี่ครั้ง',
@@ -563,8 +564,7 @@ export const thMessages: Record<string, string> = {
   'Could not sign in, please try again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่',
   'Could not sign in, please sign in again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาเข้าสู่ระบบใหม่',
   'Two-step verification': 'ยืนยันตัวตนสองขั้นตอน',
-  'Enter the 6-digit code from your authenticator app':
-    'กรอกรหัส 6 หลักจากแอป Authenticator',
+  'Enter the 6-digit code from your authenticator app': 'กรอกรหัส 6 หลักจากแอป Authenticator',
   Verify: 'ยืนยัน',
   'The code is incorrect, please try again': 'รหัสไม่ถูกต้อง กรุณาลองใหม่',
   'You can use a recovery code instead if you do not have your phone.':
@@ -860,105 +860,60 @@ export const thMessages: Record<string, string> = {
   Problem: 'ปัญหา',
   File: 'ทั้งไฟล์',
   // Payroll period check (CW-089)
-  'Export for the accountant':
-    'ส่งออกสำหรับนักบัญชี',
-  'Check against filings':
-    'เทียบกับที่ยื่นไปแล้ว',
-  'Same':
-    'ตรงกัน',
-  'Different':
-    'ไม่ตรง',
-  'Gross pay':
-    'รายได้รวม',
-  'Tax':
-    'ภาษี',
+  'Export for the accountant': 'ส่งออกสำหรับนักบัญชี',
+  'Check against filings': 'เทียบกับที่ยื่นไปแล้ว',
+  Same: 'ตรงกัน',
+  Different: 'ไม่ตรง',
+  'Gross pay': 'รายได้รวม',
+  Tax: 'ภาษี',
   'Set what the accountant filed, or HR’s own figures, beside what Cwork worked out for the month. Nothing is saved and no payslip changes.':
     'วางยอดที่นักบัญชียื่น หรือตัวเลขของ HR เอง เทียบกับที่ Cwork คำนวณของเดือนนั้น ไม่มีอะไรถูกบันทึก และไม่มีสลิปเปลี่ยน',
-  '1. The totals that were filed':
-    '1. ยอดรวมที่ยื่นไปแล้ว',
+  '1. The totals that were filed': '1. ยอดรวมที่ยื่นไปแล้ว',
   'Type the withholding tax total e-Filing produced for the month, and the social security total filed (the employee and employer shares together). Either one is enough. A difference of one satang is shown as a difference.':
     'พิมพ์ยอดภาษีหัก ณ ที่จ่ายรวมที่ e-Filing ออกให้ของเดือนนั้น และยอดประกันสังคมรวมที่ยื่น (ส่วนลูกจ้างกับส่วนนายจ้างรวมกัน) ใส่อย่างใดอย่างหนึ่งก็ได้ ต่างกันแค่ 1 สตางค์ก็แสดงว่าไม่ตรง',
-  'Withholding tax filed (baht)':
-    'ภาษีหัก ณ ที่จ่ายที่ยื่น (บาท)',
-  'An amount in baht, with at most two decimals':
-    'จำนวนเงินบาท ทศนิยมไม่เกิน 2 ตำแหน่ง',
-  'Social security filed (baht)':
-    'ประกันสังคมที่ยื่น (บาท)',
-  'Compare':
-    'เทียบ',
-  'Cwork':
-    'Cwork',
-  'Filed':
-    'ที่ยื่น',
-  'Difference':
-    'ผลต่าง',
-  'Result':
-    'ผล',
-  'Withholding tax':
-    'ภาษีหัก ณ ที่จ่าย',
-  'Employee {employee} + employer {employer}':
-    'ลูกจ้าง {employee} + นายจ้าง {employer}',
-  '2. HR’s own figures, person by person':
-    '2. ตัวเลขของ HR เอง ทีละคน',
+  'Withholding tax filed (baht)': 'ภาษีหัก ณ ที่จ่ายที่ยื่น (บาท)',
+  'An amount in baht, with at most two decimals': 'จำนวนเงินบาท ทศนิยมไม่เกิน 2 ตำแหน่ง',
+  'Social security filed (baht)': 'ประกันสังคมที่ยื่น (บาท)',
+  Compare: 'เทียบ',
+  Cwork: 'Cwork',
+  Filed: 'ที่ยื่น',
+  Difference: 'ผลต่าง',
+  Result: 'ผล',
+  'Withholding tax': 'ภาษีหัก ณ ที่จ่าย',
+  'Employee {employee} + employer {employer}': 'ลูกจ้าง {employee} + นายจ้าง {employer}',
+  '2. HR’s own figures, person by person': '2. ตัวเลขของ HR เอง ทีละคน',
   'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. Cwork marks every person and column that differs.':
     'ไฟล์ Excel หรือ CSV หนึ่งแถวต่อคน มีรหัสพนักงาน รายได้รวม ภาษี ประกันสังคม (ส่วนของลูกจ้าง) และเงินสุทธิ กรอกครบทุกช่องและปัดเศษเป็นสตางค์แล้ว คอลัมน์อื่นจะถูกข้าม Cwork จะทำเครื่องหมายทุกคนและทุกคอลัมน์ที่ต่างกัน',
-  'Fix these in the file':
-    'แก้ไขรายการเหล่านี้ในไฟล์',
-  'People compared':
-    'คนที่เทียบได้',
-  'People who differ':
-    'คนที่ตัวเลขต่างกัน',
-  'Every figure matches':
-    'ทุกตัวเลขตรงกัน',
-  'Only in your file':
-    'มีเฉพาะในไฟล์ของคุณ',
-  'Only in Cwork':
-    'มีเฉพาะใน Cwork',
-  'Person by person':
-    'ทีละคน',
-  'Show everyone':
-    'แสดงทุกคน',
-  'Show only those who differ':
-    'แสดงเฉพาะคนที่ต่างกัน',
-  'Nobody differs.':
-    'ไม่มีใครต่างกัน',
-  'Cwork {cwork} · yours {theirs}':
-    'Cwork {cwork} · ของคุณ {theirs}',
-  'Cwork has no payslip for these people in this period:':
-    'Cwork ไม่มีสลิปของคนเหล่านี้ในงวดนี้:',
-  'Your file leaves these people out:':
-    'ไฟล์ของคุณไม่มีคนเหล่านี้:',
+  'Fix these in the file': 'แก้ไขรายการเหล่านี้ในไฟล์',
+  'People compared': 'คนที่เทียบได้',
+  'People who differ': 'คนที่ตัวเลขต่างกัน',
+  'Every figure matches': 'ทุกตัวเลขตรงกัน',
+  'Only in your file': 'มีเฉพาะในไฟล์ของคุณ',
+  'Only in Cwork': 'มีเฉพาะใน Cwork',
+  'Person by person': 'ทีละคน',
+  'Show everyone': 'แสดงทุกคน',
+  'Show only those who differ': 'แสดงเฉพาะคนที่ต่างกัน',
+  'Nobody differs.': 'ไม่มีใครต่างกัน',
+  'Cwork {cwork} · yours {theirs}': 'Cwork {cwork} · ของคุณ {theirs}',
+  'Cwork has no payslip for these people in this period:': 'Cwork ไม่มีสลิปของคนเหล่านี้ในงวดนี้:',
+  'Your file leaves these people out:': 'ไฟล์ของคุณไม่มีคนเหล่านี้:',
   // Fingerprint scanner import (CW-061)
-  'No punch':
-    'ไม่มีการสแกน',
-  'Number not registered':
-    'เลขสแกนยังไม่มีเจ้าของ',
-  'Counted':
-    'นับแล้ว',
-  'Waiting: one time only':
-    'รอ HR: สแกนครั้งเดียว',
-  'Waiting: three or more times':
-    'รอ HR: สแกนสามครั้งขึ้นไป',
-  'Waiting for HR':
-    'รอ HR ตัดสิน',
-  'HR chose the times':
-    'HR เลือกเวลาแล้ว',
-  'HR left it out':
-    'HR ไม่นับวันนี้',
-  'Scanner number':
-    'เลขในเครื่องสแกน',
-  'Name on the scanner':
-    'ชื่อในเครื่องสแกน',
-  'Whose number is it?':
-    'เลขนี้ของใคร',
-  '{count} days with no punch':
-    '{count} วันที่ไม่มีการสแกน',
-  'Import from the fingerprint scanner':
-    'นำเข้าจากเครื่องสแกนนิ้ว',
+  'No punch': 'ไม่มีการสแกน',
+  'Number not registered': 'เลขสแกนยังไม่มีเจ้าของ',
+  Counted: 'นับแล้ว',
+  'Waiting: one time only': 'รอ HR: สแกนครั้งเดียว',
+  'Waiting: three or more times': 'รอ HR: สแกนสามครั้งขึ้นไป',
+  'Waiting for HR': 'รอ HR ตัดสิน',
+  'HR chose the times': 'HR เลือกเวลาแล้ว',
+  'HR left it out': 'HR ไม่นับวันนี้',
+  'Scanner number': 'เลขในเครื่องสแกน',
+  'Name on the scanner': 'ชื่อในเครื่องสแกน',
+  'Whose number is it?': 'เลขนี้ของใคร',
+  '{count} days with no punch': '{count} วันที่ไม่มีการสแกน',
+  'Import from the fingerprint scanner': 'นำเข้าจากเครื่องสแกนนิ้ว',
   'The scanner’s export for one month, kept exactly as the scanner wrote it, with the punches that can be counted added to attendance':
     'ไฟล์ที่เครื่องสแกนส่งออกของหนึ่งเดือน เก็บไว้ตามที่เครื่องบันทึกทุกอย่าง และเพิ่มเฉพาะเวลาที่นับได้เข้าไปในการลงเวลา',
-  'Review scanner days':
-    'ตรวจวันที่สแกน',
+  'Review scanner days': 'ตรวจวันที่สแกน',
   'Imported {file}: {count} punches added to attendance':
     'นำเข้า {file} แล้ว เพิ่มรายการลงเวลา {count} รายการ',
   'Days from {from} to {to}: {added} new, {changed} with new times, {same} as before':
@@ -969,119 +924,76 @@ export const thMessages: Record<string, string> = {
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
   '{count} scanner numbers belong to nobody yet; match them on the review page':
     'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
-  '1. Choose the scanner’s file':
-    '1. เลือกไฟล์จากเครื่องสแกน',
+  '1. Choose the scanner’s file': '1. เลือกไฟล์จากเครื่องสแกน',
   'Use the file the scanner wrote, as it is: it may be called .xls but it is read as text. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.':
     'ใช้ไฟล์ที่เครื่องสแกนส่งออกมาตามเดิม ชื่อไฟล์อาจเป็น .xls แต่ระบบอ่านเป็นข้อความ ไฟล์จะถูกตรวจก่อน ยังไม่บันทึกอะไร ลายนิ้วมือไม่อยู่ในไฟล์และระบบไม่เก็บ',
-  '2. Fix these in the file':
-    '2. แก้ไขรายการเหล่านี้ในไฟล์',
-  'Line':
-    'บรรทัด',
-  '2. What this file holds':
-    '2. ในไฟล์นี้มีอะไร',
-  'Import this file':
-    'นำเข้าไฟล์นี้',
+  '2. Fix these in the file': '2. แก้ไขรายการเหล่านี้ในไฟล์',
+  Line: 'บรรทัด',
+  '2. What this file holds': '2. ในไฟล์นี้มีอะไร',
+  'Import this file': 'นำเข้าไฟล์นี้',
   'The file is clean. {lines} lines, from {from} to {to}.':
     'ไฟล์ถูกต้อง {lines} บรรทัด ตั้งแต่ {from} ถึง {to}',
-  'New days':
-    'วันใหม่',
-  'Days with new times':
-    'วันที่มีเวลาเพิ่ม',
-  'Days already as they are':
-    'วันที่เหมือนเดิม',
-  'Punches to add':
-    'รายการลงเวลาที่จะเพิ่ม',
-  'Only punches not already in attendance':
-    'เฉพาะรายการที่ยังไม่อยู่ในการลงเวลา',
+  'New days': 'วันใหม่',
+  'Days with new times': 'วันที่มีเวลาเพิ่ม',
+  'Days already as they are': 'วันที่เหมือนเดิม',
+  'Punches to add': 'รายการลงเวลาที่จะเพิ่ม',
+  'Only punches not already in attendance': 'เฉพาะรายการที่ยังไม่อยู่ในการลงเวลา',
   'Nothing in this file is new: every day is already in Cwork.':
     'ไม่มีอะไรใหม่ในไฟล์นี้ ทุกวันอยู่ใน Cwork แล้ว',
-  'Scanner numbers nobody has registered':
-    'เลขสแกนที่ยังไม่มีเจ้าของ',
+  'Scanner numbers nobody has registered': 'เลขสแกนที่ยังไม่มีเจ้าของ',
   'This is not a mistake in the file. Nothing is counted for these numbers until you say whose they are, which you can do after importing; their days stay listed here and on the review page.':
     'นี่ไม่ใช่ข้อผิดพลาดของไฟล์ ระบบยังไม่นับอะไรให้เลขเหล่านี้จนกว่าจะบอกว่าเป็นของใคร ซึ่งทำได้หลังนำเข้า วันของเลขเหล่านี้จะยังแสดงไว้ที่นี่และในหน้าตรวจ',
-  'Files imported so far':
-    'ไฟล์ที่นำเข้าแล้ว',
-  'Loading…':
-    'กำลังโหลด…',
-  'No file has been imported yet.':
-    'ยังไม่เคยนำเข้าไฟล์',
-  'Days covered':
-    'ช่วงวันที่',
-  'Punches added':
-    'รายการลงเวลาที่เพิ่ม',
-  'Imported':
-    'นำเข้าเมื่อ',
-  'Payroll has used this day':
-    'เงินเดือนใช้วันนี้ไปแล้ว',
-  'Clock-in for {day}':
-    'เวลาเข้างานของ {day}',
-  'No clock-in':
-    'ไม่มีเวลาเข้า',
-  'Clock-out for {day}':
-    'เวลาเลิกงานของ {day}',
-  'No clock-out':
-    'ไม่มีเวลาออก',
-  'Use these times':
-    'ใช้เวลาเหล่านี้',
-  'Do not count this day':
-    'ไม่นับวันนี้',
+  'Files imported so far': 'ไฟล์ที่นำเข้าแล้ว',
+  'Loading…': 'กำลังโหลด…',
+  'No file has been imported yet.': 'ยังไม่เคยนำเข้าไฟล์',
+  'Days covered': 'ช่วงวันที่',
+  'Punches added': 'รายการลงเวลาที่เพิ่ม',
+  Imported: 'นำเข้าเมื่อ',
+  'Payroll has used this day': 'เงินเดือนใช้วันนี้ไปแล้ว',
+  'Clock-in for {day}': 'เวลาเข้างานของ {day}',
+  'No clock-in': 'ไม่มีเวลาเข้า',
+  'Clock-out for {day}': 'เวลาเลิกงานของ {day}',
+  'No clock-out': 'ไม่มีเวลาออก',
+  'Use these times': 'ใช้เวลาเหล่านี้',
+  'Do not count this day': 'ไม่นับวันนี้',
   'Number {number} registered: {days} days matched, {punches} punches added':
     'บันทึกเลข {number} แล้ว จับคู่ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
-  'Find an employee for number {number}':
-    'ค้นหาพนักงานของเลข {number}',
-  'Search by name or code':
-    'ค้นหาด้วยชื่อหรือรหัส',
-  'Employee for number {number}':
-    'พนักงานของเลข {number}',
-  'Choose…':
-    'เลือก…',
-  'Register this number':
-    'บันทึกเลขนี้',
+  'Find an employee for number {number}': 'ค้นหาพนักงานของเลข {number}',
+  'Search by name or code': 'ค้นหาด้วยชื่อหรือรหัส',
+  'Employee for number {number}': 'พนักงานของเลข {number}',
+  'Choose…': 'เลือก…',
+  'Register this number': 'บันทึกเลขนี้',
   'Matched again: {days} days matched, {punches} punches added':
     'จับคู่ใหม่แล้ว ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
-  'All rows':
-    'ทุกแถว',
-  'Scanner days':
-    'วันที่สแกนนิ้ว',
+  'All rows': 'ทุกแถว',
+  'Scanner days': 'วันที่สแกนนิ้ว',
   'Every day the fingerprint scanner recorded, as it recorded it. Decide the days it could not settle; the totals change as you do.':
     'ทุกวันที่เครื่องสแกนนิ้วบันทึกไว้ ตามที่เครื่องบันทึก ตัดสินวันที่เครื่องสรุปเองไม่ได้ ยอดรวมจะเปลี่ยนตามที่ตัดสิน',
-  'Import a file':
-    'นำเข้าไฟล์',
-  'Not counted until you decide':
-    'ยังไม่นับจนกว่าจะตัดสิน',
-  '{count} chosen by HR':
-    '{count} วัน HR เป็นคนเลือก',
-  'Left out by HR':
-    'HR ไม่นับ',
+  'Import a file': 'นำเข้าไฟล์',
+  'Not counted until you decide': 'ยังไม่นับจนกว่าจะตัดสิน',
+  '{count} chosen by HR': '{count} วัน HR เป็นคนเลือก',
+  'Left out by HR': 'HR ไม่นับ',
   'Days from the scanner': 'วันจากเครื่องสแกน',
-  'Match again':
-    'จับคู่ใหม่',
+  'Match again': 'จับคู่ใหม่',
   'Nothing is counted for these numbers until you say whose they are. If a number was added to an employee some other way, such as the employee import, press Match again.':
     'ยังไม่นับอะไรให้เลขเหล่านี้จนกว่าจะบอกว่าเป็นของใคร ถ้าเลขถูกใส่ให้พนักงานด้วยวิธีอื่น เช่นนำเข้าพนักงานจากไฟล์ ให้กดจับคู่ใหม่',
-  'Show':
-    'แสดง',
-  'Nothing is waiting for you':
-    'ไม่มีวันที่รอให้ตัดสิน',
-  'No days match this filter':
-    'ไม่มีวันที่ตรงกับตัวกรองนี้',
+  Show: 'แสดง',
+  'Nothing is waiting for you': 'ไม่มีวันที่รอให้ตัดสิน',
+  'No days match this filter': 'ไม่มีวันที่ตรงกับตัวกรองนี้',
   'Import the scanner’s file first, then its days appear here.':
     'นำเข้าไฟล์จากเครื่องสแกนก่อน แล้ววันต่างๆ จะแสดงที่นี่',
-  'Times on the scanner':
-    'เวลาที่เครื่องสแกนบันทึก',
-  'Decision':
-    'การตัดสิน',
+  'Times on the scanner': 'เวลาที่เครื่องสแกนบันทึก',
+  Decision: 'การตัดสิน',
   'The scanner has more times now than when you decided':
     'ตอนนี้เครื่องสแกนมีเวลามากกว่าตอนที่ตัดสินไว้',
-  'Page {page} of {pages}':
-    'หน้า {page} จาก {pages}',
+  'Page {page} of {pages}': 'หน้า {page} จาก {pages}',
   "This is not the scanner's text export: it has no byte-order mark, so it is not read. Copy the export from the scanner again and upload it unchanged":
     'นี่ไม่ใช่ไฟล์ข้อความที่เครื่องสแกนส่งออก (ไม่มีเครื่องหมายระบุการเข้ารหัสต้นไฟล์) จึงไม่อ่านให้ คัดลอกไฟล์จากเครื่องสแกนมาใหม่แล้วอัปโหลดโดยไม่แก้',
   "A line of the scanner's export has four fields (name, scanner number, date, times); this one has {found}":
     'แต่ละบรรทัดของไฟล์จากเครื่องสแกนมีสี่ช่อง (ชื่อ เลขในเครื่อง วันที่ เวลา) บรรทัดนี้มี {found} ช่อง',
   '"{value}" is not a scanner user number (digits only)':
     '"{value}" ไม่ใช่เลขผู้ใช้ในเครื่องสแกน (ต้องเป็นตัวเลขล้วน)',
-  '"{value}" is not a time written as HH:mm':
-    '"{value}" ไม่ใช่เวลาแบบ ชั่วโมง:นาที (HH:mm)',
+  '"{value}" is not a time written as HH:mm': '"{value}" ไม่ใช่เวลาแบบ ชั่วโมง:นาที (HH:mm)',
   'The year {year} is outside 1990-2100. The scanner writes the Gregorian year; check the file before importing it':
     'ปี {year} อยู่นอกช่วง 1990-2100 เครื่องสแกนเขียนเป็นปี ค.ศ. ตรวจไฟล์ก่อนนำเข้า',
   '3. Import': '3. นำเข้า',
@@ -1176,7 +1088,8 @@ export const thMessages: Record<string, string> = {
   Total: 'รวม',
   'Pay for {months} imported for {count} employees':
     'นำเข้ายอดช่วง {months} ของพนักงาน {count} คนแล้ว',
-  'Run payroll in Cwork from {month} {year}.': 'เริ่มคำนวณเงินเดือนใน Cwork ตั้งแต่เดือน{month} {year}',
+  'Run payroll in Cwork from {month} {year}.':
+    'เริ่มคำนวณเงินเดือนใน Cwork ตั้งแต่เดือน{month} {year}',
   'Already calculated without these figures, so its tax is too low. Calculate it again before it is approved:':
     'รอบนี้คำนวณไปก่อนมีตัวเลขเหล่านี้ ภาษีที่หักจึงต่ำเกินไป ให้คำนวณใหม่ก่อนอนุมัติ:',
   'No row has any figures in it': 'ไม่มีแถวใดกรอกตัวเลขไว้เลย',
@@ -1229,16 +1142,16 @@ export const thMessages: Record<string, string> = {
   'Search by name, nickname or employee code': 'ค้นหาชื่อ ชื่อเล่น หรือรหัสพนักงาน',
   'Matching employees': 'พนักงานที่ตรงกับคำค้น',
   'No one matches "{term}"': 'ไม่พบพนักงานที่ตรงกับ "{term}"',
-  'Change': 'เปลี่ยน',
+  Change: 'เปลี่ยน',
   '{available} of {granted} days left': 'คงเหลือ {available} จาก {granted} วัน',
   '— Choose —': '— เลือก —',
   'First day of leave': 'วันแรกที่ลา',
-  'Until': 'ถึงวันที่',
+  Until: 'ถึงวันที่',
   '(one day)': '(ลาวันเดียว)',
   'Full or half day': 'เต็มวันหรือครึ่งวัน',
   'Full day': 'เต็มวัน',
-  'Morning': 'ครึ่งเช้า',
-  'Afternoon': 'ครึ่งบ่าย',
+  Morning: 'ครึ่งเช้า',
+  Afternoon: 'ครึ่งบ่าย',
   'Record as approved': 'บันทึกเป็นอนุมัติแล้ว',
   'The manager already knows; no approval needed': 'หัวหน้าทราบแล้ว ไม่ต้องรออนุมัติ',
   'Send to the manager to approve': 'ส่งให้หัวหน้าอนุมัติ',
@@ -1290,6 +1203,20 @@ export const thMessages: Record<string, string> = {
   Expired: 'หมดอายุแล้ว',
   'A passport number is 5 to 20 English letters and digits.':
     'เลขพาสปอร์ตใช้ตัวอักษรภาษาอังกฤษและตัวเลข 5 ถึง 20 ตัว',
+  // The scanner number on the employee page (CW-090)
+  'This scanner number already belongs to another employee.':
+    'เลขสแกนนิ้วนี้เป็นของพนักงานคนอื่นอยู่แล้ว',
+  'A scanner number has no spaces.': 'เลขสแกนนิ้วต้องไม่มีช่องว่าง',
+  'Type it as the scanner writes it: 007 is not 7. Days already imported under the old number stay with this employee.':
+    'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขเดิมยังเป็นของพนักงานคนนี้',
+  'Type it as the scanner writes it: 007 is not 7. Days already imported under this number are counted for this employee.':
+    'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขนี้จะนับให้พนักงานคนนี้',
+  'No scanner number. Days from the scanner wait until one is given.':
+    'ยังไม่มีเลขสแกนนิ้ว วันที่มาจากเครื่องสแกนจะรอจนกว่าจะมีเลข',
+  'Saved. Days already imported under this number now belong to this employee: those with two times are counted, the others wait for HR on the scanner days page.':
+    'บันทึกแล้ว วันที่นำเข้าไว้แล้วภายใต้เลขนี้เป็นของพนักงานคนนี้แล้ว วันที่มีสองเวลานับให้เลย วันอื่นรอ HR ตัดสินในหน้าวันที่สแกนนิ้ว',
+  'Saved. The days already counted for this employee stay as they are.':
+    'บันทึกแล้ว วันที่นับให้พนักงานคนนี้ไปแล้วยังเหมือนเดิม',
   'A number is on file. Leave blank to keep it.': 'มีเลขบันทึกไว้แล้ว เว้นว่างไว้ถ้าไม่เปลี่ยน',
   // Thai date fields (CW-058)
   'day/month/year': 'วัน/เดือน/ปี พ.ศ.',
@@ -1401,7 +1328,8 @@ export const thMessages: Record<string, string> = {
   'Cancel the advance of {name}': 'ยกเลิกเงินเบิกของ {name}',
   'In an approved run': 'อยู่ในรอบที่อนุมัติแล้ว',
   'Saved the advance of {amount} to {name}': 'บันทึกเงินเบิก {amount} ของ {name} แล้ว',
-  'Recorded {amount} paid to {name} on {date}': 'บันทึกเงินเบิก {amount} ที่จ่ายให้ {name} วันที่ {date} แล้ว',
+  'Recorded {amount} paid to {name} on {date}':
+    'บันทึกเงินเบิก {amount} ที่จ่ายให้ {name} วันที่ {date} แล้ว',
   'Choose the day the advance was paid.': 'เลือกวันที่จ่ายเงินเบิก',
   'Edit an advance': 'แก้ไขเงินเบิก',
   'Record an advance': 'บันทึกเงินเบิก',
@@ -1519,8 +1447,7 @@ export const thMessages: Record<string, string> = {
     'ให้หรือถอนได้เฉพาะบทบาทที่คุณมีสิทธิ์ครบทุกข้ออยู่แล้วเท่านั้น',
   'This is the last system administrator. Make someone else one first.':
     'นี่คือผู้ดูแลระบบคนสุดท้าย ต้องตั้งคนอื่นเป็นผู้ดูแลระบบก่อน',
-  'You cannot take away your own right to manage roles.':
-    'ถอนสิทธิ์จัดการบทบาทของตัวเองไม่ได้',
+  'You cannot take away your own right to manage roles.': 'ถอนสิทธิ์จัดการบทบาทของตัวเองไม่ได้',
   'The last day has already passed.': 'วันสุดท้ายผ่านไปแล้ว',
   'This role cannot be limited to a department.': 'บทบาทนี้จำกัดไว้แผนกเดียวไม่ได้',
   'This account is disabled.': 'บัญชีนี้ถูกปิดใช้งานแล้ว',

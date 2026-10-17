@@ -20,6 +20,7 @@ import { toDateOnly } from '../../core/utils/date.util';
 import { organizationToday } from '../organization/organization-today';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { AuditService } from '../audit/audit.service';
+import { ScannerImportService } from '../attendance/scanner-import.service';
 import { employeeVisibilityFilter } from '../../core/security/employee-access';
 import type {
   CreateEmployeeDto,
@@ -56,6 +57,7 @@ export class EmployeesService {
     private readonly crypto: CryptoService,
     private readonly sequences: SequenceService,
     private readonly audit: AuditService,
+    private readonly scannerImport: ScannerImportService,
   ) {}
 
   async list(user: AuthenticatedUser, query: EmployeeQueryDto) {
@@ -339,6 +341,26 @@ export class EmployeesService {
       before as unknown as Record<string, unknown>,
       updated as unknown as Record<string, unknown>,
     );
+
+    // A number given to this employee picks up the days that were waiting on it (CW-090).
+    if (updated.scannerId && updated.scannerId !== before.scannerId) {
+      const result = await this.scannerImport.rematchNumber(
+        user.organizationId,
+        user.userId,
+        updated.scannerId,
+      );
+      if (result.daysMatched > 0) {
+        await this.audit.record({
+          organizationId: user.organizationId,
+          actorUserId: user.userId,
+          action: AuditAction.UPDATE,
+          entityType: 'Employee',
+          entityId: id,
+          summary: `Counted ${result.daysMatched} waiting scanner day(s) of number ${updated.scannerId} for employee ${updated.employeeCode}`,
+          changes: { daysMatched: result.daysMatched },
+        });
+      }
+    }
 
     return this.findOne(user, id);
   }

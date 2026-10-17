@@ -6,36 +6,35 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- CW-061 (#61) and CW-089 (#92) passed review. Code and guides are as listed in
-  the CHANGELOG; nothing open on them for the dev room.
-- **CW-062 (#62), the NAS install, is built and pushed; waiting on review.** It is
-  all in `deploy/nas/` (README there): `check.sh` (reads the machine: path A,
-  B or C), `install.sh`, `backup.sh`, `restore.sh`, `update.sh`, `rollback.sh`,
-  `make-bundle.sh`, `uninstall.sh`, one compose file with profiles `db`/`app`/`tools`
-  and a Caddy HTTPS front door. Docs: `docs/operations.md` "Running on a NAS
-  (Synology)", Thai checklist `docs/guide/nas-install.th.md`, rehearsal record
-  `docs/nas-rehearsal-2026-10.md` (read it for what was and was not tried).
-  - Rehearsed on a clean Docker host with Odoo 17 beside it, not on a Synology.
-    Not tried: every DSM screen and DSM's shell, a Windows PC trusting the
-    certificate authority, a port scan from outside, two real machines for path C,
-    the real `apt-get` Dockerfile builds (the room's containers have no internet).
-  - Edits to `backend/Dockerfile`: `/app/uploads` is created owned by the API's
-    user (uploads failed with a 500 in the existing image, root compose included);
-    the tools image carries `verify-db-objects.sql` and, in its stage only, `psql`.
-  - `docker compose run --rm migrate npm run db:verify` (operations.md) had never
-    worked from the tools image: no SQL file and no `psql`. Fixed: `psql` in the
-    Dockerfile's tools stage only, plus CI job "Tools image runs db:verify"
-    (`backend/scripts/verify-tools-image.sh`), green on `main` at `368c303`.
-  - **Open for the owner:** approval to run `./check.sh` and then the install on
-    the pilot's NAS; the real result goes at the bottom of the rehearsal record.
-    Backups need a USB drive or another machine (a same-disk folder is refused).
-- Waiting on others, nothing for the dev room to start: the owner (what HR sends
-  the accountant today, whether the first payroll runs beside HR's method, the
-  support channel for CW-087's page, the pilot's blank paper form, the
-  accountant's answer on proof of cash payment); CW-085 (#88) needs the owner's
-  sample file; CW-080 and CW-086 (#89) are not queued.
+- CW-061 (#61), CW-089 (#92) and CW-062 (#62, cloud side) passed review. `#62`
+  stays open for the real NAS; `docker compose run --rm migrate npm run db:verify`
+  works and is proved by the CI job "Tools image runs db:verify" (green on `main`).
+- **CW-090 (#93), the scanner number on the employee page, is built; waiting on
+  review.** `web/src/features/employees/ScannerNumberCard.tsx` (text, so `007` stays
+  `007`; clearing sends `null`; `DUPLICATE_SCANNER_ID` shown in words). Saving an
+  employee with a new number calls `ScannerImportService.rematchNumber`, which
+  attaches only the unowned days of that number and counts the ones with two times;
+  days HR decided, days already counted under an old number and locked days are not
+  touched. The old and new number are in the audit log (the field diff), and a second
+  entry says how many days were counted. `EmployeesModule` now imports
+  `AttendanceModule`. Thai guide `docs/guide/scanner-import.th.md` updated (the line
+  saying the page had no field is gone). Tests: four e2e cases in
+  `backend/test/scanner-import.e2e-spec.ts` (kept as text, days counted, earlier days
+  stay, locked day untouched, duplicate refused, number cleared) and
+  `ScannerNumberCard.test.tsx`. Full e2e 423 and web 234 passed; doc counts updated.
+  Not walked on a real browser in this room.
+- Rehearsal of the NAS install is on a clean Docker host, not a Synology
+  (`docs/nas-rehearsal-2026-10.md` says what was and was not tried). Open for the
+  owner: approval to run `./check.sh` on the pilot's NAS, a USB drive or another
+  machine for backups.
+- Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
+  CW-086 (#89) are not queued.
 
 ## Next
 
-- Nothing queued. Do not start CW-085, CW-080 or CW-086, nor the support-scope
-  page. Do not touch the real NAS until the owner approves.
+- Queue from the PO, in order: CW-065 (#68) add one employee from the console, same
+  fields and checks as the import, sensitive fields encrypted the same way; then
+  CW-073 (#78) passports and work permits expiring in 30/60/90 days, one notice per
+  band, no document numbers in the list or the notice.
+- Do not start CW-085, CW-080 or CW-086, nor the support-scope page. Do not touch the
+  real NAS until the owner approves.

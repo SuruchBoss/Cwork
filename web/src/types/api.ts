@@ -143,8 +143,21 @@ export interface EmployeeDetail extends EmployeeSummary {
   workPermitNoRecorded?: boolean;
   passportExpiresOn: string | null;
   workPermitExpiresOn: string | null;
-  directReports: Array<{ id: string; firstNameTh: string; lastNameTh: string; employeeCode: string }>;
-  contacts: Array<{ id: string; name: string; relation: string; phone: string; isPrimary: boolean }>;
+  /** The user number on the fingerprint scanner, exactly as the scanner writes it (CW-061). */
+  scannerId?: string | null;
+  directReports: Array<{
+    id: string;
+    firstNameTh: string;
+    lastNameTh: string;
+    employeeCode: string;
+  }>;
+  contacts: Array<{
+    id: string;
+    name: string;
+    relation: string;
+    phone: string;
+    isPrimary: boolean;
+  }>;
   user: { id: string; email: string; status: string; lastLoginAt: string | null } | null;
 }
 
@@ -181,12 +194,7 @@ export interface LeaveBalance {
 }
 
 export type LeaveRequestStatus =
-  | 'DRAFT'
-  | 'PENDING'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'CANCELLED'
-  | 'CANCELLED_AFTER_APPROVAL';
+  'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CANCELLED_AFTER_APPROVAL';
 
 export interface LeaveRequest {
   id: string;

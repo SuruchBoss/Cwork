@@ -145,6 +145,17 @@ log as an export of the run.
   host, with Odoo beside it) and what was not (any Synology, DSM's screens, a
   Windows PC trusting the authority, a scan from outside, two real machines).
 
+- **A scanner number can be set on the employee's page** (CW-090). The employee
+  page has a **Scanner number** card for anyone who may update employees. The
+  number is kept as text, so `007` stays `007`. Giving an employee a number counts,
+  at once, the days in earlier scanner files that were waiting on it: those with
+  two times become punches, the others wait for HR on the scanner days page. Days
+  already counted under a number the employee had before stay with them, and a
+  day HR decided or a payroll run has used is not touched. Changing or clearing a
+  number is audited with the old and the new one, and with how many waiting days
+  were counted. A number that belongs to someone else is refused
+  (`DUPLICATE_SCANNER_ID`). Thai guide `docs/guide/scanner-import.th.md` updated.
+
 - **The accountant's month, and a check against what was filed** (CW-089). For
   a company whose ภ.ง.ด.1 is filed by an outside accounting firm, **Payroll →
   Export for the accountant** is the period's usual export with two columns

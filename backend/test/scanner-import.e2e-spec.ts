@@ -494,6 +494,92 @@ describe('Fingerprint scanner import (e2e)', () => {
       expect(again.status).toBe(422);
       expect(again.body.code).toBe('EMPLOYEE_HAS_SCANNER_NUMBER');
     });
+
+    describe('a number edited on the employee page (CW-090)', () => {
+      const WAITING = '0090';
+
+      it('keeps 0090 as 0090, counts the days waiting on it, and leaves earlier days where they were', async () => {
+        const waiting = await api.upload(
+          '/attendance/scanner/import',
+          hr,
+          scannerFile([
+            line('รอเจ้าของ', WAITING, 10, '08:10 17:10'),
+            line('รอเจ้าของ', WAITING, 11, '08:00'),
+          ]),
+        );
+        expect(waiting.status).toBeLessThan(300);
+        const ownedBefore = await prisma.scannerDay.count({ where: { employeeId: cat.id } });
+        expect(await punchesOf(cat.id, 10)).toEqual([]);
+
+        const edited = await api.patch(`/employees/${cat.id}`, hr, { scannerId: WAITING });
+        expect(edited.status).toBe(200);
+        expect(edited.body.scannerId).toBe('0090');
+
+        // The two waiting days are hers now; the one with two times is counted, the other waits for HR.
+        const mine = await prisma.scannerDay.findMany({
+          where: { scannerNumber: WAITING },
+          select: { employeeId: true },
+        });
+        expect(mine.map((d) => d.employeeId)).toEqual([cat.id, cat.id]);
+        expect((await activeOf(cat.id, 10)).map((p) => p.type)).toEqual(['CLOCK_IN', 'CLOCK_OUT']);
+        expect(await punchesOf(cat.id, 11)).toEqual([]);
+        // The days of her old number stay hers, with their punches.
+        expect(await prisma.scannerDay.count({ where: { employeeId: cat.id } })).toBe(
+          ownedBefore + 2,
+        );
+        expect((await activeOf(cat.id, 2)).map((p) => p.type)).toEqual(['CLOCK_IN', 'CLOCK_OUT']);
+        expect((await api.get('/attendance/scanner/unmapped', hr)).body).toEqual([]);
+      });
+
+      it('records the old and the new number, and how many days were counted', async () => {
+        const entries = await prisma.auditLog.findMany({
+          where: { entityType: 'Employee', entityId: cat.id },
+          orderBy: { createdAt: 'asc' },
+        });
+        const changed = entries.find(
+          (e) =>
+            (e.changes as { scannerId?: { from: string; to: string } } | null)?.scannerId?.to ===
+            WAITING,
+        );
+        expect(changed?.changes).toMatchObject({ scannerId: { from: TEMP, to: WAITING } });
+        const counted = entries.find(
+          (e) =>
+            e.summary?.includes(WAITING) &&
+            (e.changes as { daysMatched?: number } | null)?.daysMatched === 2,
+        );
+        expect(counted).toBeDefined();
+      });
+
+      it('leaves a day alone once a payroll run has used it, when the number changes again', async () => {
+        const eight = await dayId(WAITING, 10);
+        await prisma.attendanceRecord.update({
+          where: {
+            employeeId_workDate: { employeeId: cat.id, workDate: new Date(`${iso(10)}T00:00:00Z`) },
+          },
+          data: { lockedAt: new Date() },
+        });
+        const moved = await api.patch(`/employees/${cat.id}`, hr, { scannerId: '0091' });
+        expect(moved.status).toBe(200);
+        expect(
+          (await prisma.scannerDay.findUniqueOrThrow({ where: { id: eight } })).employeeId,
+        ).toBe(cat.id);
+        expect(await activeOf(cat.id, 10)).toHaveLength(2);
+        expect((await api.get(`/attendance/scanner/days/${eight}`, hr)).body.locked).toBe(true);
+      });
+
+      it('refuses a number that belongs to someone else, and lets a number be cleared', async () => {
+        const taken = await api.patch(`/employees/${cat.id}`, hr, { scannerId: B });
+        expect(taken.status).toBe(409);
+        expect(taken.body.code).toBe('DUPLICATE_SCANNER_ID');
+        expect((await prisma.employee.findUniqueOrThrow({ where: { id: cat.id } })).scannerId).toBe(
+          '0091',
+        );
+
+        const cleared = await api.patch(`/employees/${cat.id}`, hr, { scannerId: null });
+        expect(cleared.status).toBe(200);
+        expect(cleared.body.scannerId).toBeNull();
+      });
+    });
   });
 
   describe('a file that is not what the scanner writes', () => {

@@ -99,6 +99,8 @@ that read is audited. Without it you get `nationalIdMasked`.
 `scannerId` is the employee's user number on the fingerprint scanner, as the
 scanner writes it (so `"007"` and `"7"` differ). It is unique in the organisation:
 setting one that another employee holds is `409 DUPLICATE_SCANNER_ID`.
+Setting or changing it counts the scanner days that were waiting on that number
+(CW-090); `null` clears it. The console's employee page has a card for it.
 
 ### Importing employees (CW-059)
 

@@ -24,6 +24,6 @@ import { ShiftService } from './shift.service';
     ShiftService,
     SequenceService,
   ],
-  exports: [AttendanceService, OvertimeService, ShiftService],
+  exports: [AttendanceService, OvertimeService, ScannerImportService, ShiftService],
 })
 export class AttendanceModule {}

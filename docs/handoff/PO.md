@@ -6,19 +6,22 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** empty. CW-062 (#62) is done on the cloud side (`f15746b`,
-  rehearsed beside Odoo) and stays open for the pilot's real NAS, which
-  nothing touches until the owner approves. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
+- **Dev queue (2026-10-17, owner: do what can be done while documents are
+  awaited):** CW-090 (#93, scanner number on the employee page) → CW-065
+  (#68, add one employee) → CW-073 (#78, foreign workers' expiry list and
+  notices). CW-062 (#62) is done on the cloud side and stays open for the
+  pilot's real NAS, which nothing touches until the owner approves.
+- **QA (owner approved 2026-10-17):** plan and results table in
+  `docs/qa/pilot-a-2026-10.md`, room state in `docs/handoff/QA.md`. The Asuna
+  Bot room opens the QA room. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
   sample file and November. Not queued: CW-080, CW-086 (#89), a
   scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
   on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
   filed-total and parallel-run checks).
-- **Pilot A (by 31 October):** the scanner's layout, the NAS model and how
-  filing is done are known (2026-10-17, relayed from the Asuna Bot room; no
-  real file in any cloud session). HR files social security itself, keying
-  each person into one file and uploading it; an outside accounting firm
-  files ภ.ง.ด.1 through e-Filing. Employee records still come from HR into
-  the CW-059 template. Real personal data never goes into a cloud session.
+- **Pilot A (by 31 October):** HR files social security itself (one keyed
+  file, uploaded); an outside accounting firm files ภ.ง.ด.1 via e-Filing.
+  Employee records come from HR into the CW-059 template. Real personal data
+  never goes into a cloud session.
 - **Pro edition:** decided and on `main` (`a6b0c88`): `ee/` under Elastic-2.0,
   an annual self-hosted subscription, remote help only. Follow-ups are listed
   in CW-077; CW-080 covers installation by a customer's own IT. Neither is
@@ -44,16 +47,15 @@ this file only says where the PO room stands.
   blank paper form to compare with the printout, and what its accountant
   keeps as proof of a cash payday (the owner is asking). How Pilot B pays
   wages (bank files stay Pro until then).
-- CW-087: the support channel, hours and response time. Once known, the
-  form's "ยังไม่กำหนด" line changes and the support page can be written.
+- CW-087: the support channel, hours and response time.
 - Prices and timing for the CW-077 items.
 
 ## How the PO room works
 
 - Reviews each ticket the dev room reports (`session_01A6A6oX85qwkQqRwjcjFy48`):
   reads the diff against the acceptance, reproduces a red CI step locally,
-  and waits for all nine CI jobs on `main` to be green before closing the
-  issue with a comment.
+  and waits for every CI job on `main` (ten since `368c303`) to be green
+  before closing the issue with a comment.
 - Records the outcome in `docs/backlog.md` (Done row, phase table) and sends
   the next ticket to the dev room. CI cancels an in-progress run on a new
   push, so backlog commits go to `main` only while the dev room's CI is idle.
