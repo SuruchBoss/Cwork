@@ -67,6 +67,18 @@ const COPY = {
   'สำหรับออฟฟิศเล็กที่ไม่มีฝ่าย IT': 'For the small office with no IT department',
   'พนักงานลงเวลาด้วยเครื่องสแกนนิ้ว จ่ายเงินเดือนเป็นเงินสด และจ้างสำนักงานบัญชีข้างนอกยื่นภาษี — ทุกข้อด้านล่างอยู่ในรุ่นฟรี มีเทสต์รันใน CI ทุกครั้ง และทดสอบด้วยข้อมูลสังเคราะห์เท่านั้น ยังไม่มีบริษัทไหนใช้งานจริง':
     'Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.',
+  'เส้นทางข้อมูล ตั้งแต่เครื่องสแกนนิ้วจนถึงนักบัญชี': 'How the data travels, from the fingerprint scanner to the accountant',
+  'เครื่องสแกนนิ้ว': 'Fingerprint scanner',
+  'ไฟล์ที่เครื่องส่งออก': 'The file it exports',
+  'HR ตรวจ': 'HR reviews',
+  'วันที่เวลาขาดหรือเกิน': 'Days with a time missing or extra',
+  'รอบเงินเดือน': 'Payroll run',
+  'คนทำกับคนอนุมัติเป็นคนละคน': 'Prepared and approved by two people',
+  'ใบเตรียมเงินสด': 'Cash sheet',
+  'แบงก์และเหรียญต่อคน': 'Notes and coins per person',
+  'ไฟล์ให้นักบัญชี': 'File for the accountant',
+  'เทียบกับยอดที่ยื่นแล้ว': 'Checked against what was filed',
+  'แผนภาพอธิบายลำดับงาน ไม่ใช่ภาพหน้าจอ': 'A diagram of the order of work, not a screenshot',
   'อ่านไฟล์จากเครื่องสแกนนิ้วได้เลย': 'Your fingerprint scanner’s file, read as it is',
   'อัปโหลดไฟล์ที่เครื่องส่งออก ดูตัวอย่างก่อนกดนำเข้า วันที่เวลาขาดหรือเกินรอ HR ตัดสินโดยเห็นเวลาดิบทุกตัว และวันในงวดที่จ่ายเงินเดือนแล้วจะถูกล็อก':
     'Upload the scanner’s export and preview it before importing. A day with a time missing or extra waits for HR, who sees every raw time, and days in a paid period are locked.',
