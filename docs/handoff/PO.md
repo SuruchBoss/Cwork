@@ -41,6 +41,12 @@ this file only says where the PO room stands.
 - PR #101 merged at `f4af52b`, green: the scanner import page uses the
   English singular for a count of one (`plural()` in `web/src/lib/i18n`).
   Left over: `SpreadsheetImport.tsx` still says "1 problems". Dev queue empty.
+- PR #102 merged at `20fb92b`, green: the สปส.1-10 PDF follows the redacted
+  sample's layout (total in Thai words, title in the name column, sheet
+  numbers top right, ruled total row). Not on it, because no field exists:
+  the employer's SSO account number, the six-digit branch number, the
+  address. Adding organisation fields for them is an open question for the
+  owner, not urgent while HR files online.
 
 ## Waiting on the owner
 
