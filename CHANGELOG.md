@@ -728,6 +728,21 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **NAS installer: a used port is never reported as free, and an address change has
+  a script** (#96, #97). `check.sh` read "free" whenever neither `ss` nor
+  `netstat` existed; it now reads the kernel's own table (`/proc/net/tcp`,
+  `tcp6`, state `0A`) and, when it cannot tell at all, says `[WARN]` instead.
+  New `change-address.sh NEW_ADDRESS` edits `CWORK_HOST` and `PUBLIC_WEB_URL` and
+  recreates the proxy and the API (editing `.env` alone changed nothing). The Thai
+  guide now says an authenticator app is needed for the first administrator and that
+  the recovery codes must be kept, that an address change does not make a new
+  certificate authority (PCs that trust it need nothing; only an uninstall and a
+  fresh install does), and gives the nightly backup line a `PATH`. `install.sh`
+  no longer says to put `CWORK_BACKUP_DIR` in `.env` when `--backup-dir` was given.
+  Checked here: the port check against a real listener without `ss`/`netstat`,
+  and `change-address.sh` against a stand-in `docker` (the recreate itself was
+  checked by QA on a Docker host); not on a Synology.
+
 - **A scanner day could still be decided after its month was paid, and a locked
   day stayed in HR's waiting list** (#94, #95). Marking a run paid locks the
   attendance records that exist at that moment, so a day HR had not decided yet

@@ -92,7 +92,10 @@ if [ -n "$free" ]; then
 fi
 
 # --- the port
-if port_in_use "$PORT"; then
+if port_in_use "$PORT"; then port_state=0; else port_state=$?; fi
+if [ "$port_state" = 2 ]; then
+  warn "port $PORT: this machine has no tool to list open ports (ss, netstat) and /proc/net/tcp cannot be read, so it cannot be checked. If something already uses it, Docker will refuse to start Cwork and say so."
+elif [ "$port_state" = 0 ]; then
   if [ "$have_docker" = 1 ] && docker ps --format '{{.Names}} {{.Ports}}' 2>/dev/null | grep -q "^cwork-proxy.*:$PORT->"; then
     ok "port $PORT is Cwork's own (already installed)"
   else

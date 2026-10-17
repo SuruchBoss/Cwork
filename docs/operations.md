@@ -653,6 +653,13 @@ public name is needed. The decision to take, and what it costs:
 - The authority lives in a Docker volume. If the machine is rebuilt, a new
   authority is made and each PC has to trust the new file; it is deliberately not
   in the backup (whoever holds it can mint certificates every office PC trusts).
+- A new address does **not** make a new authority (the SHA-256 fingerprint is the
+  same before and after), so PCs that already trust it need nothing. Editing
+  `CWORK_HOST` and `PUBLIC_WEB_URL` in `.env` is not enough: the proxy and the
+  API keep the old address until they are recreated, and in the meantime a browser
+  at the new address fails the certificate check. `./change-address.sh NEW_ADDRESS`
+  edits both lines and recreates them. Only `uninstall.sh` plus a fresh install makes
+  a new authority.
 - The proxy adds no HSTS header, but the API itself sends one in production
   (`backend/src/main.ts`, one year). Browsers do not apply HSTS to an IP address,
   which is how the console is reached by default. If the NAS is given a *name*
@@ -708,8 +715,9 @@ makes those columns unreadable for good; `./show-key.sh` prints it on request.**
 
 A nightly run, in DSM: *Control Panel → Task Scheduler → Create → Scheduled Task
 → User-defined script*, user **root**, daily, script
-`cd /volume1/docker/cwork/deploy/nas && ./backup.sh` (adjust the path). Not tried
-on a real Synology. Look at the folder the morning after the first night.
+`export PATH=$PATH:/usr/local/bin:/usr/bin:/bin; cd /volume1/docker/cwork/deploy/nas && ./backup.sh`
+(adjust the path; the `export` is for a Task Scheduler that runs with a short `PATH`
+and would not find `docker`). Not tried on a real Synology. Look at the folder the morning after the first night.
 
 ### Restore: `./restore.sh`
 
