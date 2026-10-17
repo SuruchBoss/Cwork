@@ -426,6 +426,13 @@
   .flow > li:nth-child(3)::after { animation-delay: 1.8s; }
   @keyframes flow-run { 0% { background-position: -100% 0; } 30%, 100% { background-position: 250% 0; } }
   .flow__note { margin: -24px 0 clamp(28px, 4vw, 44px); font-size: var(--t-micro); color: var(--ink-2); }
+  .officeclip { margin: clamp(36px, 5vw, 56px) 0 0; }
+  .officeclip .still { display: none; }
+  .gallery--office { margin-top: clamp(28px, 4vw, 44px); align-items: start; }
+  @media (prefers-reduced-motion: reduce) {
+    .officeclip .anim { display: none; }
+    .officeclip .still { display: block; }
+  }
   @media (max-width: 800px) {
     .flow { grid-template-columns: 1fr; gap: 28px; }
     .flow > li:not(:last-child)::after {
@@ -608,6 +615,59 @@
         <div class="rule"><span class="mono">新 04</span><div><h3>รันคู่ขนานกับวิธีเดิมก่อนเปลี่ยน</h3><p>อัปโหลดตัวเลขรายคนของวิธีที่ใช้อยู่ ระบบชี้ทุกคนและทุกช่องที่ต่างจาก Cwork โดยไม่แก้สลิปหรือข้อมูลใดเลย</p></div></div>
         <div class="rule"><span class="mono">新 05</span><div><h3>ตัวติดตั้งสำหรับ NAS ในออฟฟิศ</h3><p>ตรวจเครื่องแบบอ่านอย่างเดียวก่อน แล้วติดตั้ง สำรอง กู้คืน อัปเดต และย้อนเวอร์ชันด้วยสคริปต์ ซ้อมบนเครื่อง Docker แล้ว แต่ยังไม่ได้ลองบนหน้าจอ Synology DSM จริง</p></div></div>
         <div class="rule"><span class="mono">新 06</span><div><h3>พาสปอร์ตและใบอนุญาตทำงานไม่หมดอายุเงียบ ๆ</h3><p>แจ้งคนที่แก้ข้อมูลพนักงานได้เมื่อเหลือ 90, 60 และ 30 วัน และตอนหมดอายุ โดยไม่แสดงเลขเอกสาร</p></div></div>
+      </div>
+
+      <figure class="window marks officeclip">
+        <b></b><b></b><b></b><b></b>
+        <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner/import</span></div>
+        <img class="anim" src="assets/office.th.webp" alt="เลือกไฟล์จากเครื่องสแกนนิ้ว ตรวจในหน้าตัวอย่าง นำเข้า แล้ว HR ตัดสินวันที่มีสามเวลาโดยเลือกเวลาแรกกับเวลาสุดท้าย" loading="lazy" width="900" height="563">
+        <img class="still" src="assets/shots/scanner-days.th.webp" alt="หน้าวันที่สแกนนิ้ว แสดงวันที่รอ HR ตัดสิน พร้อมเวลาทุกตัวตามที่เครื่องบันทึก และช่องเลือกเวลาเข้า-ออก" loading="lazy" width="1280" height="800">
+      </figure>
+      <p class="caption"><span>ระบบจริงบนบริษัทตัวอย่าง กับไฟล์สแกนนิ้วที่ทำขึ้นเอง — เลือกไฟล์ ดูตัวอย่าง นำเข้า แล้วตัดสินวันที่รอ HR</span><span class="mono">REC · demo company</span></p>
+
+      <div class="gallery gallery--office">
+        <figure>
+          <a href="assets/shots/scanner-preview.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner/import</span></div>
+              <img src="assets/shots/scanner-preview.th.webp" alt="หน้านำเข้าหลังเลือกไฟล์จากเครื่องสแกน: วันใหม่ 22 วัน แยกเป็นนับแล้ว รอ HR ตัดสิน และเลขสแกนที่ยังไม่มีเจ้าของ โดยยังไม่เขียนอะไรลงข้อมูล" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>ตรวจไฟล์ก่อนนำเข้า</b><span>วันใหม่ วันที่รอ HR และเลขที่ยังไม่มีเจ้าของ ก่อนเขียนอะไรลงข้อมูล</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/scanner-days.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner</span></div>
+              <img src="assets/shots/scanner-days.th.webp" alt="หน้าวันที่สแกนนิ้ว แสดงวันที่รอ HR ตัดสิน พร้อมเวลาทุกตัวตามที่เครื่องบันทึก และช่องเลือกเวลาเข้า-ออก" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>วันที่รอ HR ตัดสิน</b><span>เวลาดิบทุกตัวตามที่เครื่องบันทึก HR เลือกเวลาเข้า-ออกเอง</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/check-filings.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/payroll/compare</span></div>
+              <img src="assets/shots/check-filings.th.webp" alt="หน้าเทียบกับที่ยื่นไปแล้ว: ภาษีหัก ณ ที่จ่ายตรงกับที่ยื่น ประกันสังคมต่างกัน 0.50 บาท และขึ้นว่าไม่ตรง" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>เทียบกับยอดที่ยื่นแล้ว</b><span>ภาษีตรงกัน ประกันสังคมต่าง 0.50 บาทก็ขึ้นว่าไม่ตรง</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/parallel-run.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/payroll/compare</span></div>
+              <img src="assets/shots/parallel-run.th.webp" alt="ตัวเลขรายคนของ HR เทียบกับ Cwork: สองคนไม่ตรง ระบุคอลัมน์และผลต่างเป็นบาท" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>รันคู่ขนาน</b><span>ชี้ทุกคนและทุกช่องที่ต่างจากตัวเลขของ HR</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/cash-sheet.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>PAY-2026-00009 · cash sheet</span></div>
+              <img src="assets/shots/cash-sheet.th.webp" alt="ใบเตรียมเงินสดหน้าแรก: เงินสุทธิของแต่ละคน จำนวนแบงก์และเหรียญแต่ละชนิด ยอดที่ต้องถอนจากธนาคาร เศษที่น้อยกว่า 25 สตางค์ และบรรทัดแดงบอกว่ารูปแบบตารางยังรอเทียบกับแบบฟอร์มกระดาษจริง" loading="lazy" width="2550" height="1226"></div>
+          </a>
+          <figcaption><b>ใบเตรียมเงินสด</b><span>แบงก์และเหรียญต่อคน ยอดที่ต้องถอน และเศษที่ไม่ปัด (ใบพิมพ์เป็นภาษาไทย รูปแบบตารางยังรอเทียบกับแบบฟอร์มจริง)</span></figcaption>
+        </figure>
+        <figure>
+          <a href="assets/shots/documents-expiring.th.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/employees/documents-expiring</span></div>
+              <img src="assets/shots/documents-expiring.th.webp" alt="พาสปอร์ตและใบอนุญาตทำงานที่หมดอายุภายใน 90 วัน แสดงชื่อ เอกสาร วันหมดอายุ และจำนวนวันที่เหลือ มีหนึ่งรายการที่หมดอายุแล้ว" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>เอกสารใกล้หมดอายุ</b><span>พาสปอร์ตและใบอนุญาตทำงานที่เหลือไม่เกิน 90 วัน</span></figcaption>
+        </figure>
       </div>
     </div>
   </section>

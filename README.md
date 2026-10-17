@@ -56,6 +56,13 @@ import, the accountant's file and the NAS scripts also went through a QA pass
 of 41 cases on synthetic data ([plan and results](./docs/qa/pilot-a-2026-10.md)).
 No company runs Cwork in production yet.
 
+<img src="./docs/demo/office.en.gif" alt="A scanner export is chosen, checked in a preview, imported, and then one day with three times is decided on the review page, where HR keeps the first and the last time" width="860">
+
+<sub>The real console on the demo company, with a made-up scanner file: choose
+it, check the preview, import, then decide a day that waits for HR. Recorded by
+<a href="./docs/screenshots/capture-office.mjs">a script in this repository</a>;
+every figure and name on this page is synthetic.</sub>
+
 - **The fingerprint scanner's file, read as it is.** Attendance → scanner days:
   upload the scanner's export, look at the preview, then import; nothing is
   written before that. A day with two times counts as in and out. A day with
@@ -64,12 +71,20 @@ No company runs Cwork in production yet.
   itself. Once a period has been paid its scanner days are locked, and a day
   forgotten before payday is corrected in the next period.
   [Guide (Thai)](./docs/guide/scanner-import.th.md)
+
+  <img src="./docs/screenshots/en/25-scanner-preview.png" alt="The import page after a scanner file was chosen: 22 new days, counted as counted, waiting for HR or numbers not yet registered, and nothing written yet" width="780">
+
+  <img src="./docs/screenshots/en/24-scanner-days.png" alt="The scanner days page listing days that wait for HR, each with the times exactly as the scanner recorded them and a choice of clock-in and clock-out" width="780">
+
 - **A cash payday, counted to the coin.** From an approved run, print a
   cash-preparation sheet: for each person, how many of each note and coin down
   to 25 satang, and the total to withdraw from the bank. Whatever is left under
   25 satang is shown, never rounded into anyone's pay. Payslips print one, two
   or four to an A4 sheet, with a wage-receipt sheet to sign.
   [Guide (Thai)](./docs/guide/printing-payslips.th.md)
+
+  <img src="./docs/screenshots/en/28-cash-sheet.png" alt="Page one of the cash-preparation sheet for a month: for each employee the net pay and how many notes and coins of each kind, the total to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai, and a red line on it says its table layout is still waiting to be compared with a real paper form" width="780">
+
 - **A file for the outside accountant, and a check against what was filed.** An
   approved or paid period exports with each person's tax ID and income type,
   for whoever prepares the ภ.ง.ด.1. Enter the tax and social security totals that were
@@ -78,6 +93,11 @@ No company runs Cwork in production yet.
   Cwork beside the way you pay today: every person and column that differs is
   marked, and nothing is changed. Cwork prepares and checks. It does not file
   anything, and it does not replace the accountant.
+
+  <img src="./docs/screenshots/en/26-check-filings.png" alt="The check against filings page: withholding tax matches what was filed, social security differs by 0.50 baht and is marked Different" width="780">
+
+  <img src="./docs/screenshots/en/27-parallel-run.png" alt="HR’s own per-person figures compared with Cwork: two people differ, with the column and the difference in baht marked" width="780">
+
 - **An installer for the office NAS.** `deploy/nas/` holds a read-only check,
   then install, backup, restore, update and rollback scripts, with HTTPS on one
   port. Rehearsed on a clean Docker host, where install, update, rollback and a
@@ -90,6 +110,9 @@ No company runs Cwork in production yet.
   the employee at each of those points and on expiry. The document number is
   never shown in the list or the notice.
   [Guide (Thai)](./docs/guide/expiring-documents.th.md)
+
+  <img src="./docs/screenshots/en/29-documents-expiring.png" alt="Passports and work permits expiring within 90 days, with the employee, the document, the date and the days left; one has already expired" width="780">
+
 - **Smaller things.** Add a single employee from the console instead of a
   one-row import; set or correct a scanner number on the employee page; and a
   "report a problem" page that builds a text with diagnostics and no personal

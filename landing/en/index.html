@@ -426,6 +426,13 @@
   .flow > li:nth-child(3)::after { animation-delay: 1.8s; }
   @keyframes flow-run { 0% { background-position: -100% 0; } 30%, 100% { background-position: 250% 0; } }
   .flow__note { margin: -24px 0 clamp(28px, 4vw, 44px); font-size: var(--t-micro); color: var(--ink-2); }
+  .officeclip { margin: clamp(36px, 5vw, 56px) 0 0; }
+  .officeclip .still { display: none; }
+  .gallery--office { margin-top: clamp(28px, 4vw, 44px); align-items: start; }
+  @media (prefers-reduced-motion: reduce) {
+    .officeclip .anim { display: none; }
+    .officeclip .still { display: block; }
+  }
   @media (max-width: 800px) {
     .flow { grid-template-columns: 1fr; gap: 28px; }
     .flow > li:not(:last-child)::after {
@@ -595,7 +602,7 @@
         <li><div class="flow__card"><span class="jp" aria-hidden="true">給</span><b>Payroll run</b><span>Prepared and approved by two people</span></div></li>
         <li>
           <div class="flow__card"><span class="jp" aria-hidden="true">現</span><b>Cash sheet</b><span>Notes and coins per person</span></div>
-          <div class="flow__card"><span class="jp" aria-hidden="true">税</span><b>File for the accountant</b><span>Checked against what was filed</span></div>
+          <div class="flow__card"><span class="jp" aria-hidden="true">税</span><b>File for the accountant</b><span>Checked against the filing</span></div>
         </li>
       </ol>
       <p class="flow__note">A diagram of the order of work, not a screenshot</p>
@@ -607,6 +614,59 @@
         <div class="rule"><span class="mono">新 04</span><div><h3>Run beside your current method before switching</h3><p>Upload the per-person figures from the way you pay today. Every person and column that differs from Cwork is marked, and no payslip or record is changed.</p></div></div>
         <div class="rule"><span class="mono">新 05</span><div><h3>An installer for the office NAS</h3><p>A read-only check first, then scripts to install, back up, restore, update and roll back. Rehearsed on a Docker host; not yet tried on the real Synology DSM screens.</p></div></div>
         <div class="rule"><span class="mono">新 06</span><div><h3>Passports and work permits that do not lapse unnoticed</h3><p>Whoever may edit the employee is told at 90, 60 and 30 days and on expiry, and the document number is never shown.</p></div></div>
+      </div>
+
+      <figure class="window marks officeclip">
+        <b></b><b></b><b></b><b></b>
+        <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner/import</span></div>
+        <img class="anim" src="../assets/office.en.webp" alt="A scanner export is chosen, checked in a preview, imported, and then one day with three times is decided on the review page, where HR keeps the first and the last time" loading="lazy" width="900" height="563">
+        <img class="still" src="../assets/shots/scanner-days.en.webp" alt="The scanner days page listing days that wait for HR, each with the times exactly as the scanner recorded them and a choice of clock-in and clock-out" loading="lazy" width="1280" height="800">
+      </figure>
+      <p class="caption"><span>The real console on the demo company, with a made-up scanner file — choose it, preview it, import it, then decide a day that waits for HR</span><span class="mono">REC · demo company</span></p>
+
+      <div class="gallery gallery--office">
+        <figure>
+          <a href="../assets/shots/scanner-preview.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner/import</span></div>
+              <img src="../assets/shots/scanner-preview.en.webp" alt="The import page after a scanner file was chosen: 22 new days, split into counted, waiting for HR and numbers not yet registered, and nothing written yet" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>Check the file before importing</b><span>What is new, what waits for HR and which numbers have no owner yet, before anything is written</span></figcaption>
+        </figure>
+        <figure>
+          <a href="../assets/shots/scanner-days.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner</span></div>
+              <img src="../assets/shots/scanner-days.en.webp" alt="The scanner days page listing days that wait for HR, each with the times exactly as the scanner recorded them and a choice of clock-in and clock-out" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>Days waiting for HR</b><span>Every raw time as the scanner recorded it; HR picks the in and the out</span></figcaption>
+        </figure>
+        <figure>
+          <a href="../assets/shots/check-filings.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/payroll/compare</span></div>
+              <img src="../assets/shots/check-filings.en.webp" alt="The check against filings page: withholding tax matches what was filed, social security differs by 0.50 baht and is marked Different" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>Checked against the filing</b><span>Tax matches; social security is 0.50 baht off, and it says so</span></figcaption>
+        </figure>
+        <figure>
+          <a href="../assets/shots/parallel-run.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/payroll/compare</span></div>
+              <img src="../assets/shots/parallel-run.en.webp" alt="HR’s own per-person figures compared with Cwork: two people differ, with the column and the difference in baht marked" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>Running beside your method</b><span>Every person and column that differs from HR’s figures, marked</span></figcaption>
+        </figure>
+        <figure>
+          <a href="../assets/shots/cash-sheet.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>PAY-2026-00009 · cash sheet</span></div>
+              <img src="../assets/shots/cash-sheet.en.webp" alt="Page one of the cash-preparation sheet: each person’s net pay, how many notes and coins of each kind, the amount to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai, and a red line on it says its table layout is still waiting to be compared with a real paper form" loading="lazy" width="2550" height="1226"></div>
+          </a>
+          <figcaption><b>Cash sheet</b><span>Notes and coins per person, the amount to withdraw, and the remainder, not rounded (printed in Thai; the table layout is still waiting to be compared with a real form)</span></figcaption>
+        </figure>
+        <figure>
+          <a href="../assets/shots/documents-expiring.en.webp" target="_blank" rel="noopener">
+            <div class="window"><div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/employees/documents-expiring</span></div>
+              <img src="../assets/shots/documents-expiring.en.webp" alt="Passports and work permits expiring within 90 days, with the employee, the document, the date and the days left; one has already expired" loading="lazy" width="1280" height="800"></div>
+          </a>
+          <figcaption><b>Documents expiring</b><span>Passports and work permits with up to 90 days left</span></figcaption>
+        </figure>
       </div>
     </div>
   </section>
