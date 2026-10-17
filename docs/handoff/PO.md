@@ -6,19 +6,20 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** empty. CW-087 (#90) stays open: its problem-report form is
-  done (219878b); the support page and its README link wait on the owner.
-  CW-085 (#88, the e-Services upload file and the November check) waits on a
-  sample file and the pilot's November month; CW-061/062 wait on the pilot's
-  files. Not queued, owner decides when: CW-080, CW-086 (#89). Closed on
-  2026-10-11: CW-079, CW-078, CW-076, CW-081, CW-071, CW-084, CW-048, CW-082,
-  CW-083; on 2026-10-16: CW-088 (cash sheet, release 0.4.0).
-- **Pilot A (by 31 October):** waits on the pilot company's files, not on
-  code. CW-061 needs one real month exported from the TA-001EX scanner;
-  CW-062 needs the NAS make, model, CPU, memory, what runs on it and how the
-  office reaches the internet. Employee records come from HR's paper or Excel
-  into the CW-059 import template (the pilot's Odoo holds accounting files
-  only). Real personal data never goes into a cloud session.
+- **Dev queue:** CW-061 (#61, scanner import with HR's review page; the
+  export's layout and the owner's rules are in the ticket) is with the dev
+  room, then CW-089 (#92, the accountant's export and a comparison page for
+  e-Filing totals and a parallel run), then CW-062 (#62, three install paths
+  on the pilot's Synology; nothing touches the real NAS until the owner
+  approves). CW-087 (#90) stays open for its support page. CW-085 (#88)
+  waits on a sample file and November. Not queued: CW-080, CW-086 (#89).
+  Closed on 2026-10-16: CW-088.
+- **Pilot A (by 31 October):** the scanner's layout, the NAS model and how
+  filing is done are known (2026-10-17, relayed from the Asuna Bot room; no
+  real file in any cloud session). HR files social security itself, keying
+  each person into one file and uploading it; an outside accounting firm
+  files ภ.ง.ด.1 through e-Filing. Employee records still come from HR into
+  the CW-059 template. Real personal data never goes into a cloud session.
 - **Pro edition:** decided and on `main` (`a6b0c88`): `ee/` under Elastic-2.0,
   an annual self-hosted subscription, remote help only. Follow-ups are listed
   in CW-077; CW-080 covers installation by a customer's own IT. Neither is
@@ -27,7 +28,10 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- The pilot company's files for CW-061 and CW-062, and the HR import file.
+- For CW-062: the NAS's DSM version, whether Container Manager is
+  installed, and its free space. The HR import file.
+- For CW-089: what HR sends the accountant today, and whether the first
+  payroll runs beside HR's method once.
 - A qualified reviewer for the payroll rules on #36, including the two
   section 76 questions and question 4 (overtime in the SSO wage). Until it
   is answered, carried advances should not be taken from a later payday

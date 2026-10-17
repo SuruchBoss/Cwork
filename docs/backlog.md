@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · CW-061 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-061 · CW-062 · CW-089 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -216,7 +216,7 @@ and staff like that often have no work email. Cwork must not require one.
 
 
 ### CW-061 · Import punches from a fingerprint scanner's export
-`P0` · attendance · **M** · Pilot A, by 31 October 2026
+`P0` · attendance · **M** · Pilot A, by 31 October 2026 · queued 2026-10-17 (#61)
 
 **Confirmed 2026-09-30:** the pilot's scanner is a TA-001EX. Staff do scan,
 and HR copies the times onto paper because they do not use the scanner's
@@ -235,6 +235,46 @@ real export covering a month. Names can be replaced before it is shared, but
 IDs, times and the layout must be as the scanner writes them. Scanners differ
 in layout: some write one row per punch, others one row per day with in and
 out columns. Build against the real file, not a guess.
+
+**The export's layout, confirmed 2026-10-17 (owner, relayed from the Asuna Bot
+room; no real file is in this repo or any cloud session):**
+- Named `.xls`, but it is UTF-16LE text with a byte-order mark, tab-separated,
+  with no header row. Detect it from the BOM, never from the extension.
+- Each line has four fields and a trailing empty one. Every field carries
+  trailing spaces and ends in a comma; trim both.
+- Field 1 the name (Thai), field 2 the scanner's user number (an integer, not
+  the HR employee code), field 3 the date as dd/mm/yyyy in the Gregorian year
+  (check a file from another month before trusting that), field 4 every time
+  of that day in one field as HH:mm separated by spaces, from none to many.
+- One line for every day of the month for each scanner number, even a day
+  with no punch. One file holds one month.
+
+**Decided by the owner (2026-10-17):**
+- A scanner number not in the employee register (a temporary number, for
+  instance) is *not counted*, not an error. It is listed apart, with its rows,
+  for HR to map if they want.
+- A day with one time, or three or more, is *not counted* until HR decides
+  that row. Cwork does not guess.
+- Every raw row stays visible: nothing is hidden or deleted. HR's decisions
+  are stored apart from the raw punches, can be seen afterwards and changed.
+
+**Day types (the PO's proposal; the dev settles the detail):** no time = no
+punch (day off, leave or absence come from the calendar and leave records,
+never guessed from the scanner); two times = a normal day, in = the first,
+out = the last, counted; one time = a missing punch, waiting on HR; three or
+more = extra punches, waiting on HR. One review page holds every row waiting
+on HR, decided one row at a time, with the totals changing as HR decides.
+
+**Not known yet:** whether shifts, lateness or overtime are needed for this
+pilot (the first round keeps in and out only), and whether any shift crosses
+midnight. Neither is guessed.
+
+**Test files:** synthetic only, covering a day with no punch, two times, one
+time, three times, a number not in the register, fields with trailing spaces
+and commas, and UTF-16LE with a BOM. Nothing real, and nothing derived from a
+real file, is committed; add a `.gitignore` pattern for the scanner's export.
+The acceptance check against the pilot's real export is run on the owner's
+own machine, not in a cloud session.
 
 **Scope**
 - A scanner ID on each employee, mapping the scanner's user number to the
@@ -274,6 +314,29 @@ questions below, and each one can stop a go-live on the day.
 **Needs from the pilot before building:** the NAS make and model, its CPU
 (x86 or ARM), its memory and what else it runs, and how the office reaches
 the internet.
+
+**The NAS, confirmed 2026-10-17 (owner):** Synology DS925+, AMD Ryzen V1500B
+(x86-64, four cores), 20 GB of memory, on the office LAN. Not known yet: the
+DSM version, whether Container Manager is installed, and the free space; the
+owner is asking someone at the pilot. The installer checks these itself and
+says which path applies.
+
+**Three ways to install, asked for by the owner (2026-10-17):**
+- **A. Container Manager already installed:** Cwork's compose project runs
+  on the NAS.
+- **B. Container Manager not installed:** the guide installs it from DSM's
+  Package Center first, then follows A.
+- **C. The app on an office PC, the data on the NAS:** PostgreSQL runs on the
+  NAS (which still needs Container Manager) and the API and console run on a
+  PC that connects to it over the network. **Decided by the PO:** C never
+  puts PostgreSQL's data directory on a shared folder opened over SMB or NFS
+  by a database running elsewhere; that is how database files get corrupted.
+  Its cost: the console is down whenever that PC is off, so A or B is the
+  recommended path and C the fallback.
+- Every path has a rollback, a backup before every update, a short checklist
+  someone without IT can follow, and one rehearsal on a clean test machine
+  written up here. **Nothing touches the pilot's real NAS until the owner
+  approves.** The installer stays free (CW-077, CW-086).
 
 **Scope**
 - Cwork's images build and run on that NAS's CPU. ARM is the usual trap.
@@ -897,6 +960,52 @@ signature block, so this is a template over it.
   whole year's income and tax, including the opening balances from CW-059.
 
 **Files** `backend/src/modules/documents/`, `backend/src/modules/payroll/`
+
+---
+
+### CW-089 · Hand the accountant the month, and check it against what was filed
+`P1` · payroll · **S** · Pilot A, by 31 October 2026; free
+
+The pilot's ภ.ง.ด.1 is filed by an outside accounting firm through the Revenue
+Department's e-Filing, not by HR (owner, 2026-10-17); social security is
+filed by HR. So for this pilot Cwork does not need to write the filing file
+(CW-045 stays where it is): it needs to give the accountant the month in one
+go, and show at once when what was filed differs from what Cwork worked out.
+The first payroll is also meant to run beside HR's usual method once, with
+the figures compared person by person (proposed to the owner, not yet
+answered).
+
+**Already there:** `GET /payroll/periods/:id/export` gives one row per person
+with gross, taxable income, withholding tax, the employee's and the employer's
+social security and net pay, reconciled before it is written (CW-044).
+
+**Scope**
+- An accountant's format of that export: the same rows plus what ภ.ง.ด.1 is
+  keyed from (the employee's tax ID and the month's income type), under
+  `payroll:export` and audited as an export like every other format. Its
+  column order follows what HR sends the accountant today once the owner
+  says what that is; until then it follows the existing export.
+- A comparison page for a period: HR enters the totals the outside filing
+  produced (e-Filing's tax total, the social security total), and Cwork shows
+  each beside its own figure with the difference.
+- The same page takes HR's own per-person figures for a parallel run (a
+  spreadsheet with employee code, gross, tax, social security, net) and marks
+  every person and column that differs. Nothing HR uploads changes a payslip.
+
+**Questions for the owner (not guessed)**
+- What HR sends the accountant today (an Excel file, payslips, a list) and in
+  what layout.
+- Whether the first payroll runs beside HR's method once before Cwork is
+  used for real.
+
+**Acceptance**
+- The accountant's format matches the existing export's totals for the
+  seeded demo company, and carries no column beyond what is listed here.
+- A filed total that differs by one satang is shown as different.
+- A parallel-run upload with one person's tax changed marks that person and
+  column only, and no payslip changes.
+
+**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
 
 ---
 
