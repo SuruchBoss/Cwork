@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Removes Cwork from this machine, INCLUDING its database and uploaded files
 # (CW-062). For starting over, or taking Cwork off a machine. Backups in the
 # backup folder are not touched.

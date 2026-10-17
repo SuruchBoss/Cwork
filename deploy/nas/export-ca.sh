@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Hands over the certificate of Cwork's own authority, so an office PC's browser
 # trusts https://<this address>:<port>. Do it once per PC. Nothing secret is in
 # the file: it is the public half.

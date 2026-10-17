@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Returns to the version and the data from just before the last update.
 #
 #   ./rollback.sh [--yes]

@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Makes the first administrator, once. With --web it prints a one-hour token to
 # finish in the browser instead (nicer for typing a Thai organisation name).
 . "$(dirname "$0")/lib.sh"

@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Installs Cwork on this machine (CW-062). Run it once, as root, in this folder.
 #
 #   ./install.sh [--mode full|db|app] [--host ADDRESS] [--port 8443]

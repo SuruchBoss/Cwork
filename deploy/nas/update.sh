@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Updates Cwork to the version in this folder (CW-062). Safe by construction:
 # a backup is taken first and the update stops if it cannot be; the images being
 # replaced are kept as ":previous" so ./rollback.sh can put them back.
