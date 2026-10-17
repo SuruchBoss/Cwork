@@ -145,6 +145,20 @@ log as an export of the run.
   host, with Odoo beside it) and what was not (any Synology, DSM's screens, a
   Windows PC trusting the authority, a scan from outside, two real machines).
 
+- **Add one employee from the console** (CW-065). **Employees → Add an employee**
+  (for anyone who may create employees) is a form with the fields of the
+  spreadsheet import: name in Thai or, for someone with no Thai name, in English
+  (carried into the Thai fields the console shows), employee code (empty
+  numbers automatically), dates, work details, identity documents, contact and,
+  optionally, a bank account. It goes through the same route and checks as the
+  import: a national ID of 13 digits with dashes and spaces allowed, a probation
+  that does not end before the hire date, a bank account whole or not at all,
+  and the national ID, tax ID, social security number, passport, work permit
+  and account number stored encrypted. `POST /employees` now takes an optional
+  `bankAccount` and refuses a probation before the hire date, as the import
+  does. Offering to create the person's sign-in waits for CW-064. Tested with
+  synthetic people only.
+
 - **A scanner number can be set on the employee's page** (CW-090). The employee
   page has a **Scanner number** card for anyone who may update employees. The
   number is kept as text, so `007` stays `007`. Giving an employee a number counts,
@@ -817,6 +831,35 @@ log as an export of the run.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **NAS installer: a used port is never reported as free, and an address change has
+  a script** (#96, #97). `check.sh` read "free" whenever neither `ss` nor
+  `netstat` existed; it now reads the kernel's own table (`/proc/net/tcp`,
+  `tcp6`, state `0A`) and, when it cannot tell at all, says `[WARN]` instead.
+  New `change-address.sh NEW_ADDRESS` edits `CWORK_HOST` and `PUBLIC_WEB_URL` and
+  recreates the proxy and the API (editing `.env` alone changed nothing). The Thai
+  guide now says an authenticator app is needed for the first administrator and that
+  the recovery codes must be kept, that an address change does not make a new
+  certificate authority (PCs that trust it need nothing; only an uninstall and a
+  fresh install does), and gives the nightly backup line a `PATH`. `install.sh`
+  no longer says to put `CWORK_BACKUP_DIR` in `.env` when `--backup-dir` was given.
+  Checked here: the port check against a real listener without `ss`/`netstat`,
+  and `change-address.sh` against a stand-in `docker` (the recreate itself was
+  checked by QA on a Docker host); not on a Synology.
+
+- **A scanner day could still be decided after its month was paid, and a locked
+  day stayed in HR's waiting list** (#94, #95). Marking a run paid locks the
+  attendance records that exist at that moment, so a day HR had not decided yet
+  (no record) was never locked: deciding it afterwards added punches to a paid
+  month, and a later file could do the same. A day inside a period the employee
+  was paid for (a paid run with a payslip for them) is now locked whether or
+  not it had a record: a decision on it is `422 DAY_LOCKED` and a file adds no
+  punch for it. A locked day is no longer offered as work to do: the default
+  list and `totals.waiting` leave it out, and a new **Payroll has used it**
+  filter (`status=LOCKED`) lists every locked day, marked "Not counted; the
+  month is paid" when it was waiting. A day HR forgot after the month was paid
+  is put right in a later period, not by changing the paid one; the Thai guide
+  `docs/guide/scanner-import.th.md` says so.
 
 - **Uploads failed with an error in the production image.** `/app/uploads` was
   created root-owned when a volume was mounted there and the API runs as an

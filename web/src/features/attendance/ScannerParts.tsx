@@ -22,11 +22,17 @@ const TONES: Record<ScannerDayStatus, Tone> = {
 export function ScannerStatusBadge({
   status,
   reason,
+  locked,
 }: {
   status: ScannerDayStatus;
   reason?: WaitingReason | null;
+  /** Payroll has used the day: a waiting one will not be counted, and cannot be decided now. */
+  locked?: boolean;
 }) {
   const t = useT();
+  if (locked && status === 'WAITING') {
+    return <Badge tone="neutral">{t('Not counted; the month is paid')}</Badge>;
+  }
   const labels: Record<ScannerDayStatus, string> = {
     NO_PUNCH: t('No punch'),
     UNMAPPED: t('Number not registered'),

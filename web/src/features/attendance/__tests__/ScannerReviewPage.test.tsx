@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -185,6 +185,24 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
 
     expect(screen.getByText('เงินเดือนใช้วันนี้ไปแล้ว')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'ใช้เวลาเหล่านี้' })).not.toBeInTheDocument();
+  });
+
+  it('says a waiting day of a paid month is not counted, and offers the locked days as their own list (#95)', async () => {
+    serve([locked]);
+    renderPage();
+    await screen.findByText('08:00');
+
+    expect(screen.getByText('ไม่นับ เพราะจ่ายเงินเดือนงวดนี้แล้ว')).toBeInTheDocument();
+    expect(screen.queryByText('รอ HR: สแกนครั้งเดียว')).not.toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'แสดง' }), 'LOCKED');
+    await waitFor(() =>
+      expect(get).toHaveBeenCalledWith(
+        '/attendance/scanner/days',
+        expect.objectContaining({ query: expect.objectContaining({ status: 'LOCKED' }) }),
+      ),
+    );
   });
 
   it('warns when the scanner has more times than when HR decided', async () => {

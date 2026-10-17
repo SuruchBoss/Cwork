@@ -8,7 +8,7 @@ import type { ImportProblem } from '../imports/import-problems';
 export type ScannerDayStatus =
   'NO_PUNCH' | 'UNMAPPED' | 'COUNTED' | 'WAITING' | 'DECIDED_USE' | 'DECIDED_IGNORE';
 
-export type ScannerStatusFilter = ScannerDayStatus | 'ALL';
+export type ScannerStatusFilter = ScannerDayStatus | 'LOCKED' | 'ALL';
 
 export type WaitingReason = 'ONE_TIME' | 'MANY_TIMES';
 

@@ -151,6 +151,11 @@ else
   say "  2. Save the encryption key NOW:    ./show-key.sh   (put it in your password manager)"
   say "  3. Let office PCs trust the HTTPS: ./export-ca.sh  (once per PC; the guide shows how)"
   say "  4. Open  https://$HOST:$PORT  on an office PC."
-  say "  5. Choose where backups go: a USB drive or another machine's share, NOT the NAS's own disk."
-  say "     Put it in .env as CWORK_BACKUP_DIR=..., then run ./backup.sh once to see it work."
+  if [ -n "$BACKUP_DIR" ]; then
+    say "  5. Backups go to $BACKUP_DIR (saved in .env). Run ./backup.sh once to see it work."
+    say "     It must be a USB drive or another machine's share, NOT the NAS's own disk."
+  else
+    say "  5. Choose where backups go: a USB drive or another machine's share, NOT the NAS's own disk."
+    say "     Put it in .env as CWORK_BACKUP_DIR=..., then run ./backup.sh once to see it work."
+  fi
 fi

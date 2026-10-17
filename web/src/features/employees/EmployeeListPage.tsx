@@ -79,9 +79,14 @@ export default function EmployeeListPage() {
         }
         actions={
           canImport ? (
-            <Link to="/employees/import" className="btn btn--secondary">
-              {t('Import from a spreadsheet')}
-            </Link>
+            <>
+              <Link to="/employees/import" className="btn btn--secondary">
+                {t('Import from a spreadsheet')}
+              </Link>
+              <Link to="/employees/new" className="btn btn--primary">
+                {t('Add an employee')}
+              </Link>
+            </>
           ) : undefined
         }
       />

@@ -27,6 +27,7 @@ export const SCANNER_STATUS_FILTERS = [
   'DECIDED_IGNORE',
   'NO_PUNCH',
   'UNMAPPED',
+  'LOCKED',
   'ALL',
 ] as const;
 export type ScannerStatusFilter = (typeof SCANNER_STATUS_FILTERS)[number];

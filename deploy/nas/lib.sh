@@ -70,15 +70,21 @@ device_of() {
   df -P "$d" 2>/dev/null | awk 'NR==2 {print $1}'
 }
 
-# 0 when something already listens on a TCP port on this machine.
+# Whether something already listens on a TCP port on this machine: 0 when it
+# does, 1 when it does not, 2 when this machine has no way to tell. Never "free"
+# by default: a missing tool is not an empty port (#96). The last resort reads
+# the kernel's own table (state 0A is LISTEN, the port is hex after the colon).
 port_in_use() {
   p=$1
   if command -v ss >/dev/null 2>&1; then
     ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "[:.]$p\$"
   elif command -v netstat >/dev/null 2>&1; then
     netstat -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "[:.]$p\$"
+  elif [ -r /proc/net/tcp ]; then
+    hex=$(printf '%04X' "$p")
+    awk 'FNR > 1 && $4 == "0A" {print $2}' /proc/net/tcp /proc/net/tcp6 2>/dev/null | grep -Eiq ":$hex\$"
   else
-    return 1
+    return 2
   fi
 }
 

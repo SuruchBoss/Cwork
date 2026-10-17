@@ -40,6 +40,7 @@ const FILTERS: ScannerStatusFilter[] = [
   'COUNTED',
   'NO_PUNCH',
   'UNMAPPED',
+  'LOCKED',
   'ALL',
 ];
 
@@ -294,6 +295,7 @@ export default function ScannerReviewPage() {
     COUNTED: t('Counted'),
     NO_PUNCH: t('No punch'),
     UNMAPPED: t('Number not registered'),
+    LOCKED: t('Payroll has used it'),
     ALL: t('All rows'),
   };
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
@@ -460,7 +462,11 @@ export default function ScannerReviewPage() {
                       )}
                     </td>
                     <td>
-                      <ScannerStatusBadge status={day.status} reason={day.reason} />
+                      <ScannerStatusBadge
+                        status={day.status}
+                        reason={day.reason}
+                        locked={day.locked}
+                      />
                       {day.decisionOutdated && (
                         <div className="subtle">
                           {t('The scanner has more times now than when you decided')}

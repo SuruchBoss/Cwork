@@ -86,7 +86,7 @@ Error codes: `MFA_ENROLMENT_REQUIRED`, `MFA_CODE_INVALID`, `MFA_MANDATORY`,
 | GET | `/employees/me/team` | `employee:read:team` |
 | GET | `/employees/:id` | scoped by visibility |
 | GET | `/employees/:id/employment-events` | `employee:read` |
-| POST | `/employees` | `employee:create` |
+| POST | `/employees` | `employee:create` — an optional `bankAccount` `{bankCode, bankName, accountNo, accountName}` is stored encrypted (CW-065); `probationEndDate` before `hireDate` is `422 PROBATION_BEFORE_HIRE` |
 | PATCH | `/employees/:id` | `employee:update` |
 | DELETE | `/employees/:id` | `employee:delete` (soft, disables login) |
 | GET | `/employees/import/template?lang=th\|en` | `employee:create` — the .xlsx to fill in |
@@ -223,7 +223,7 @@ departments. The upload routes take one multipart part named `file`, up to 5 MB.
 | POST | `/attendance/scanner/preview` | checks a file, writes nothing |
 | POST | `/attendance/scanner/import` | all or nothing; audited as one event |
 | GET | `/attendance/scanner/imports` | the files imported so far |
-| GET | `/attendance/scanner/days` | `status` (default `WAITING`; `ALL` for every row), `from`, `to`, `employeeId`, `scannerNumber`, `page`, `limit`; also returns totals for the whole range |
+| GET | `/attendance/scanner/days` | `status` (default `WAITING`, which leaves out locked days; `LOCKED` for every day payroll has used, `ALL` for every row), `from`, `to`, `employeeId`, `scannerNumber`, `page`, `limit`; also returns totals for the whole range |
 | GET | `/attendance/scanner/days/:id` | one day |
 | POST | `/attendance/scanner/days/:id/decision` | `{action: USE\|IGNORE, clockIn?, clockOut?, note?}` |
 | GET | `/attendance/scanner/unmapped` | scanner numbers no employee holds |

@@ -16,6 +16,7 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const ApprovalsPage = lazy(() => import('@/features/approvals/ApprovalsPage'));
 const EmployeeListPage = lazy(() => import('@/features/employees/EmployeeListPage'));
 const EmployeeDetailPage = lazy(() => import('@/features/employees/EmployeeDetailPage'));
+const EmployeeCreatePage = lazy(() => import('@/features/employees/EmployeeCreatePage'));
 const EmployeeImportPage = lazy(() => import('@/features/employees/EmployeeImportPage'));
 const OffboardingPage = lazy(() => import('@/features/employees/OffboardingPage'));
 const LeavePage = lazy(() => import('@/features/leave/LeavePage'));
@@ -114,6 +115,11 @@ export const router = createBrowserRouter([
                 element: <RequirePermission any={[P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM]} />,
                 children: [
                   { index: true, element: <EmployeeListPage /> },
+                  {
+                    path: 'new',
+                    element: <RequirePermission any={[P.EMPLOYEE_CREATE]} />,
+                    children: [{ index: true, element: <EmployeeCreatePage /> }],
+                  },
                   {
                     path: 'import',
                     element: <RequirePermission any={[P.EMPLOYEE_CREATE]} />,

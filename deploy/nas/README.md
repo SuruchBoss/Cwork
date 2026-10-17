@@ -17,6 +17,7 @@ was not rehearsed: [`docs/nas-rehearsal-2026-10.md`](../../docs/nas-rehearsal-20
 | `first-admin.sh`, `show-key.sh`, `export-ca.sh`, `status.sh` | First administrator; print the encryption key; hand over the HTTPS authority; what is running |
 | `backup.sh`, `restore.sh` | Database and uploaded files to another disk; put a backup back (tries the key first) |
 | `update.sh`, `rollback.sh` | Backs up, then updates; returns to the old programs and data |
+| `change-address.sh` | Moves the console to a new address: edits `CWORK_HOST` and `PUBLIC_WEB_URL` in `.env` and recreates the proxy and API (the certificate authority stays) |
 | `make-bundle.sh` | On a machine with Docker and internet: builds `images.tar.gz` for a NAS with none |
 | `uninstall.sh` | Removes Cwork **and its data** from this machine |
 | `docker-compose.yml`, `docker-compose.lan-db.yml`, `Caddyfile`, `lib.sh` | The stack (profiles `db`, `app`, `tools`), path C's database exposure, the HTTPS front door, shared shell functions |

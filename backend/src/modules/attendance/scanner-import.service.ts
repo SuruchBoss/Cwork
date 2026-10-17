@@ -6,6 +6,7 @@ import {
   AuditAction,
   Prisma,
   PunchMethod,
+  PayrollRunStatus,
   PunchType,
   ScannerDayDecisionAction,
 } from '@prisma/client';
@@ -156,6 +157,26 @@ const EMPTY_BY_STATUS = (): Record<ScannerDayStatus, number> => ({
 });
 
 /** The decision of a day, as long as it was made about the times the day has. */
+/**
+ * The days payroll has used. A day is used when its attendance record is locked,
+ * or when it lies inside a period the employee was paid for.
+ */
+class LockedDays {
+  constructor(
+    private readonly records: Set<string>,
+    private readonly paid: Map<string, Array<[string, string]>>,
+  ) {}
+
+  /** `key` is `employeeId|yyyy-mm-dd`. */
+  has(key: string): boolean {
+    if (this.records.has(key)) return true;
+    const cut = key.lastIndexOf('|');
+    const spans = this.paid.get(key.slice(0, cut));
+    const day = key.slice(cut + 1);
+    return Boolean(spans?.some(([start, end]) => start <= day && day <= end));
+  }
+}
+
 function inForce(day: Pick<LoadedDay, 'decisions'>, times: string[]): DayDecision | null {
   const latest = day.decisions[0];
   if (!latest || !sameTimes(latest.timesAtDecision, times)) return null;
@@ -429,6 +450,8 @@ export class ScannerImportService {
     );
     const views = rows.map((row) => this.view(row, locked));
 
+    // A locked day is not work for HR: no decision can change it. It is counted
+    // under locked, not waiting, and listed under the LOCKED filter (#95).
     const totals = {
       days: views.length,
       waiting: 0,
@@ -440,15 +463,21 @@ export class ScannerImportService {
       locked: views.filter((v) => v.locked).length,
     };
     for (const v of views) {
-      if (v.status === 'WAITING') totals.waiting += 1;
-      else if (v.status === 'COUNTED') totals.counted += 1;
+      if (v.status === 'WAITING') {
+        if (!v.locked) totals.waiting += 1;
+      } else if (v.status === 'COUNTED') totals.counted += 1;
       else if (v.status === 'DECIDED_USE') totals.decidedUse += 1;
       else if (v.status === 'DECIDED_IGNORE') totals.decidedIgnore += 1;
       else if (v.status === 'NO_PUNCH') totals.noPunch += 1;
       else totals.unmapped += 1;
     }
 
-    const wanted = filter === 'ALL' ? views : views.filter((v) => v.status === filter);
+    const wanted =
+      filter === 'ALL'
+        ? views
+        : filter === 'LOCKED'
+          ? views.filter((v) => v.locked)
+          : views.filter((v) => v.status === filter && !(filter === 'WAITING' && v.locked));
     return {
       from,
       to,
@@ -469,7 +498,7 @@ export class ScannerImportService {
           formatDateOnly(row.workDate),
           formatDateOnly(row.workDate),
         )
-      : new Set<string>();
+      : new LockedDays(new Set(), new Map());
     const decisions = await this.prisma.scannerDayDecision.findMany({
       where: { scannerDayId: dayId },
       orderBy: { createdAt: 'desc' },
@@ -747,7 +776,7 @@ export class ScannerImportService {
         lastNameTh: string;
       } | null;
     },
-    locked: Set<string>,
+    locked: LockedDays,
   ): ScannerDayView {
     const decision = inForce(row, row.times);
     const verdict = classifyDay({ times: row.times, mapped: row.employeeId !== null, decision });
@@ -784,24 +813,63 @@ export class ScannerImportService {
     };
   }
 
-  /** `employeeId|yyyy-mm-dd` of every day a payroll run has already used. */
+  /**
+   * Every day payroll has used, as `employeeId|yyyy-mm-dd`: a day whose
+   * attendance record was locked, and any day inside a period an employee was
+   * paid for. The second is what keeps a day that had no record when the run
+   * was paid (a day HR had not yet decided) from being decided afterwards and
+   * adding punches to a paid month (#94). It follows markPaid: a paid run
+   * with a payslip for the employee covers the whole period.
+   */
   private async lockedSet(
     organizationId: string,
     employeeIds: string[],
     from: string,
     to: string,
-  ): Promise<Set<string>> {
-    if (employeeIds.length === 0) return new Set();
-    const records = await this.prisma.attendanceRecord.findMany({
-      where: {
-        organizationId,
-        employeeId: { in: [...new Set(employeeIds)] },
-        workDate: { gte: toDateOnly(from), lte: toDateOnly(to) },
-        lockedAt: { not: null },
-      },
-      select: { employeeId: true, workDate: true },
-    });
-    return new Set(records.map((r) => `${r.employeeId}|${formatDateOnly(r.workDate)}`));
+  ): Promise<LockedDays> {
+    if (employeeIds.length === 0) return new LockedDays(new Set(), new Map());
+    const unique = [...new Set(employeeIds)];
+    const [records, payslips] = await Promise.all([
+      this.prisma.attendanceRecord.findMany({
+        where: {
+          organizationId,
+          employeeId: { in: unique },
+          workDate: { gte: toDateOnly(from), lte: toDateOnly(to) },
+          lockedAt: { not: null },
+        },
+        select: { employeeId: true, workDate: true },
+      }),
+      this.prisma.payslip.findMany({
+        where: {
+          employeeId: { in: unique },
+          run: {
+            organizationId,
+            status: PayrollRunStatus.PAID,
+            period: {
+              periodStart: { lte: toDateOnly(to) },
+              periodEnd: { gte: toDateOnly(from) },
+            },
+          },
+        },
+        select: {
+          employeeId: true,
+          run: { select: { period: { select: { periodStart: true, periodEnd: true } } } },
+        },
+      }),
+    ]);
+    const paid = new Map<string, Array<[string, string]>>();
+    for (const slip of payslips) {
+      const spans = paid.get(slip.employeeId) ?? [];
+      spans.push([
+        formatDateOnly(slip.run.period.periodStart),
+        formatDateOnly(slip.run.period.periodEnd),
+      ]);
+      paid.set(slip.employeeId, spans);
+    }
+    return new LockedDays(
+      new Set(records.map((r) => `${r.employeeId}|${formatDateOnly(r.workDate)}`)),
+      paid,
+    );
   }
 
   /** What the file would do, against what Cwork already holds. */
@@ -945,7 +1013,7 @@ export class ScannerImportService {
           dates[0]!,
           dates[dates.length - 1]!,
         )
-      : new Set<string>();
+      : new LockedDays(new Set(), new Map());
 
     let added = 0;
     let lockedDays = 0;
