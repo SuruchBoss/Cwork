@@ -559,7 +559,7 @@ What the compose file runs today, and what makes this large: `postgres`
 ---
 
 ### CW-087 · What Cwork's support covers, written down
-`P1` · business · docs · **S** · before the first invoice; part of CW-077, open (#90). The problem-report form is done (219878b, 2026-10-16); the page and the README link wait on the owner's channel, hours and response time
+`P1` · business · docs · **S** · before the first invoice; part of CW-077, open (#90). The problem-report form is done (219878b, 2026-10-16); the page and the README link wait on the owner's channel and response time
 
 The "what support means" point of CW-077, as its own ticket, the counterpart
 of SuruchBoss/PaynEat#168. One person answers support online, beside a day
@@ -608,6 +608,11 @@ employee's name, code, email, salary and ID number in the path, query, body
 and the server's error, none of which reach the report. Guide:
 `docs/guide/report-a-problem.th.md`; what is kept is listed in
 `docs/security.md`. Not yet walked through in a real browser.
+
+**Owner, 2026-10-17:** support hours are 18:00–24:00 Thai time for now
+(after the day job), a temporary value. The channel and the response time
+are not set ("ยังไม่กำหนด"); no response time is written anywhere until the
+owner states one.
 
 **Files** `docs/` (new page), `README.md`, `README.th.md`
 
