@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-090 → CW-065 → CW-073 · CW-062 on the real NAS · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-065 → CW-073 · CW-062 on the real NAS · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -215,37 +215,6 @@ and staff like that often have no work email. Cwork must not require one.
 ---
 
 
-### CW-090 · Set an employee's scanner number on the employee page
-`P1` · employees · web · **S** · Pilot A · queued 2026-10-17 (#93)
-
-Found by the PO on 2026-10-17 while writing the QA plan for CW-061. An
-employee's scanner number (`scannerId`) can be set three ways today: the
-CW-059 import, the unowned-numbers card on the scanner review page, and the
-API. The employee page does not show it and cannot change it, and the
-scanner guide says so ("หน้าพนักงานยังไม่มีช่องแก้เลขสแกน"). When HR types
-`7` where the scanner writes `007`, or a scanner is replaced and numbers
-change, the only fix is the API, which HR does not use.
-
-The backend already accepts the field on update, keeps it exactly as written
-and refuses a number another employee holds (`DUPLICATE_SCANNER_ID`). This is
-web work.
-
-**Acceptance**
-- The employee page shows the scanner number, or "none" when there is none.
-- A user who may edit employees can set, change and clear it there. A number
-  with a space is refused before saving; a number another employee holds is
-  refused with that employee's code, as the API says.
-- `007` stays `007`: nothing pads, trims zeros or converts it to a number.
-- After a change, the scanner review page counts that number's unowned days
-  for the employee without a second step (or the page says plainly which
-  button does it). Days already decided or used by payroll do not move.
-- The change is in the audit log with the old and new number.
-- `docs/guide/scanner-import.th.md` loses the "no field on the employee page"
-  line and says where to change the number.
-- Web tests for show, set, change, clear, duplicate refused.
-
----
-
 ### CW-062 · Run on the pilot's NAS, beside Odoo
 `P0` · platform · docs · **S–M** · pilot, by 31 October 2026 · cloud side done 2026-10-17 (`f15746b`); open for the real NAS (#62)
 
@@ -259,9 +228,9 @@ install, update, rollback and a byte-exact restore passed, sign-in with 2FA
 survived, and only the HTTPS port was open. Not tried: DSM itself, installing
 the authority's certificate on Windows, a scan from outside the office, path C
 on a real office PC. **Left:** the acceptance below on the pilot's NAS, which
-waits on the owner's approval and starts with the read-only `./check.sh`; and
-`npm run db:verify` from the tools image needs `psql` in it (not built or
-tested yet).
+waits on the owner's approval and starts with the read-only `./check.sh`.
+`npm run db:verify` now runs from the tools image (`368c303`, CI job "Tools
+image runs db:verify").
 
 The pilot company already runs Odoo in a container on a NAS, and Cwork goes
 next to it. `docker-compose.yml` is written for a Linux host. A NAS adds the
@@ -1018,7 +987,7 @@ not because there is a date.
 
 
 ### CW-065 · Add one employee from the console
-`P1` · employees · web · **S** · queued 2026-10-17 (#68), after CW-090
+`P1` · employees · web · **S** · with the dev since 2026-10-17 (#68)
 
 Found by the dev on 2026-09-30. The console has no form for adding one
 employee. CW-059's spreadsheet import is the only way in, and a single new
@@ -1442,3 +1411,4 @@ Kept so the reasoning survives.
 | **CW-088** · A cash payday had no way to count the notes and coins | Payroll → run page → "พิมพ์ใบเตรียมเงินสด", and `GET /payroll/runs/:id/print/cash`, print an A4 landscape PDF: one row per person with the exact net pay, how many of each note and coin (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25, largest first), the cash for the envelope and the remainder under 25 satang, which is shown and never rounded into the pay; then the run totals per denomination and the amount to withdraw. Counted in whole satang (`splitCash` in `documents/cash-sheet.ts`), so no float rounding; no setting to skip a denomination, as the pilot hands out all of them. Same rules as CW-071: `payroll:read`, a run not approved or paid is refused (`PAYROLL_RUN_NOT_PRINTABLE`), audited as an export (`cash-sheet`, with the withdrawal total), Sarabun with the glyph check. Tested by hand-worked figures (12,345.67 gives 12,345.50 in cash and 0.17 left; three people netting 20,345.66 withdraw 20,345.25) and in the e2e against an independently worked split. No schema change. Guide: `docs/guide/printing-payslips.th.md`. Still open, not code: the page says its layout awaits the pilot's blank paper form, to be compared when it arrives; how the pilot pays a remainder under 25 satang; what the pilot's accountant keeps as proof of a cash payday (the owner is asking). 8d15223 and 5bdd09c, closed 2026-10-16. |
 | **CW-061** · A company on a fingerprint scanner had no way to bring its punches in | Attendance → scanner days (`/attendance/scanner`, `attendance:manage`, not for a department-limited user): upload the export, preview it, then import; nothing is written until HR imports. The file is read from its byte-order mark, never its name (the pilot's TA-001EX writes UTF-16LE text with a mark, tab-separated, no header, fields padded and ending in a comma); a year outside 1990-2100, a Buddhist-era year for instance, is a problem, not a silent read. Two times count (first in, last out); no time is no punch (leave and absence come from the calendar and leave records); one time, or three or more, waits for HR; a scanner number with no employee is listed apart with its days, not an error. HR picks in and out from the day's times or leaves the day uncounted, decisions are kept apart from the raw times and can be changed, every raw row stays visible, and the totals follow each decision. A decision holds only while its day has the same times: a later file that adds a time puts the day back to waiting on HR and stops counting the punches it had counted, which stay in the append-only punch table and are filtered out by `ACTIVE_PUNCH`. Counted times are ordinary `BIOMETRIC` punches, not flagged for having no location; an overlapping file adds only new punches and does not touch days a payroll has used; each import is one audit event (file, date range, punches added); nothing but name, number, date and times is accepted, checked by an e2e on the columns written. Accepted from the dev: the same minute written twice on one day is one tap, counted once. Tested on synthetic files only; `.gitignore` keeps `Export*.xls`, `Export*.XLS` and `Export*.txt` out. Guide: `docs/guide/scanner-import.th.md`. Left: the check against the pilot's real export, run on the owner's own machine; lateness, overtime, shifts and shifts across midnight (not known to be needed); a field to change an employee's scanner number on the employee page (today through the CW-059 import or `PATCH /employees/:id`), not queued. 6afcf2e and 6db7bf2, closed 2026-10-17. |
 | **CW-089** · The accountant who files ภ.ง.ด.1 had nothing to work from, and nothing showed when a filed total differed | `GET /payroll/periods/:id/export?format=accountant` is the existing export, every column in its order, plus two only: the employee's tax ID (the stored one, else the national ID, else empty) and the income type, 40(1) on every row since Cwork's payroll is employment income only; `payroll:export`, audited as an export with the count of rows missing a tax ID and never the numbers; an e2e checks every money figure equals the existing export and that the plain CSV still prints no ID. Payroll → compare with what was filed (`/payroll/compare`): HR enters the filed tax total and the filed social security total (employee and employer together) and sees Cwork's figure beside each with the difference, one satang either way shown as different; on the same page HR uploads its own per-person figures (code, gross, tax, social security, net) for a parallel run and every person and column that differs is marked, nothing kept and no payslip changed (checked field by field against a snapshot). Accepted from the dev: a period whose runs are paid now exports as well as one that is approved (`reconcilePeriod` allows APPROVED or PAID, as the social security file already did), since the accountant files after payday; a draft or calculated run is still refused. Free, tied to no key; synthetic test data only. Guide: `docs/guide/period-check.th.md`. Left for the owner: what HR sends the accountant today (the column order follows the existing export until then), whether e-Filing needs a finer income code than 40(1), and whether the first payroll runs beside HR's method once. dbf6e9b and 4a40efe, closed 2026-10-17. |
+| **CW-090** · HR could not set or correct an employee's scanner number without the API | The employee page has a scanner-number card for users who may edit employees: the number is kept as written (`007` stays `007`), cleared by saving it empty, and a number another employee holds is refused with a Thai message. Saving a new number counts that number's days that nobody owned yet, straight away: two-time days become punches, the rest wait for HR on the scanner page, which the card says after saving. Days HR decided, days already counted under an old number and days payroll used do not move. The update is audited with the old and new number, plus a row with the count of days matched. `docs/guide/scanner-import.th.md` now says where to change it. e2e covers keeping zeros, matching waiting days, old days staying put, locked days, duplicates and clearing. 39152de and 2a6e6bb, closed 2026-10-17. |
