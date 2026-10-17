@@ -427,6 +427,7 @@
   @keyframes flow-run { 0% { background-position: -100% 0; } 30%, 100% { background-position: 250% 0; } }
   .flow__note { margin: -24px 0 clamp(28px, 4vw, 44px); font-size: var(--t-micro); color: var(--ink-2); }
   .officeclip { margin: clamp(36px, 5vw, 56px) 0 0; }
+  .officeclip video { display: block; height: auto; }
   .officeclip .still { display: none; }
   .gallery--office { margin-top: clamp(28px, 4vw, 44px); align-items: start; }
   @media (prefers-reduced-motion: reduce) {
@@ -619,7 +620,12 @@
       <figure class="window marks officeclip">
         <b></b><b></b><b></b><b></b>
         <div class="window__bar" aria-hidden="true"><i></i><i></i><i></i><span>/attendance/scanner/import</span></div>
-        <img class="anim" src="../assets/office.en.webp" alt="A scanner export is chosen, checked in a preview, imported, and then one day with three times is decided on the review page, where HR keeps the first and the last time" loading="lazy" width="900" height="563">
+        <video class="anim" muted loop autoplay playsinline preload="metadata"
+               poster="../assets/office.poster.en.webp" width="1920" height="1200"
+               aria-label="A scanner export is chosen, checked in a preview, imported, and then one day with three times is decided on the review page, where HR keeps the first and the last time">
+          <source src="../assets/office.en.mp4" type="video/mp4">
+          <source src="../assets/office.en.webm" type="video/webm">
+        </video>
         <img class="still" src="../assets/shots/scanner-days.en.webp" alt="The scanner days page listing days that wait for HR, each with the times exactly as the scanner recorded them and a choice of clock-in and clock-out" loading="lazy" width="1280" height="800">
       </figure>
       <p class="caption"><span>The real console on the demo company, with a made-up scanner file — choose it, preview it, import it, then decide a day that waits for HR</span><span class="mono">REC · demo company</span></p>

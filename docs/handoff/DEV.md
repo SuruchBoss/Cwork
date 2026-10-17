@@ -34,14 +34,16 @@ this file only says where the dev room stands.
   `sso-shortfall.e2e-spec.ts` now checks its empty year with 2041: it used 2035, which
   `period-check` pays a run in, so it failed whenever `period-check` ran first.
 - `lockedDays` ticket is on `main` (4fe0cd1). CI of it is being watched.
-- **Pictures for the READMEs and landing page (PO, separate PR):** branch
-  `claude/new-session-syszvt` carries them on top of PR #98's branch
-  (`claude/serene-carson-fr7k0k`, merged in): `docs/screenshots/capture-office.mjs`
-  writes stills 24-29 (th and en), landing webp copies, and the clip
-  (`docs/demo/office.<lang>.webp/.gif`); README.md, README.th.md and the landing
-  page use them. Run it on a freshly seeded database; it changes that database.
-  The cash sheet has one (Thai) edition and a red draft note about the pilot's
-  paper form, which the picture shows: waiting on the PO's call.
+- **Pictures for the READMEs and landing page (PO, PR #98 and #99 merged):**
+  `docs/screenshots/capture-office.mjs` writes stills 24-29 (th and en) and the clip.
+  **Sharper-clip ticket (branch `claude/new-session-syszvt`, waits for the PO's PR):**
+  Playwright's video and the screencast are 1x whatever the pixel ratio, so the script now
+  takes its own 2x pictures (about 9 a second) and encodes from those: landing
+  `office.<lang>.mp4/.webm` (1920 px) with `office.poster.<lang>.webp`, README
+  `docs/demo/office.<lang>.gif` (1600 px). The landing clip is a `<video muted loop
+  autoplay playsinline>` because an animated WebP that size decodes to about a gigabyte on a
+  tablet. Run it on a freshly seeded database (it changes it); `KEEP_SCRATCH=1` keeps the pictures.
+  The cash sheet has one (Thai) edition and a red draft note about the pilot's paper form.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
   CW-086 (#89) are not queued.
 
