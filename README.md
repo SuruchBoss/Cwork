@@ -50,8 +50,8 @@ one switch turns the whole console English (<a href="./docs/backlog.md">CW-016</
 This month Cwork was built out for one kind of company in particular: a small
 business with no IT department, staff who clock in on a fingerprint scanner,
 wages paid in cash, and an outside accountant who files the withholding tax.
-Everything below is in `main` and part of the free edition (Apache 2.0, outside
-`ee/`). It is covered by unit and end-to-end tests in CI, and the scanner
+Everything below is in `main` and is currently in the free edition (Apache 2.0,
+outside `ee/`). It is covered by unit and end-to-end tests in CI, and the scanner
 import, the accountant's file and the NAS scripts also went through a QA pass
 of 41 cases on synthetic data ([plan and results](./docs/qa/pilot-a-2026-10.md)).
 No company runs Cwork in production yet.

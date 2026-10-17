@@ -65,8 +65,8 @@ const COPY = {
   // ------------------------------------------------------ small office
   'ใหม่เดือนตุลาคม 2026': 'New in October 2026',
   'สำหรับออฟฟิศเล็กที่ไม่มีฝ่าย IT': 'For the small office with no IT department',
-  'พนักงานลงเวลาด้วยเครื่องสแกนนิ้ว จ่ายเงินเดือนเป็นเงินสด และจ้างสำนักงานบัญชีข้างนอกยื่นภาษี — ทุกข้อด้านล่างอยู่ในรุ่นฟรี มีเทสต์รันใน CI ทุกครั้ง และทดสอบด้วยข้อมูลสังเคราะห์เท่านั้น ยังไม่มีบริษัทไหนใช้งานจริง':
-    'Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.',
+  'พนักงานลงเวลาด้วยเครื่องสแกนนิ้ว จ่ายเงินเดือนเป็นเงินสด และจ้างสำนักงานบัญชีข้างนอกยื่นภาษี — ตอนนี้ทุกข้อด้านล่างอยู่ในรุ่นฟรี มีเทสต์รันใน CI ทุกครั้ง และทดสอบด้วยข้อมูลสังเคราะห์เท่านั้น ยังไม่มีบริษัทไหนใช้งานจริง':
+    'Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is currently in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.',
   'เส้นทางข้อมูล ตั้งแต่เครื่องสแกนนิ้วจนถึงนักบัญชี': 'How the data travels, from the fingerprint scanner to the accountant',
   'เครื่องสแกนนิ้ว': 'Fingerprint scanner',
   'ไฟล์ที่เครื่องส่งออก': 'The file it exports',
