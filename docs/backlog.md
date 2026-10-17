@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-090 → CW-065 → CW-073 · CW-062 on the real NAS · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -214,6 +214,37 @@ and staff like that often have no work email. Cwork must not require one.
 
 ---
 
+
+### CW-090 · Set an employee's scanner number on the employee page
+`P1` · employees · web · **S** · Pilot A · queued 2026-10-17 (#93)
+
+Found by the PO on 2026-10-17 while writing the QA plan for CW-061. An
+employee's scanner number (`scannerId`) can be set three ways today: the
+CW-059 import, the unowned-numbers card on the scanner review page, and the
+API. The employee page does not show it and cannot change it, and the
+scanner guide says so ("หน้าพนักงานยังไม่มีช่องแก้เลขสแกน"). When HR types
+`7` where the scanner writes `007`, or a scanner is replaced and numbers
+change, the only fix is the API, which HR does not use.
+
+The backend already accepts the field on update, keeps it exactly as written
+and refuses a number another employee holds (`DUPLICATE_SCANNER_ID`). This is
+web work.
+
+**Acceptance**
+- The employee page shows the scanner number, or "none" when there is none.
+- A user who may edit employees can set, change and clear it there. A number
+  with a space is refused before saving; a number another employee holds is
+  refused with that employee's code, as the API says.
+- `007` stays `007`: nothing pads, trims zeros or converts it to a number.
+- After a change, the scanner review page counts that number's unowned days
+  for the employee without a second step (or the page says plainly which
+  button does it). Days already decided or used by payroll do not move.
+- The change is in the audit log with the old and new number.
+- `docs/guide/scanner-import.th.md` loses the "no field on the employee page"
+  line and says where to change the number.
+- Web tests for show, set, change, clear, duplicate refused.
+
+---
 
 ### CW-062 · Run on the pilot's NAS, beside Odoo
 `P0` · platform · docs · **S–M** · pilot, by 31 October 2026 · cloud side done 2026-10-17 (`f15746b`); open for the real NAS (#62)
@@ -615,7 +646,7 @@ and the server's error, none of which reach the report. Guide:
 
 
 ### CW-073 · Foreign workers' documents expire without anyone being told
-`P1` · employees · notifications · **S–M** · after Pilot A
+`P1` · employees · notifications · **S–M** · queued 2026-10-17 (#78), after CW-065
 
 Split from CW-068, whose Pilot A half is done: an employee now carries
 `passportExpiresOn` and `workPermitExpiresOn`, and the employee page marks a
@@ -987,7 +1018,7 @@ not because there is a date.
 
 
 ### CW-065 · Add one employee from the console
-`P2` · employees · web · **S**
+`P1` · employees · web · **S** · queued 2026-10-17 (#68), after CW-090
 
 Found by the dev on 2026-09-30. The console has no form for adding one
 employee. CW-059's spreadsheet import is the only way in, and a single new
