@@ -19,13 +19,13 @@ this file only says where the dev room stands.
     Not tried: every DSM screen and DSM's shell, a Windows PC trusting the
     certificate authority, a port scan from outside, two real machines for path C,
     the real `apt-get` Dockerfile builds (the room's containers have no internet).
-  - Two edits to `backend/Dockerfile`: `/app/uploads` is created owned by the
-    API's user (uploads failed with a 500 in the existing image, root compose
-    included) and the tools image carries `verify-db-objects.sql`.
-  - **Open for the PO:** `docker compose run --rm migrate npm run db:verify`, as
-    written in `docs/operations.md` Deploying/Upgrading/Restoring, fails because
-    the tools image has no `psql`; adding `postgresql-client` to the Dockerfile's
-    `deps` stage would fix it. Not done: it could not be built or tested here.
+  - Edits to `backend/Dockerfile`: `/app/uploads` is created owned by the API's
+    user (uploads failed with a 500 in the existing image, root compose included);
+    the tools image carries `verify-db-objects.sql` and, in its stage only, `psql`.
+  - `docker compose run --rm migrate npm run db:verify` (operations.md) had never
+    worked from the tools image: no SQL file and no `psql`. Fixed: `psql` in the
+    Dockerfile's tools stage only, plus CI job "Tools image runs db:verify"
+    (`backend/scripts/verify-tools-image.sh`), green on `main` at `368c303`.
   - **Open for the owner:** approval to run `./check.sh` and then the install on
     the pilot's NAS; the real result goes at the bottom of the rehearsal record.
     Backups need a USB drive or another machine (a same-disk folder is refused).

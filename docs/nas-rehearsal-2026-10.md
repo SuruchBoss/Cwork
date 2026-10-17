@@ -71,15 +71,16 @@ to `backend/Dockerfile` (below) were mirrored in the stand-in. The root
   `/app/uploads` is created root-owned when a volume is mounted, and the API runs as
   an unprivileged user. `backend/Dockerfile` now creates it owned by that user.
   This affects the root `docker-compose.yml` as well, which has the same volume.
-- **`db:verify` could not run from the tools image**: its script was not copied in
-  (fixed, `backend/Dockerfile`), and `psql`, which it calls, is not in the image
-  either. The NAS scripts pipe the same SQL file into `psql` in the PostgreSQL
-  container instead, and a missing index was shown to make that check fail.
-  **Left for the PO:** the commands in this file's "Deploying", "Upgrading" and
-  "Restoring from backup" sections, `docker compose run --rm migrate npm run
-  db:verify`, still fail for want of `psql`; adding `postgresql-client` to the
-  Dockerfile's `deps` stage (an `apt-get` line) would fix them. It was not done
-  because the room cannot build an image with `apt-get`, so it could not be tested.
+- **`db:verify` could not run from the tools image**: its SQL file was not copied
+  in and `psql`, which the script calls, was not in the image. Both are fixed in
+  `backend/Dockerfile` (`psql` in the tools stage only), and a new CI job builds
+  the two stages, runs `db:verify` through the tools image on a migrated database
+  (and shows it fails when an index is missing), and asserts the runtime image has
+  no `psql`; it passed on its first run on `main`. The commands in this file's
+  "Deploying", "Upgrading" and "Restoring from backup" sections therefore work. The
+  NAS scripts still pipe the SQL through the PostgreSQL container, which was what
+  could be rehearsed here (the room cannot run `apt-get`, so it could not build the
+  fixed image itself); it checks the same objects.
 - **The "dump complete" check missed pg16's trailing `\unrestrict` line**; it now
   looks at the last ten lines.
 - **A failed install could not be run again** (`.env` was left behind); an install
