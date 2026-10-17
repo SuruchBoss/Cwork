@@ -38,8 +38,9 @@ this file only says where the PO room stands.
   video (mp4 + webm + poster) instead of a 900px animated WebP that looked
   soft on high-density tablets; the README GIF is 1600px wide. Not yet seen
   on Safari or a real tablet.
-- Dev has a small copy fix next: the English plural in "1 scanner numbers
-  belong to nobody yet".
+- PR #101 merged at `f4af52b`, green: the scanner import page uses the
+  English singular for a count of one (`plural()` in `web/src/lib/i18n`).
+  Left over: `SpreadsheetImport.tsx` still says "1 problems". Dev queue empty.
 
 ## Waiting on the owner
 
