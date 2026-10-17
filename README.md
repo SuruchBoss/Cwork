@@ -45,6 +45,57 @@ one switch turns the whole console English (<a href="./docs/backlog.md">CW-016</
 
 ---
 
+## New in October 2026: the small office
+
+This month Cwork was built out for one kind of company in particular: a small
+business with no IT department, staff who clock in on a fingerprint scanner,
+wages paid in cash, and an outside accountant who files the withholding tax.
+Everything below is in `main` and is currently in the free edition (Apache 2.0,
+outside `ee/`). It is covered by unit and end-to-end tests in CI, and the scanner
+import, the accountant's file and the NAS scripts also went through a QA pass
+of 41 cases on synthetic data ([plan and results](./docs/qa/pilot-a-2026-10.md)).
+No company runs Cwork in production yet.
+
+- **The fingerprint scanner's file, read as it is.** Attendance → scanner days:
+  upload the scanner's export, look at the preview, then import; nothing is
+  written before that. A day with two times counts as in and out. A day with
+  one time, or three or more, waits for HR, who sees every raw time and picks
+  in and out or leaves the day uncounted: Cwork never settles an odd day by
+  itself. Once a period has been paid its scanner days are locked, and a day
+  forgotten before payday is corrected in the next period.
+  [Guide (Thai)](./docs/guide/scanner-import.th.md)
+- **A cash payday, counted to the coin.** From an approved run, print a
+  cash-preparation sheet: for each person, how many of each note and coin down
+  to 25 satang, and the total to withdraw from the bank. Whatever is left under
+  25 satang is shown, never rounded into anyone's pay. Payslips print one, two
+  or four to an A4 sheet, with a wage-receipt sheet to sign.
+  [Guide (Thai)](./docs/guide/printing-payslips.th.md)
+- **A file for the outside accountant, and a check against what was filed.** An
+  approved or paid period exports with each person's tax ID and income type,
+  for whoever prepares the ภ.ง.ด.1. Enter the tax and social security totals that were
+  actually filed and Cwork shows its own figure beside each; one satang either
+  way is shown as a difference. Upload your current per-person figures to run
+  Cwork beside the way you pay today: every person and column that differs is
+  marked, and nothing is changed. Cwork prepares and checks. It does not file
+  anything, and it does not replace the accountant.
+- **An installer for the office NAS.** `deploy/nas/` holds a read-only check,
+  then install, backup, restore, update and rollback scripts, with HTTPS on one
+  port. Rehearsed on a clean Docker host, where install, update, rollback and a
+  byte-for-byte restore passed. **Not yet tried on a real NAS:** the Synology
+  DSM screens, installing the certificate on Windows, a port scan from outside
+  the office, and the layout with the app on a PC and the database on the NAS.
+  [Guide (Thai)](./docs/guide/nas-install.th.md)
+- **Passports and work permits that do not lapse unnoticed.** A list of the
+  documents expiring within 90, 60 or 30 days, and a notice to whoever may edit
+  the employee at each of those points and on expiry. The document number is
+  never shown in the list or the notice.
+  [Guide (Thai)](./docs/guide/expiring-documents.th.md)
+- **Smaller things.** Add a single employee from the console instead of a
+  one-row import; set or correct a scanner number on the employee page; and a
+  "report a problem" page that builds a text with diagnostics and no personal
+  data, for you to copy and send yourself. Cwork sends nothing off your
+  machine. [Guide (Thai)](./docs/guide/report-a-problem.th.md)
+
 ## Why Cwork
 
 Six problems a Thai business pays for every month, and how Cwork answers each
@@ -288,6 +339,19 @@ Running `db:init` a second time on a database that already has an organisation
 refuses, and so does `db:seed`: the demo data will not install itself beside a
 real company by accident.
 
+### On an office NAS
+
+`deploy/nas/` installs Cwork on a NAS that runs containers, beside whatever
+already runs there: `./check.sh` first, which only reads and changes nothing,
+then install, backup, restore, update, rollback and change-address scripts, with
+HTTPS on a single port. A backup refuses to go on the same disk as the data,
+and `show-key.sh` prints the encryption key on request, to be kept in a password
+manager, never beside the backups. It was rehearsed on
+a clean Docker host ([notes](./docs/nas-rehearsal-2026-10.md)); the Synology DSM
+screens, the certificate on Windows, a scan from outside the office and the
+app-on-a-PC layout have not been tried on real hardware yet. The step-by-step
+guide is in Thai: [docs/guide/nas-install.th.md](./docs/guide/nas-install.th.md).
+
 ### Putting the app on employees' phones
 
 There is one Android app, the same for every company. Each employee connects it
@@ -347,7 +411,13 @@ interview.
 A company that already keeps its people in Excel or another system brings them
 in from a spreadsheet, with the leave each person has already taken this year.
 Every problem is listed by row and column before anything is saved, and a Thai
-Excel CSV reads as Thai.
+Excel CSV reads as Thai. A single new hire is added from the directory's "Add
+employee" form, with the same checks.
+
+**Passports and work permits are watched.** An expiring-documents page lists
+foreign workers' documents due within 90, 60 or 30 days or already expired, and
+whoever may edit the employee is told at each point. The document number is
+never shown.
 
 <img src="./docs/screenshots/en/04-employees.png" alt="Employee register" width="49%"> <img src="./docs/screenshots/en/18-employee-detail.png" alt="Employee record" width="49%">
 
@@ -370,6 +440,10 @@ and overtime at Labour Protection Act rates.
 **A punch outside the fence is flagged, never rejected.** An employee must always
 be able to prove they turned up; HR reviews the flag afterwards.
 
+**A fingerprint scanner's export comes in through HR's review.** Two times a day
+count as in and out; any other day waits for HR with every raw time on screen,
+and days in a paid period are locked. [Guide (Thai)](./docs/guide/scanner-import.th.md)
+
 <img src="./docs/screenshots/en/06-attendance.png" alt="Attendance" width="49%"> <img src="./docs/screenshots/en/22-roster.png" alt="Shift roster" width="49%">
 
 ### Payroll
@@ -384,6 +458,19 @@ by policy.
 moves to Cwork mid-year imports what it paid each person from January, and the
 first run withholds exactly what it would have if the whole year had run here.
 Those months stay the company's own for the year-end filings.
+
+**A cash payday is printed, not worked out by hand.** An approved run prints
+payslips one, two or four to an A4 sheet, a wage-receipt sheet to sign, and a
+cash-preparation sheet with every note and coin per person and the amount to
+withdraw. [Guide (Thai)](./docs/guide/printing-payslips.th.md)
+
+**The filings start from payroll's own numbers.** The monthly social security
+form's figures (สปส.1-10) download as CSV, Excel or PDF
+([guide](./docs/guide/sso-filing.th.md)), and the accountant's export adds each
+person's tax ID and income type for the ภ.ง.ด.1. A compare page sets the totals
+that were filed beside Cwork's, and a parallel-run check marks every person and
+column that differs from your own figures. These prepare and check a filing;
+they do not submit one.
 
 <img src="./docs/screenshots/en/07-payroll.png" alt="Payroll periods and runs" width="49%"> <img src="./docs/screenshots/en/19-payroll-run.png" alt="Payroll run" width="49%">
 
@@ -593,8 +680,8 @@ email/push delivery are all in place. What is left is tracked in the
 
 **Still not production-ready without work.** Before running real payroll, read
 [the gaps in docs/security.md](./docs/security.md#what-this-does-not-do). In
-short: no ภ.ง.ด.1 filing export, issued documents are not rendered as PDFs, the
-employee app cannot register for push yet, retention is a policy you have to
+short: no ภ.ง.ด.1 filing file (the accountant's export is a working file for
+whoever files, not a submission), the employee app cannot register for push yet, retention is a policy you have to
 enforce by hand ([how](./docs/privacy.md)), the interface covers only Thai and
 English, and this code has never had a penetration test.
 
