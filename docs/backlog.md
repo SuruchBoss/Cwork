@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-089 · CW-062 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -216,7 +216,7 @@ and staff like that often have no work email. Cwork must not require one.
 
 
 ### CW-062 · Run on the pilot's NAS, beside Odoo
-`P0` · platform · docs · **S–M** · pilot, by 31 October 2026
+`P0` · platform · docs · **S–M** · pilot, by 31 October 2026 · queued 2026-10-17 (#62)
 
 The pilot company already runs Odoo in a container on a NAS, and Cwork goes
 next to it. `docker-compose.yml` is written for a Linux host. A NAS adds the
@@ -874,52 +874,6 @@ signature block, so this is a template over it.
 
 ---
 
-### CW-089 · Hand the accountant the month, and check it against what was filed
-`P1` · payroll · **S** · Pilot A, by 31 October 2026; free
-
-The pilot's ภ.ง.ด.1 is filed by an outside accounting firm through the Revenue
-Department's e-Filing, not by HR (owner, 2026-10-17); social security is
-filed by HR. So for this pilot Cwork does not need to write the filing file
-(CW-045 stays where it is): it needs to give the accountant the month in one
-go, and show at once when what was filed differs from what Cwork worked out.
-The first payroll is also meant to run beside HR's usual method once, with
-the figures compared person by person (proposed to the owner, not yet
-answered).
-
-**Already there:** `GET /payroll/periods/:id/export` gives one row per person
-with gross, taxable income, withholding tax, the employee's and the employer's
-social security and net pay, reconciled before it is written (CW-044).
-
-**Scope**
-- An accountant's format of that export: the same rows plus what ภ.ง.ด.1 is
-  keyed from (the employee's tax ID and the month's income type), under
-  `payroll:export` and audited as an export like every other format. Its
-  column order follows what HR sends the accountant today once the owner
-  says what that is; until then it follows the existing export.
-- A comparison page for a period: HR enters the totals the outside filing
-  produced (e-Filing's tax total, the social security total), and Cwork shows
-  each beside its own figure with the difference.
-- The same page takes HR's own per-person figures for a parallel run (a
-  spreadsheet with employee code, gross, tax, social security, net) and marks
-  every person and column that differs. Nothing HR uploads changes a payslip.
-
-**Questions for the owner (not guessed)**
-- What HR sends the accountant today (an Excel file, payslips, a list) and in
-  what layout.
-- Whether the first payroll runs beside HR's method once before Cwork is
-  used for real.
-
-**Acceptance**
-- The accountant's format matches the existing export's totals for the
-  seeded demo company, and carries no column beyond what is listed here.
-- A filed total that differs by one satang is shown as different.
-- A parallel-run upload with one person's tax changed marks that person and
-  column only, and no payslip changes.
-
-**Files** `backend/src/modules/payroll/`, `web/src/features/payroll/`
-
----
-
 ### CW-085 · The สปส.1-10 upload file for e-Services, and the November check
 `P1` · payroll · **S** · Pilot B
 
@@ -1442,3 +1396,4 @@ Kept so the reasoning survives.
 | **CW-083** · A department limit on the payroll officer did not limit pay, and the console did not say so | When a department limit is chosen for a role, the account-roles card on the employee page now names, before saving, what the limit does not narrow, in Thai and English: pay (payroll runs, payslips, printed payslips, wage receipts, compensation), resignations and the audit log. The list is data, not role names: `OUTSIDE_THE_DEPARTMENT_LIMIT` and `unlimitedAreas()` in `organization/role-grants.ts`, returned per role by `GET /employees/:id/roles` as `unlimitedByDepartment`, so a new role or permission is covered by adding it there. Saving is not blocked and who sees pay is unchanged. `docs/security.md` and `docs/guide/account-roles.th.md` say the same. Accepted from the dev: MANAGER holds only `employee:read:team`, so no department limit can be chosen for it and no note appears (tested in unit, e2e and web); resignations and the audit log were found outside the filter while tracing the code and added to the list, so PAYROLL_OFFICER, HR_OFFICER and AUDITOR now show the note. Whether payroll should honour a department limit stays an owner's decision. c764fca, closed 2026-10-11. |
 | **CW-088** · A cash payday had no way to count the notes and coins | Payroll → run page → "พิมพ์ใบเตรียมเงินสด", and `GET /payroll/runs/:id/print/cash`, print an A4 landscape PDF: one row per person with the exact net pay, how many of each note and coin (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25, largest first), the cash for the envelope and the remainder under 25 satang, which is shown and never rounded into the pay; then the run totals per denomination and the amount to withdraw. Counted in whole satang (`splitCash` in `documents/cash-sheet.ts`), so no float rounding; no setting to skip a denomination, as the pilot hands out all of them. Same rules as CW-071: `payroll:read`, a run not approved or paid is refused (`PAYROLL_RUN_NOT_PRINTABLE`), audited as an export (`cash-sheet`, with the withdrawal total), Sarabun with the glyph check. Tested by hand-worked figures (12,345.67 gives 12,345.50 in cash and 0.17 left; three people netting 20,345.66 withdraw 20,345.25) and in the e2e against an independently worked split. No schema change. Guide: `docs/guide/printing-payslips.th.md`. Still open, not code: the page says its layout awaits the pilot's blank paper form, to be compared when it arrives; how the pilot pays a remainder under 25 satang; what the pilot's accountant keeps as proof of a cash payday (the owner is asking). 8d15223 and 5bdd09c, closed 2026-10-16. |
 | **CW-061** · A company on a fingerprint scanner had no way to bring its punches in | Attendance → scanner days (`/attendance/scanner`, `attendance:manage`, not for a department-limited user): upload the export, preview it, then import; nothing is written until HR imports. The file is read from its byte-order mark, never its name (the pilot's TA-001EX writes UTF-16LE text with a mark, tab-separated, no header, fields padded and ending in a comma); a year outside 1990-2100, a Buddhist-era year for instance, is a problem, not a silent read. Two times count (first in, last out); no time is no punch (leave and absence come from the calendar and leave records); one time, or three or more, waits for HR; a scanner number with no employee is listed apart with its days, not an error. HR picks in and out from the day's times or leaves the day uncounted, decisions are kept apart from the raw times and can be changed, every raw row stays visible, and the totals follow each decision. A decision holds only while its day has the same times: a later file that adds a time puts the day back to waiting on HR and stops counting the punches it had counted, which stay in the append-only punch table and are filtered out by `ACTIVE_PUNCH`. Counted times are ordinary `BIOMETRIC` punches, not flagged for having no location; an overlapping file adds only new punches and does not touch days a payroll has used; each import is one audit event (file, date range, punches added); nothing but name, number, date and times is accepted, checked by an e2e on the columns written. Accepted from the dev: the same minute written twice on one day is one tap, counted once. Tested on synthetic files only; `.gitignore` keeps `Export*.xls`, `Export*.XLS` and `Export*.txt` out. Guide: `docs/guide/scanner-import.th.md`. Left: the check against the pilot's real export, run on the owner's own machine; lateness, overtime, shifts and shifts across midnight (not known to be needed); a field to change an employee's scanner number on the employee page (today through the CW-059 import or `PATCH /employees/:id`), not queued. 6afcf2e and 6db7bf2, closed 2026-10-17. |
+| **CW-089** · The accountant who files ภ.ง.ด.1 had nothing to work from, and nothing showed when a filed total differed | `GET /payroll/periods/:id/export?format=accountant` is the existing export, every column in its order, plus two only: the employee's tax ID (the stored one, else the national ID, else empty) and the income type, 40(1) on every row since Cwork's payroll is employment income only; `payroll:export`, audited as an export with the count of rows missing a tax ID and never the numbers; an e2e checks every money figure equals the existing export and that the plain CSV still prints no ID. Payroll → compare with what was filed (`/payroll/compare`): HR enters the filed tax total and the filed social security total (employee and employer together) and sees Cwork's figure beside each with the difference, one satang either way shown as different; on the same page HR uploads its own per-person figures (code, gross, tax, social security, net) for a parallel run and every person and column that differs is marked, nothing kept and no payslip changed (checked field by field against a snapshot). Accepted from the dev: a period whose runs are paid now exports as well as one that is approved (`reconcilePeriod` allows APPROVED or PAID, as the social security file already did), since the accountant files after payday; a draft or calculated run is still refused. Free, tied to no key; synthetic test data only. Guide: `docs/guide/period-check.th.md`. Left for the owner: what HR sends the accountant today (the column order follows the existing export until then), whether e-Filing needs a finer income code than 40(1), and whether the first payroll runs beside HR's method once. dbf6e9b and 4a40efe, closed 2026-10-17. |

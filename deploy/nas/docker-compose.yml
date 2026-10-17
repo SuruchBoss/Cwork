@@ -1,0 +1,130 @@
+# Cwork on a NAS (CW-062): the stack for a small office, beside whatever else the
+# NAS already runs (Odoo, for the pilot). One file, three ways to use it:
+#
+#   full (paths A and B)  CWORK_MODE=full  everything on the NAS
+#   db   (path C, NAS)    CWORK_MODE=db    only PostgreSQL, published on the LAN
+#   app  (path C, PC)     CWORK_MODE=app   API, console and HTTPS; the database is
+#                                          the one on the NAS (DB_HOST)
+#
+# Do not run this file by hand: `install.sh` writes `.env`, picks the profiles and
+# checks the host first. The commands in docs/operations.md ("Running on a NAS")
+# all go through the scripts in this folder.
+#
+# Everything here is named and ported so that it cannot collide with a typical
+# NAS: one published port (CWORK_HTTPS_PORT, 8443 by default) and nothing else,
+# containers named by the `cwork` project, volumes that Docker keeps on the NAS's
+# own disk. PostgreSQL's data is a Docker volume, never a shared folder: a
+# database whose files are reached over SMB or NFS gets corrupted.
+
+name: cwork
+
+services:
+  postgres:
+    profiles: ["db"]
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cwork}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run install.sh first, it writes .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cwork}
+    # A NAS runs other things; keep the database modest. These are the settings a
+    # small office needs, not a tuned server.
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60", "-c", "work_mem=8MB"]
+    mem_limit: ${POSTGRES_MEM_LIMIT:-1g}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cwork} -d ${POSTGRES_DB:-cwork}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    profiles: ["app"]
+    image: cwork/api:${CWORK_VERSION:-local}
+    build:
+      context: ../../backend
+    restart: unless-stopped
+    mem_limit: ${API_MEM_LIMIT:-768m}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cwork}:${POSTGRES_PASSWORD}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-cwork}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?run install.sh first, it writes .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?run install.sh first, it writes .env}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?run install.sh first, it writes .env}
+      # The console is reached at one HTTPS address, which the API must know.
+      CORS_ORIGINS: ${PUBLIC_WEB_URL:?run install.sh first, it writes .env}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Asia/Bangkok}
+      DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-THB}
+      THROTTLE_STORAGE: memory
+      EMAIL_ENABLED: "false"
+      PUSH_ENABLED: "false"
+      MALWARE_SCAN_ENABLED: "false"
+      ASSISTANT_ENABLED: "false"
+      ASSISTANT_PROVIDER: none
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      METRICS_PORT: 9464
+    volumes:
+      - api-uploads:/app/uploads
+    # No `ports`: only the HTTPS proxy below is reachable, from the office.
+
+  web:
+    profiles: ["app"]
+    image: cwork/web:${CWORK_VERSION:-local}
+    build:
+      context: ../../web
+      args:
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      - api
+
+  # HTTPS, inside the office only. Caddy makes its own certificate authority and
+  # issues the console's certificate from it, so nothing is fetched from the
+  # internet and nothing about the NAS is published. Each office PC trusts the
+  # authority once (`export-ca.sh` hands over the file). `/api` goes straight to
+  # the API, not through the console's nginx: the API trusts exactly one proxy in
+  # front of it, and a second hop would show every user as the same address.
+  proxy:
+    profiles: ["app"]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      - api
+      - web
+    environment:
+      CWORK_HOST: ${CWORK_HOST:?run install.sh first, it writes .env}
+      CWORK_HTTPS_PORT: ${CWORK_HTTPS_PORT:-8443}
+    ports:
+      - "${CWORK_HTTPS_PORT:-8443}:${CWORK_HTTPS_PORT:-8443}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # One-off tools: migrations, `db:init`, `db:verify`. Not started by `up`.
+  migrate:
+    profiles: ["tools"]
+    image: cwork/tools:${CWORK_VERSION:-local}
+    build:
+      context: ../../backend
+      target: build
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cwork}:${POSTGRES_PASSWORD}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${POSTGRES_DB:-cwork}?schema=public
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?run install.sh first, it writes .env}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?run install.sh first, it writes .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?run install.sh first, it writes .env}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+volumes:
+  postgres-data:
+  api-uploads:
+  caddy-data:
+  caddy-config:

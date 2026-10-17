@@ -6,13 +6,13 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-089 (#92, the accountant's export and a comparison page
-  for e-Filing totals and a parallel run) is with the dev room, then CW-062
-  (#62, three install paths on the pilot's Synology; nothing touches the real
-  NAS until the owner approves). CW-087 (#90) stays open for its support
-  page. CW-085 (#88) waits on a sample file and November. Not queued: CW-080,
-  CW-086 (#89), a scanner-number field on the employee page. Closed on
-  2026-10-16: CW-088; on 2026-10-17: CW-061 (scanner import).
+- **Dev queue:** CW-062 (#62, three install paths on the pilot's Synology;
+  nothing touches the real NAS until the owner approves) is with the dev
+  room. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
+  sample file and November. Not queued: CW-080, CW-086 (#89), a
+  scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
+  on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
+  filed-total and parallel-run checks).
 - **Pilot A (by 31 October):** the scanner's layout, the NAS model and how
   filing is done are known (2026-10-17, relayed from the Asuna Bot room; no
   real file in any cloud session). HR files social security itself, keying
@@ -29,7 +29,8 @@ this file only says where the PO room stands.
 
 - For CW-062: the NAS's DSM version, whether Container Manager is
   installed, and its free space. The HR import file.
-- For CW-089: what HR sends the accountant today, and whether the first
+- After CW-089 (closed): what HR sends the accountant today, whether
+  e-Filing needs a finer income code than 40(1), and whether the first
   payroll runs beside HR's method once.
 - A qualified reviewer for the payroll rules on #36, including the two
   section 76 questions and question 4 (overtime in the SSO wage). Until it

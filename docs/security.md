@@ -350,6 +350,15 @@ national ID in full; it gives the last four digits.
   leaves the phone.
 - `trust proxy` is set to one hop, so `req.ip` is the real client behind a load
   balancer without trusting arbitrary `X-Forwarded-For` chains.
+- The NAS install (`deploy/nas`, CW-062) publishes one HTTPS port and nothing
+  else. Its certificate comes from an authority the install makes itself, so
+  nothing is fetched from the internet; each office PC trusts that authority once.
+  The authority's key stays in a Docker volume and is deliberately not in the
+  backups. PostgreSQL, the API and the console's web server publish no port. The
+  one exception is path C, where PostgreSQL is offered on the LAN, only on the
+  NAS's address, unencrypted, to be firewalled to the one PC that runs the app.
+  `.env` (secrets made by the installer) is mode 600; backups never contain
+  `FIELD_ENCRYPTION_KEY`, and `backup.sh` refuses a folder on the disk it protects.
 
 ## Fail-fast configuration
 

@@ -1,0 +1,8 @@
+# Path C, on the NAS: PostgreSQL is reached from the office PC, so its port is
+# published, on the NAS's LAN address and no other. Added by `install.sh` in
+# `db` mode. The NAS firewall should then allow this port from that PC alone
+# (docs/operations.md, "Running on a NAS").
+services:
+  postgres:
+    ports:
+      - "${DB_BIND:?set DB_BIND to the NAS's LAN address}:${DB_PORT:-5432}:5432"

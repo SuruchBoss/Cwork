@@ -1,0 +1,28 @@
+# The console's HTTPS front door (CW-062). Reached at https://<NAS address>:<port>
+# from the office network. Written for Caddy 2; the values come from `.env`.
+{
+	# Nothing here needs the internet, and nothing here may open port 80/443 on a
+	# NAS that has DSM on them.
+	admin off
+	auto_https disable_redirects
+	local_certs
+	# A browser that opens https://<address> sends no server name, and behind
+	# Docker's port mapping Caddy cannot see which address was dialled. Without
+	# this the handshake fails with "internal error".
+	default_sni {$CWORK_HOST}
+}
+
+https://{$CWORK_HOST}:{$CWORK_HTTPS_PORT} {
+	tls internal
+
+	encode gzip
+
+	# Straight to the API: one proxy hop, so the API sees each user's own address.
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}
