@@ -883,6 +883,25 @@ pilot or the owner:
   recognised by a passport or work-permit number on the record, since Cwork
   stores no nationality.
 
+**2026-10-17: what the redacted sample shows.** The owner sent photos of a
+filed สปส.1-10, parts 1 and 2, with names, ID numbers, account numbers and
+amounts blacked out. They are kept out of the repository; only the layout is
+recorded here. It is the form e-Services prints, not the upload file, so the
+upload layout is still unknown and the owner will ask the pilot's HR for it.
+Against CW-048's printable PDF:
+
+- Part 1 matches: the same five lines (total wage, employee and employer
+  contributions, total, number insured). The official form also has the total
+  in Thai words under line 4, the establishment's name, branch, address,
+  account number and contribution rate in the header, and an "attached as"
+  box where "internet" is ticked.
+- Part 2 matches on the five columns. Differences: the name column is headed
+  "คำนำหน้านาม-ชื่อ-ชื่อสกุล" (title, first name, surname); the header has
+  "แผ่นที่ N ในจำนวน M แผ่น", the account number and a six-digit branch
+  number (`000000` for the head office); and there is a "รวม" (total) row
+  under the wage and contribution columns.
+- Both parts are filed online: part 1 says part 2 is made through e-Services.
+
 Free, as decided for CW-048: the file HR uploads by hand is the company's own
 data; filing online is the Pro candidate in CW-077.
 

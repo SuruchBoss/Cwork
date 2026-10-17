@@ -55,8 +55,10 @@ this file only says where the PO room stands.
   section 76 questions and question 4 (overtime in the SSO wage). Until it
   is answered, carried advances should not be taken from a later payday
   without the employee's signed consent.
-- A sample สปส.1-10 upload file from SSO e-Services, names and ID numbers
-  blanked, for CW-085's file format.
+- For CW-085: the e-Services upload template HR uses (names, ID numbers and
+  amounts blanked). The printed form arrived redacted on 2026-10-17 and is
+  recorded in CW-085 as layout only; it is not the upload file. The owner
+  will ask HR.
 - After CW-088 (closed): how the pilot pays a remainder under 25 satang, its
   blank paper form to compare with the printout, and what its accountant
   keeps as proof of a cash payday (the owner is asking). How Pilot B pays
