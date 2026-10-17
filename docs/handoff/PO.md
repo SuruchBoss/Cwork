@@ -7,9 +7,8 @@ this file only says where the PO room stands.
 ## Where things are
 
 - **Dev queue (2026-10-17, owner: do what can be done while documents are
-  awaited):** CW-090 (#93, scanner number on the employee page) → CW-065
-  (#68, add one employee) → CW-073 (#78, foreign workers' expiry list and
-  notices). CW-062 (#62) is done on the cloud side and stays open for the
+  awaited):** CW-065 (#68, add one employee, with the dev) → CW-073
+  (#78, foreign workers' expiry list and notices). CW-090 closed 2026-10-17. CW-062 (#62) is done on the cloud side and stays open for the
   pilot's real NAS, which nothing touches until the owner approves.
 - **QA (owner approved 2026-10-17):** plan and results table in
   `docs/qa/pilot-a-2026-10.md`, room state in `docs/handoff/QA.md`. The Asuna
