@@ -1203,6 +1203,9 @@ export const thMessages: Record<string, string> = {
   Expired: 'หมดอายุแล้ว',
   'A passport number is 5 to 20 English letters and digits.':
     'เลขพาสปอร์ตใช้ตัวอักษรภาษาอังกฤษและตัวเลข 5 ถึง 20 ตัว',
+  // Scanner days in a paid month (#94, #95)
+  'Payroll has used it': 'เงินเดือนใช้แล้ว',
+  'Not counted; the month is paid': 'ไม่นับ เพราะจ่ายเงินเดือนงวดนี้แล้ว',
   // Adding one employee from the console (CW-065)
   'Add an employee': 'เพิ่มพนักงาน',
   'Add employee': 'เพิ่มพนักงาน',

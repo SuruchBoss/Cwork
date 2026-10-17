@@ -662,4 +662,139 @@ describe('Fingerprint scanner import (e2e)', () => {
       ]);
     });
   });
+  /**
+   * A scanner day and a paid month (#94, #95). Marking a run paid locks the
+   * attendance records that exist at that moment; a day HR had not decided yet
+   * has none, so it was never locked, and deciding it afterwards put punches
+   * into a paid month. A day inside a period the employee was paid for is now
+   * locked whether or not it had a record, and is not offered to HR as work.
+   * It runs last in this file and in 2038, so nothing above sees its data.
+   */
+  describe('a month that has been paid', () => {
+    const PAID_YEAR = 2038;
+    const PAID_NUMBER = '9701';
+    const paidIso = (day: number) => `${PAID_YEAR}-05-${String(day).padStart(2, '0')}`;
+    const paidLine = (day: number, times: string) =>
+      [
+        'คนทดสอบ ,',
+        `${PAID_NUMBER} ,`,
+        `${String(day).padStart(2, '0')}/05/${PAID_YEAR} ,`,
+        `${times} ,`,
+        '',
+      ].join('\t');
+    let waitingDay: string;
+    let countedDay: string;
+
+    const paidDays = async (query: string) =>
+      (await api.get(`/attendance/scanner/days?from=${paidIso(1)}&to=${paidIso(31)}${query}`, hr))
+        .body;
+    const punchesOn = (day: number) =>
+      prisma.attendancePunch.count({
+        where: { employeeId: cat.id, workDate: new Date(`${paidIso(day)}T00:00:00Z`) },
+      });
+    const dayOf = async (day: number) =>
+      (
+        await prisma.scannerDay.findFirstOrThrow({
+          where: { scannerNumber: PAID_NUMBER, workDate: new Date(`${paidIso(day)}T00:00:00Z`) },
+        })
+      ).id;
+
+    beforeAll(async () => {
+      const payroll = await api.token('payroll@cwork.example');
+      const ceo = await api.token('ceo@cwork.example');
+      await prisma.employee.update({ where: { id: cat.id }, data: { scannerId: PAID_NUMBER } });
+
+      // Day 4 is counted (two times); day 27 waits (one time) and has no record.
+      const imported = await api.upload(
+        '/attendance/scanner/import',
+        hr,
+        scannerFile([paidLine(4, '08:00 17:00'), paidLine(27, '08:00')]),
+      );
+      expect(imported.status).toBeLessThan(300);
+      waitingDay = await dayOf(27);
+      countedDay = await dayOf(4);
+
+      expect(
+        (
+          await api.post('/payroll/compensation', payroll, {
+            employeeId: cat.id,
+            effectiveFrom: `${PAID_YEAR}-01-01`,
+            baseSalary: 30000,
+            payFrequency: 'MONTHLY',
+          })
+        ).status,
+      ).toBe(201);
+      const period = await api.post('/payroll/periods', payroll, {
+        year: PAID_YEAR,
+        month: 5,
+        periodStart: paidIso(1),
+        periodEnd: paidIso(31),
+        payDate: paidIso(31),
+      });
+      expect(period.status).toBe(201);
+      const run = await api.post('/payroll/runs', payroll, { periodId: period.body.id });
+      expect(run.status).toBe(201);
+      expect((await api.post(`/payroll/runs/${run.body.id}/calculate`, payroll)).status).toBe(201);
+      expect((await api.post(`/payroll/runs/${run.body.id}/approve`, ceo)).status).toBe(201);
+
+      // Approved is not paid: the waiting day still waits for HR.
+      expect((await paidDays('')).totals.waiting).toBe(1);
+
+      expect((await api.post(`/payroll/runs/${run.body.id}/pay`, ceo)).status).toBe(201);
+    });
+
+    it('refuses to decide a day that had no record when the month was paid, and adds no punch', async () => {
+      const before = await punchesOn(27);
+      const res = await api.post(`/attendance/scanner/days/${waitingDay}/decision`, hr, {
+        action: 'USE',
+        clockIn: '08:00',
+      });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe('DAY_LOCKED');
+      expect(await punchesOn(27)).toBe(before);
+      expect(
+        await prisma.attendanceRecord.count({
+          where: { employeeId: cat.id, workDate: new Date(`${paidIso(27)}T00:00:00Z`) },
+        }),
+      ).toBe(0);
+    });
+
+    it('shows such a day as locked, not as work for HR, and keeps it out of the waiting total', async () => {
+      const waiting = await paidDays('&status=WAITING');
+      expect(waiting.items).toEqual([]);
+      expect(waiting.totals.waiting).toBe(0);
+
+      const locked = await paidDays('&status=LOCKED');
+      expect(locked.items.map((d: any) => [d.workDate, d.locked])).toEqual([
+        [paidIso(4), true],
+        [paidIso(27), true],
+      ]);
+      expect(locked.totals.locked).toBe(2);
+      // Every row is still there under ALL.
+      expect((await paidDays('&status=ALL')).items).toHaveLength(2);
+    });
+
+    it('keeps a counted day out of the queue when a later file grows it', async () => {
+      const grown = await api.upload(
+        '/attendance/scanner/import',
+        hr,
+        scannerFile([paidLine(4, '08:00 12:00 17:00')]),
+      );
+      expect(grown.body).toMatchObject({ punchesAdded: 0, lockedDays: 1 });
+      const waiting = await paidDays('&status=WAITING');
+      expect(waiting.items).toEqual([]);
+      expect(waiting.totals.waiting).toBe(0);
+      expect((await api.get(`/attendance/scanner/days/${countedDay}`, hr)).body.locked).toBe(true);
+    });
+
+    it('adds no punch for a day of the paid month that a new file brings', async () => {
+      const late = await api.upload(
+        '/attendance/scanner/import',
+        hr,
+        scannerFile([paidLine(28, '08:00 17:00')]),
+      );
+      expect(late.body).toMatchObject({ punchesAdded: 0, lockedDays: 1 });
+      expect(await punchesOn(28)).toBe(0);
+    });
+  });
 });

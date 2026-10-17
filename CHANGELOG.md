@@ -728,6 +728,20 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A scanner day could still be decided after its month was paid, and a locked
+  day stayed in HR's waiting list** (#94, #95). Marking a run paid locks the
+  attendance records that exist at that moment, so a day HR had not decided yet
+  (no record) was never locked: deciding it afterwards added punches to a paid
+  month, and a later file could do the same. A day inside a period the employee
+  was paid for (a paid run with a payslip for them) is now locked whether or
+  not it had a record: a decision on it is `422 DAY_LOCKED` and a file adds no
+  punch for it. A locked day is no longer offered as work to do: the default
+  list and `totals.waiting` leave it out, and a new **Payroll has used it**
+  filter (`status=LOCKED`) lists every locked day, marked "Not counted; the
+  month is paid" when it was waiting. A day HR forgot after the month was paid
+  is put right in a later period, not by changing the paid one; the Thai guide
+  `docs/guide/scanner-import.th.md` says so.
+
 - **Uploads failed with an error in the production image.** `/app/uploads` was
   created root-owned when a volume was mounted there and the API runs as an
   unprivileged user; the Dockerfile now creates it owned by that user.

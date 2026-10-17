@@ -223,7 +223,7 @@ departments. The upload routes take one multipart part named `file`, up to 5 MB.
 | POST | `/attendance/scanner/preview` | checks a file, writes nothing |
 | POST | `/attendance/scanner/import` | all or nothing; audited as one event |
 | GET | `/attendance/scanner/imports` | the files imported so far |
-| GET | `/attendance/scanner/days` | `status` (default `WAITING`; `ALL` for every row), `from`, `to`, `employeeId`, `scannerNumber`, `page`, `limit`; also returns totals for the whole range |
+| GET | `/attendance/scanner/days` | `status` (default `WAITING`, which leaves out locked days; `LOCKED` for every day payroll has used, `ALL` for every row), `from`, `to`, `employeeId`, `scannerNumber`, `page`, `limit`; also returns totals for the whole range |
 | GET | `/attendance/scanner/days/:id` | one day |
 | POST | `/attendance/scanner/days/:id/decision` | `{action: USE\|IGNORE, clockIn?, clockOut?, note?}` |
 | GET | `/attendance/scanner/unmapped` | scanner numbers no employee holds |
