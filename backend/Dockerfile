@@ -5,8 +5,10 @@
 # ---- deps -------------------------------------------------------------------
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app
-# Prisma's engines need OpenSSL at build and run time.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+# Prisma's engines need OpenSSL at build and run time. `psql` is for the tools
+# image only (`npm run db:verify` calls it): this stage becomes `build`, the tools
+# image, and never reaches `runtime`, which starts again from the slim base.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
 RUN npm ci
