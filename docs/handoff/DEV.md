@@ -6,52 +6,30 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- Reviewed and accepted by the PO: CW-061, CW-089, CW-062 (cloud side), CW-090, #94-#97,
-  CW-065. `#62` stays open for the real NAS: the owner has to approve `./check.sh` on it.
-- **CI of `1f85420` was red on one test, now fixed here.** `telemetry.e2e-spec.ts` "writes
-  outbox.delivery.failed ..." drains the outbox once; a drain claims only the oldest
-  `OUTBOX_BATCH_SIZE` (20) pending events, so when earlier specs left more than 20
-  pending, this test's two events (the newest) were never claimed and no log line
-  appeared. Reproduced by adding 25 older pending events (same failure message), fixed
-  by emptying the pending queue first, as `outbox.e2e-spec.ts` does; with the 25 events
-  and the fix it passes. Nothing in product code was wrong; the spec count of pending
-  events grows with every spec that pays a run or raises a notification.
-- **CW-073 (#78), documents expiring, is built and waits for review.**
-  `GET /employees/expiring-documents` (`employee:read`, names/codes/dates/window, no
-  numbers), console page Employees -> Documents expiring, daily job `document-expiry-notices`
-  (02:00 UTC, lock id 10) that tells every user who may update employees once as a document
-  enters the 90, 60 and 30-day windows and once when expired (`employee_document_notices`,
-  migration `20261017120000`). Logic in `domain/document-expiry.ts` and
-  `document-expiry.service.ts`. A renewal is a new date and starts new windows. E2E in
-  `employee-document-expiry.e2e-spec.ts` (8 cases, walks one date through 90/60/30/expired
-  with an injected `now`). Thai guide `docs/guide/expiring-documents.th.md`. Not walked in a
-  browser.
-- QA re-ran S15 (#94/#95) on `main` 814ecc5: all four checks pass.
-- **Small ticket from the PO, done here:** the scanner import's `lockedDays` (preview and
-  result) now counts every day of the file that payroll has used, by the same `LockedDays`
-  rule as the review page, so a new waiting day in a paid month reports 1. The import page
-  says how many days will be left as they are. One e2e case added (preview and import).
-  `sso-shortfall.e2e-spec.ts` now checks its empty year with 2041: it used 2035, which
-  `period-check` pays a run in, so it failed whenever `period-check` ran first.
-- `lockedDays` ticket is on `main` (4fe0cd1). CI of it is being watched.
-- **Pictures for the READMEs and landing page (PO, PR #98 and #99 merged):**
-  `docs/screenshots/capture-office.mjs` writes stills 24-29 (th and en) and the clip.
-  **Sharper-clip ticket (branch `claude/new-session-syszvt`, waits for the PO's PR):**
-  Playwright's video and the screencast are 1x whatever the pixel ratio, so the script now
-  takes its own 2x pictures (about 9 a second) and encodes from those: landing
-  `office.<lang>.mp4/.webm` (1920 px) with `office.poster.<lang>.webp`, README
-  `docs/demo/office.<lang>.gif` (1600 px). The landing clip is a `<video muted loop
-  autoplay playsinline>` because an animated WebP that size decodes to about a gigabyte on a
-  tablet. Run it on a freshly seeded database (it changes it); `KEEP_SCRATCH=1` keeps the pictures.
-  The cash sheet has one (Thai) edition and a red draft note about the pilot's paper form.
-- **Small ticket from the PO, done here:** English singular/plural on the scanner import
-  page (`plural(count, one, other)` in `web/src/lib/i18n`, singular keys with their own Thai
-  entries; no helper existed). Other pages still have "{count} problems" style strings
-  (`SpreadsheetImport.tsx` shares one); not touched. No screenshot shows these lines.
-- Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
-  CW-086 (#89) are not queued.
+- Accepted by the PO and on `main`: CW-061, CW-089, CW-062 (cloud side), CW-090, CW-065,
+  CW-073, #94-#97, the scanner import's `lockedDays`, the office pictures (#98, #99) and the
+  sharper clip (#100). `#62` stays open for the real NAS: the owner has to approve
+  `./check.sh` on it.
+- **On branch `claude/new-session-syszvt`, waiting for the PO to open the PR:**
+  - English singular/plural on the scanner import page (`a20df9b`): `plural(count, one,
+    other)` in `web/src/lib/i18n` picks between two keys; each singular has its own Thai
+    entry. `SpreadsheetImport.tsx` still says "{count} problems" for one (shared key, not
+    touched).
+  - CW-085 layout of the social security filing PDF (`87a55c0`): total of line 4 in Thai
+    words (new `core/utils/baht-text.util.ts`, the first amount-in-words in Cwork), name
+    column headed "คำนำหน้านาม-ชื่อ-ชื่อสกุล" with `Employee.titleTh` in front where HR
+    recorded one (passed by `exportFile`; `sheet()` and the calculation untouched), the rate
+    and "แผ่นที่ N ในจำนวน M แผ่น" in the heading of each part 2 sheet, a rule above "รวม".
+    Not on the PDF because Cwork has no such field: the establishment's social security
+    account number and the six-digit branch number. Counts now 787 backend unit, 255 web.
+- Pictures: `docs/screenshots/capture-office.mjs` takes its own 2x pictures (Playwright's
+  video is 1x whatever the pixel ratio) and encodes the landing clip as mp4/webm with a
+  poster and the README GIF. Run it on a freshly seeded database; it changes it.
+  `KEEP_SCRATCH=1` keeps the pictures.
+- Waiting on others: CW-085 upload file needs the e-Services layout (the owner will ask the
+  pilot's HR); CW-080 and CW-086 (#89) are not queued.
 
 ## Next
 
-- Nothing queued. Do not start CW-085, CW-080 or CW-086, nor the
+- Nothing queued. Do not start CW-085's upload file, CW-080 or CW-086, nor the
   support-scope page. Do not touch the real NAS until the owner approves.

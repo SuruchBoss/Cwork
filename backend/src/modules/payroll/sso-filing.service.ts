@@ -141,10 +141,21 @@ export class SsoFilingService {
         where: { id: user.organizationId },
         select: { name: true, legalName: true, taxId: true },
       });
+      // The form's name column starts with the title; HR may not have recorded one.
+      const people = await this.prisma.employee.findMany({
+        where: {
+          id: { in: sheet.rows.map((row) => row.employeeId) },
+          organizationId: user.organizationId,
+        },
+        select: { id: true, titleTh: true },
+      });
+      const titles: Record<string, string> = {};
+      for (const person of people) if (person.titleTh) titles[person.id] = person.titleTh;
       const content = await this.renderer.render({
         organizationName: organization.legalName || organization.name,
         taxId: organization.taxId,
         sheet,
+        titles,
       });
       return {
         filename: `${stem}.pdf`,

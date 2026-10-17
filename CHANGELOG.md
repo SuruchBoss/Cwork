@@ -608,6 +608,16 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **The social security filing PDF reads more like the form** (CW-085). Against a
+  redacted, filed สปส.1-10: part 1 writes the total of line 4 in Thai words
+  under the figure (a new `bahtText`, which is also the first amount-in-words in
+  Cwork); part 2 heads the name column "คำนำหน้านาม-ชื่อ-ชื่อสกุล" and puts the
+  title in front of the name where HR recorded one, shows the rate and
+  "แผ่นที่ N ในจำนวน M แผ่น" in the heading of each sheet (it was a footer), and
+  rules off the "รวม" row. Nothing in the calculation, the sheet data or the
+  other exports changed. The establishment's social security account number and
+  the six-digit branch number are on the form but Cwork does not store them, so
+  they are not on the PDF yet.
 - **The console says what a department limit does not narrow** (CW-083). A
   limit to one department is a filter on employee queries, so it narrows
   employee records and what hangs off them (leave, attendance, overtime,
