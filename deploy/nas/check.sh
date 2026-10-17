@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Looks at this machine and says which way of installing Cwork applies, without
 # changing anything (CW-062). Safe to run on the pilot's NAS at any time.
 #

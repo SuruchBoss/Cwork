@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Prints FIELD_ENCRYPTION_KEY, once, on request. National IDs, bank accounts and
 # two-factor secrets are encrypted with it: lose it and they are gone for good.
 # Keep it in a password manager, never in the same place as the backups.

@@ -1,3 +1,6 @@
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Shared by the scripts in this folder (CW-062). Plain POSIX sh: a Synology's
 # shell is not bash, and nothing here may need anything a NAS does not have.
 # Sourced, never run.

@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Puts a backup back (CW-062): into this installation, or into a fresh one built
 # with install.sh on a new machine.
 #

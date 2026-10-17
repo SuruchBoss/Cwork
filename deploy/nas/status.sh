@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # What is running, and whether the console answers.
 . "$(dirname "$0")/lib.sh"
 need_root; need_docker; load_env

@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Backs up Cwork's database (and uploaded files) to a folder on ANOTHER disk
 # (CW-062). Run by hand, by the NAS's Task Scheduler every night, and by
 # update.sh before every update.

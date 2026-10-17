@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2026 Suruch Chakrapeesirisuk
+# SPDX-License-Identifier: Apache-2.0
+
 # Builds images.tar.gz: every image the NAS needs, in one file, so that installing
 # or updating there needs no internet, no Docker Hub and no npm (CW-062).
 # Run it on a machine WITH Docker and the internet (a developer's PC), then copy
