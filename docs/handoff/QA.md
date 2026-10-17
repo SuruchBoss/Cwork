@@ -8,7 +8,8 @@ Overwritten at the end of each unit of work. Git history keeps the past.
   are in [`docs/qa/pilot-a-2026-10.md`](../qa/pilot-a-2026-10.md): CW-061
   scanner import, CW-089 accountant export and checks, CW-062 NAS installer.
 - **Status:** pass 1 finished 2026-10-17. 41 of 41 cases run, all pass; CW-062 on stand-in images, N11 with notes. Issues #94–#97 are open for the dev room (none is a security problem). The results table and how it was run are at the end of the plan.
-- **Next:** when the dev room fixes #94/#95, re-test S15. When the owner approves the real NAS, someone with DSM access repeats N1–N3, N11 there; the real Dockerfile builds still need a machine with internet.
+- **Re-test:** S15 (#94/#95) passed again on main `814ecc5`; nothing waiting on the dev room.
+- **Next:** When the owner approves the real NAS, someone with DSM access repeats N1–N3, N11 there; the real Dockerfile builds still need a machine with internet.
 
 ## How to start
 
