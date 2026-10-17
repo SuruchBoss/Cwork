@@ -97,6 +97,38 @@ const COPY = {
   'พาสปอร์ตและใบอนุญาตทำงานไม่หมดอายุเงียบ ๆ': 'Passports and work permits that do not lapse unnoticed',
   'แจ้งคนที่แก้ข้อมูลพนักงานได้เมื่อเหลือ 90, 60 และ 30 วัน และตอนหมดอายุ โดยไม่แสดงเลขเอกสาร':
     'Whoever may edit the employee is told at 90, 60 and 30 days and on expiry, and the document number is never shown.',
+  // The pictures of those features: a clip, then six screenshots.
+  'เลือกไฟล์จากเครื่องสแกนนิ้ว ตรวจในหน้าตัวอย่าง นำเข้า แล้ว HR ตัดสินวันที่มีสามเวลาโดยเลือกเวลาแรกกับเวลาสุดท้าย':
+    'A scanner export is chosen, checked in a preview, imported, and then one day with three times is decided on the review page, where HR keeps the first and the last time',
+  'ระบบจริงบนบริษัทตัวอย่าง กับไฟล์สแกนนิ้วที่ทำขึ้นเอง — เลือกไฟล์ ดูตัวอย่าง นำเข้า แล้วตัดสินวันที่รอ HR':
+    'The real console on the demo company, with a made-up scanner file — choose it, preview it, import it, then decide a day that waits for HR',
+  'หน้านำเข้าหลังเลือกไฟล์จากเครื่องสแกน: วันใหม่ 22 วัน แยกเป็นนับแล้ว รอ HR ตัดสิน และเลขสแกนที่ยังไม่มีเจ้าของ โดยยังไม่เขียนอะไรลงข้อมูล':
+    'The import page after a scanner file was chosen: 22 new days, split into counted, waiting for HR and numbers not yet registered, and nothing written yet',
+  'ตรวจไฟล์ก่อนนำเข้า': 'Check the file before importing',
+  'วันใหม่ วันที่รอ HR และเลขที่ยังไม่มีเจ้าของ ก่อนเขียนอะไรลงข้อมูล':
+    'What is new, what waits for HR and which numbers have no owner yet, before anything is written',
+  'หน้าวันที่สแกนนิ้ว แสดงวันที่รอ HR ตัดสิน พร้อมเวลาทุกตัวตามที่เครื่องบันทึก และช่องเลือกเวลาเข้า-ออก':
+    'The scanner days page listing days that wait for HR, each with the times exactly as the scanner recorded them and a choice of clock-in and clock-out',
+  'วันที่รอ HR ตัดสิน': 'Days waiting for HR',
+  'เวลาดิบทุกตัวตามที่เครื่องบันทึก HR เลือกเวลาเข้า-ออกเอง':
+    'Every raw time as the scanner recorded it; HR picks the in and the out',
+  'หน้าเทียบกับที่ยื่นไปแล้ว: ภาษีหัก ณ ที่จ่ายตรงกับที่ยื่น ประกันสังคมต่างกัน 0.50 บาท และขึ้นว่าไม่ตรง':
+    'The check against filings page: withholding tax matches what was filed, social security differs by 0.50 baht and is marked Different',
+  'เทียบกับยอดที่ยื่นแล้ว': 'Checked against the filing',
+  'ภาษีตรงกัน ประกันสังคมต่าง 0.50 บาทก็ขึ้นว่าไม่ตรง':
+    'Tax matches; social security is 0.50 baht off, and it says so',
+  'ตัวเลขรายคนของ HR เทียบกับ Cwork: สองคนไม่ตรง ระบุคอลัมน์และผลต่างเป็นบาท':
+    'HR’s own per-person figures compared with Cwork: two people differ, with the column and the difference in baht marked',
+  'รันคู่ขนาน': 'Running beside your method',
+  'ชี้ทุกคนและทุกช่องที่ต่างจากตัวเลขของ HR': 'Every person and column that differs from HR’s figures, marked',
+  'ใบเตรียมเงินสดหน้าแรก: เงินสุทธิของแต่ละคน จำนวนแบงก์และเหรียญแต่ละชนิด ยอดที่ต้องถอนจากธนาคาร และเศษที่น้อยกว่า 25 สตางค์':
+    'Page one of the cash-preparation sheet: each person’s net pay, how many notes and coins of each kind, the amount to withdraw from the bank and the remainder under 25 satang (the printout is in Thai)',
+  'แบงก์และเหรียญต่อคน ยอดที่ต้องถอน และเศษที่ไม่ปัด (ใบพิมพ์เป็นภาษาไทย)':
+    'Notes and coins per person, the amount to withdraw, and the remainder, not rounded (the printout is in Thai)',
+  'พาสปอร์ตและใบอนุญาตทำงานที่หมดอายุภายใน 90 วัน แสดงชื่อ เอกสาร วันหมดอายุ และจำนวนวันที่เหลือ มีหนึ่งรายการที่หมดอายุแล้ว':
+    'Passports and work permits expiring within 90 days, with the employee, the document, the date and the days left; one has already expired',
+  'เอกสารใกล้หมดอายุ': 'Documents expiring',
+  'พาสปอร์ตและใบอนุญาตทำงานที่เหลือไม่เกิน 90 วัน': 'Passports and work permits with up to 90 days left',
   // ---------------------------------------------------------- problems
   'ปัญหาและทางแก้': 'Problems and fixes',
   'หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน':
@@ -562,9 +594,9 @@ if (/walkthrough\.th\.mp4/.test(out)) {
   console.error('The English page still points at the Thai-captioned walkthrough.');
   process.exit(1);
 }
-for (const file of ['assets/film.en.mp4', 'assets/film.en.webp']) {
+for (const file of ['assets/film.en.mp4', 'assets/film.en.webp', 'assets/office.en.webp']) {
   if (out.includes(`../${file}`) && !existsSync(join(here, file))) {
-    console.error(`${file} is missing (run docs/film/film.mjs with FILM_LANG=en)`);
+    console.error(`${file} is missing (run docs/film/film.mjs with FILM_LANG=en, or docs/screenshots/capture-office.mjs for the office clip)`);
     process.exit(1);
   }
 }
@@ -573,7 +605,7 @@ const takes = [...out.matchAll(/"\.\.\/(assets\/shots\/[\w-]+\.en\.webp)"/g)].ma
 const absent = [...new Set(takes)].filter((file) => !existsSync(join(here, file)));
 if (absent.length > 0) {
   console.error(
-    `English screenshots missing (run docs/screenshots/capture.mjs and capture-mobile.mjs): ${absent.join(', ')}`,
+    `English screenshots missing (run docs/screenshots/capture.mjs, capture-office.mjs and capture-mobile.mjs): ${absent.join(', ')}`,
   );
   process.exit(1);
 }
