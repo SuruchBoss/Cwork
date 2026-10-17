@@ -6,14 +6,13 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-061 (#61, scanner import with HR's review page; the
-  export's layout and the owner's rules are in the ticket) is with the dev
-  room, then CW-089 (#92, the accountant's export and a comparison page for
-  e-Filing totals and a parallel run), then CW-062 (#62, three install paths
-  on the pilot's Synology; nothing touches the real NAS until the owner
-  approves). CW-087 (#90) stays open for its support page. CW-085 (#88)
-  waits on a sample file and November. Not queued: CW-080, CW-086 (#89).
-  Closed on 2026-10-16: CW-088.
+- **Dev queue:** CW-089 (#92, the accountant's export and a comparison page
+  for e-Filing totals and a parallel run) is with the dev room, then CW-062
+  (#62, three install paths on the pilot's Synology; nothing touches the real
+  NAS until the owner approves). CW-087 (#90) stays open for its support
+  page. CW-085 (#88) waits on a sample file and November. Not queued: CW-080,
+  CW-086 (#89), a scanner-number field on the employee page. Closed on
+  2026-10-16: CW-088; on 2026-10-17: CW-061 (scanner import).
 - **Pilot A (by 31 October):** the scanner's layout, the NAS model and how
   filing is done are known (2026-10-17, relayed from the Asuna Bot room; no
   real file in any cloud session). HR files social security itself, keying
