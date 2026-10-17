@@ -216,7 +216,21 @@ and staff like that often have no work email. Cwork must not require one.
 
 
 ### CW-062 · Run on the pilot's NAS, beside Odoo
-`P0` · platform · docs · **S–M** · pilot, by 31 October 2026 · queued 2026-10-17 (#62)
+`P0` · platform · docs · **S–M** · pilot, by 31 October 2026 · cloud side done 2026-10-17 (`f15746b`); open for the real NAS (#62)
+
+**Done so far (2026-10-17):** `deploy/nas/` (one compose file with db/app/tools
+profiles, Caddy HTTPS on one port with its own authority, and check, install,
+backup, restore, update, rollback, bundle and uninstall scripts),
+`docs/guide/nas-install.th.md`, the "Running on a NAS" section of
+`docs/operations.md`, and the uploads-ownership fix in `backend/Dockerfile`.
+Rehearsed on a clean Docker host beside Odoo 17 (`docs/nas-rehearsal-2026-10.md`):
+install, update, rollback and a byte-exact restore passed, sign-in with 2FA
+survived, and only the HTTPS port was open. Not tried: DSM itself, installing
+the authority's certificate on Windows, a scan from outside the office, path C
+on a real office PC. **Left:** the acceptance below on the pilot's NAS, which
+waits on the owner's approval and starts with the read-only `./check.sh`; and
+`npm run db:verify` from the tools image needs `psql` in it (not built or
+tested yet).
 
 The pilot company already runs Odoo in a container on a NAS, and Cwork goes
 next to it. `docker-compose.yml` is written for a Linux host. A NAS adds the
