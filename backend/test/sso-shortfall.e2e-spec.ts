@@ -409,9 +409,10 @@ describe('Social security shortfall (e2e)', () => {
   });
 
   it('gives an empty report, not an error, for a year with no locked or paid run', async () => {
-    const r = await report(2035);
+    // A year no other spec pays a run in, so the result does not depend on spec order.
+    const r = await report(2041);
     expect(r).toMatchObject({
-      year: 2035,
+      year: 2041,
       payslipsChecked: 0,
       rows: [],
       byMonth: [],
