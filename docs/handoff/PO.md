@@ -34,6 +34,9 @@ this file only says where the PO room stands.
   to be merged until the owner reads it) and its four questions: the landing
   "in development" line on filing and bank files (now Pro candidates), "no
   annual contract" in the hero, the Status test counts, new screenshots.
+- PR #99 (screenshots and a loop from the real console, stacked on #98, docs
+  and images only, not to be merged until the owner reads it). Merge #98
+  first, then retarget #99 to main.
 
 - For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
   (it reports the DSM version, Container Manager and free space), a USB
