@@ -30,6 +30,11 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
+- PR #98 (README and landing page for the October features, docs only, not
+  to be merged until the owner reads it) and its four questions: the landing
+  "in development" line on filing and bank files (now Pro candidates), "no
+  annual contract" in the hero, the Status test counts, new screenshots.
+
 - For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
   (it reports the DSM version, Container Manager and free space), a USB
   drive or another machine for backups, and a password store for the key
