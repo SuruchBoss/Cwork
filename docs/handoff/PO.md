@@ -7,15 +7,13 @@ this file only says where the PO room stands.
 ## Where things are
 
 - **Dev queue (2026-10-17, owner: do what can be done while documents are
-  awaited):** QA findings first: #94 (a waiting scanner day can be
-  decided inside a paid month; decided: refuse, fix in the next period) and
-  #95 (locked days leave the waiting queue) → #96 (`check.sh` port check
-  without ss/netstat) → #97 (NAS guide gaps), then CW-065 (#68) → CW-073
-  (#78). CW-090 closed 2026-10-17. CW-062 (#62) is done on the cloud side and stays open for the
+  awaited):** empty. Closed 2026-10-17: CW-090, CW-065, CW-073 and the
+  QA findings #94–#97 (a day inside a paid month is locked; fixes go in the
+  next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
   pilot's real NAS, which nothing touches until the owner approves.
 - **QA:** first pass done 2026-10-17, 41 cases, results merged
   (`docs/qa/pilot-a-2026-10.md`). The QA room
-  (`session_01FygupdPGTCw1Qe7C1BYSCg`) re-tests S15 once #94/#95 land. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
+  (`session_01FygupdPGTCw1Qe7C1BYSCg`) re-tests S15 on the fix for #94/#95. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
   sample file and November. Not queued: CW-080, CW-086 (#89), a
   scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
   on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
