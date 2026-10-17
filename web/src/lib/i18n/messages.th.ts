@@ -1203,6 +1203,18 @@ export const thMessages: Record<string, string> = {
   Expired: 'หมดอายุแล้ว',
   'A passport number is 5 to 20 English letters and digits.':
     'เลขพาสปอร์ตใช้ตัวอักษรภาษาอังกฤษและตัวเลข 5 ถึง 20 ตัว',
+  // Foreign workers' documents that are about to lapse (CW-073)
+  'Documents expiring': 'เอกสารใกล้หมดอายุ',
+  'Passports and work permits that have expired or will soon, for people who are still employed. HR is told once as each document comes within 90, 60 and 30 days.':
+    'พาสปอร์ตและใบอนุญาตทำงานที่หมดอายุแล้วหรือใกล้หมด เฉพาะคนที่ยังทำงานอยู่ ระบบแจ้ง HR ครั้งเดียวเมื่อเอกสารเหลือไม่เกิน 90, 60 และ 30 วัน',
+  'Look ahead': 'ดูล่วงหน้า',
+  Passport: 'พาสปอร์ต',
+  'Work permit': 'ใบอนุญาตทำงาน',
+  Document: 'เอกสาร',
+  'Expires on': 'หมดอายุวันที่',
+  '{days} days left': 'เหลือ {days} วัน',
+  'Nothing has expired or expires in the next {days} days':
+    'ไม่มีเอกสารที่หมดอายุแล้วหรือจะหมดใน {days} วันข้างหน้า',
   // Scanner days in a paid month (#94, #95)
   'Payroll has used it': 'เงินเดือนใช้แล้ว',
   'Not counted; the month is paid': 'ไม่นับ เพราะจ่ายเงินเดือนงวดนี้แล้ว',

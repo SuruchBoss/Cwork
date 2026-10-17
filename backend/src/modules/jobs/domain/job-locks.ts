@@ -24,6 +24,7 @@ export const JOB_LOCKS = {
   'leave-year-rollover': 7,
   'purge-delivered-outbox': 8,
   'purge-expired-employees': 9,
+  'document-expiry-notices': 10,
 } as const;
 
 export type JobName = keyof typeof JOB_LOCKS;

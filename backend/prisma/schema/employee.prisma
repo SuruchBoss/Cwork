@@ -127,6 +127,7 @@ model Employee {
   attendanceRecords    AttendanceRecord[]
   attendancePunches    AttendancePunch[]
   scannerDays          ScannerDay[]
+  documentNotices      EmployeeDocumentNotice[]
   attendanceCorrections AttendanceCorrection[]
   overtimeRequests     OvertimeRequest[]
   scheduleAssignments  ScheduleAssignment[]
@@ -416,4 +417,24 @@ model ExitInterview {
   updatedAt     DateTime @updatedAt
 
   @@map("exit_interviews")
+}
+
+/// Which expiry window of which document HR has already been told about
+/// (CW-073). One row per employee, document, expiry date and window, so a window
+/// is announced once; a renewal is a new expiry date and starts its own windows.
+/// `document` is PASSPORT or WORK_PERMIT and `window` is 90, 60 or 30 days left,
+/// or 0 once the date has passed. Never holds a document number.
+model EmployeeDocumentNotice {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  employeeId     String   @db.Uuid
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  document       String
+  expiresOn      DateTime @db.Date
+  window         Int
+  noticedAt      DateTime @default(now())
+
+  @@unique([employeeId, document, expiresOn, window])
+  @@index([organizationId])
+  @@map("employee_document_notices")
 }

@@ -39,6 +39,7 @@ import {
   CreateResignationDto,
   DecideResignationDto,
   EmployeeQueryDto,
+  ExpiringDocumentsQueryDto,
   UpdateEmployeeDto,
   UpdateOwnProfileDto,
 } from './dto/employee.dto';
@@ -48,6 +49,7 @@ import {
   requireUpload,
   XLSX_CONTENT_TYPE,
 } from '../../core/spreadsheet/upload';
+import { DocumentExpiryService } from './document-expiry.service';
 import { EmployeeImportService } from './employee-import.service';
 import { EmployeesService } from './employees.service';
 import { OffboardingService } from './offboarding.service';
@@ -61,6 +63,7 @@ export class EmployeesController {
     private readonly employees: EmployeesService,
     private readonly retention: EmployeeRetentionService,
     private readonly imports: EmployeeImportService,
+    private readonly documentExpiry: DocumentExpiryService,
   ) {}
 
   @Get()
@@ -74,7 +77,19 @@ export class EmployeesController {
     return this.employees.list(user, query);
   }
 
-  // Import and retention routes are declared before ':id' so the static segment wins.
+  // Import, retention and expiry routes are declared before ':id' so the static segment wins.
+
+  @Get('expiring-documents')
+  @RequirePermissions(Permission.EMPLOYEE_READ)
+  @ApiOperation({
+    summary: 'Passports and work permits expired or expiring within 30, 60 or 90 days (CW-073)',
+  })
+  expiringDocuments(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ExpiringDocumentsQueryDto,
+  ) {
+    return this.documentExpiry.list(user, query.within ?? 90);
+  }
 
   @Get('import/template')
   @RequirePermissions(Permission.EMPLOYEE_CREATE)

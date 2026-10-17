@@ -15,6 +15,7 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -398,4 +399,16 @@ export class CreateOffboardingTaskDto {
   @IsInt()
   @Min(0)
   orderIndex?: number;
+}
+
+export class ExpiringDocumentsQueryDto {
+  @ApiPropertyOptional({
+    enum: [30, 60, 90],
+    default: 90,
+    description: 'How many days ahead to look; documents already expired are always listed',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsIn([30, 60, 90])
+  within?: number;
 }

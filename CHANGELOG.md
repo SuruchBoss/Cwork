@@ -41,6 +41,21 @@ entry, tags it and publishes the notes.
   host, with Odoo beside it) and what was not (any Synology, DSM's screens, a
   Windows PC trusting the authority, a scan from outside, two real machines).
 
+- **Passports and work permits that are about to lapse** (CW-073). **Employees →
+  Documents expiring** lists, for anyone who may read employee records, the
+  passports and work permits of people who have not left that have expired or
+  will within 30, 60 or 90 days (`GET /employees/expiring-documents`): name, code,
+  which document, the date and how many days are left, never a document number.
+  Each day at 02:00 UTC (09:00 in Bangkok) HR (everyone who may update employees,
+  a department-limited grant for its own department's people) is told once as a
+  document comes within 90, 60 and 30 days, and once when it has expired. The
+  notice names the person and the date and carries no number. A document first
+  seen already inside a window is told for that window only. A renewal is a later
+  date, which starts its own windows and leaves nothing more to send for the old
+  one. What was told is kept in `employee_document_notices` (migration
+  `20261017120000`), one row per employee, document, date and window. Thai guide
+  `docs/guide/expiring-documents.th.md`.
+
 - **Add one employee from the console** (CW-065). **Employees → Add an employee**
   (for anyone who may create employees) is a form with the fields of the
   spreadsheet import: name in Thai or, for someone with no Thai name, in English
