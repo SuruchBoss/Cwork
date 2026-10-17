@@ -44,6 +44,7 @@ const preview: ScannerPreview = {
   days: { added: 29, changed: 0, unchanged: 0 },
   byStatus,
   punchesToAdd: 40,
+  lockedDays: 0,
   unmapped: [
     {
       scannerNumber: '77',
@@ -150,6 +151,17 @@ describe('Importing the fingerprint scanner export (CW-061)', () => {
 
     expect(
       await screen.findByText('ไม่มีอะไรใหม่ในไฟล์นี้ ทุกวันอยู่ใน Cwork แล้ว'),
+    ).toBeInTheDocument();
+  });
+
+  it('tells HR how many days sit in a month payroll has already used', async () => {
+    post.mockResolvedValueOnce({ ...preview, lockedDays: 2 });
+    renderPage();
+
+    await choose();
+
+    expect(
+      await screen.findByText('2 วันอยู่ในเดือนที่เงินเดือนใช้ไปแล้ว จะไม่ถูกแก้'),
     ).toBeInTheDocument();
   });
 

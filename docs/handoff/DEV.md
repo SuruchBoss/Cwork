@@ -26,12 +26,19 @@ this file only says where the dev room stands.
   `employee-document-expiry.e2e-spec.ts` (8 cases, walks one date through 90/60/30/expired
   with an injected `now`). Thai guide `docs/guide/expiring-documents.th.md`. Not walked in a
   browser.
-- Full e2e 441 and web 251 passed; doc counts updated.
+- QA re-ran S15 (#94/#95) on `main` 814ecc5: all four checks pass.
+- **Small ticket from the PO, done here:** the scanner import's `lockedDays` (preview and
+  result) now counts every day of the file that payroll has used, by the same `LockedDays`
+  rule as the review page, so a new waiting day in a paid month reports 1. The import page
+  says how many days will be left as they are. One e2e case added (preview and import).
+  `sso-shortfall.e2e-spec.ts` now checks its empty year with 2041: it used 2035, which
+  `period-check` pays a run in, so it failed whenever `period-check` ran first.
+- Full e2e 442 and web 252 passed locally; doc counts updated. Waiting for CI of `main`
+  54730ed to finish before pushing to `main`.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
-  CW-086 (#89) are not queued. QA has not yet re-run S15 (#94/#95): tell room
-  `session_01FygupdPGTCw1Qe7C1BYSCg` once CI on `main` is green.
+  CW-086 (#89) are not queued.
 
 ## Next
 
-- Nothing queued once CW-073 is accepted. Do not start CW-085, CW-080 or CW-086, nor the
+- Nothing queued. Do not start CW-085, CW-080 or CW-086, nor the
   support-scope page. Do not touch the real NAS until the owner approves.

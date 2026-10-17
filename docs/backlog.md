@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-065 → CW-073 · CW-062 on the real NAS · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -559,7 +559,7 @@ What the compose file runs today, and what makes this large: `postgres`
 ---
 
 ### CW-087 · What Cwork's support covers, written down
-`P1` · business · docs · **S** · before the first invoice; part of CW-077, open (#90). The problem-report form is done (219878b, 2026-10-16); the page and the README link wait on the owner's channel, hours and response time
+`P1` · business · docs · **S** · before the first invoice; part of CW-077, open (#90). The problem-report form is done (219878b, 2026-10-16); the page and the README link wait on the owner's channel and response time
 
 The "what support means" point of CW-077, as its own ticket, the counterpart
 of SuruchBoss/PaynEat#168. One person answers support online, beside a day
@@ -609,37 +609,12 @@ and the server's error, none of which reach the report. Guide:
 `docs/guide/report-a-problem.th.md`; what is kept is listed in
 `docs/security.md`. Not yet walked through in a real browser.
 
+**Owner, 2026-10-17:** support hours are 18:00–24:00 Thai time for now
+(after the day job), a temporary value. The channel and the response time
+are not set ("ยังไม่กำหนด"); no response time is written anywhere until the
+owner states one.
+
 **Files** `docs/` (new page), `README.md`, `README.th.md`
-
----
-
-
-### CW-073 · Foreign workers' documents expire without anyone being told
-`P1` · employees · notifications · **S–M** · queued 2026-10-17 (#78), after CW-065
-
-Split from CW-068, whose Pilot A half is done: an employee now carries
-`passportExpiresOn` and `workPermitExpiresOn`, and the employee page marks a
-date that has already passed. Nothing looks at those dates ahead of time, and
-a work permit that lapses unnoticed carries heavy penalties for the employer.
-
-**Scope**
-- A list for HR of passports and work permits expiring within 30, 60 and 90
-  days, and already expired, for active employees they can see. Dates and
-  names only, never the document numbers.
-- A notification to HR as each window opens for a document, once per window,
-  not daily. A renewal (a later expiry date) clears it and starts its own
-  windows. An employee who has left is neither listed nor notified.
-
-**Acceptance**
-- A work permit expiring in 29 days appears on the list, and HR is notified
-  once, not daily.
-- Renewing that permit removes it from the list, and nothing more is sent for
-  the old date.
-- The list and the notification never contain a passport or work permit
-  number.
-
-**Files** `backend/src/modules/employees/`, `backend/src/modules/notifications/`,
-`web/src/features/employees/`
 
 ---
 
@@ -984,24 +959,6 @@ not because there is a date.
 
 
 ## P2 — worth doing
-
-
-### CW-065 · Add one employee from the console
-`P1` · employees · web · **S** · with the dev since 2026-10-17 (#68)
-
-Found by the dev on 2026-09-30. The console has no form for adding one
-employee. CW-059's spreadsheet import is the only way in, and a single new
-hire means filling in a one-row template. The pilot can live with that for
-four weeks, but a product cannot.
-
-**Acceptance** HR adds one employee, with the same fields and checks as the
-import, and sensitive fields encrypted the same way, from a form on the
-employee directory. When CW-064 has landed, the same form offers to create
-their account.
-
-**Files** `web/src/features/employees/`
-
----
 
 
 ### CW-012 · Expense claims on mobile
@@ -1412,3 +1369,6 @@ Kept so the reasoning survives.
 | **CW-061** · A company on a fingerprint scanner had no way to bring its punches in | Attendance → scanner days (`/attendance/scanner`, `attendance:manage`, not for a department-limited user): upload the export, preview it, then import; nothing is written until HR imports. The file is read from its byte-order mark, never its name (the pilot's TA-001EX writes UTF-16LE text with a mark, tab-separated, no header, fields padded and ending in a comma); a year outside 1990-2100, a Buddhist-era year for instance, is a problem, not a silent read. Two times count (first in, last out); no time is no punch (leave and absence come from the calendar and leave records); one time, or three or more, waits for HR; a scanner number with no employee is listed apart with its days, not an error. HR picks in and out from the day's times or leaves the day uncounted, decisions are kept apart from the raw times and can be changed, every raw row stays visible, and the totals follow each decision. A decision holds only while its day has the same times: a later file that adds a time puts the day back to waiting on HR and stops counting the punches it had counted, which stay in the append-only punch table and are filtered out by `ACTIVE_PUNCH`. Counted times are ordinary `BIOMETRIC` punches, not flagged for having no location; an overlapping file adds only new punches and does not touch days a payroll has used; each import is one audit event (file, date range, punches added); nothing but name, number, date and times is accepted, checked by an e2e on the columns written. Accepted from the dev: the same minute written twice on one day is one tap, counted once. Tested on synthetic files only; `.gitignore` keeps `Export*.xls`, `Export*.XLS` and `Export*.txt` out. Guide: `docs/guide/scanner-import.th.md`. Left: the check against the pilot's real export, run on the owner's own machine; lateness, overtime, shifts and shifts across midnight (not known to be needed); a field to change an employee's scanner number on the employee page (today through the CW-059 import or `PATCH /employees/:id`), not queued. 6afcf2e and 6db7bf2, closed 2026-10-17. |
 | **CW-089** · The accountant who files ภ.ง.ด.1 had nothing to work from, and nothing showed when a filed total differed | `GET /payroll/periods/:id/export?format=accountant` is the existing export, every column in its order, plus two only: the employee's tax ID (the stored one, else the national ID, else empty) and the income type, 40(1) on every row since Cwork's payroll is employment income only; `payroll:export`, audited as an export with the count of rows missing a tax ID and never the numbers; an e2e checks every money figure equals the existing export and that the plain CSV still prints no ID. Payroll → compare with what was filed (`/payroll/compare`): HR enters the filed tax total and the filed social security total (employee and employer together) and sees Cwork's figure beside each with the difference, one satang either way shown as different; on the same page HR uploads its own per-person figures (code, gross, tax, social security, net) for a parallel run and every person and column that differs is marked, nothing kept and no payslip changed (checked field by field against a snapshot). Accepted from the dev: a period whose runs are paid now exports as well as one that is approved (`reconcilePeriod` allows APPROVED or PAID, as the social security file already did), since the accountant files after payday; a draft or calculated run is still refused. Free, tied to no key; synthetic test data only. Guide: `docs/guide/period-check.th.md`. Left for the owner: what HR sends the accountant today (the column order follows the existing export until then), whether e-Filing needs a finer income code than 40(1), and whether the first payroll runs beside HR's method once. dbf6e9b and 4a40efe, closed 2026-10-17. |
 | **CW-090** · HR could not set or correct an employee's scanner number without the API | The employee page has a scanner-number card for users who may edit employees: the number is kept as written (`007` stays `007`), cleared by saving it empty, and a number another employee holds is refused with a Thai message. Saving a new number counts that number's days that nobody owned yet, straight away: two-time days become punches, the rest wait for HR on the scanner page, which the card says after saving. Days HR decided, days already counted under an old number and days payroll used do not move. The update is audited with the old and new number, plus a row with the count of days matched. `docs/guide/scanner-import.th.md` now says where to change it. e2e covers keeping zeros, matching waiting days, old days staying put, locked days, duplicates and clearing. 39152de and 2a6e6bb, closed 2026-10-17. |
+| **CW-065** · A single new hire needed a one-row import file | An "Add employee" button on the directory opens `/employees/new` with the import's fields and checks (Thai or English name alone, hire date, ID number with or without dashes, probation not before hire, a bank account complete or left out entirely) and posts to the same `POST /employees`; ID numbers and the account number are encrypted as in the import. The backend gained an optional bank account on create and the `PROBATION_BEFORE_HIRE` check. Creating a sign-in waits on CW-064. e2e and web tests added. 8308aaa and 1f85420, closed 2026-10-17. |
+| **QA pass 1 findings (#94–#97)** · Found by the Pilot A QA pass, 2026-10-17 | #94/#95: a scanner day inside a period the employee was paid for (a paid run with a payslip for them) is locked whether or not it had an attendance record; a decision is 422 `DAY_LOCKED`, a later file adds no punch, and locked days leave the waiting queue and `totals.waiting` for their own LOCKED filter. Decided by the PO: a day forgotten before payday is corrected in the next period, never in the paid one; the guide says so. #96: `check.sh` reads `/proc/net/tcp` and `tcp6` when neither `ss` nor `netstat` exists, and warns that it cannot tell rather than calling a port free. #97: `deploy/nas/change-address.sh`; the Thai guide gains the authenticator and recovery-code step, the corrected address-change row, `PATH` in the Task Scheduler line, and `install.sh` no longer asks for a backup folder it was given. The QA room re-tests S15. 133d884 and a2ca743, closed 2026-10-17. |
+| **CW-073** · A foreign worker's passport or work permit could lapse with nobody told | `GET /employees/expiring-documents` (`employee:read`) lists active employees' passports and work permits expiring within 30, 60 or 90 days or already expired, with names, codes, dates and the window, never a document number; the console has an Expiring documents page off the directory. A daily job (`document-expiry-notices`, 02:00 UTC, its own lock) tells everyone who may edit the employee once per window (90, 60, 30) and once more on expiry, department-scoped users only about their own department; sent windows are kept in `employee_document_notices` (additive migration). A renewal is a new date and starts its own windows; a date first entered inside 30 days notices that window only; leavers are neither listed nor notified. e2e covers once-only notices over repeated runs, renewal, the four windows in turn, expiry, leavers, missing dates and permissions, and no document number in the list or the notice. Guide: `docs/guide/expiring-documents.th.md`. 1be372f and 15a40f7, closed 2026-10-17. |
