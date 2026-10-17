@@ -855,6 +855,8 @@ export const thMessages: Record<string, string> = {
   '3. Fix these in the file': '3. แก้ไขรายการเหล่านี้ในไฟล์',
   '{count} problems. Nothing has been imported: fix them in the file and upload it again.':
     'พบ {count} จุดที่ต้องแก้ ยังไม่มีการนำเข้าใด ๆ แก้ในไฟล์แล้วอัปโหลดใหม่',
+  '{count} problem. Nothing has been imported: fix it in the file and upload it again.':
+    'พบ {count} จุดที่ต้องแก้ ยังไม่มีการนำเข้าใด ๆ แก้ในไฟล์แล้วอัปโหลดใหม่',
   Row: 'แถว',
   Column: 'คอลัมน์',
   Problem: 'ปัญหา',
@@ -916,15 +918,25 @@ export const thMessages: Record<string, string> = {
   'Review scanner days': 'ตรวจวันที่สแกน',
   'Imported {file}: {count} punches added to attendance':
     'นำเข้า {file} แล้ว เพิ่มรายการลงเวลา {count} รายการ',
+  'Imported {file}: {count} punch added to attendance':
+    'นำเข้า {file} แล้ว เพิ่มรายการลงเวลา {count} รายการ',
   'Days from {from} to {to}: {added} new, {changed} with new times, {same} as before':
     'วันที่ {from} ถึง {to}: วันใหม่ {added} วัน วันที่มีเวลาเพิ่ม {changed} วัน เหมือนเดิม {same} วัน',
   '{count} days were left as they were because payroll has already used them':
     '{count} วันไม่ถูกแก้ เพราะเงินเดือนใช้ไปแล้ว',
+  '{count} day was left as it was because payroll has already used it':
+    '{count} วันไม่ถูกแก้ เพราะเงินเดือนใช้ไปแล้ว',
   '{count} days are in a month payroll has already used; they will be left as they are':
+    '{count} วันอยู่ในเดือนที่เงินเดือนใช้ไปแล้ว จะไม่ถูกแก้',
+  '{count} day is in a month payroll has already used; it will be left as it is':
     '{count} วันอยู่ในเดือนที่เงินเดือนใช้ไปแล้ว จะไม่ถูกแก้',
   '{count} days are waiting for HR to decide, and are not counted until then':
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
+  '{count} day is waiting for HR to decide, and is not counted until then':
+    '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
   '{count} scanner numbers belong to nobody yet; match them on the review page':
+    'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
+  '{count} scanner number belongs to nobody yet; match it on the review page':
     'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
   '1. Choose the scanner’s file': '1. เลือกไฟล์จากเครื่องสแกน',
   'Use the file the scanner wrote, as it is: it may be called .xls but it is read as text. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.':
@@ -934,6 +946,8 @@ export const thMessages: Record<string, string> = {
   '2. What this file holds': '2. ในไฟล์นี้มีอะไร',
   'Import this file': 'นำเข้าไฟล์นี้',
   'The file is clean. {lines} lines, from {from} to {to}.':
+    'ไฟล์ถูกต้อง {lines} บรรทัด ตั้งแต่ {from} ถึง {to}',
+  'The file is clean. {lines} line, from {from} to {to}.':
     'ไฟล์ถูกต้อง {lines} บรรทัด ตั้งแต่ {from} ถึง {to}',
   'New days': 'วันใหม่',
   'Days with new times': 'วันที่มีเวลาเพิ่ม',

@@ -35,6 +35,15 @@ export function translate(
 }
 
 /**
+ * English has a singular. Keys are the English text, so the singular wording is
+ * its own key (with its own Thai entry, which is the same Thai: Thai does not
+ * inflect) and `count` picks between the two: `t(plural(n, one, other), { count: n })`.
+ */
+export function plural(count: number, one: string, other: string): string {
+  return count === 1 ? one : other;
+}
+
+/**
  * Translate outside a React component, against the current language. Components
  * should use `useT` instead so they re-render when the language changes.
  */

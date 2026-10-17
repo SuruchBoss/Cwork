@@ -743,6 +743,13 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The scanner import page no longer says "1 days" or "1 scanner numbers belong
+  to nobody".** English has a singular, and the page's counted messages (punches
+  added, days left as they were, days waiting for HR, scanner numbers with no
+  owner, problems in the file, lines, days in a paid month) now read correctly for
+  one. A small `plural(count, one, other)` picks between two keys, so the singular
+  is its own English text with its own Thai entry (the same Thai: Thai does not
+  inflect). Tests cover a count of one and of two.
 - **NAS installer: a used port is never reported as free, and an address change has
   a script** (#96, #97). `check.sh` read "free" whenever neither `ss` nor
   `netstat` existed; it now reads the kernel's own table (`/proc/net/tcp`,

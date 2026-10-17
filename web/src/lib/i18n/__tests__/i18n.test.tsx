@@ -4,7 +4,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatMinutes, formatMoney, yearsOfService } from '@/lib/format';
-import { translate } from '@/lib/i18n';
+import { plural, translate } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import { useUiStore } from '@/stores/ui.store';
 
@@ -35,6 +35,14 @@ describe('translate', () => {
 
   it('leaves an unmatched placeholder untouched', () => {
     expect(translate('{a} and {b}', 'en', { a: 'x' })).toBe('x and {b}');
+  });
+
+  it('picks the singular key for one and the plural key for every other count', () => {
+    const one = '{n} day is left';
+    const other = '{n} days are left';
+    expect(plural(1, one, other)).toBe(one);
+    expect(plural(0, one, other)).toBe(other);
+    expect(plural(2, one, other)).toBe(other);
   });
 });
 
