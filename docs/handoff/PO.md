@@ -34,6 +34,12 @@ this file only says where the PO room stands.
   and free-edition wording) and PR #99 (screenshots and a loop from the real
   console, `docs/screenshots/capture-office.mjs`) merged at `6393314` and
   `f93e1d7`, both green.
+- PR #100 merged at `d342b87`, green: the landing clip is now a 1920x1200
+  video (mp4 + webm + poster) instead of a 900px animated WebP that looked
+  soft on high-density tablets; the README GIF is 1600px wide. Not yet seen
+  on Safari or a real tablet.
+- Dev has a small copy fix next: the English plural in "1 scanner numbers
+  belong to nobody yet".
 
 ## Waiting on the owner
 
