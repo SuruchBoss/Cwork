@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  ACCOUNTANT_FORMAT,
   CSV_FORMAT,
   PayrollReconciliationError,
   reconcilePeriod,
@@ -132,6 +133,49 @@ describe('CSV format', () => {
     ]);
     const csv = CSV_FORMAT.build(reconciled);
     expect(csv).toContain('"Smith, John"');
+  });
+});
+
+describe('accountant format (CW-089)', () => {
+  const lines = (csv: string) =>
+    csv
+      .replace(/^\uFEFF/, '')
+      .trimEnd()
+      .split('\r\n');
+
+  it('is the existing export with two columns after it, and no other', () => {
+    const reconciled = reconcilePeriod(period, [
+      reconciledRun({ payslips: [slip({ taxId: '1234567890123' })] }),
+    ]);
+    const plain = lines(CSV_FORMAT.build(reconciled));
+    const accountant = lines(ACCOUNTANT_FORMAT.build(reconciled));
+
+    const plainHeader = plain[0]!.split(',');
+    const header = accountant[0]!.split(',');
+    expect(header.slice(0, plainHeader.length)).toEqual(plainHeader);
+    expect(header.slice(plainHeader.length)).toEqual(['Tax ID', 'Income type']);
+    // The figures are the same figures, row for row.
+    const cells = accountant[1]!.split(',');
+    expect(cells.slice(0, plainHeader.length)).toEqual(plain[1]!.split(','));
+    expect(cells.slice(plainHeader.length)).toEqual(['1234567890123', '40(1)']);
+  });
+
+  it('leaves the tax ID empty for someone who has none, and the plain export never prints it', () => {
+    const reconciled = reconcilePeriod(period, [
+      reconciledRun({ payslips: [slip({ taxId: null })] }),
+    ]);
+    expect(lines(ACCOUNTANT_FORMAT.build(reconciled))[1]).toMatch(/,,40\(1\)$/);
+
+    const withId = reconcilePeriod(period, [
+      reconciledRun({ payslips: [slip({ taxId: '1234567890123' })] }),
+    ]);
+    expect(CSV_FORMAT.build(withId)).not.toContain('1234567890123');
+    expect(CSV_FORMAT.needsTaxIds).toBeUndefined();
+    expect(ACCOUNTANT_FORMAT.needsTaxIds).toBe(true);
+  });
+
+  it('is found by its id', () => {
+    expect(resolveExportFormat('accountant')?.id).toBe('accountant');
   });
 });
 

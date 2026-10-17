@@ -61,6 +61,8 @@ import {
 } from './dto/payroll.dto';
 import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
+import { ComparePeriodDto } from './dto/period-check.dto';
+import { PeriodCheckService } from './period-check.service';
 import { PayslipPrintService, type PrintedFile } from './payslip-print.service';
 import { PayrollService } from './payroll.service';
 import type { SlipsPerPage } from '../documents/payslip-renderer';
@@ -93,6 +95,7 @@ export class PayrollController {
     private readonly ssoShortfall: SsoShortfallService,
     private readonly printing: PayslipPrintService,
     private readonly ssoFiling: SsoFilingService,
+    private readonly periodCheck: PeriodCheckService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -143,6 +146,41 @@ export class PayrollController {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'private, max-age=0, no-store');
     res.send(file.content);
+  }
+
+  @Post('periods/:id/compare')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.PAYROLL_EXPORT)
+  @ApiOperation({
+    summary: "Set the filed totals beside this period's own (CW-089)",
+    description:
+      'Takes the withholding-tax total e-Filing produced and/or the social security total filed (employee and employer together) and returns each beside Cwork’s figure with the difference, to the satang. Refused with 422 while the period does not reconcile. Writes nothing.',
+  })
+  comparePeriod(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ComparePeriodDto,
+  ) {
+    return this.periodCheck.compare(user, id, dto);
+  }
+
+  @Post('periods/:id/parallel-run')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.PAYROLL_EXPORT)
+  @UseInterceptors(FileInterceptor('file', { limits: IMPORT_LIMITS }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody(IMPORT_BODY)
+  @ApiOperation({
+    summary: "Check HR's own per-person figures against this period (CW-089)",
+    description:
+      'A spreadsheet with employee code, gross, tax, social security (employee) and net for each person. Returns every person and column that differs, and anyone only one side has, or every problem with the file. Writes nothing and changes no payslip.',
+  })
+  parallelRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.periodCheck.parallelRun(user, id, requireUpload(file));
   }
 
   // -------------------------------------------------------------------- reports

@@ -13,6 +13,7 @@ import { ExpensesService } from './expenses.service';
 import { OpeningBalanceImportService } from './opening-balance-import.service';
 import { BenefitsController, ExpensesController, PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
+import { PeriodCheckService } from './period-check.service';
 import { PayslipPrintService } from './payslip-print.service';
 import { SsoFilingService } from './sso-filing.service';
 import { SsoShortfallService } from './sso-shortfall.service';
@@ -29,6 +30,7 @@ import { SsoShortfallService } from './sso-shortfall.service';
     OpeningBalanceImportService,
     SsoShortfallService,
     SsoFilingService,
+    PeriodCheckService,
     PayslipPrintService,
     CryptoService,
     SequenceService,
