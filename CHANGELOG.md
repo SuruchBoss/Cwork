@@ -65,6 +65,7 @@ sheet of the notes and coins each envelope needs and what to withdraw (CW-088).
 A customer who hits an error can build a report of what happened, with the
 console's version and the failed requests but no personal data, to copy and
 send themselves; Cwork sends nothing (CW-087).
+A fingerprint scanner's export is imported from the console: a day with two times counts, a day with one time or three or more waits for HR to decide on one review page, and a scanner number nobody holds is listed apart (CW-061).
 The console and the app also work in English; benefits, shifts and issued
 documents are managed in the console; statuses read as words rather than codes;
 and a public demo runs from the landing page.
