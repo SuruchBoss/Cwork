@@ -480,6 +480,7 @@
       <small>v0.3.1</small>
     </a>
     <nav aria-label="Main menu">
+      <a class="nav__link" href="#office">New for small offices</a>
       <a class="nav__link" href="#pain">Problems we solve</a>
       <a class="nav__link" href="#calc">What it costs</a>
       <a class="nav__link" href="#screens">The screens</a>
@@ -545,6 +546,26 @@
                aria-label="A three-and-a-half-minute film: six HR problems Cwork solves on screen, in the real product — payroll, clocking in with no signal, leave filed and approved from a phone, and PDPA-protected personal data"></video>
       </figure>
       <p class="caption"><span>The running product, not a mock-up — every field really typed, every button really pressed</span><span class="mono">REC · demo company</span></p>
+    </div>
+  </section>
+
+  <!-- ==================================================== small office -->
+  <section id="office" class="block block--alt">
+    <div class="wrap">
+      <div class="shead">
+        <span class="eyebrow"><span class="jp" aria-hidden="true">新</span><span class="label">New in October 2026</span></span>
+        <h2>For the small office with no IT department</h2>
+        <p class="lede">Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.</p>
+      </div>
+
+      <div class="rules">
+        <div class="rule"><span class="mono">新 01</span><div><h3>Your fingerprint scanner’s file, read as it is</h3><p>Upload the scanner’s export and preview it before importing. A day with a time missing or extra waits for HR, who sees every raw time, and days in a paid period are locked.</p></div></div>
+        <div class="rule"><span class="mono">新 02</span><div><h3>A cash payday, counted to the coin</h3><p>The cash sheet gives each person’s notes and coins down to 25 satang and the amount to withdraw, with payslips and a wage receipt for staff to sign.</p></div></div>
+        <div class="rule"><span class="mono">新 03</span><div><h3>A file for the accountant, checked against what was filed</h3><p>An export with tax IDs for whoever prepares the PND 1, and any difference from the filed totals shows, down to one satang. Cwork prepares and checks; it does not file for the accountant.</p></div></div>
+        <div class="rule"><span class="mono">新 04</span><div><h3>Run beside your current method before switching</h3><p>Upload the per-person figures from the way you pay today. Every person and column that differs from Cwork is marked, and no payslip or record is changed.</p></div></div>
+        <div class="rule"><span class="mono">新 05</span><div><h3>An installer for the office NAS</h3><p>A read-only check first, then scripts to install, back up, restore, update and roll back. Rehearsed on a Docker host; not yet tried on the real Synology DSM screens.</p></div></div>
+        <div class="rule"><span class="mono">新 06</span><div><h3>Passports and work permits that do not lapse unnoticed</h3><p>Whoever may edit the employee is told at 90, 60 and 30 days and on expiry, and the document number is never shown.</p></div></div>
+      </div>
     </div>
   </section>
 
@@ -919,6 +940,7 @@
         <p class="lede">
           Forward this section to whoever looks after your servers. All it needs is one machine with Docker — no Redis, no message broker, no Kubernetes.
         </p>
+        <p class="lede">If the office has a NAS that runs containers, deploy/nas has scripts and a Thai guide. Rehearsed on a clean Docker host; not yet tried on a real NAS.</p>
       </div>
 
       <div class="split" style="align-items:start">
