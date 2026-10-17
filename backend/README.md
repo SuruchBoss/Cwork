@@ -85,7 +85,7 @@ npm run db:verify     # fails loudly if an object went missing
 
 ## Tests
 
-476 unit tests over the domain layer:
+493 unit tests over the domain layer:
 
 | Area | Covers |
 |---|---|

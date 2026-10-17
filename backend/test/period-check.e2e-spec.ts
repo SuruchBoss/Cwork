@@ -81,7 +81,12 @@ describe('Payroll period check (e2e)', () => {
     return { periodId: period.body.id as string, periodCode: period.body.code as string };
   }
 
-  const csvLines = (body: Buffer) => body.toString('utf8').replace(/^﻿/, '').trim().split('\r\n');
+  const csvLines = (body: Buffer) =>
+    body
+      .toString('utf8')
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .split('\r\n');
 
   async function slips() {
     return prisma.payslip.findMany({
@@ -334,6 +339,26 @@ describe('Payroll period check (e2e)', () => {
       expect(res.body.problems.map((p: any) => [p.row, p.column, p.code])).toEqual([
         [2, 'B', 'INVALID_AMOUNT'],
       ]);
+    });
+  });
+
+  describe('a period that has been paid', () => {
+    it('is exported and compared like an approved one, since it is filed after payday', async () => {
+      const paid = await preparePeriod(2035, 3, { approve: true });
+      const run = await prisma.payrollRun.findFirstOrThrow({ where: { periodId: paid.periodId } });
+      const pay = await api.post(`/payroll/runs/${run.id}/pay`, ceoToken);
+      expect(pay.body.status).toBe('PAID');
+
+      const file = await api.getRaw(
+        `/payroll/periods/${paid.periodId}/export?format=accountant`,
+        payrollToken,
+      );
+      expect(file.status).toBe(200);
+      const compared = await api.post(`/payroll/periods/${paid.periodId}/compare`, payrollToken, {
+        taxFiled: '0',
+      });
+      expect(compared.status).toBe(200);
+      expect(compared.body.tax.cwork).toMatch(/^\d+\.\d{2}$/);
     });
   });
 

@@ -21,6 +21,22 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **The accountant's month, and a check against what was filed** (CW-089). For
+  a company whose ภ.ง.ด.1 is filed by an outside accounting firm, **Payroll →
+  Export for the accountant** is the period's usual export with two columns
+  after it, the employee's tax ID (their own, else their national ID) and the
+  income type (`40(1)`, the only income Cwork's payroll computes). It needs
+  `payroll:export`, is audited like every export (with how many people had no tax
+  ID, never the numbers), and is the only format that decrypts them.
+  **Payroll → Check against filings** takes the withholding-tax total e-Filing
+  produced and the social security total filed and shows each beside Cwork's,
+  with the difference; a satang out is shown as different. The same page takes
+  HR's own per-person figures (code, gross, tax, social security, net) for a
+  parallel run and marks every person and column that differs, and anyone only
+  one side has. Both checks read the period reconciled like the export, store
+  nothing and change no payslip. Free, tied to no key. Thai guide
+  `docs/guide/period-check.th.md`. Tested with synthetic periods and files only.
+
 - **Import from a fingerprint scanner** (CW-061). The scanner's own export, a
   text file it calls `.xls` (UTF-16 with a byte-order mark, tab separated, no
   header, one line for each scanner number and day), is imported from

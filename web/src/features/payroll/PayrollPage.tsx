@@ -101,8 +101,11 @@ export default function PayrollPage() {
   // The server reconciles before it sends anything; a period that does not
   // reconcile is refused with the reason, which surfaces as the error below.
   const exportPeriod = useMutation({
-    mutationFn: async (periodId: string) => {
-      const { blob, filename } = await api.download(`/payroll/periods/${periodId}/export`);
+    mutationFn: async ({ periodId, format }: { periodId: string; format?: 'accountant' }) => {
+      const path = `/payroll/periods/${periodId}/export`;
+      const { blob, filename } = await (format
+        ? api.download(path, { query: { format } })
+        : api.download(path));
       saveBlob(blob, filename);
     },
   });
@@ -124,6 +127,9 @@ export default function PayrollPage() {
                   </Link>
                   <Link to="/payroll/sso-shortfall" className="btn btn--secondary">
                     {t('Social security shortfall')}
+                  </Link>
+                  <Link to="/payroll/compare" className="btn btn--secondary">
+                    {t('Check against filings')}
                   </Link>
                 </>
               )}
@@ -279,14 +285,34 @@ export default function PayrollPage() {
                           </Button>
                         )}
                         {canExport && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            loading={exportPeriod.isPending && exportPeriod.variables === period.id}
-                            onClick={() => exportPeriod.mutate(period.id)}
-                          >
-                            {t('Export CSV')}
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              loading={
+                                exportPeriod.isPending &&
+                                exportPeriod.variables?.periodId === period.id &&
+                                !exportPeriod.variables.format
+                              }
+                              onClick={() => exportPeriod.mutate({ periodId: period.id })}
+                            >
+                              {t('Export CSV')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              loading={
+                                exportPeriod.isPending &&
+                                exportPeriod.variables?.periodId === period.id &&
+                                exportPeriod.variables.format === 'accountant'
+                              }
+                              onClick={() =>
+                                exportPeriod.mutate({ periodId: period.id, format: 'accountant' })
+                              }
+                            >
+                              {t('Export for the accountant')}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </td>

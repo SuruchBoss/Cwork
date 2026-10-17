@@ -74,6 +74,11 @@ describe('reconcilePeriod', () => {
     expect(() => reconcilePeriod(period, [run])).toThrow(/RUN-X is CALCULATED, not APPROVED/);
   });
 
+  it('reconciles a run that has been paid, since a period is filed after payday', () => {
+    const run = reconciledRun({ status: 'PAID' });
+    expect(reconcilePeriod(period, [run]).rows).toHaveLength(1);
+  });
+
   it('refuses a run whose gross does not add up, naming the difference', () => {
     // Payslips total 30,000 gross; the run wrongly records 30,450.
     const run = reconciledRun({ payslips: [slip()], totalGross: '30450.00' });

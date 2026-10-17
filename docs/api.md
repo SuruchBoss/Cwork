@@ -288,6 +288,9 @@ Other error codes: `IMPORT_HAS_PROBLEMS` (422, on import), `DAY_LOCKED`,
 | GET | `/payroll/opening-balances/import/template?month=&year=&lang=` | `payroll:run` — everyone employed in those months |
 | POST | `/payroll/opening-balances/import/preview?month=&year=` | `payroll:run` — checks a file, writes nothing |
 | POST | `/payroll/opening-balances/import?month=&year=` | `payroll:run` — sets pay before Cwork; audited as one event |
+| GET | `/payroll/periods/:id/export?format=csv\|accountant` | `payroll:export` — the reconciled period as a file; `accountant` adds the employee's tax ID and the income type; audited |
+| POST | `/payroll/periods/:id/compare` | `payroll:export` — the filed totals beside Cwork's, to the satang; writes nothing |
+| POST | `/payroll/periods/:id/parallel-run` | `payroll:export` — HR's own per-person figures against Cwork's; writes nothing, changes no payslip |
 
 **Separation of duties:** the account that calculated a run cannot approve it —
 `SELF_APPROVAL_NOT_ALLOWED`.
@@ -295,6 +298,38 @@ Other error codes: `IMPORT_HAS_PROBLEMS` (422, on import), `DAY_LOCKED`,
 Lifecycle: `DRAFT → CALCULATED → APPROVED → PAID`. Marking a run paid publishes
 its payslips, consumes the overtime and expense claims it paid, and locks the
 attendance days it was based on.
+
+### Handing the accountant the month, and checking it (CW-089)
+
+For a company whose ภ.ง.ด.1 is filed by an outside accounting firm. All three
+routes read the period the way the export does: every run must be `APPROVED` and
+add up, or the answer is `422 PAYROLL_NOT_RECONCILED` naming the run.
+
+`GET /payroll/periods/:id/export?format=accountant` is the existing CSV with
+exactly two columns after it, in this order: `Tax ID` and `Income type`. The tax
+ID is the one stored on the employee, or their national ID when none is (a Thai
+person's tax ID is their national ID number); it is empty for someone with
+neither, and the audit entry says how many rows that is (`missingTaxId`) and
+never the numbers. Cwork's payroll computes employment income only, so
+`Income type` is `40(1)` on every row. The tax IDs are decrypted for this format
+alone; the plain `csv` never carries one.
+
+`POST /payroll/periods/:id/compare` takes `{ "taxFiled": "1250.00", "ssoFiled":
+"3000.00" }`, either or both, as text in baht with at most two decimals, and
+returns for each a `cwork`, `filed`, `difference` (filed minus Cwork's) and
+`matches`. `ssoFiled` is the employee and employer shares together; the answer
+shows both shares. A difference of one satang is `matches: false`. Neither
+field is `422 NOTHING_TO_COMPARE`; a malformed amount is `400`. Nothing is stored.
+
+`POST /payroll/periods/:id/parallel-run` takes one multipart `file`, a
+spreadsheet or CSV with one row for each person: employee code, gross, tax,
+social security (the employee's share) and net, all five columns present, every
+figure filled in and at most two decimals. Columns it does not know are ignored.
+It returns each person in both with each figure's `cwork`, `theirs`,
+`difference` and `differs`, the codes only the file has (`onlyInFile`), the
+people the file leaves out (`onlyInCwork`) and, instead of any of that, every
+`problems` entry by row and column. An employee paid in more than one run in the
+period is added up. Nothing is stored and no payslip is touched.
 
 ### Pay before Cwork (CW-059)
 

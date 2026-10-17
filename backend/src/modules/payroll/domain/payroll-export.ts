@@ -16,8 +16,12 @@ import { Decimal, formatMoney, money, round2 } from '../../../core/utils/money.u
  * (the API serialises Decimal as a string) and is coerced through `money()`.
  */
 
-/** A run status; only APPROVED runs may be exported. */
-const APPROVED_STATUS = 'APPROVED';
+/**
+ * The run statuses a period may be exported in: approved, and paid, which is
+ * approved and then paid out. A period is filed after its pay date, so refusing
+ * a paid run would refuse the one time anyone asks (CW-089).
+ */
+const EXPORTABLE_STATUSES = ['APPROVED', 'PAID'];
 
 type MoneyInput = Parameters<typeof money>[0];
 
@@ -98,7 +102,7 @@ export class PayrollReconciliationError extends Error {
 /**
  * Checks a period's runs and returns its reconciled rows, or throws
  * PayrollReconciliationError naming what is wrong. Refuses when: the period has
- * no runs; any run is not APPROVED; a run's payslip count disagrees with its
+ * no runs; any run is not APPROVED or PAID; a run's payslip count disagrees with its
  * recorded employee count; or a run's payslip totals do not add up to the run
  * totals (gross, deductions or net).
  */
@@ -110,9 +114,9 @@ export function reconcilePeriod(period: ExportPeriod, runs: ExportRun[]): Reconc
   }
 
   for (const run of runs) {
-    if (run.status !== APPROVED_STATUS) {
+    if (!EXPORTABLE_STATUSES.includes(run.status)) {
       throw new PayrollReconciliationError(
-        `Run ${run.runNo} is ${run.status}, not APPROVED — every run in period ` +
+        `Run ${run.runNo} is ${run.status}, not APPROVED or PAID — every run in period ` +
           `${period.code} must be approved before the period can be exported.`,
       );
     }
