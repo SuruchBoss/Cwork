@@ -32,6 +32,7 @@ import {
   type PunchInput,
   type ShiftDefinition,
 } from './domain/attendance-calculator';
+import { ACTIVE_PUNCH } from './active-punch';
 import { checkGeofence, distanceMeters } from './domain/geo';
 import type { AttendanceQueryDto, CreateCorrectionDto, PunchDto } from './dto/attendance.dto';
 import { LatePunchConfirmationService } from './late-punch.service';
@@ -187,7 +188,7 @@ export class AttendanceService {
         include: { workLocation: { select: { id: true, name: true } } },
       }),
       this.prisma.attendancePunch.findMany({
-        where: { employeeId, workDate },
+        where: { employeeId, workDate, ...ACTIVE_PUNCH },
         orderBy: { punchedAt: 'asc' },
         select: {
           id: true,
@@ -461,7 +462,7 @@ export class AttendanceService {
 
     const [punchRows, shift, calendarDay, leaveDay] = await Promise.all([
       this.prisma.attendancePunch.findMany({
-        where: { employeeId, workDate: day },
+        where: { employeeId, workDate: day, ...ACTIVE_PUNCH },
         orderBy: { punchedAt: 'asc' },
       }),
       this.resolveShift(employeeId, day),
@@ -723,7 +724,7 @@ export class AttendanceService {
     type: PunchType,
   ): Promise<void> {
     const last = await this.prisma.attendancePunch.findFirst({
-      where: { employeeId, workDate },
+      where: { employeeId, workDate, ...ACTIVE_PUNCH },
       orderBy: { punchedAt: 'desc' },
       select: { type: true, punchedAt: true },
     });

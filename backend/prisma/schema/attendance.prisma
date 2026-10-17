@@ -151,6 +151,9 @@ model AttendancePunch {
   clientPunchId  String?
   createdAt      DateTime @default(now())
 
+  /// Set for a punch that came from a fingerprint scanner's export (CW-061).
+  scannerLink    ScannerPunchLink?
+
   @@unique([employeeId, clientPunchId])
   @@index([organizationId, workDate])
   @@index([employeeId, workDate, punchedAt])
@@ -309,4 +312,108 @@ model EmployeeDevice {
   @@index([employeeId, status])
   @@index([organizationId])
   @@map("employee_devices")
+}
+
+enum ScannerDayDecisionAction {
+  USE
+  IGNORE
+}
+
+/// One export file copied off the fingerprint scanner (CW-061), kept as what it
+/// did: when it was read, the dates it covers and how much it added. Its lines
+/// are `ScannerDay` rows. A fingerprint template or image is never accepted, so
+/// no column here could hold one.
+model ScannerImport {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fileName       String
+  /// SHA-256 of the file's bytes: the same file is recognisably the same file.
+  fileSha256     String
+  dateFrom       DateTime @db.Date
+  dateTo         DateTime @db.Date
+  lineCount      Int
+  /// Days new to Cwork, days that already were but gained times, and punches written.
+  daysAdded      Int
+  daysChanged    Int
+  punchesAdded   Int
+  importedById   String?  @db.Uuid
+  createdAt      DateTime @default(now())
+
+  firstSeenDays  ScannerDay[] @relation("ScannerDayFirstImport")
+  lastSeenDays   ScannerDay[] @relation("ScannerDayLastImport")
+
+  @@index([organizationId, createdAt])
+  @@map("scanner_imports")
+}
+
+/// One scanner user number's day, as the scanner wrote it. Raw: nothing here is
+/// ever deleted or hidden, and HR's decisions are kept apart in
+/// `ScannerDayDecision`. A later export of the same day can only add times.
+model ScannerDay {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Digits as written; "007" is not "7".
+  scannerNumber  String
+  /// The name the scanner holds for the number; may be empty.
+  name           String
+  workDate       DateTime @db.Date
+  /// Every time the scanner recorded that day, HH:mm, earliest first, each once.
+  times          String[] @default([])
+  /// The employee the number belongs to; null for a number nobody registered.
+  employeeId     String?  @db.Uuid
+  employee       Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  firstImportId  String   @db.Uuid
+  firstImport    ScannerImport @relation("ScannerDayFirstImport", fields: [firstImportId], references: [id], onDelete: Restrict)
+  lastImportId   String   @db.Uuid
+  lastImport     ScannerImport @relation("ScannerDayLastImport", fields: [lastImportId], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  decisions      ScannerDayDecision[]
+  punches        ScannerPunchLink[]
+
+  @@unique([organizationId, scannerNumber, workDate])
+  @@index([organizationId, workDate])
+  @@index([employeeId, workDate])
+  @@map("scanner_days")
+}
+
+/// What HR decided about a day. A change adds a row; the latest one whose times
+/// still match the day is in force and the rest stay as history.
+model ScannerDayDecision {
+  id              String   @id @default(uuid()) @db.Uuid
+  scannerDayId    String   @db.Uuid
+  scannerDay      ScannerDay @relation(fields: [scannerDayId], references: [id], onDelete: Cascade)
+  action          ScannerDayDecisionAction
+  /// HH:mm picked from the day's times; null when none is used as that punch.
+  clockIn         String?
+  clockOut        String?
+  /// The day's times when HR decided. A decision about these is none about a longer list.
+  timesAtDecision String[] @default([])
+  note            String?
+  decidedById     String?  @db.Uuid
+  createdAt       DateTime @default(now())
+
+  @@index([scannerDayId, createdAt])
+  @@map("scanner_day_decisions")
+}
+
+/// Which punches of the append-only stream came from which scanner day, and
+/// whether they still count. A punch cannot be edited or deleted, so one that
+/// stops counting (HR changed their mind, or the day gained a time) is marked
+/// here and left out of the day's attendance.
+model ScannerPunchLink {
+  punchId      String   @id @db.Uuid
+  punch        AttendancePunch @relation(fields: [punchId], references: [id], onDelete: Cascade)
+  scannerDayId String   @db.Uuid
+  scannerDay   ScannerDay @relation(fields: [scannerDayId], references: [id], onDelete: Cascade)
+  /// The decision that put it there; null when the two-times rule did.
+  decisionId   String?  @db.Uuid
+  supersededAt DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([scannerDayId])
+  @@map("scanner_punch_links")
 }
