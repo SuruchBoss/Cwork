@@ -77,6 +77,17 @@ names, never a real or real-derived file. Importing, deciding a day and
 registering a scanner number need `attendance:manage` and are refused to someone
 whose access is limited to some departments.
 
+### The accountant's file
+
+`GET /payroll/periods/:id/export?format=accountant` (CW-089) prints each
+employee's tax ID, which is their national ID unless a tax ID is stored, so it
+needs `payroll:export` and is audited like every export. The numbers are
+decrypted for that format only; the plain export never reads them. The audit
+entry holds the period, the format, the row count and how many rows had no tax
+ID to print, never an ID. The check against what was filed
+(`/payroll/periods/:id/compare` and `/parallel-run`) reads payroll figures, holds
+no ID, and stores nothing of what is entered or uploaded.
+
 ## Claiming a fresh installation
 
 Between the moment a deployment starts answering requests and the moment its

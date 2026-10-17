@@ -28,6 +28,7 @@ const PayrollPage = lazy(() => import('@/features/payroll/PayrollPage'));
 const PayrollRunPage = lazy(() => import('@/features/payroll/PayrollRunPage'));
 const PayrollImportPage = lazy(() => import('@/features/payroll/PayrollImportPage'));
 const AdvancesPage = lazy(() => import('@/features/payroll/AdvancesPage'));
+const PeriodCheckPage = lazy(() => import('@/features/payroll/PeriodCheckPage'));
 const SsoShortfallPage = lazy(() => import('@/features/payroll/SsoShortfallPage'));
 const SsoFilingPage = lazy(() => import('@/features/payroll/SsoFilingPage'));
 const ExpensesPage = lazy(() => import('@/features/payroll/ExpensesPage'));
@@ -182,6 +183,11 @@ export const router = createBrowserRouter([
                     path: 'sso-filing',
                     element: <RequirePermission any={[P.PAYROLL_EXPORT]} />,
                     children: [{ index: true, element: <SsoFilingPage /> }],
+                  },
+                  {
+                    path: 'compare',
+                    element: <RequirePermission any={[P.PAYROLL_EXPORT]} />,
+                    children: [{ index: true, element: <PeriodCheckPage /> }],
                   },
                   {
                     path: 'sso-shortfall',

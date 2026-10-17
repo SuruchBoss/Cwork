@@ -21,6 +21,7 @@ import {
   NotFoundError,
 } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { CryptoService } from '../../core/security/crypto.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { eachDateInRange, formatDateOnly, toDateOnly } from '../../core/utils/date.util';
 import { Decimal, round2, toPrismaDecimal } from '../../core/utils/money.util';
@@ -45,14 +46,10 @@ import {
 } from './domain/daily-wage';
 import { taxRulesFor } from './domain/thai-tax';
 import { yearToDate } from './domain/year-to-date';
-import {
-  EXPORT_FORMATS,
-  PayrollReconciliationError,
-  reconcilePeriod,
-  resolveExportFormat,
-} from './domain/payroll-export';
+import { EXPORT_FORMATS, resolveExportFormat } from './domain/payroll-export';
 import { AuditService } from '../audit/audit.service';
 import { AdvancesService } from './advances.service';
+import { loadReconciledPeriod } from './reconciled-period';
 import type { CreatePayrollPeriodDto, CreatePayrollRunDto } from './dto/payroll.dto';
 
 /** The period fields a calculation reads — not the whole row. */
@@ -92,6 +89,7 @@ export class PayrollService {
     private readonly audit: AuditService,
     private readonly advances: AdvancesService,
     private readonly workCalendar: WorkCalendarService,
+    private readonly crypto: CryptoService,
   ) {}
 
   // -------------------------------------------------------------------- periods
@@ -640,68 +638,23 @@ export class PayrollService {
       );
     }
 
-    const period = await this.prisma.payrollPeriod.findFirst({
-      where: { id: periodId, organizationId: user.organizationId },
-      include: {
-        runs: {
-          orderBy: { runNo: 'asc' },
-          include: {
-            payslips: {
-              orderBy: { employee: { employeeCode: 'asc' } },
-              include: {
-                employee: {
-                  select: {
-                    employeeCode: true,
-                    firstNameTh: true,
-                    lastNameTh: true,
-                    department: { select: { name: true } },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!period) throw new NotFoundError('PayrollPeriod', periodId);
-
-    let reconciled;
-    try {
-      reconciled = reconcilePeriod(
-        { code: period.code, year: period.year, month: period.month },
-        period.runs.map((run) => ({
-          runNo: run.runNo,
-          status: run.status,
-          employeeCount: run.employeeCount,
-          totalGross: run.totalGross,
-          totalDeduction: run.totalDeduction,
-          totalNet: run.totalNet,
-          payslips: run.payslips.map((slip) => ({
-            employeeCode: slip.employee.employeeCode,
-            firstNameTh: slip.employee.firstNameTh,
-            lastNameTh: slip.employee.lastNameTh,
-            departmentName: slip.employee.department?.name ?? null,
-            currency: slip.currency,
-            grossEarnings: slip.grossEarnings,
-            totalDeductions: slip.totalDeductions,
-            taxableIncome: slip.taxableIncome,
-            withholdingTax: slip.withholdingTax,
-            ssoEmployee: slip.ssoEmployee,
-            ssoEmployer: slip.ssoEmployer,
-            netPay: slip.netPay,
-          })),
-        })),
-      );
-    } catch (error) {
-      // Refusal is a client error, not a server fault: name the reason (422).
-      if (error instanceof PayrollReconciliationError) {
-        throw new BusinessRuleError(error.code, error.message);
-      }
-      throw error;
-    }
+    const { period, reconciled } = await loadReconciledPeriod(
+      this.prisma,
+      user.organizationId,
+      periodId,
+      format.needsTaxIds
+        ? (employee) =>
+            this.crypto.decrypt(employee.taxIdEnc) ?? this.crypto.decrypt(employee.nationalIdEnc)
+        : undefined,
+    );
 
     const content = format.build(reconciled);
     const rowCount = reconciled.rows.length;
+    // A format that prints tax IDs says so in the audit trail, with how many
+    // people had none to print, so a blank is never found by surprise.
+    const missingTaxId = format.needsTaxIds
+      ? reconciled.rows.filter((row) => row.taxId === '').length
+      : undefined;
 
     await this.audit.record({
       organizationId: user.organizationId,
@@ -710,7 +663,12 @@ export class PayrollService {
       entityType: 'PayrollPeriod',
       entityId: period.id,
       summary: `Exported payroll period ${period.code} as ${format.label}`,
-      changes: { format: format.id, rowCount, period: period.code },
+      changes: {
+        format: format.id,
+        rowCount,
+        period: period.code,
+        ...(missingTaxId === undefined ? {} : { missingTaxId }),
+      },
     });
 
     return {

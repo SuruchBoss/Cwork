@@ -16,8 +16,12 @@ import { Decimal, formatMoney, money, round2 } from '../../../core/utils/money.u
  * (the API serialises Decimal as a string) and is coerced through `money()`.
  */
 
-/** A run status; only APPROVED runs may be exported. */
-const APPROVED_STATUS = 'APPROVED';
+/**
+ * The run statuses a period may be exported in: approved, and paid, which is
+ * approved and then paid out. A period is filed after its pay date, so refusing
+ * a paid run would refuse the one time anyone asks (CW-089).
+ */
+const EXPORTABLE_STATUSES = ['APPROVED', 'PAID'];
 
 type MoneyInput = Parameters<typeof money>[0];
 
@@ -34,6 +38,11 @@ export interface ExportPayslip {
   ssoEmployee: MoneyInput;
   ssoEmployer: MoneyInput;
   netPay: MoneyInput;
+  /**
+   * The employee's tax ID, only for a format that asks for it (CW-089): the
+   * personal numbers are decrypted for the formats that print them and no others.
+   */
+  taxId?: string | null;
 }
 
 export interface ExportRun {
@@ -66,6 +75,8 @@ export interface ReconciledRow {
   ssoEmployee: Decimal;
   ssoEmployer: Decimal;
   netPay: Decimal;
+  /** Empty unless the format asked for it and the employee has one. */
+  taxId: string;
 }
 
 export interface ReconciledPeriod {
@@ -91,7 +102,7 @@ export class PayrollReconciliationError extends Error {
 /**
  * Checks a period's runs and returns its reconciled rows, or throws
  * PayrollReconciliationError naming what is wrong. Refuses when: the period has
- * no runs; any run is not APPROVED; a run's payslip count disagrees with its
+ * no runs; any run is not APPROVED or PAID; a run's payslip count disagrees with its
  * recorded employee count; or a run's payslip totals do not add up to the run
  * totals (gross, deductions or net).
  */
@@ -103,9 +114,9 @@ export function reconcilePeriod(period: ExportPeriod, runs: ExportRun[]): Reconc
   }
 
   for (const run of runs) {
-    if (run.status !== APPROVED_STATUS) {
+    if (!EXPORTABLE_STATUSES.includes(run.status)) {
       throw new PayrollReconciliationError(
-        `Run ${run.runNo} is ${run.status}, not APPROVED — every run in period ` +
+        `Run ${run.runNo} is ${run.status}, not APPROVED or PAID — every run in period ` +
           `${period.code} must be approved before the period can be exported.`,
       );
     }
@@ -171,6 +182,7 @@ function toRow(run: ExportRun, slip: ExportPayslip): ReconciledRow {
     ssoEmployee: round2(money(slip.ssoEmployee)),
     ssoEmployer: round2(money(slip.ssoEmployer)),
     netPay: round2(money(slip.netPay)),
+    taxId: slip.taxId ?? '',
   };
 }
 
@@ -186,6 +198,8 @@ export interface ExportFormat {
   label: string;
   extension: string;
   contentType: string;
+  /** The format prints the employee's tax ID, so the service decrypts it for this format only. */
+  needsTaxIds?: boolean;
   build(reconciled: ReconciledPeriod): string;
 }
 
@@ -209,15 +223,17 @@ const CSV_COLUMNS: Array<{ header: string; value: (row: ReconciledRow) => string
   { header: 'Net pay', value: (r) => r.netPay.toFixed(2) },
 ];
 
-function buildPayslipCsv(reconciled: ReconciledPeriod): string {
-  const rows = [
-    CSV_COLUMNS.map((c) => c.header),
-    ...reconciled.rows.map((row) => CSV_COLUMNS.map((c) => c.value(row))),
-  ];
-  const body = rows.map((cells) => cells.map(csvField).join(',')).join('\r\n');
-  // A UTF-8 BOM so a Thai name renders correctly when the file is opened in
-  // Excel, which otherwise assumes the system codepage.
-  return `\uFEFF${body}\r\n`;
+function buildCsv(columns: typeof CSV_COLUMNS): (reconciled: ReconciledPeriod) => string {
+  return (reconciled) => {
+    const rows = [
+      columns.map((c) => c.header),
+      ...reconciled.rows.map((row) => columns.map((c) => c.value(row))),
+    ];
+    const body = rows.map((cells) => cells.map(csvField).join(',')).join('\r\n');
+    // A UTF-8 BOM so a Thai name renders correctly when the file is opened in
+    // Excel, which otherwise assumes the system codepage.
+    return `\uFEFF${body}\r\n`;
+  };
 }
 
 export const CSV_FORMAT: ExportFormat = {
@@ -225,15 +241,40 @@ export const CSV_FORMAT: ExportFormat = {
   label: 'Payslip totals (CSV)',
   extension: 'csv',
   contentType: 'text/csv; charset=utf-8',
-  build: buildPayslipCsv,
+  build: buildCsv(CSV_COLUMNS),
 };
 
 /**
- * The formats this period-export supports. CW-044 ships only `csv`; #44 and the
- * tickets after it add entries here — each a formatter over ReconciledPeriod.
+ * What ภ.ง.ด.1 is keyed from (CW-089). Cwork's payroll computes employment
+ * income only (section 40(1): salary, overtime, bonus, allowances), so that is
+ * the income type of every row. The tax ID is the one stored on the employee, or
+ * their national ID when none is: a Thai person's tax ID is their national ID
+ * number. The columns are the existing export's, in its order, and these two.
+ */
+export const INCOME_TYPE_EMPLOYMENT = '40(1)';
+
+const ACCOUNTANT_COLUMNS: typeof CSV_COLUMNS = [
+  ...CSV_COLUMNS,
+  { header: 'Tax ID', value: (r) => r.taxId },
+  { header: 'Income type', value: () => INCOME_TYPE_EMPLOYMENT },
+];
+
+export const ACCOUNTANT_FORMAT: ExportFormat = {
+  id: 'accountant',
+  label: 'For the accountant (CSV)',
+  extension: 'csv',
+  contentType: 'text/csv; charset=utf-8',
+  needsTaxIds: true,
+  build: buildCsv(ACCOUNTANT_COLUMNS),
+};
+
+/**
+ * The formats this period-export supports. CW-044 ships `csv`, CW-089 adds the
+ * accountant's; the tickets after it add entries here — each a formatter over ReconciledPeriod.
  */
 export const EXPORT_FORMATS: Record<string, ExportFormat> = {
   [CSV_FORMAT.id]: CSV_FORMAT,
+  [ACCOUNTANT_FORMAT.id]: ACCOUNTANT_FORMAT,
 };
 
 export const DEFAULT_EXPORT_FORMAT = CSV_FORMAT.id;

@@ -859,6 +859,75 @@ export const thMessages: Record<string, string> = {
   Column: 'คอลัมน์',
   Problem: 'ปัญหา',
   File: 'ทั้งไฟล์',
+  // Payroll period check (CW-089)
+  'Export for the accountant':
+    'ส่งออกสำหรับนักบัญชี',
+  'Check against filings':
+    'เทียบกับที่ยื่นไปแล้ว',
+  'Same':
+    'ตรงกัน',
+  'Different':
+    'ไม่ตรง',
+  'Gross pay':
+    'รายได้รวม',
+  'Tax':
+    'ภาษี',
+  'Set what the accountant filed, or HR’s own figures, beside what Cwork worked out for the month. Nothing is saved and no payslip changes.':
+    'วางยอดที่นักบัญชียื่น หรือตัวเลขของ HR เอง เทียบกับที่ Cwork คำนวณของเดือนนั้น ไม่มีอะไรถูกบันทึก และไม่มีสลิปเปลี่ยน',
+  '1. The totals that were filed':
+    '1. ยอดรวมที่ยื่นไปแล้ว',
+  'Type the withholding tax total e-Filing produced for the month, and the social security total filed (the employee and employer shares together). Either one is enough. A difference of one satang is shown as a difference.':
+    'พิมพ์ยอดภาษีหัก ณ ที่จ่ายรวมที่ e-Filing ออกให้ของเดือนนั้น และยอดประกันสังคมรวมที่ยื่น (ส่วนลูกจ้างกับส่วนนายจ้างรวมกัน) ใส่อย่างใดอย่างหนึ่งก็ได้ ต่างกันแค่ 1 สตางค์ก็แสดงว่าไม่ตรง',
+  'Withholding tax filed (baht)':
+    'ภาษีหัก ณ ที่จ่ายที่ยื่น (บาท)',
+  'An amount in baht, with at most two decimals':
+    'จำนวนเงินบาท ทศนิยมไม่เกิน 2 ตำแหน่ง',
+  'Social security filed (baht)':
+    'ประกันสังคมที่ยื่น (บาท)',
+  'Compare':
+    'เทียบ',
+  'Cwork':
+    'Cwork',
+  'Filed':
+    'ที่ยื่น',
+  'Difference':
+    'ผลต่าง',
+  'Result':
+    'ผล',
+  'Withholding tax':
+    'ภาษีหัก ณ ที่จ่าย',
+  'Employee {employee} + employer {employer}':
+    'ลูกจ้าง {employee} + นายจ้าง {employer}',
+  '2. HR’s own figures, person by person':
+    '2. ตัวเลขของ HR เอง ทีละคน',
+  'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. Cwork marks every person and column that differs.':
+    'ไฟล์ Excel หรือ CSV หนึ่งแถวต่อคน มีรหัสพนักงาน รายได้รวม ภาษี ประกันสังคม (ส่วนของลูกจ้าง) และเงินสุทธิ กรอกครบทุกช่องและปัดเศษเป็นสตางค์แล้ว คอลัมน์อื่นจะถูกข้าม Cwork จะทำเครื่องหมายทุกคนและทุกคอลัมน์ที่ต่างกัน',
+  'Fix these in the file':
+    'แก้ไขรายการเหล่านี้ในไฟล์',
+  'People compared':
+    'คนที่เทียบได้',
+  'People who differ':
+    'คนที่ตัวเลขต่างกัน',
+  'Every figure matches':
+    'ทุกตัวเลขตรงกัน',
+  'Only in your file':
+    'มีเฉพาะในไฟล์ของคุณ',
+  'Only in Cwork':
+    'มีเฉพาะใน Cwork',
+  'Person by person':
+    'ทีละคน',
+  'Show everyone':
+    'แสดงทุกคน',
+  'Show only those who differ':
+    'แสดงเฉพาะคนที่ต่างกัน',
+  'Nobody differs.':
+    'ไม่มีใครต่างกัน',
+  'Cwork {cwork} · yours {theirs}':
+    'Cwork {cwork} · ของคุณ {theirs}',
+  'Cwork has no payslip for these people in this period:':
+    'Cwork ไม่มีสลิปของคนเหล่านี้ในงวดนี้:',
+  'Your file leaves these people out:':
+    'ไฟล์ของคุณไม่มีคนเหล่านี้:',
   // Fingerprint scanner import (CW-061)
   'No punch':
     'ไม่มีการสแกน',
