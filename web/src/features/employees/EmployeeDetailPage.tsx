@@ -23,6 +23,7 @@ import type { EmployeeDetail, LeaveBalance } from '@/types/api';
 import { AccountRolesCard } from './AccountRolesCard';
 import { CompensationCard } from './CompensationCard';
 import { ForeignWorkerDocuments } from './ForeignWorkerDocuments';
+import { ScannerNumberCard } from './ScannerNumberCard';
 
 export default function EmployeeDetailPage() {
   const { id = '' } = useParams();
@@ -149,6 +150,7 @@ export default function EmployeeDetailPage() {
             <CompensationCard employeeId={person.id} canManage={canAny(P.COMPENSATION_MANAGE)} />
           )}
           <ForeignWorkerDocuments person={person} canEdit={canAny(P.EMPLOYEE_UPDATE)} />
+          <ScannerNumberCard person={person} canEdit={canAny(P.EMPLOYEE_UPDATE)} />
           {canAny(P.ROLE_MANAGE) && <AccountRolesCard employeeId={person.id} />}
 
           {balances.data && (

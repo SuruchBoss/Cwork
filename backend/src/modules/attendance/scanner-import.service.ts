@@ -662,6 +662,20 @@ export class ScannerImportService {
     return result;
   }
 
+  /**
+   * Days waiting on one scanner number, now that an employee carries it. Used when an
+   * employee's number is edited on their page (CW-090); it touches only that number's
+   * days that no one owns, so decided days and days already counted stay where they are.
+   */
+  async rematchNumber(
+    organizationId: string,
+    userId: string,
+    scannerNumber: string,
+  ): Promise<{ daysMatched: number; punchesAdded: number }> {
+    const organization = await this.organization.getOrganization(organizationId);
+    return this.rematchUnmapped(organizationId, organization.timezone, userId, scannerNumber);
+  }
+
   /** Numbers registered since a file was imported find their days. */
   async rematch(user: AuthenticatedUser) {
     this.assertWholeCompany(user);
@@ -1017,9 +1031,14 @@ export class ScannerImportService {
     organizationId: string,
     timezone: string,
     userId: string,
+    onlyNumber?: string,
   ): Promise<{ daysMatched: number; punchesAdded: number }> {
     const orphans = await this.prisma.scannerDay.findMany({
-      where: { organizationId, employeeId: null },
+      where: {
+        organizationId,
+        employeeId: null,
+        ...(onlyNumber ? { scannerNumber: onlyNumber } : {}),
+      },
       select: { scannerNumber: true },
       distinct: ['scannerNumber'],
     });
