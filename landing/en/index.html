@@ -407,6 +407,37 @@
     .rules { grid-template-columns: 1fr; }
     .rules .rule:nth-child(n) { padding-inline: 0; border-inline-end: 0; }
   }
+  /* ========================================================= small office */
+  .flow { list-style: none; margin: 0 0 clamp(36px, 5vw, 56px); padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+  .flow > li { position: relative; display: grid; gap: 10px; align-content: start; }
+  .flow__card { padding: 16px 18px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; }
+  .flow__card .jp { grid-row: span 2; font-size: 1.6rem; line-height: 1; color: var(--shu); }
+  .flow__card b { font: 600 1rem/1.4 var(--f-head); }
+  .flow__card span:last-child { font-size: var(--t-small); color: var(--ink-2); }
+  /* The connector: a thin rule with a highlight that travels along it, left to
+     right, one step after another. Decoration only; the order is in the list. */
+  .flow > li:not(:last-child)::after {
+    content: ""; position: absolute; top: 34px; inset-inline-end: -32px; width: 32px; height: 2px;
+    background: var(--line) linear-gradient(90deg, transparent, var(--shu), transparent) no-repeat;
+    background-size: 60% 100%; background-position: -100% 0;
+    animation: flow-run 3.6s ease-in-out infinite;
+  }
+  .flow > li:nth-child(2)::after { animation-delay: .9s; }
+  .flow > li:nth-child(3)::after { animation-delay: 1.8s; }
+  @keyframes flow-run { 0% { background-position: -100% 0; } 30%, 100% { background-position: 250% 0; } }
+  .flow__note { margin: -24px 0 clamp(28px, 4vw, 44px); font-size: var(--t-micro); color: var(--ink-2); }
+  @media (max-width: 800px) {
+    .flow { grid-template-columns: 1fr; gap: 28px; }
+    .flow > li:not(:last-child)::after {
+      top: auto; bottom: -28px; inset-inline-end: auto; inset-inline-start: 34px; width: 2px; height: 28px;
+      background-image: linear-gradient(180deg, transparent, var(--shu), transparent);
+      background-size: 100% 60%; background-position: 0 -100%;
+      animation-name: flow-run-down;
+    }
+    @keyframes flow-run-down { 0% { background-position: 0 -100%; } 30%, 100% { background-position: 0 250%; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .flow > li::after { animation: none !important; background-image: none !important; } }
+
   .proof { margin-top: clamp(36px, 5vw, 56px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   .proof div { padding: 18px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r); }
   .proof b { display: block; font: 600 1rem/1.4 var(--f-head); }
@@ -480,6 +511,7 @@
       <small>v0.3.1</small>
     </a>
     <nav aria-label="Main menu">
+      <a class="nav__link" href="#office">New for small offices</a>
       <a class="nav__link" href="#pain">Problems we solve</a>
       <a class="nav__link" href="#calc">What it costs</a>
       <a class="nav__link" href="#screens">The screens</a>
@@ -501,7 +533,7 @@
         <h1><span class="line">All of HR, company-wide</span><span class="line">with no <em>per-seat fee</em></span></h1>
 
         <p class="hero__lede">
-          Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, no annual contract.
+          Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, and no annual contract for the free edition.
         </p>
 
         <div class="cta-row">
@@ -545,6 +577,37 @@
                aria-label="A three-and-a-half-minute film: six HR problems Cwork solves on screen, in the real product — payroll, clocking in with no signal, leave filed and approved from a phone, and PDPA-protected personal data"></video>
       </figure>
       <p class="caption"><span>The running product, not a mock-up — every field really typed, every button really pressed</span><span class="mono">REC · demo company</span></p>
+    </div>
+  </section>
+
+  <!-- ==================================================== small office -->
+  <section id="office" class="block block--alt">
+    <div class="wrap">
+      <div class="shead">
+        <span class="eyebrow"><span class="jp" aria-hidden="true">新</span><span class="label">New in October 2026</span></span>
+        <h2>For the small office with no IT department</h2>
+        <p class="lede">Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is currently in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.</p>
+      </div>
+
+      <ol class="flow" aria-label="How the data travels, from the fingerprint scanner to the accountant">
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">指</span><b>Fingerprint scanner</b><span>The file it exports</span></div></li>
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">検</span><b>HR reviews</b><span>Days with a time missing or extra</span></div></li>
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">給</span><b>Payroll run</b><span>Prepared and approved by two people</span></div></li>
+        <li>
+          <div class="flow__card"><span class="jp" aria-hidden="true">現</span><b>Cash sheet</b><span>Notes and coins per person</span></div>
+          <div class="flow__card"><span class="jp" aria-hidden="true">税</span><b>File for the accountant</b><span>Checked against what was filed</span></div>
+        </li>
+      </ol>
+      <p class="flow__note">A diagram of the order of work, not a screenshot</p>
+
+      <div class="rules">
+        <div class="rule"><span class="mono">新 01</span><div><h3>Your fingerprint scanner’s file, read as it is</h3><p>Upload the scanner’s export and preview it before importing. A day with a time missing or extra waits for HR, who sees every raw time, and days in a paid period are locked.</p></div></div>
+        <div class="rule"><span class="mono">新 02</span><div><h3>A cash payday, counted to the coin</h3><p>The cash sheet gives each person’s notes and coins down to 25 satang and the amount to withdraw, with payslips and a wage receipt for staff to sign.</p></div></div>
+        <div class="rule"><span class="mono">新 03</span><div><h3>A file for the accountant, checked against what was filed</h3><p>An export with tax IDs for whoever prepares the PND 1, and any difference from the filed totals shows, down to one satang. Cwork prepares and checks; it does not file for the accountant.</p></div></div>
+        <div class="rule"><span class="mono">新 04</span><div><h3>Run beside your current method before switching</h3><p>Upload the per-person figures from the way you pay today. Every person and column that differs from Cwork is marked, and no payslip or record is changed.</p></div></div>
+        <div class="rule"><span class="mono">新 05</span><div><h3>An installer for the office NAS</h3><p>A read-only check first, then scripts to install, back up, restore, update and roll back. Rehearsed on a Docker host; not yet tried on the real Synology DSM screens.</p></div></div>
+        <div class="rule"><span class="mono">新 06</span><div><h3>Passports and work permits that do not lapse unnoticed</h3><p>Whoever may edit the employee is told at 90, 60 and 30 days and on expiry, and the document number is never shown.</p></div></div>
+      </div>
     </div>
   </section>
 
@@ -659,7 +722,7 @@
             <li><div><b>Approvers see why the total moved</b><span>The AI assistant explains the change from last period — joiners and leavers, overtime, unpaid leave — and is not allowed to state a figure the data does not contain. Switched on only if you want it.</span></div></li>
             <li><div><b>Payslips you can explain a year later</b><span>Employer contributions shown apart from what was deducted, and employees open their own payslips in the app.</span></div></li>
           </ul>
-          <p class="soon"><span class="label">In progress</span>PND 1 and social-security filing files, and bank transfer files</p>
+          <p class="soon"><span class="label">Planned for Cwork Pro</span>Online PND 1 and social security filing, and bank transfer files</p>
         </div>
         <figure>
           <a href="../assets/shots/payroll-run.en.webp" target="_blank" rel="noopener">
@@ -919,6 +982,7 @@
         <p class="lede">
           Forward this section to whoever looks after your servers. All it needs is one machine with Docker — no Redis, no message broker, no Kubernetes.
         </p>
+        <p class="lede">If the office has a NAS that runs containers, deploy/nas has scripts and a Thai guide. Rehearsed on a clean Docker host; not yet tried on a real NAS.</p>
       </div>
 
       <div class="split" style="align-items:start">

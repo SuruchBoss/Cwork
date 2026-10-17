@@ -33,6 +33,7 @@ const THAI = /[\u0E01-\u0E3E\u0E40-\u0E7F]/;
 /** Thai source → English. Longest first, so a substring never eats its parent. */
 const COPY = {
   // --------------------------------------------------------------- nav
+  'ใหม่สำหรับออฟฟิศเล็ก': 'New for small offices',
   'ปัญหาที่เราแก้': 'Problems we solve',
   'คิดค่าใช้จ่าย': 'What it costs',
   'หน้าตาระบบ': 'The screens',
@@ -43,8 +44,8 @@ const COPY = {
   'งาน HR ทั้งบริษัท': 'All of HR, company-wide',
   'ไม่ต้องจ่าย': 'with no ',
   'รายหัว': 'per-seat fee',
-  'เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA — ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว ไม่มีสัญญารายปี':
-    'Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, no annual contract.',
+  'เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA — ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว และรุ่นฟรีไม่มีสัญญารายปี':
+    'Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, and no annual contract for the free edition.',
   'ติดตั้งเอง': 'Install it yourself',
   'เข้าเป็น HR ของบริษัทตัวอย่างในเบราว์เซอร์ ไม่ต้องสมัคร ไม่ต้องใช้รหัสผ่าน · ข้อมูลกลับเป็นค่าเริ่มต้นทุกชั่วโมง · ถ้าไม่มีใครใช้มาสักพัก ครั้งแรกอาจรอเครื่องตื่นราวหนึ่งนาที':
     'Opens in your browser as HR at a demo company — no sign-up, no password · Everything goes back to the start every hour · If nobody has used it for a while, the first visit may wait about a minute for it to wake',
@@ -61,6 +62,41 @@ const COPY = {
   // ------------------------------------------------------- walkthrough
   'ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง — ทุกช่องกรอกจริง ทุกปุ่มกดจริง':
     'The running product, not a mock-up — every field really typed, every button really pressed',
+  // ------------------------------------------------------ small office
+  'ใหม่เดือนตุลาคม 2026': 'New in October 2026',
+  'สำหรับออฟฟิศเล็กที่ไม่มีฝ่าย IT': 'For the small office with no IT department',
+  'พนักงานลงเวลาด้วยเครื่องสแกนนิ้ว จ่ายเงินเดือนเป็นเงินสด และจ้างสำนักงานบัญชีข้างนอกยื่นภาษี — ตอนนี้ทุกข้อด้านล่างอยู่ในรุ่นฟรี มีเทสต์รันใน CI ทุกครั้ง และทดสอบด้วยข้อมูลสังเคราะห์เท่านั้น ยังไม่มีบริษัทไหนใช้งานจริง':
+    'Staff who clock in on a fingerprint scanner, wages paid in cash, and an outside accountant who files the tax. Everything below is currently in the free edition, tested in CI on every change and only ever with synthetic data. No company runs it in production yet.',
+  'เส้นทางข้อมูล ตั้งแต่เครื่องสแกนนิ้วจนถึงนักบัญชี': 'How the data travels, from the fingerprint scanner to the accountant',
+  'เครื่องสแกนนิ้ว': 'Fingerprint scanner',
+  'ไฟล์ที่เครื่องส่งออก': 'The file it exports',
+  'HR ตรวจ': 'HR reviews',
+  'วันที่เวลาขาดหรือเกิน': 'Days with a time missing or extra',
+  'รอบเงินเดือน': 'Payroll run',
+  'คนทำกับคนอนุมัติเป็นคนละคน': 'Prepared and approved by two people',
+  'ใบเตรียมเงินสด': 'Cash sheet',
+  'แบงก์และเหรียญต่อคน': 'Notes and coins per person',
+  'ไฟล์ให้นักบัญชี': 'File for the accountant',
+  'เทียบกับยอดที่ยื่นแล้ว': 'Checked against what was filed',
+  'แผนภาพอธิบายลำดับงาน ไม่ใช่ภาพหน้าจอ': 'A diagram of the order of work, not a screenshot',
+  'อ่านไฟล์จากเครื่องสแกนนิ้วได้เลย': 'Your fingerprint scanner’s file, read as it is',
+  'อัปโหลดไฟล์ที่เครื่องส่งออก ดูตัวอย่างก่อนกดนำเข้า วันที่เวลาขาดหรือเกินรอ HR ตัดสินโดยเห็นเวลาดิบทุกตัว และวันในงวดที่จ่ายเงินเดือนแล้วจะถูกล็อก':
+    'Upload the scanner’s export and preview it before importing. A day with a time missing or extra waits for HR, who sees every raw time, and days in a paid period are locked.',
+  'วันจ่ายเงินสด นับได้ถึงเหรียญ': 'A cash payday, counted to the coin',
+  'ใบเตรียมเงินสดบอกแบงก์และเหรียญของแต่ละคนลงถึง 25 สตางค์ กับยอดที่ต้องถอน พร้อมสลิปเงินเดือนและใบรับเงินให้พนักงานเซ็น':
+    'The cash sheet gives each person’s notes and coins down to 25 satang and the amount to withdraw, with payslips and a wage receipt for staff to sign.',
+  'ไฟล์ให้นักบัญชี และเทียบกับยอดที่ยื่นแล้ว': 'A file for the accountant, checked against what was filed',
+  'ส่งออกพร้อมเลขผู้เสียภาษีสำหรับคนที่เตรียม ภ.ง.ด.1 ยอดที่ต่างจากที่ยื่นไปแม้ 1 สตางค์ก็เห็น ระบบช่วยเตรียมและช่วยตรวจ ไม่ได้ยื่นแบบแทนนักบัญชี':
+    'An export with tax IDs for whoever prepares the PND 1, and any difference from the filed totals shows, down to one satang. Cwork prepares and checks; it does not file for the accountant.',
+  'รันคู่ขนานกับวิธีเดิมก่อนเปลี่ยน': 'Run beside your current method before switching',
+  'อัปโหลดตัวเลขรายคนของวิธีที่ใช้อยู่ ระบบชี้ทุกคนและทุกช่องที่ต่างจาก Cwork โดยไม่แก้สลิปหรือข้อมูลใดเลย':
+    'Upload the per-person figures from the way you pay today. Every person and column that differs from Cwork is marked, and no payslip or record is changed.',
+  'ตัวติดตั้งสำหรับ NAS ในออฟฟิศ': 'An installer for the office NAS',
+  'ตรวจเครื่องแบบอ่านอย่างเดียวก่อน แล้วติดตั้ง สำรอง กู้คืน อัปเดต และย้อนเวอร์ชันด้วยสคริปต์ ซ้อมบนเครื่อง Docker แล้ว แต่ยังไม่ได้ลองบนหน้าจอ Synology DSM จริง':
+    'A read-only check first, then scripts to install, back up, restore, update and roll back. Rehearsed on a Docker host; not yet tried on the real Synology DSM screens.',
+  'พาสปอร์ตและใบอนุญาตทำงานไม่หมดอายุเงียบ ๆ': 'Passports and work permits that do not lapse unnoticed',
+  'แจ้งคนที่แก้ข้อมูลพนักงานได้เมื่อเหลือ 90, 60 และ 30 วัน และตอนหมดอายุ โดยไม่แสดงเลขเอกสาร':
+    'Whoever may edit the employee is told at 90, 60 and 30 days and on expiry, and the document number is never shown.',
   // ---------------------------------------------------------- problems
   'ปัญหาและทางแก้': 'Problems and fixes',
   'หกปัญหางาน HR ที่ธุรกิจไทยจ่ายแพงทุกเดือน':
@@ -127,9 +163,9 @@ const COPY = {
   'สลิปที่อธิบายได้แม้ผ่านไปเป็นปี': 'Payslips you can explain a year later',
   'แยกเงินสมทบฝั่งนายจ้างออกจากยอดที่หักพนักงาน และพนักงานเปิดดูสลิปเองได้ในแอป':
     'Employer contributions shown apart from what was deducted, and employees open their own payslips in the app.',
-  'กำลังพัฒนา': 'In progress',
-  'ไฟล์ยื่น ภ.ง.ด.1 ประกันสังคม และไฟล์โอนเงินธนาคาร':
-    'PND 1 and social-security filing files, and bank transfer files',
+  'วางแผนไว้ในรุ่น Pro': 'Planned for Cwork Pro',
+  'ยื่นแบบ ภ.ง.ด.1 และประกันสังคมออนไลน์ และไฟล์โอนเงินธนาคาร':
+    'Online PND 1 and social security filing, and bank transfer files',
   'รอบที่ปิดแล้ว — รายได้รวม รายการหัก ยอดสุทธิ และต้นทุนนายจ้าง':
     'A closed run — gross pay, deductions, net pay and employer cost',
   // ----------------------------------------------------- 03 attendance
@@ -255,6 +291,8 @@ const COPY = {
   'ดูสลิป ขอลา และอนุมัติได้ในเครื่องเดียว': 'Payslips, leave and approvals in one app',
   'หัวหน้างานกดอนุมัติจากมือถือได้ ไม่ต้องรอกลับไปเปิดคอม':
     'Supervisors approve from their phones instead of waiting to get back to a desk.',
+  'ถ้าออฟฟิศมี NAS ที่รัน container ได้ มีสคริปต์และคู่มือภาษาไทยใน deploy/nas ซ้อมบนเครื่อง Docker ที่ว่างเปล่าแล้ว แต่ยังไม่ได้ลองบน NAS จริง':
+    'If the office has a NAS that runs containers, deploy/nas has scripts and a Thai guide. Rehearsed on a clean Docker host; not yet tried on a real NAS.',
   // ------------------------------------------------------------- trust
   'ความน่าเชื่อถือ': 'Trust',
   'กฎที่ผู้ดูแลระบบก็แหกไม่ได้': 'Rules even an administrator cannot break',

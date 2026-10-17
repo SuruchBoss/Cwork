@@ -407,6 +407,37 @@
     .rules { grid-template-columns: 1fr; }
     .rules .rule:nth-child(n) { padding-inline: 0; border-inline-end: 0; }
   }
+  /* ========================================================= small office */
+  .flow { list-style: none; margin: 0 0 clamp(36px, 5vw, 56px); padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+  .flow > li { position: relative; display: grid; gap: 10px; align-content: start; }
+  .flow__card { padding: 16px 18px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; }
+  .flow__card .jp { grid-row: span 2; font-size: 1.6rem; line-height: 1; color: var(--shu); }
+  .flow__card b { font: 600 1rem/1.4 var(--f-head); }
+  .flow__card span:last-child { font-size: var(--t-small); color: var(--ink-2); }
+  /* The connector: a thin rule with a highlight that travels along it, left to
+     right, one step after another. Decoration only; the order is in the list. */
+  .flow > li:not(:last-child)::after {
+    content: ""; position: absolute; top: 34px; inset-inline-end: -32px; width: 32px; height: 2px;
+    background: var(--line) linear-gradient(90deg, transparent, var(--shu), transparent) no-repeat;
+    background-size: 60% 100%; background-position: -100% 0;
+    animation: flow-run 3.6s ease-in-out infinite;
+  }
+  .flow > li:nth-child(2)::after { animation-delay: .9s; }
+  .flow > li:nth-child(3)::after { animation-delay: 1.8s; }
+  @keyframes flow-run { 0% { background-position: -100% 0; } 30%, 100% { background-position: 250% 0; } }
+  .flow__note { margin: -24px 0 clamp(28px, 4vw, 44px); font-size: var(--t-micro); color: var(--ink-2); }
+  @media (max-width: 800px) {
+    .flow { grid-template-columns: 1fr; gap: 28px; }
+    .flow > li:not(:last-child)::after {
+      top: auto; bottom: -28px; inset-inline-end: auto; inset-inline-start: 34px; width: 2px; height: 28px;
+      background-image: linear-gradient(180deg, transparent, var(--shu), transparent);
+      background-size: 100% 60%; background-position: 0 -100%;
+      animation-name: flow-run-down;
+    }
+    @keyframes flow-run-down { 0% { background-position: 0 -100%; } 30%, 100% { background-position: 0 250%; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .flow > li::after { animation: none !important; background-image: none !important; } }
+
   .proof { margin-top: clamp(36px, 5vw, 56px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   .proof div { padding: 18px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r); }
   .proof b { display: block; font: 600 1rem/1.4 var(--f-head); }
@@ -480,6 +511,7 @@
       <small>v0.3.1</small>
     </a>
     <nav aria-label="เมนูหลัก">
+      <a class="nav__link" href="#office">ใหม่สำหรับออฟฟิศเล็ก</a>
       <a class="nav__link" href="#pain">ปัญหาที่เราแก้</a>
       <a class="nav__link" href="#calc">คิดค่าใช้จ่าย</a>
       <a class="nav__link" href="#screens">หน้าตาระบบ</a>
@@ -502,7 +534,7 @@
 
         <p class="hero__lede">
           เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA —
-          ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว ไม่มีสัญญารายปี
+          ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว และรุ่นฟรีไม่มีสัญญารายปี
         </p>
 
         <div class="cta-row">
@@ -546,6 +578,37 @@
                aria-label="วิดีโอสามนาทีครึ่ง: หกปัญหางาน HR ที่ Cwork แก้ให้ดูบนระบบจริง ตั้งแต่เงินเดือน ลงเวลาตอนไม่มีสัญญาณ ขอลาและอนุมัติจากมือถือ ไปจนถึงข้อมูลส่วนบุคคลตาม PDPA"></video>
       </figure>
       <p class="caption"><span>ระบบจริงที่รันอยู่ ไม่ใช่ภาพจำลอง — ทุกช่องกรอกจริง ทุกปุ่มกดจริง</span><span class="mono">REC · demo company</span></p>
+    </div>
+  </section>
+
+  <!-- ==================================================== small office -->
+  <section id="office" class="block block--alt">
+    <div class="wrap">
+      <div class="shead">
+        <span class="eyebrow"><span class="jp" aria-hidden="true">新</span><span class="label">ใหม่เดือนตุลาคม 2026</span></span>
+        <h2>สำหรับออฟฟิศเล็กที่ไม่มีฝ่าย IT</h2>
+        <p class="lede">พนักงานลงเวลาด้วยเครื่องสแกนนิ้ว จ่ายเงินเดือนเป็นเงินสด และจ้างสำนักงานบัญชีข้างนอกยื่นภาษี — ตอนนี้ทุกข้อด้านล่างอยู่ในรุ่นฟรี มีเทสต์รันใน CI ทุกครั้ง และทดสอบด้วยข้อมูลสังเคราะห์เท่านั้น ยังไม่มีบริษัทไหนใช้งานจริง</p>
+      </div>
+
+      <ol class="flow" aria-label="เส้นทางข้อมูล ตั้งแต่เครื่องสแกนนิ้วจนถึงนักบัญชี">
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">指</span><b>เครื่องสแกนนิ้ว</b><span>ไฟล์ที่เครื่องส่งออก</span></div></li>
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">検</span><b>HR ตรวจ</b><span>วันที่เวลาขาดหรือเกิน</span></div></li>
+        <li><div class="flow__card"><span class="jp" aria-hidden="true">給</span><b>รอบเงินเดือน</b><span>คนทำกับคนอนุมัติเป็นคนละคน</span></div></li>
+        <li>
+          <div class="flow__card"><span class="jp" aria-hidden="true">現</span><b>ใบเตรียมเงินสด</b><span>แบงก์และเหรียญต่อคน</span></div>
+          <div class="flow__card"><span class="jp" aria-hidden="true">税</span><b>ไฟล์ให้นักบัญชี</b><span>เทียบกับยอดที่ยื่นแล้ว</span></div>
+        </li>
+      </ol>
+      <p class="flow__note">แผนภาพอธิบายลำดับงาน ไม่ใช่ภาพหน้าจอ</p>
+
+      <div class="rules">
+        <div class="rule"><span class="mono">新 01</span><div><h3>อ่านไฟล์จากเครื่องสแกนนิ้วได้เลย</h3><p>อัปโหลดไฟล์ที่เครื่องส่งออก ดูตัวอย่างก่อนกดนำเข้า วันที่เวลาขาดหรือเกินรอ HR ตัดสินโดยเห็นเวลาดิบทุกตัว และวันในงวดที่จ่ายเงินเดือนแล้วจะถูกล็อก</p></div></div>
+        <div class="rule"><span class="mono">新 02</span><div><h3>วันจ่ายเงินสด นับได้ถึงเหรียญ</h3><p>ใบเตรียมเงินสดบอกแบงก์และเหรียญของแต่ละคนลงถึง 25 สตางค์ กับยอดที่ต้องถอน พร้อมสลิปเงินเดือนและใบรับเงินให้พนักงานเซ็น</p></div></div>
+        <div class="rule"><span class="mono">新 03</span><div><h3>ไฟล์ให้นักบัญชี และเทียบกับยอดที่ยื่นแล้ว</h3><p>ส่งออกพร้อมเลขผู้เสียภาษีสำหรับคนที่เตรียม ภ.ง.ด.1 ยอดที่ต่างจากที่ยื่นไปแม้ 1 สตางค์ก็เห็น ระบบช่วยเตรียมและช่วยตรวจ ไม่ได้ยื่นแบบแทนนักบัญชี</p></div></div>
+        <div class="rule"><span class="mono">新 04</span><div><h3>รันคู่ขนานกับวิธีเดิมก่อนเปลี่ยน</h3><p>อัปโหลดตัวเลขรายคนของวิธีที่ใช้อยู่ ระบบชี้ทุกคนและทุกช่องที่ต่างจาก Cwork โดยไม่แก้สลิปหรือข้อมูลใดเลย</p></div></div>
+        <div class="rule"><span class="mono">新 05</span><div><h3>ตัวติดตั้งสำหรับ NAS ในออฟฟิศ</h3><p>ตรวจเครื่องแบบอ่านอย่างเดียวก่อน แล้วติดตั้ง สำรอง กู้คืน อัปเดต และย้อนเวอร์ชันด้วยสคริปต์ ซ้อมบนเครื่อง Docker แล้ว แต่ยังไม่ได้ลองบนหน้าจอ Synology DSM จริง</p></div></div>
+        <div class="rule"><span class="mono">新 06</span><div><h3>พาสปอร์ตและใบอนุญาตทำงานไม่หมดอายุเงียบ ๆ</h3><p>แจ้งคนที่แก้ข้อมูลพนักงานได้เมื่อเหลือ 90, 60 และ 30 วัน และตอนหมดอายุ โดยไม่แสดงเลขเอกสาร</p></div></div>
+      </div>
     </div>
   </section>
 
@@ -663,7 +726,7 @@
             <li><div><b>ผู้อนุมัติเห็นว่าทำไมยอดขยับ</b><span>ผู้ช่วย AI สรุปความต่างจากงวดก่อน — คนเข้า-ออก โอที ลาไม่รับค่าจ้าง — โดยห้ามแต่งตัวเลขที่ไม่มีในข้อมูล เปิดใช้เมื่อต้องการ</span></div></li>
             <li><div><b>สลิปที่อธิบายได้แม้ผ่านไปเป็นปี</b><span>แยกเงินสมทบฝั่งนายจ้างออกจากยอดที่หักพนักงาน และพนักงานเปิดดูสลิปเองได้ในแอป</span></div></li>
           </ul>
-          <p class="soon"><span class="label">กำลังพัฒนา</span>ไฟล์ยื่น ภ.ง.ด.1 ประกันสังคม และไฟล์โอนเงินธนาคาร</p>
+          <p class="soon"><span class="label">วางแผนไว้ในรุ่น Pro</span>ยื่นแบบ ภ.ง.ด.1 และประกันสังคมออนไลน์ และไฟล์โอนเงินธนาคาร</p>
         </div>
         <figure>
           <a href="assets/shots/payroll-run.th.webp" target="_blank" rel="noopener">
@@ -928,6 +991,7 @@
           ส่งหัวข้อนี้ให้คนที่ดูแลเซิร์ฟเวอร์ของบริษัทได้เลย สิ่งที่ต้องมีคือเครื่องหนึ่งเครื่องกับ Docker —
           ไม่ต้องมี Redis ไม่ต้องมี message broker ไม่ต้องมี Kubernetes
         </p>
+        <p class="lede">ถ้าออฟฟิศมี NAS ที่รัน container ได้ มีสคริปต์และคู่มือภาษาไทยใน deploy/nas ซ้อมบนเครื่อง Docker ที่ว่างเปล่าแล้ว แต่ยังไม่ได้ลองบน NAS จริง</p>
       </div>
 
       <div class="split" style="align-items:start">
