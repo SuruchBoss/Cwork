@@ -47,7 +47,7 @@ this file only says where the PO room stands.
   blank paper form to compare with the printout, and what its accountant
   keeps as proof of a cash payday (the owner is asking). How Pilot B pays
   wages (bank files stay Pro until then).
-- CW-087: the support channel, hours and response time.
+- CW-087: the support channel and response time (hours set 2026-10-17: 18:00–24:00 Thai time, temporary).
 - Prices and timing for the CW-077 items.
 
 ## How the PO room works
