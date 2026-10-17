@@ -126,6 +126,7 @@ model Employee {
   leaveAdjustments     LeaveAdjustment[]
   attendanceRecords    AttendanceRecord[]
   attendancePunches    AttendancePunch[]
+  scannerDays          ScannerDay[]
   attendanceCorrections AttendanceCorrection[]
   overtimeRequests     OvertimeRequest[]
   scheduleAssignments  ScheduleAssignment[]

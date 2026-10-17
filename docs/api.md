@@ -210,6 +210,56 @@ employee must be able to prove they turned up. Flags: `OUTSIDE_GEOFENCE`,
 Error codes: `ALREADY_CLOCKED_IN`, `NOT_CLOCKED_IN`, `DUPLICATE_PUNCH`,
 `ATTENDANCE_LOCKED`.
 
+### Fingerprint scanner export (CW-061)
+
+All of these need `attendance:manage` and, like every route that writes for the
+whole company, are refused with `403` to someone whose access is limited to some
+departments. The upload routes take one multipart part named `file`, up to 5 MB.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/attendance/scanner/preview` | checks a file, writes nothing |
+| POST | `/attendance/scanner/import` | all or nothing; audited as one event |
+| GET | `/attendance/scanner/imports` | the files imported so far |
+| GET | `/attendance/scanner/days` | `status` (default `WAITING`; `ALL` for every row), `from`, `to`, `employeeId`, `scannerNumber`, `page`, `limit`; also returns totals for the whole range |
+| GET | `/attendance/scanner/days/:id` | one day |
+| POST | `/attendance/scanner/days/:id/decision` | `{action: USE\|IGNORE, clockIn?, clockOut?, note?}` |
+| GET | `/attendance/scanner/unmapped` | scanner numbers no employee holds |
+| POST | `/attendance/scanner/unmapped/bind` | `{scannerNumber, employeeId}` |
+| POST | `/attendance/scanner/rematch` | after numbers were registered on employees |
+
+The file is the scanner's own text export: UTF-16 with a byte-order mark, tab
+separated, no header, one line for each scanner number and day with the name,
+the number, the date as dd/mm/yyyy and every time that day as HH:mm. The
+encoding is read from the byte-order mark, never from the extension (the scanner
+calls it `.xls`). Dates are Gregorian and times are read in the organisation's
+time zone.
+
+What each day becomes, with nothing guessed:
+
+| The day has | Status | What counts |
+|---|---|---|
+| no time | `NO_PUNCH` | nothing; a day off, leave or absence comes from the calendar and leave records |
+| two times | `COUNTED` | first as the clock-in, last as the clock-out |
+| one time, or three or more | `WAITING` | nothing, until HR decides the day |
+| a number no employee holds | `UNMAPPED` | nothing, until the number is registered |
+
+HR's decision (`DECIDED_USE`: pick the clock-in and clock-out from the day's
+times; `DECIDED_IGNORE`: count none) is stored beside the day, never in it, and
+can be changed; it applies only while the day has the times it was made about.
+Counted times are ordinary `BIOMETRIC` punches, so a day's record is worked out
+the way it is for any other punch. A punch that stops counting is marked and
+left out of the day (the punch table is append-only). Importing an overlapping
+file adds only the punches not already there; a day payroll has used is left as
+it is. Problems are reported by line, as for the spreadsheet imports, with codes
+such as `UNSUPPORTED_ENCODING`, `WRONG_FIELD_COUNT`, `INVALID_SCANNER_NUMBER`,
+`INVALID_DATE`, `INVALID_TIME`, `YEAR_OUT_OF_RANGE` and `DUPLICATE_IN_FILE`.
+Other error codes: `IMPORT_HAS_PROBLEMS` (422, on import), `DAY_LOCKED`,
+`SCANNER_NUMBER_NOT_REGISTERED`, `SCANNER_DAY_HAS_NO_TIMES`,
+`DECISION_NOTHING_TO_USE`, `DECISION_TIME_NOT_ON_DAY`,
+`DECISION_OUT_NOT_AFTER_IN`, `EMPLOYEE_HAS_SCANNER_NUMBER`,
+`DUPLICATE_SCANNER_ID`.
+
 ## Overtime, expenses, documents
 
 | Method | Path |

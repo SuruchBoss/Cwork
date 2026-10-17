@@ -22,6 +22,8 @@ const LeavePage = lazy(() => import('@/features/leave/LeavePage'));
 const LeaveImportPage = lazy(() => import('@/features/leave/LeaveImportPage'));
 const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage'));
 const RosterPage = lazy(() => import('@/features/attendance/RosterPage'));
+const ScannerImportPage = lazy(() => import('@/features/attendance/ScannerImportPage'));
+const ScannerReviewPage = lazy(() => import('@/features/attendance/ScannerReviewPage'));
 const PayrollPage = lazy(() => import('@/features/payroll/PayrollPage'));
 const PayrollRunPage = lazy(() => import('@/features/payroll/PayrollRunPage'));
 const PayrollImportPage = lazy(() => import('@/features/payroll/PayrollImportPage'));
@@ -148,7 +150,17 @@ export const router = createBrowserRouter([
               {
                 path: 'attendance',
                 element: <RequirePermission any={[P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM]} />,
-                children: [{ index: true, element: <AttendancePage /> }],
+                children: [
+                  { index: true, element: <AttendancePage /> },
+                  {
+                    path: 'scanner',
+                    element: <RequirePermission any={[P.ATTENDANCE_MANAGE]} />,
+                    children: [
+                      { index: true, element: <ScannerReviewPage /> },
+                      { path: 'import', element: <ScannerImportPage /> },
+                    ],
+                  },
+                ],
               },
               {
                 path: 'roster',

@@ -87,6 +87,12 @@ export const NAV: NavSection[] = [
         permissions: [P.ATTENDANCE_READ, P.ATTENDANCE_READ_TEAM],
       },
       {
+        to: '/attendance/scanner',
+        label: 'Scanner days',
+        icon: 'clock',
+        permissions: [P.ATTENDANCE_MANAGE],
+      },
+      {
         to: '/roster',
         label: 'Shifts & roster',
         icon: 'calendar',

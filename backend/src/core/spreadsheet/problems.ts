@@ -21,6 +21,12 @@ export type ImportProblemCode =
   | 'MISSING_COLUMN'
   | 'NO_ROWS'
   | 'TOO_MANY_ROWS'
+  // A fingerprint scanner's export (CW-061).
+  | 'UNSUPPORTED_ENCODING'
+  | 'WRONG_FIELD_COUNT'
+  | 'INVALID_SCANNER_NUMBER'
+  | 'INVALID_TIME'
+  | 'YEAR_OUT_OF_RANGE'
   // One cell.
   | 'REQUIRED'
   | 'NAME_REQUIRED'
@@ -79,6 +85,14 @@ const MESSAGES: Record<ImportProblemCode, string> = {
   MISSING_COLUMN: 'The file has no "{column}" column, which is required',
   NO_ROWS: 'The file has a header row but no employees under it',
   TOO_MANY_ROWS: 'The file has {rows} rows; one import takes at most {max}',
+  UNSUPPORTED_ENCODING:
+    "This is not the scanner's text export: it has no byte-order mark, so it is not read. Copy the export from the scanner again and upload it unchanged",
+  WRONG_FIELD_COUNT:
+    "A line of the scanner's export has four fields (name, scanner number, date, times); this one has {found}",
+  INVALID_SCANNER_NUMBER: '"{value}" is not a scanner user number (digits only)',
+  INVALID_TIME: '"{value}" is not a time written as HH:mm',
+  YEAR_OUT_OF_RANGE:
+    'The year {year} is outside 1990-2100. The scanner writes the Gregorian year; check the file before importing it',
   REQUIRED: 'This is required',
   NAME_REQUIRED: 'A name is needed, in Thai or in English',
   INVALID_DATE: '"{value}" is not a date this import can read',

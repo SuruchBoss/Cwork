@@ -123,6 +123,31 @@ log as an export of the run.
 
 ### Added
 
+- **Import from a fingerprint scanner** (CW-061). The scanner's own export, a
+  text file it calls `.xls` (UTF-16 with a byte-order mark, tab separated, no
+  header, one line for each scanner number and day), is imported from
+  **Time & leave → Scanner days → Import a file**: it is checked first and
+  nothing is written until HR confirms. Every day is kept as the scanner wrote
+  it, and nothing is guessed: a day with two times counts (first in, last out),
+  a day with no time is no punch (leave and absence come from the calendar and
+  leave records), a day with one time or three or more waits for HR, and a
+  scanner number no employee holds is listed apart with its days, not treated as
+  an error. HR picks the clock-in and clock-out from the day's own times, or
+  leaves the day out, on one review page whose totals change as each day is
+  decided; the decision is stored beside the raw times, can be changed, and goes
+  stale if a later file adds a time to that day. Counted times are ordinary
+  `BIOMETRIC` punches; one that stops counting is marked and left out of the day
+  (the punch table stays append-only). An overlapping file adds only the punches
+  not already there, a day payroll has used is left alone, each import is one
+  audit entry naming the file, its date range and the punches added, and no
+  fingerprint, template or image is accepted or kept (a test checks the tables).
+  A scanner number can be registered on an employee from the review page. New
+  `/attendance/scanner/*` routes need `attendance:manage` and are refused to a
+  department-limited user; Thai guide `docs/guide/scanner-import.th.md`. Shifts,
+  lateness, overtime and shifts across midnight are not worked out from scanner
+  times yet. Tested with files written in code, never a real or real-derived
+  file; `.gitignore` refuses `Export*.xls`, `Export*.XLS` and `Export*.txt`.
+
 - **A "report a problem" form in the console** (CW-087). A customer who hit an
   error had nothing to send but a description. **Help → Report a problem**
   (everyone signed in) takes what happened and attaches what Cwork can tell

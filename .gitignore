@@ -26,6 +26,13 @@ npm-debug.log*
 pnpm-debug.log*
 .pnpm-store/
 
+# ---- Fingerprint scanner exports (real attendance data, CW-061) ----
+# The scanner's own file names its people and the times they came and went.
+# It is imported through the console and never belongs in the repository.
+Export*.xls
+Export*.XLS
+Export*.txt
+
 # ---- Nest / Prisma ----
 backend/dist/
 backend/generated/

@@ -41,6 +41,8 @@ model Organization {
   workSchedules         WorkSchedule[]
   attendanceRecords     AttendanceRecord[]
   attendancePunches     AttendancePunch[]
+  scannerImports        ScannerImport[]
+  scannerDays           ScannerDay[]
   employeeDevices       EmployeeDevice[]
   overtimeRequests      OvertimeRequest[]
   payComponents         PayComponent[]

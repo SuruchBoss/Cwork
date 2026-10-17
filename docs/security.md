@@ -62,6 +62,21 @@ names, ID numbers and salaries. `web/src/lib/failure-log.ts` decides what is
 kept, and its tests run seeded employee data through the real API client and
 check that none of it reaches the report.
 
+### The fingerprint scanner's export
+
+The scanner's file (CW-061) names each person and the times they came and went,
+so it is real attendance data. It is read in memory and kept as days and times
+only; the file itself is not stored, only its name, its SHA-256 and the dates it
+covers, and an import is one audit entry naming the file, the date range and how
+many punches it added. **A fingerprint, a template or an image is never part of
+what Cwork accepts or keeps**: the export has none, and a test checks that no
+table the import writes has a column that could hold one. The `.gitignore`
+refuses `Export*.xls`, `Export*.XLS` and `Export*.txt` so a real file is not
+committed by accident, and the tests use files written in code, with invented
+names, never a real or real-derived file. Importing, deciding a day and
+registering a scanner number need `attendance:manage` and are refused to someone
+whose access is limited to some departments.
+
 ## Claiming a fresh installation
 
 Between the moment a deployment starts answering requests and the moment its
