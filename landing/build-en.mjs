@@ -552,6 +552,8 @@ out = out.replace(/walkthrough\.th\.mp4/g, 'walkthrough.en.mp4');
 // So is the film (docs/film/film.mjs, FILM_LANG): English captions over the
 // English interface, for the English page.
 out = out.replace(/film\.th\.mp4/g, 'film.en.mp4');
+// The office clip is a video in two encodings, in the language of the console it shows.
+out = out.replace(/office\.th\.(mp4|webm)/g, 'office.en.$1');
 // The console screenshots likewise: the English page shows the English console.
 out = out.replace(/\.th\.webp/g, '.en.webp');
 // And the demo opens in the page's language (CW-031): the console reads `lang`.
@@ -594,7 +596,7 @@ if (/walkthrough\.th\.mp4/.test(out)) {
   console.error('The English page still points at the Thai-captioned walkthrough.');
   process.exit(1);
 }
-for (const file of ['assets/film.en.mp4', 'assets/film.en.webp', 'assets/office.en.webp']) {
+for (const file of ['assets/film.en.mp4', 'assets/film.en.webp', 'assets/office.en.mp4', 'assets/office.en.webm', 'assets/office.poster.en.webp']) {
   if (out.includes(`../${file}`) && !existsSync(join(here, file))) {
     console.error(`${file} is missing (run docs/film/film.mjs with FILM_LANG=en, or docs/screenshots/capture-office.mjs for the office clip)`);
     process.exit(1);

@@ -42,9 +42,9 @@
  *   29-documents-expiring.png      passports and work permits by how soon they end
  *
  *   landing/assets/shots/<key>.<lang>.webp       the same, 1280×800 at 2×
- *   docs/demo/office.<lang>.webp                 the clip, animated, for the landing page
- *   landing/assets/office.<lang>.webp            the same file, where the landing page reads it
- *   docs/demo/office.<lang>.gif                  the clip, for the README
+ *   landing/assets/office.<lang>.mp4/.webm       the clip, 1920 px wide, for the landing page
+ *   landing/assets/office.poster.<lang>.webp     its first picture, shown until it plays
+ *   docs/demo/office.<lang>.gif                  the clip, 1600 px wide, for the README
  *
  * The cash sheet is one document with no English edition, so there is one
  * picture and it is written to both folders. The clip is the journey as the
@@ -90,6 +90,11 @@ const ACCOUNT = "ceo@cwork.example";
 const DESKTOP = { width: 1280, height: 800 };
 const LANDING = join(repo, "landing", "assets", "shots");
 const DEMO = join(repo, "docs", "demo");
+const CLIP_WIDTH = 1920;
+const CLIP_FPS = 25;
+const GIF_WIDTH = Number(process.env.GIF_WIDTH ?? 1600);
+const GIF_FPS = Number(process.env.GIF_FPS ?? 10);
+const GIF_COLORS = Number(process.env.GIF_COLORS ?? 128);
 const scratch = join(tmpdir(), "cwork-capture-office");
 
 rmSync(scratch, { recursive: true, force: true });
@@ -391,14 +396,14 @@ async function settle(page) {
 }
 
 /**
- * A context for one language, signed in. `record` makes it record a video.
- * Signing in happens in a throw-away context so that no clip starts with a
- * login, and the session is carried over in `storageState`.
+ * A context for one language, signed in. Signing in happens in a throw-away
+ * context so that no clip starts with a login, and the session is carried over
+ * in `storageState`.
  */
-async function openContext(language, { record = false } = {}) {
+async function openContext(language) {
   const options = {
     viewport: DESKTOP,
-    deviceScaleFactor: record ? 1 : 2,
+    deviceScaleFactor: 2,
     locale: language === "th" ? "th-TH" : "en-GB",
     timezoneId: "Asia/Bangkok",
   };
@@ -429,14 +434,6 @@ async function openContext(language, { record = false } = {}) {
   const context = await browser.newContext({
     ...options,
     storageState,
-    ...(record
-      ? {
-          recordVideo: {
-            dir: join(scratch, `video-${language}`),
-            size: DESKTOP,
-          },
-        }
-      : {}),
   });
   await serveWebfonts(context);
   await followApiClock(context, `${API}/config`);
@@ -554,10 +551,61 @@ const CAPTIONS = {
   },
 };
 
+/**
+ * Pictures of the page, one after the other, as sharp as the stills (2×), each
+ * with the time it was taken. Playwright's own video and the browser's
+ * screencast are both 1× whatever the pixel ratio, which is what made the first
+ * clips soft on a high-density screen. A picture takes a while, so the frames
+ * come at uneven intervals; the times are kept and the encoder is told how long
+ * each one lasted.
+ */
+function startFrames(page, dir) {
+  mkdirSync(dir, { recursive: true });
+  const frames = [];
+  let running = true;
+  const loop = (async () => {
+    while (running) {
+      const at = Date.now();
+      try {
+        const file = join(dir, `${String(frames.length).padStart(5, "0")}.jpg`);
+        writeFileSync(
+          file,
+          await page.screenshot({ type: "jpeg", quality: 92 }),
+        );
+        frames.push({ file, at });
+      } catch {
+        // The page was between two documents: try again.
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      }
+    }
+  })();
+  return {
+    frames,
+    async stop() {
+      running = false;
+      await loop;
+    },
+  };
+}
+
+/** The list ffmpeg's concat demuxer reads: each picture and how long it lasted. */
+function concatList(frames, path) {
+  const lines = [];
+  frames.forEach((frame, i) => {
+    const next = frames[i + 1]?.at ?? frame.at + 200;
+    lines.push(
+      `file '${frame.file}'`,
+      `duration ${((next - frame.at) / 1000).toFixed(3)}`,
+    );
+  });
+  // The demuxer ignores the last duration unless the file is named again.
+  lines.push(`file '${frames.at(-1).file}'`);
+  writeFileSync(path, lines.join("\n") + "\n");
+}
+
 async function recordClip(language, file, fileName) {
-  const context = await openContext(language, { record: true });
+  const context = await openContext(language);
   const page = await context.newPage();
-  const startedAt = Date.now();
   const pageErrors = [];
   page.on("pageerror", (e) => pageErrors.push(String(e)));
   const text = CAPTIONS[language];
@@ -566,7 +614,7 @@ async function recordClip(language, file, fileName) {
   await page.goto(BASE + "/attendance/scanner/import");
   await settle(page);
   // The clip starts on the loaded page, not on the loading of it.
-  const trim = ((Date.now() - startedAt) / 1000).toFixed(2);
+  const recorder = startFrames(page, join(scratch, `frames-${language}`));
   await caption(page, text.choose);
   await hold(1600);
 
@@ -618,62 +666,93 @@ async function recordClip(language, file, fileName) {
 
   if (pageErrors.length > 0)
     throw new Error(`the console threw: ${pageErrors.join(" | ")}`);
-  const video = page.video();
+  await recorder.stop();
   await context.close();
-  const webm = await video.path();
+  const list = join(scratch, `clip-${language}.ffconcat`);
+  concatList(recorder.frames, list);
+  const seconds = (
+    (recorder.frames.at(-1).at - recorder.frames[0].at) /
+    1000
+  ).toFixed(1);
 
-  // 900 px wide at 10 fps: an interface mostly holds still (see record.mjs).
-  const scale = "fps=10,scale=900:-1:flags=lanczos";
+  // The landing page shows the clip about 1500 px wide, on screens that have
+  // two device pixels to the CSS pixel, so it is encoded at 1920 px. It is a
+  // video, not an animated image: a browser decodes every frame of an animated
+  // WebP into memory, and a clip this size would be about a gigabyte of it on
+  // a tablet. H.264 first, VP9 for a browser that has no H.264.
+  const assets = join(repo, "landing", "assets");
+  const input = ["-f", "concat", "-safe", "0", "-i", list];
+  const size = `scale=${CLIP_WIDTH}:-2:flags=lanczos`;
   execFileSync("ffmpeg", [
     "-y",
     "-loglevel",
     "error",
-    "-ss",
-    trim,
-    "-i",
-    webm,
+    ...input,
     "-vf",
-    scale,
-    "-loop",
+    `fps=${CLIP_FPS},${size},format=yuv420p`,
+    "-c:v",
+    "libx264",
+    "-preset",
+    "slow",
+    "-crf",
+    "22",
+    "-movflags",
+    "+faststart",
+    "-an",
+    join(assets, `office.${language}.mp4`),
+  ]);
+  execFileSync("ffmpeg", [
+    "-y",
+    "-loglevel",
+    "error",
+    ...input,
+    "-vf",
+    `fps=${CLIP_FPS},${size}`,
+    "-c:v",
+    "libvpx-vp9",
+    "-b:v",
     "0",
-    "-quality",
-    "70",
-    "-compression_level",
-    "6",
-    join(DEMO, `office.${language}.webp`),
+    "-crf",
+    "33",
+    "-row-mt",
+    "1",
+    "-an",
+    join(assets, `office.${language}.webm`),
   ]);
-  // Only landing/ is published to Pages, so the clip is copied there as well.
-  execFileSync("cp", [
-    join(DEMO, `office.${language}.webp`),
-    join(repo, "landing", "assets", `office.${language}.webp`),
-  ]);
+  // The poster is the first picture of the clip, at the same size.
   execFileSync("ffmpeg", [
     "-y",
     "-loglevel",
     "error",
-    "-ss",
-    trim,
     "-i",
-    webm,
+    recorder.frames[0].file,
     "-vf",
-    `${scale},split[a][b];[a]palettegen=stats_mode=diff:max_colors=96[p];[b][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle`,
+    size,
+    "-quality",
+    "82",
+    join(assets, `office.poster.${language}.webp`),
+  ]);
+  // The README's GitHub column is about 880 px; 1600 keeps it sharp on a
+  // high-density screen. A GIF is limited to a palette, so the palette is built
+  // from the whole clip.
+  execFileSync("ffmpeg", [
+    "-y",
+    "-loglevel",
+    "error",
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    list,
+    "-vf",
+    `fps=${GIF_FPS},scale=${GIF_WIDTH}:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=${GIF_COLORS}[p];[b][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle`,
     "-loop",
     "0",
     join(DEMO, `office.${language}.gif`),
   ]);
-  const seconds = execFileSync("ffprobe", [
-    "-v",
-    "error",
-    "-show_entries",
-    "format=duration",
-    "-of",
-    "csv=p=0",
-    webm,
-  ])
-    .toString()
-    .trim();
   console.log(
-    `  clip ${language}: ${(Number(seconds) - Number(trim)).toFixed(1)}s`,
+    `  clip ${language}: ${seconds}s, ${recorder.frames.length} pictures`,
   );
 }
 
@@ -819,15 +898,20 @@ if (MODE !== "clips") {
 }
 
 await browser.close();
-if (existsSync(scratch)) rmSync(scratch, { recursive: true, force: true });
-for (const file of [
-  "office.th.webp",
-  "office.en.webp",
-  "office.th.gif",
-  "office.en.gif",
+if (existsSync(scratch) && !process.env.KEEP_SCRATCH)
+  rmSync(scratch, { recursive: true, force: true });
+for (const path of [
+  join(DEMO, "office.th.gif"),
+  join(DEMO, "office.en.gif"),
+  ...["th", "en"].flatMap((language) =>
+    ["mp4", "webm"].map((type) =>
+      join(repo, "landing", "assets", `office.${language}.${type}`),
+    ),
+  ),
 ]) {
-  const path = join(DEMO, file);
   if (existsSync(path))
-    console.log(`${file}: ${(statSync(path).size / 1e6).toFixed(2)} MB`);
+    console.log(
+      `${path.slice(repo.length + 1)}: ${(statSync(path).size / 1e6).toFixed(2)} MB`,
+    );
 }
 console.log("done");
