@@ -24,8 +24,37 @@ import {
   Matches,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../core/http/pagination.dto';
+
+/**
+ * Where an employee is paid by transfer. All four parts or none, the same
+ * checks the spreadsheet import makes (CW-059); the account number is stored
+ * encrypted.
+ */
+export class NewBankAccountDto {
+  @ApiProperty({ description: 'Three-digit Bank of Thailand code', example: '014' })
+  @Matches(/^\d{3}$/, { message: 'bankCode must be 3 digits' })
+  bankCode!: string;
+
+  @ApiProperty({ example: 'ธนาคารไทยพาณิชย์' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  bankName!: string;
+
+  @ApiProperty({ description: '6 to 20 digits', example: '1234567890' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.replace(/[\s-]/g, '') : value))
+  @Matches(/^\d{6,20}$/, { message: 'accountNo must be 6 to 20 digits' })
+  accountNo!: string;
+
+  @ApiProperty({ description: 'Name on the account' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  accountName!: string;
+}
 
 export class CreateEmployeeDto {
   @ApiPropertyOptional({ description: 'Auto-generated when omitted' })
@@ -214,10 +243,16 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsBoolean()
   createUserAccount?: boolean;
+
+  @ApiPropertyOptional({ type: NewBankAccountDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NewBankAccountDto)
+  bankAccount?: NewBankAccountDto;
 }
 
 export class UpdateEmployeeDto extends PartialType(
-  OmitType(CreateEmployeeDto, ['employeeCode', 'createUserAccount'] as const),
+  OmitType(CreateEmployeeDto, ['employeeCode', 'createUserAccount', 'bankAccount'] as const),
 ) {
   @ApiPropertyOptional({ enum: EmployeeStatus })
   @IsOptional()

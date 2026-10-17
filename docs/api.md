@@ -86,7 +86,7 @@ Error codes: `MFA_ENROLMENT_REQUIRED`, `MFA_CODE_INVALID`, `MFA_MANDATORY`,
 | GET | `/employees/me/team` | `employee:read:team` |
 | GET | `/employees/:id` | scoped by visibility |
 | GET | `/employees/:id/employment-events` | `employee:read` |
-| POST | `/employees` | `employee:create` |
+| POST | `/employees` | `employee:create` — an optional `bankAccount` `{bankCode, bankName, accountNo, accountName}` is stored encrypted (CW-065); `probationEndDate` before `hireDate` is `422 PROBATION_BEFORE_HIRE` |
 | PATCH | `/employees/:id` | `employee:update` |
 | DELETE | `/employees/:id` | `employee:delete` (soft, disables login) |
 | GET | `/employees/import/template?lang=th\|en` | `employee:create` — the .xlsx to fill in |

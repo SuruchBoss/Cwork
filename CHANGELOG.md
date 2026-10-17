@@ -41,6 +41,20 @@ entry, tags it and publishes the notes.
   host, with Odoo beside it) and what was not (any Synology, DSM's screens, a
   Windows PC trusting the authority, a scan from outside, two real machines).
 
+- **Add one employee from the console** (CW-065). **Employees → Add an employee**
+  (for anyone who may create employees) is a form with the fields of the
+  spreadsheet import: name in Thai or, for someone with no Thai name, in English
+  (carried into the Thai fields the console shows), employee code (empty
+  numbers automatically), dates, work details, identity documents, contact and,
+  optionally, a bank account. It goes through the same route and checks as the
+  import: a national ID of 13 digits with dashes and spaces allowed, a probation
+  that does not end before the hire date, a bank account whole or not at all,
+  and the national ID, tax ID, social security number, passport, work permit
+  and account number stored encrypted. `POST /employees` now takes an optional
+  `bankAccount` and refuses a probation before the hire date, as the import
+  does. Offering to create the person's sign-in waits for CW-064. Tested with
+  synthetic people only.
+
 - **A scanner number can be set on the employee's page** (CW-090). The employee
   page has a **Scanner number** card for anyone who may update employees. The
   number is kept as text, so `007` stays `007`. Giving an employee a number counts,

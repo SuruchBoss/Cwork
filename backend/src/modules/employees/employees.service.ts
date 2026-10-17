@@ -163,11 +163,31 @@ export class EmployeesService {
     if (existing)
       throw new ConflictError('DUPLICATE_EMPLOYEE_CODE', `Employee code ${employeeCode} is taken`);
 
+    if (dto.probationEndDate && dto.probationEndDate.slice(0, 10) < dto.hireDate.slice(0, 10)) {
+      throw new BusinessRuleError(
+        'PROBATION_BEFORE_HIRE',
+        'The probation end date cannot be before the hire date',
+      );
+    }
     if (dto.managerId) await this.assertEmployeeInOrg(user.organizationId, dto.managerId);
     await this.assertScannerIdFree(user.organizationId, dto.scannerId);
 
     const employee = await this.prisma.$transaction(async (tx) => {
       const created = await this.createInTransaction(tx, user, employeeCode, dto);
+
+      if (dto.bankAccount) {
+        const { bankCode, bankName, accountNo, accountName } = dto.bankAccount;
+        await tx.employeeBankAccount.create({
+          data: {
+            employeeId: created.id,
+            bankCode,
+            bankName,
+            accountNoEnc: this.crypto.encrypt(accountNo)!,
+            accountNoLast4: CryptoService.lastChars(accountNo),
+            accountName,
+          },
+        });
+      }
 
       if (dto.createUserAccount) {
         const email = dto.workEmail ?? dto.personalEmail;
