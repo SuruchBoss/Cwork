@@ -859,6 +859,162 @@ export const thMessages: Record<string, string> = {
   Column: 'คอลัมน์',
   Problem: 'ปัญหา',
   File: 'ทั้งไฟล์',
+  // Fingerprint scanner import (CW-061)
+  'No punch':
+    'ไม่มีการสแกน',
+  'Number not registered':
+    'เลขสแกนยังไม่มีเจ้าของ',
+  'Counted':
+    'นับแล้ว',
+  'Waiting: one time only':
+    'รอ HR: สแกนครั้งเดียว',
+  'Waiting: three or more times':
+    'รอ HR: สแกนสามครั้งขึ้นไป',
+  'Waiting for HR':
+    'รอ HR ตัดสิน',
+  'HR chose the times':
+    'HR เลือกเวลาแล้ว',
+  'HR left it out':
+    'HR ไม่นับวันนี้',
+  'Scanner number':
+    'เลขในเครื่องสแกน',
+  'Name on the scanner':
+    'ชื่อในเครื่องสแกน',
+  'Whose number is it?':
+    'เลขนี้ของใคร',
+  '{count} days with no punch':
+    '{count} วันที่ไม่มีการสแกน',
+  'Import from the fingerprint scanner':
+    'นำเข้าจากเครื่องสแกนนิ้ว',
+  'The scanner’s export for one month, kept exactly as the scanner wrote it, with the punches that can be counted added to attendance':
+    'ไฟล์ที่เครื่องสแกนส่งออกของหนึ่งเดือน เก็บไว้ตามที่เครื่องบันทึกทุกอย่าง และเพิ่มเฉพาะเวลาที่นับได้เข้าไปในการลงเวลา',
+  'Review scanner days':
+    'ตรวจวันที่สแกน',
+  'Imported {file}: {count} punches added to attendance':
+    'นำเข้า {file} แล้ว เพิ่มรายการลงเวลา {count} รายการ',
+  'Days from {from} to {to}: {added} new, {changed} with new times, {same} as before':
+    'วันที่ {from} ถึง {to}: วันใหม่ {added} วัน วันที่มีเวลาเพิ่ม {changed} วัน เหมือนเดิม {same} วัน',
+  '{count} days were left as they were because payroll has already used them':
+    '{count} วันไม่ถูกแก้ เพราะเงินเดือนใช้ไปแล้ว',
+  '{count} days are waiting for HR to decide, and are not counted until then':
+    '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
+  '{count} scanner numbers belong to nobody yet; match them on the review page':
+    'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
+  '1. Choose the scanner’s file':
+    '1. เลือกไฟล์จากเครื่องสแกน',
+  'Use the file the scanner wrote, as it is: it may be called .xls but it is read as text. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.':
+    'ใช้ไฟล์ที่เครื่องสแกนส่งออกมาตามเดิม ชื่อไฟล์อาจเป็น .xls แต่ระบบอ่านเป็นข้อความ ไฟล์จะถูกตรวจก่อน ยังไม่บันทึกอะไร ลายนิ้วมือไม่อยู่ในไฟล์และระบบไม่เก็บ',
+  '2. Fix these in the file':
+    '2. แก้ไขรายการเหล่านี้ในไฟล์',
+  'Line':
+    'บรรทัด',
+  '2. What this file holds':
+    '2. ในไฟล์นี้มีอะไร',
+  'Import this file':
+    'นำเข้าไฟล์นี้',
+  'The file is clean. {lines} lines, from {from} to {to}.':
+    'ไฟล์ถูกต้อง {lines} บรรทัด ตั้งแต่ {from} ถึง {to}',
+  'New days':
+    'วันใหม่',
+  'Days with new times':
+    'วันที่มีเวลาเพิ่ม',
+  'Days already as they are':
+    'วันที่เหมือนเดิม',
+  'Punches to add':
+    'รายการลงเวลาที่จะเพิ่ม',
+  'Only punches not already in attendance':
+    'เฉพาะรายการที่ยังไม่อยู่ในการลงเวลา',
+  'Nothing in this file is new: every day is already in Cwork.':
+    'ไม่มีอะไรใหม่ในไฟล์นี้ ทุกวันอยู่ใน Cwork แล้ว',
+  'Scanner numbers nobody has registered':
+    'เลขสแกนที่ยังไม่มีเจ้าของ',
+  'This is not a mistake in the file. Nothing is counted for these numbers until you say whose they are, which you can do after importing; their days stay listed here and on the review page.':
+    'นี่ไม่ใช่ข้อผิดพลาดของไฟล์ ระบบยังไม่นับอะไรให้เลขเหล่านี้จนกว่าจะบอกว่าเป็นของใคร ซึ่งทำได้หลังนำเข้า วันของเลขเหล่านี้จะยังแสดงไว้ที่นี่และในหน้าตรวจ',
+  'Files imported so far':
+    'ไฟล์ที่นำเข้าแล้ว',
+  'Loading…':
+    'กำลังโหลด…',
+  'No file has been imported yet.':
+    'ยังไม่เคยนำเข้าไฟล์',
+  'Days covered':
+    'ช่วงวันที่',
+  'Punches added':
+    'รายการลงเวลาที่เพิ่ม',
+  'Imported':
+    'นำเข้าเมื่อ',
+  'Payroll has used this day':
+    'เงินเดือนใช้วันนี้ไปแล้ว',
+  'Clock-in for {day}':
+    'เวลาเข้างานของ {day}',
+  'No clock-in':
+    'ไม่มีเวลาเข้า',
+  'Clock-out for {day}':
+    'เวลาเลิกงานของ {day}',
+  'No clock-out':
+    'ไม่มีเวลาออก',
+  'Use these times':
+    'ใช้เวลาเหล่านี้',
+  'Do not count this day':
+    'ไม่นับวันนี้',
+  'Number {number} registered: {days} days matched, {punches} punches added':
+    'บันทึกเลข {number} แล้ว จับคู่ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
+  'Find an employee for number {number}':
+    'ค้นหาพนักงานของเลข {number}',
+  'Search by name or code':
+    'ค้นหาด้วยชื่อหรือรหัส',
+  'Employee for number {number}':
+    'พนักงานของเลข {number}',
+  'Choose…':
+    'เลือก…',
+  'Register this number':
+    'บันทึกเลขนี้',
+  'Matched again: {days} days matched, {punches} punches added':
+    'จับคู่ใหม่แล้ว ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
+  'All rows':
+    'ทุกแถว',
+  'Scanner days':
+    'วันที่สแกนนิ้ว',
+  'Every day the fingerprint scanner recorded, as it recorded it. Decide the days it could not settle; the totals change as you do.':
+    'ทุกวันที่เครื่องสแกนนิ้วบันทึกไว้ ตามที่เครื่องบันทึก ตัดสินวันที่เครื่องสรุปเองไม่ได้ ยอดรวมจะเปลี่ยนตามที่ตัดสิน',
+  'Import a file':
+    'นำเข้าไฟล์',
+  'Not counted until you decide':
+    'ยังไม่นับจนกว่าจะตัดสิน',
+  '{count} chosen by HR':
+    '{count} วัน HR เป็นคนเลือก',
+  'Left out by HR':
+    'HR ไม่นับ',
+  'Days from the scanner': 'วันจากเครื่องสแกน',
+  'Match again':
+    'จับคู่ใหม่',
+  'Nothing is counted for these numbers until you say whose they are. If a number was added to an employee some other way, such as the employee import, press Match again.':
+    'ยังไม่นับอะไรให้เลขเหล่านี้จนกว่าจะบอกว่าเป็นของใคร ถ้าเลขถูกใส่ให้พนักงานด้วยวิธีอื่น เช่นนำเข้าพนักงานจากไฟล์ ให้กดจับคู่ใหม่',
+  'Show':
+    'แสดง',
+  'Nothing is waiting for you':
+    'ไม่มีวันที่รอให้ตัดสิน',
+  'No days match this filter':
+    'ไม่มีวันที่ตรงกับตัวกรองนี้',
+  'Import the scanner’s file first, then its days appear here.':
+    'นำเข้าไฟล์จากเครื่องสแกนก่อน แล้ววันต่างๆ จะแสดงที่นี่',
+  'Times on the scanner':
+    'เวลาที่เครื่องสแกนบันทึก',
+  'Decision':
+    'การตัดสิน',
+  'The scanner has more times now than when you decided':
+    'ตอนนี้เครื่องสแกนมีเวลามากกว่าตอนที่ตัดสินไว้',
+  'Page {page} of {pages}':
+    'หน้า {page} จาก {pages}',
+  "This is not the scanner's text export: it has no byte-order mark, so it is not read. Copy the export from the scanner again and upload it unchanged":
+    'นี่ไม่ใช่ไฟล์ข้อความที่เครื่องสแกนส่งออก (ไม่มีเครื่องหมายระบุการเข้ารหัสต้นไฟล์) จึงไม่อ่านให้ คัดลอกไฟล์จากเครื่องสแกนมาใหม่แล้วอัปโหลดโดยไม่แก้',
+  "A line of the scanner's export has four fields (name, scanner number, date, times); this one has {found}":
+    'แต่ละบรรทัดของไฟล์จากเครื่องสแกนมีสี่ช่อง (ชื่อ เลขในเครื่อง วันที่ เวลา) บรรทัดนี้มี {found} ช่อง',
+  '"{value}" is not a scanner user number (digits only)':
+    '"{value}" ไม่ใช่เลขผู้ใช้ในเครื่องสแกน (ต้องเป็นตัวเลขล้วน)',
+  '"{value}" is not a time written as HH:mm':
+    '"{value}" ไม่ใช่เวลาแบบ ชั่วโมง:นาที (HH:mm)',
+  'The year {year} is outside 1990-2100. The scanner writes the Gregorian year; check the file before importing it':
+    'ปี {year} อยู่นอกช่วง 1990-2100 เครื่องสแกนเขียนเป็นปี ค.ศ. ตรวจไฟล์ก่อนนำเข้า',
   '3. Import': '3. นำเข้า',
   'Import {count} employees': 'นำเข้าพนักงาน {count} คน',
   'The file is clean. These employees will be created, all together:':

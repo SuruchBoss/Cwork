@@ -73,7 +73,7 @@ export function AppLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={item.to === '/'}
+                  end={item.to === '/' || item.to === '/attendance'}
                   onClick={closeSidebar}
                   className={({ isActive }) => clsx('nav-link', isActive && 'nav-link--active')}
                 >

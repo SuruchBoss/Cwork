@@ -65,6 +65,14 @@ const TEMPLATES: Record<string, string> = {
   INVALID_AMOUNT: '"{value}" is not an amount in baht: 0 or more, with at most two decimals',
   TAX_OVER_INCOME: 'Tax withheld ({value}) cannot be more than the taxable income ({income})',
   SSO_OVER_LIMIT: 'Social security for {months} months is at most {max}, not {value}',
+  UNSUPPORTED_ENCODING:
+    "This is not the scanner's text export: it has no byte-order mark, so it is not read. Copy the export from the scanner again and upload it unchanged",
+  WRONG_FIELD_COUNT:
+    "A line of the scanner's export has four fields (name, scanner number, date, times); this one has {found}",
+  INVALID_SCANNER_NUMBER: '"{value}" is not a scanner user number (digits only)',
+  INVALID_TIME: '"{value}" is not a time written as HH:mm',
+  YEAR_OUT_OF_RANGE:
+    'The year {year} is outside 1990-2100. The scanner writes the Gregorian year; check the file before importing it',
   PAID_IN_CWORK:
     '{employee} was already paid for {period} in Cwork; these figures can only cover the months before it',
 };

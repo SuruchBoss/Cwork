@@ -51,6 +51,9 @@ export const qk = {
 
   attendanceRecords: (filters?: unknown) => ['attendance', 'records', filters] as const,
   attendanceToday: ['attendance', 'today'] as const,
+  scannerDays: (filters?: unknown) => ['attendance', 'scanner', 'days', filters] as const,
+  scannerUnmapped: ['attendance', 'scanner', 'unmapped'] as const,
+  scannerImports: ['attendance', 'scanner', 'imports'] as const,
   attendanceCorrections: (status?: string) => ['attendance', 'corrections', status] as const,
   overtimeRequests: (filters?: unknown) => ['overtime', filters] as const,
 

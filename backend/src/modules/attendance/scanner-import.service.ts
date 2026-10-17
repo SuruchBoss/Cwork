@@ -622,7 +622,7 @@ export class ScannerImportService {
     if (employee.scannerId) {
       throw new BusinessRuleError(
         'EMPLOYEE_HAS_SCANNER_NUMBER',
-        `Employee ${employee.employeeCode} already has scanner number ${employee.scannerId}; change it on the employee's page`,
+        `Employee ${employee.employeeCode} already has scanner number ${employee.scannerId}`,
       );
     }
     const holder = await this.prisma.employee.findFirst({
