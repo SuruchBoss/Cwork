@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-061 · CW-062 · CW-089 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-089 · CW-062 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -211,95 +211,6 @@ and staff like that often have no work email. Cwork must not require one.
 
 **Files** `backend/src/modules/auth/`, `backend/src/modules/employees/`,
 `backend/prisma/schema/`, `web/src/features/employees/`, `mobile/lib/features/auth/`
-
----
-
-
-### CW-061 · Import punches from a fingerprint scanner's export
-`P0` · attendance · **M** · Pilot A, by 31 October 2026 · queued 2026-10-17 (#61)
-
-**Confirmed 2026-09-30:** the pilot's scanner is a TA-001EX. Staff do scan,
-and HR copies the times onto paper because they do not use the scanner's
-software. Importing the scanner's file is the first thing the pilot will
-*see* Cwork save them. The PO could not find the model's documentation;
-devices of this kind usually export to a USB flash drive, which is the file
-to ask for.
-
-The pilot company clocks in on a fingerprint scanner and gets the punches out
-as an Excel file. Cwork has no way to take them in. `PunchMethod` already has
-`BIOMETRIC` and `IMPORT`, but nothing writes either. Without this the pilot has
-no attendance at all, because nobody there clocks in on the app.
-
-**Needs from the pilot before building:** the scanner's make and model, and one
-real export covering a month. Names can be replaced before it is shared, but
-IDs, times and the layout must be as the scanner writes them. Scanners differ
-in layout: some write one row per punch, others one row per day with in and
-out columns. Build against the real file, not a guess.
-
-**The export's layout, confirmed 2026-10-17 (owner, relayed from the Asuna Bot
-room; no real file is in this repo or any cloud session):**
-- Named `.xls`, but it is UTF-16LE text with a byte-order mark, tab-separated,
-  with no header row. Detect it from the BOM, never from the extension.
-- Each line has four fields and a trailing empty one. Every field carries
-  trailing spaces and ends in a comma; trim both.
-- Field 1 the name (Thai), field 2 the scanner's user number (an integer, not
-  the HR employee code), field 3 the date as dd/mm/yyyy in the Gregorian year
-  (check a file from another month before trusting that), field 4 every time
-  of that day in one field as HH:mm separated by spaces, from none to many.
-- One line for every day of the month for each scanner number, even a day
-  with no punch. One file holds one month.
-
-**Decided by the owner (2026-10-17):**
-- A scanner number not in the employee register (a temporary number, for
-  instance) is *not counted*, not an error. It is listed apart, with its rows,
-  for HR to map if they want.
-- A day with one time, or three or more, is *not counted* until HR decides
-  that row. Cwork does not guess.
-- Every raw row stays visible: nothing is hidden or deleted. HR's decisions
-  are stored apart from the raw punches, can be seen afterwards and changed.
-
-**Day types (the PO's proposal; the dev settles the detail):** no time = no
-punch (day off, leave or absence come from the calendar and leave records,
-never guessed from the scanner); two times = a normal day, in = the first,
-out = the last, counted; one time = a missing punch, waiting on HR; three or
-more = extra punches, waiting on HR. One review page holds every row waiting
-on HR, decided one row at a time, with the totals changing as HR decides.
-
-**Not known yet:** whether shifts, lateness or overtime are needed for this
-pilot (the first round keeps in and out only), and whether any shift crosses
-midnight. Neither is guessed.
-
-**Test files:** synthetic only, covering a day with no punch, two times, one
-time, three times, a number not in the register, fields with trailing spaces
-and commas, and UTF-16LE with a BOM. Nothing real, and nothing derived from a
-real file, is committed; add a `.gitignore` pattern for the scanner's export.
-The acceptance check against the pilot's real export is run on the owner's
-own machine, not in a cloud session.
-
-**Scope**
-- A scanner ID on each employee, mapping the scanner's user number to the
-  employee. It is set by hand or by CW-059's import.
-- Upload the export, preview it, then commit. As in CW-059, nothing is written
-  until the file is clean.
-- Imported punches are ordinary punches, method `BIOMETRIC`. They are
-  append-only like every other punch, and late, absent and overtime are derived
-  from them exactly as from app punches.
-- Times in the file carry no time zone and are read in the organisation's.
-
-**Acceptance**
-- The pilot's real export imports, and the day-by-day attendance matches what
-  HR reads off the file for five employees chosen at random.
-- Importing an overlapping export (scanners export cumulative ranges) adds only
-  the punches not already present, with no duplicates.
-- A scanner ID with no employee is listed by ID and row, not silently dropped.
-- Imported punches are not flagged for having no location.
-- Each import is audited as one event naming the file, its date range and the
-  number of punches added.
-- No fingerprint template or image is accepted or stored. The file carries
-  times, and a test asserts nothing else is kept.
-
-**Files** `backend/src/modules/attendance/`, `web/src/features/attendance/`,
-`backend/prisma/schema/`
 
 ---
 
@@ -1530,3 +1441,4 @@ Kept so the reasoning survives.
 | **CW-082** · A monthly salary prorated in a month with a substitute day counted that day as a working day | A salaried joiner's or leaver's pay, and the value of an unpaid day, are now worked out over the employee's own work calendar (`WorkCalendarService`: their schedule, the organisation's and the work location's holidays, substitute days as days off), not Monday to Friday less the organisation's holidays. The method in `docs/payroll-thailand.md` is unchanged: base × days paid ÷ the period's working days, counted as if employed all period, so a holiday before someone joined still takes its substitute out of the month. Checked by hand in the e2e for December 2026 at 20,000 (20 working days after 7, 10 and 31 December): a joiner on the 9th gets 15,000.00 (was 14,285.71), a leaver after the 4th 4,000.00, one absent day 19,000.00, a full month 20,000.00 as before; the test fails with the old figures when the substitute day is taken out. Accepted from the dev: a full-month employee with unpaid days in such a month is docked at the corrected day's value, which is the fix; a schedule with Saturday as a working day now counts Saturdays; approved and paid payslips are not recalculated. 6fffdeb, closed 2026-10-11. |
 | **CW-083** · A department limit on the payroll officer did not limit pay, and the console did not say so | When a department limit is chosen for a role, the account-roles card on the employee page now names, before saving, what the limit does not narrow, in Thai and English: pay (payroll runs, payslips, printed payslips, wage receipts, compensation), resignations and the audit log. The list is data, not role names: `OUTSIDE_THE_DEPARTMENT_LIMIT` and `unlimitedAreas()` in `organization/role-grants.ts`, returned per role by `GET /employees/:id/roles` as `unlimitedByDepartment`, so a new role or permission is covered by adding it there. Saving is not blocked and who sees pay is unchanged. `docs/security.md` and `docs/guide/account-roles.th.md` say the same. Accepted from the dev: MANAGER holds only `employee:read:team`, so no department limit can be chosen for it and no note appears (tested in unit, e2e and web); resignations and the audit log were found outside the filter while tracing the code and added to the list, so PAYROLL_OFFICER, HR_OFFICER and AUDITOR now show the note. Whether payroll should honour a department limit stays an owner's decision. c764fca, closed 2026-10-11. |
 | **CW-088** · A cash payday had no way to count the notes and coins | Payroll → run page → "พิมพ์ใบเตรียมเงินสด", and `GET /payroll/runs/:id/print/cash`, print an A4 landscape PDF: one row per person with the exact net pay, how many of each note and coin (1,000, 500, 100, 50, 20; 10, 5, 2, 1, 0.50, 0.25, largest first), the cash for the envelope and the remainder under 25 satang, which is shown and never rounded into the pay; then the run totals per denomination and the amount to withdraw. Counted in whole satang (`splitCash` in `documents/cash-sheet.ts`), so no float rounding; no setting to skip a denomination, as the pilot hands out all of them. Same rules as CW-071: `payroll:read`, a run not approved or paid is refused (`PAYROLL_RUN_NOT_PRINTABLE`), audited as an export (`cash-sheet`, with the withdrawal total), Sarabun with the glyph check. Tested by hand-worked figures (12,345.67 gives 12,345.50 in cash and 0.17 left; three people netting 20,345.66 withdraw 20,345.25) and in the e2e against an independently worked split. No schema change. Guide: `docs/guide/printing-payslips.th.md`. Still open, not code: the page says its layout awaits the pilot's blank paper form, to be compared when it arrives; how the pilot pays a remainder under 25 satang; what the pilot's accountant keeps as proof of a cash payday (the owner is asking). 8d15223 and 5bdd09c, closed 2026-10-16. |
+| **CW-061** · A company on a fingerprint scanner had no way to bring its punches in | Attendance → scanner days (`/attendance/scanner`, `attendance:manage`, not for a department-limited user): upload the export, preview it, then import; nothing is written until HR imports. The file is read from its byte-order mark, never its name (the pilot's TA-001EX writes UTF-16LE text with a mark, tab-separated, no header, fields padded and ending in a comma); a year outside 1990-2100, a Buddhist-era year for instance, is a problem, not a silent read. Two times count (first in, last out); no time is no punch (leave and absence come from the calendar and leave records); one time, or three or more, waits for HR; a scanner number with no employee is listed apart with its days, not an error. HR picks in and out from the day's times or leaves the day uncounted, decisions are kept apart from the raw times and can be changed, every raw row stays visible, and the totals follow each decision. A decision holds only while its day has the same times: a later file that adds a time puts the day back to waiting on HR and stops counting the punches it had counted, which stay in the append-only punch table and are filtered out by `ACTIVE_PUNCH`. Counted times are ordinary `BIOMETRIC` punches, not flagged for having no location; an overlapping file adds only new punches and does not touch days a payroll has used; each import is one audit event (file, date range, punches added); nothing but name, number, date and times is accepted, checked by an e2e on the columns written. Accepted from the dev: the same minute written twice on one day is one tap, counted once. Tested on synthetic files only; `.gitignore` keeps `Export*.xls`, `Export*.XLS` and `Export*.txt` out. Guide: `docs/guide/scanner-import.th.md`. Left: the check against the pilot's real export, run on the owner's own machine; lateness, overtime, shifts and shifts across midnight (not known to be needed); a field to change an employee's scanner number on the employee page (today through the CW-059 import or `PATCH /employees/:id`), not queued. 6afcf2e and 6db7bf2, closed 2026-10-17. |
