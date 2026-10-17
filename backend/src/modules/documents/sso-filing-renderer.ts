@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import PDFDocument from 'pdfkit';
 import type { FilingSheet } from '../payroll/domain/sso-filing';
 import { formatThaiDocumentDate } from '../../core/utils/date.util';
+import { bahtText } from '../../core/utils/baht-text.util';
 
 /**
  * Draws a month's social security filing (CW-048) as the two parts of form
@@ -23,6 +24,15 @@ export interface FilingDocument {
   organizationName: string;
   taxId: string | null;
   sheet: FilingSheet;
+  /** Each person's title (นาย, นางสาว…) by employee id, where HR has recorded one. */
+  titles?: Record<string, string>;
+}
+
+/** "นายสมชาย ใจดี": a Thai title joins the name, a title ending in a Latin letter or a stop is spaced from it. */
+export function titledName(title: string | undefined, name: string): string {
+  const t = title?.trim();
+  if (!t) return name;
+  return `${t}${/[A-Za-z.]$/.test(t) ? ' ' : ''}${name}`;
 }
 
 /** "พฤศจิกายน 2580": the month and its Buddhist-era year. */
@@ -61,7 +71,7 @@ export function filingColumns(pageWidth: number) {
       x: left + index + id,
       width: total - index - id - wage - contribution,
       align: 'left' as const,
-      text: 'ชื่อ-สกุล',
+      text: 'คำนำหน้านาม-ชื่อ-ชื่อสกุล',
     },
     wage: {
       x: left + total - wage - contribution,
@@ -97,7 +107,10 @@ export class SsoFilingRenderer {
     return done;
   }
 
-  private draw(doc: PDFKit.PDFDocument, { organizationName, taxId, sheet }: FilingDocument): void {
+  private draw(
+    doc: PDFKit.PDFDocument,
+    { organizationName, taxId, sheet, titles = {} }: FilingDocument,
+  ): void {
     const width = doc.page.width - 96;
     const monthLabel = filingMonthLabel(sheet.year, sheet.month);
 
@@ -130,6 +143,15 @@ export class SsoFilingRenderer {
       doc.text(label, 48, y, { width: width - 160 });
       doc.text(value, 48 + width - 160, y, { width: 160, align: 'right' });
       doc.moveDown(0.3);
+      if (label.startsWith('4.')) {
+        // The form writes the total in words under the figure.
+        doc.font(REGULAR).fontSize(11).fillColor('#333333');
+        doc.text(`(ตัวอักษร) ${bahtText(sheet.totals.total)}`, 48 + 16, doc.y, {
+          width: width - 16,
+        });
+        doc.fillColor('black').font(REGULAR).fontSize(12);
+        doc.moveDown(0.3);
+      }
     }
     doc.moveDown(1);
     doc.font(REGULAR).fontSize(9).fillColor('#555555');
@@ -145,6 +167,7 @@ export class SsoFilingRenderer {
     // Part 2: one row for each insured person.
     const columns = filingColumns(doc.page.width);
     const pageBottom = doc.page.height - 64;
+    let sheetLineY = 0;
     const drawHeading = (): number => {
       doc.addPage();
       doc.font(BOLD).fontSize(14).text('รายละเอียดการนำส่งเงินสมทบ สปส.1-10 ส่วนที่ 2', 48, 48, {
@@ -158,7 +181,14 @@ export class SsoFilingRenderer {
           width,
           align: 'center',
         });
-      let y = doc.y + 8;
+      // The rate on the left; "แผ่นที่ N ในจำนวน M แผ่น" is written on the right
+      // once the number of sheets is known.
+      sheetLineY = doc.y + 4;
+      doc
+        .font(REGULAR)
+        .fontSize(10)
+        .text(`อัตราเงินสมทบร้อยละ ${sheet.ratePercent}`, 48, sheetLineY, { width: width / 2 });
+      let y = sheetLineY + 20;
       doc.font(BOLD).fontSize(10);
       let tallest = 0;
       for (const key of ['index', 'id', 'name', 'wage', 'contribution'] as const) {
@@ -181,7 +211,8 @@ export class SsoFilingRenderer {
     let y = drawHeading();
     for (const row of sheet.rows) {
       doc.font(REGULAR).fontSize(11);
-      const nameHeight = doc.heightOfString(row.name, { width: columns.name.width });
+      const name = titledName(titles[row.employeeId], row.name);
+      const nameHeight = doc.heightOfString(name, { width: columns.name.width });
       const height = Math.max(20, nameHeight + 6);
       if (y + height > pageBottom) y = drawHeading();
       doc.text(String(row.sequence), columns.index.x, y + 3, {
@@ -189,7 +220,7 @@ export class SsoFilingRenderer {
         align: 'center',
       });
       doc.text(row.identifier, columns.id.x, y + 3, { width: columns.id.width });
-      doc.text(row.name, columns.name.x, y + 3, { width: columns.name.width });
+      doc.text(name, columns.name.x, y + 3, { width: columns.name.width });
       doc.text(money(row.wage), columns.wage.x, y + 3, {
         width: columns.wage.width,
         align: 'right',
@@ -208,6 +239,12 @@ export class SsoFilingRenderer {
       doc.strokeColor('black');
     }
     if (y + 30 > pageBottom) y = drawHeading();
+    doc
+      .moveTo(48, y)
+      .lineTo(48 + width, y)
+      .lineWidth(0.7)
+      .strokeColor('black')
+      .stroke();
     doc.font(BOLD).fontSize(11);
     doc.text(`รวม ${sheet.totals.insured} คน`, columns.id.x, y + 8, { width: 200 });
     doc.text(money(sheet.totals.wage), columns.wage.x, y + 8, {
@@ -219,20 +256,17 @@ export class SsoFilingRenderer {
       align: 'right',
     });
 
-    // Part 2 starts on the second page: number those pages "แผ่นที่ x ในจำนวน y แผ่น" as the form does.
+    // Part 2 starts on the second page: number those pages "แผ่นที่ x ในจำนวน y แผ่น" in the heading, as the form does.
     const range = doc.bufferedPageRange();
     const sheets = range.count - 1;
     for (let i = 1; i < range.count; i += 1) {
       doc.switchToPage(range.start + i);
-      // The footer sits inside the bottom margin; without this pdfkit starts a new page for it.
-      doc.page.margins.bottom = 0;
-      doc.font(REGULAR).fontSize(9).fillColor('#555555');
-      doc.text(`แผ่นที่ ${i} ในจำนวน ${sheets} แผ่น`, 48, doc.page.height - 44, {
-        width,
-        align: 'center',
+      doc.font(REGULAR).fontSize(10);
+      doc.text(`แผ่นที่ ${i} ในจำนวน ${sheets} แผ่น`, 48 + width / 2, sheetLineY, {
+        width: width / 2,
+        align: 'right',
         lineBreak: false,
       });
-      doc.fillColor('black');
     }
   }
 }

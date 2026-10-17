@@ -48,6 +48,11 @@ this file only says where the dev room stands.
   page (`plural(count, one, other)` in `web/src/lib/i18n`, singular keys with their own Thai
   entries; no helper existed). Other pages still have "{count} problems" style strings
   (`SpreadsheetImport.tsx` shares one); not touched. No screenshot shows these lines.
+- **Small ticket from the PO, done here (CW-085 layout):** the SSO filing PDF now has the
+  total in Thai words (new `core/utils/baht-text.util.ts`), the "คำนำหน้านาม-ชื่อ-ชื่อสกุล"
+  column with titles from `Employee.titleTh` (passed by `exportFile`, `sheet()` untouched),
+  rate and "แผ่นที่ N ในจำนวน M แผ่น" in the part 2 heading, a rule above "รวม". Not on the
+  PDF because Cwork has no such field: the SSO account number and the six-digit branch number.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
   CW-086 (#89) are not queued.
 
