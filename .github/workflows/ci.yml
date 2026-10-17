@@ -221,6 +221,37 @@ jobs:
       - name: The shipped web image serves its security headers
         run: web/scripts/verify-security-headers.sh
 
+  tools-image:
+    name: Tools image runs db:verify
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cwork
+          POSTGRES_PASSWORD: cwork
+          POSTGRES_DB: cwork_tools
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cwork"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The `migrate` service in docker-compose.yml is the Dockerfile's `build`
+      # stage, and operations.md tells people to run `npm run db:verify` through
+      # it. That needs `psql`, which the image once lacked, and `psql` must not
+      # end up in the runtime image. Nothing else builds these two stages.
+      - name: The tools image runs db:verify, the runtime image has no psql
+        env:
+          DATABASE_URL: postgresql://cwork:cwork@localhost:5432/cwork_tools
+        run: backend/scripts/verify-tools-image.sh
+
   demo-image:
     name: Demo image boots
     runs-on: ubuntu-latest

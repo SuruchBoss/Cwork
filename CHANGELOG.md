@@ -809,10 +809,15 @@ log as an export of the run.
 
 - **Uploads failed with an error in the production image.** `/app/uploads` was
   created root-owned when a volume was mounted there and the API runs as an
-  unprivileged user; the Dockerfile now creates it owned by that user. The tools
-  image also now carries the SQL file `db:verify` reads (the script itself still
-  needs `psql`, which the image does not have; the NAS scripts run the same SQL
-  through the PostgreSQL container).
+  unprivileged user; the Dockerfile now creates it owned by that user.
+
+- **`docker compose run --rm migrate npm run db:verify` ran nowhere but in
+  CI's source checkout.** The tools image (the Dockerfile's `build` stage, the
+  `migrate` service) had neither the script's SQL file nor `psql`, which the
+  script calls. It now carries both; `psql` is installed in that stage only, and a
+  CI job builds both stages, runs `db:verify` through the tools image on a
+  migrated database, shows it fails when a hand-written index is dropped, and
+  checks that `psql` is not in the runtime image.
 
 - **A monthly salary is prorated over the employee's own work calendar**
   (CW-082). Payroll still counted a month's working days as Monday to Friday

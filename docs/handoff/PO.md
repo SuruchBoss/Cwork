@@ -6,9 +6,9 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue:** CW-062 (#62, three install paths on the pilot's Synology;
-  nothing touches the real NAS until the owner approves) is with the dev
-  room. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
+- **Dev queue:** empty. CW-062 (#62) is done on the cloud side (`f15746b`,
+  rehearsed beside Odoo) and stays open for the pilot's real NAS, which
+  nothing touches until the owner approves. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
   sample file and November. Not queued: CW-080, CW-086 (#89), a
   scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
   on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
@@ -27,8 +27,10 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- For CW-062: the NAS's DSM version, whether Container Manager is
-  installed, and its free space. The HR import file.
+- For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
+  (it reports the DSM version, Container Manager and free space), a USB
+  drive or another machine for backups, and a password store for the key
+  `show-key.sh` prints. The HR import file.
 - After CW-089 (closed): what HR sends the accountant today, whether
   e-Filing needs a finer income code than 40(1), and whether the first
   payroll runs beside HR's method once.
