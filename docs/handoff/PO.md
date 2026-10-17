@@ -28,15 +28,14 @@ this file only says where the PO room stands.
   queued; the owner decides when. The landing page still says Apache-2.0 and
   ฿0, which stays true of the free edition.
 
-## Waiting on the owner
+## Done 2026-10-17 (evening)
 
-- PR #98 (README and landing page for the October features, docs only, not
-  to be merged until the owner reads it) and its four questions: the landing
-  "in development" line on filing and bank files (now Pro candidates), "no
-  annual contract" in the hero, the Status test counts, new screenshots.
-- PR #99 (screenshots and a loop from the real console, stacked on #98, docs
-  and images only, not to be merged until the owner reads it). Merge #98
-  first, then retarget #99 to main.
+- PR #98 (README and landing page for the October features, the owner's Pro
+  and free-edition wording) and PR #99 (screenshots and a loop from the real
+  console, `docs/screenshots/capture-office.mjs`) merged at `6393314` and
+  `f93e1d7`, both green.
+
+## Waiting on the owner
 
 - For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
   (it reports the DSM version, Container Manager and free space), a USB
