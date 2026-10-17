@@ -26,12 +26,17 @@ this file only says where the dev room stands.
   `employee-document-expiry.e2e-spec.ts` (8 cases, walks one date through 90/60/30/expired
   with an injected `now`). Thai guide `docs/guide/expiring-documents.th.md`. Not walked in a
   browser.
-- Full e2e 441 and web 251 passed; doc counts updated.
+- QA re-ran S15 (#94/#95) on `main` 814ecc5: all four checks pass.
+- **Small ticket from the PO, done here:** the scanner import's `lockedDays` (preview and
+  result) now counts every day of the file that payroll has used, by the same `LockedDays`
+  rule as the review page, so a new waiting day in a paid month reports 1. The import page
+  says how many days will be left as they are. One e2e case added (preview and import).
+  `sso-shortfall.e2e-spec.ts` now checks its empty year with 2041: it used 2035, which
+  `period-check` pays a run in, so it failed whenever `period-check` ran first.
+- Full e2e 442 and web 252 passed locally; doc counts updated. Waiting for CI of `main`
+  54730ed to finish before pushing to `main`.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
-  CW-086 (#89) are not queued. QA re-ran S15 (#94/#95) on `main` 814ecc5: all four checks
-  pass. One minor note, not a ticket: the import result reports `lockedDays: 0` for new days
-  inside a paid period, because it counts only days that already had a record; the review
-  page shows them as locked. No data impact; PO decides whether to fix it.
+  CW-086 (#89) are not queued.
 
 ## Next
 
