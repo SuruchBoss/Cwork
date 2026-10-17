@@ -693,7 +693,7 @@ means a new rule set and that translation pass, not a rewrite.
 ## Status
 
 Working and verified end to end — sign-in through payroll. 762 backend unit
-tests, 252 web, 101 mobile, plus a 442-check end-to-end suite that drives the real
+tests, 255 web, 101 mobile, plus a 442-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -752,7 +752,7 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 762 backend unit tests, 252 web,
+- Every suite passes, in CI, on every push — 762 backend unit tests, 255 web,
   101 mobile, 442 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design

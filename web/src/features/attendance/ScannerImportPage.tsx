@@ -9,6 +9,7 @@ import { Button, Card, ErrorState, PageHeader, Stat } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, formatDateTime, formatNumber } from '@/lib/format';
+import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import { describeProblem, type ImportProblem } from '../imports/import-problems';
 import { ScannerStatusBadge, UnmappedTable } from './ScannerParts';
@@ -127,10 +128,14 @@ export default function ScannerImportPage() {
         <Card>
           <div className="stack" role="status">
             <p style={{ margin: 0, fontWeight: 600 }}>
-              {t('Imported {file}: {count} punches added to attendance', {
-                file: step.result.fileName,
-                count: formatNumber(step.result.punchesAdded),
-              })}
+              {t(
+                plural(
+                  step.result.punchesAdded,
+                  'Imported {file}: {count} punch added to attendance',
+                  'Imported {file}: {count} punches added to attendance',
+                ),
+                { file: step.result.fileName, count: formatNumber(step.result.punchesAdded) },
+              )}
             </p>
             <p className="muted" style={{ margin: 0 }}>
               {t(
@@ -146,23 +151,38 @@ export default function ScannerImportPage() {
             </p>
             {step.result.lockedDays > 0 && (
               <p className="muted" style={{ margin: 0 }}>
-                {t('{count} days were left as they were because payroll has already used them', {
-                  count: formatNumber(step.result.lockedDays),
-                })}
+                {t(
+                  plural(
+                    step.result.lockedDays,
+                    '{count} day was left as it was because payroll has already used it',
+                    '{count} days were left as they were because payroll has already used them',
+                  ),
+                  { count: formatNumber(step.result.lockedDays) },
+                )}
               </p>
             )}
             {step.result.byStatus.WAITING > 0 && (
               <div className="alert alert--info" role="note">
-                {t('{count} days are waiting for HR to decide, and are not counted until then', {
-                  count: formatNumber(step.result.byStatus.WAITING),
-                })}
+                {t(
+                  plural(
+                    step.result.byStatus.WAITING,
+                    '{count} day is waiting for HR to decide, and is not counted until then',
+                    '{count} days are waiting for HR to decide, and are not counted until then',
+                  ),
+                  { count: formatNumber(step.result.byStatus.WAITING) },
+                )}
               </div>
             )}
             {step.result.unmapped.length > 0 && (
               <div className="alert alert--info" role="note">
-                {t('{count} scanner numbers belong to nobody yet; match them on the review page', {
-                  count: formatNumber(step.result.unmapped.length),
-                })}
+                {t(
+                  plural(
+                    step.result.unmapped.length,
+                    '{count} scanner number belongs to nobody yet; match it on the review page',
+                    '{count} scanner numbers belong to nobody yet; match them on the review page',
+                  ),
+                  { count: formatNumber(step.result.unmapped.length) },
+                )}
               </div>
             )}
             <div className="row">
@@ -208,7 +228,11 @@ export default function ScannerImportPage() {
               <div className="stack" style={{ padding: '12px 16px' }}>
                 <p className="muted" style={{ margin: 0 }} role="status">
                   {t(
-                    '{count} problems. Nothing has been imported: fix them in the file and upload it again.',
+                    plural(
+                      preview.problems.length,
+                      '{count} problem. Nothing has been imported: fix it in the file and upload it again.',
+                      '{count} problems. Nothing has been imported: fix them in the file and upload it again.',
+                    ),
                     { count: preview.problems.length },
                   )}
                 </p>
@@ -250,11 +274,18 @@ export default function ScannerImportPage() {
               >
                 <div className="stack">
                   <p className="muted" style={{ margin: 0 }} role="status">
-                    {t('The file is clean. {lines} lines, from {from} to {to}.', {
-                      lines: formatNumber(preview.lines),
-                      from: formatDate(preview.dateFrom),
-                      to: formatDate(preview.dateTo),
-                    })}
+                    {t(
+                      plural(
+                        preview.lines,
+                        'The file is clean. {lines} line, from {from} to {to}.',
+                        'The file is clean. {lines} lines, from {from} to {to}.',
+                      ),
+                      {
+                        lines: formatNumber(preview.lines),
+                        from: formatDate(preview.dateFrom),
+                        to: formatDate(preview.dateTo),
+                      },
+                    )}
                   </p>
                   <div className="grid grid--4">
                     <Stat label={t('New days')} value={formatNumber(preview.days.added)} />
@@ -283,7 +314,11 @@ export default function ScannerImportPage() {
                   {preview.lockedDays > 0 && (
                     <div className="alert alert--info" role="note">
                       {t(
-                        '{count} days are in a month payroll has already used; they will be left as they are',
+                        plural(
+                          preview.lockedDays,
+                          '{count} day is in a month payroll has already used; it will be left as it is',
+                          '{count} days are in a month payroll has already used; they will be left as they are',
+                        ),
                         { count: formatNumber(preview.lockedDays) },
                       )}
                     </div>

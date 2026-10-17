@@ -165,6 +165,54 @@ describe('Importing the fingerprint scanner export (CW-061)', () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    [
+      1,
+      [
+        'Imported Export.xls: 1 punch added to attendance',
+        '1 day was left as it was because payroll has already used it',
+        '1 day is waiting for HR to decide, and is not counted until then',
+        '1 scanner number belongs to nobody yet; match it on the review page',
+      ],
+    ],
+    [
+      2,
+      [
+        'Imported Export.xls: 2 punches added to attendance',
+        '2 days were left as they were because payroll has already used them',
+        '2 days are waiting for HR to decide, and are not counted until then',
+        '2 scanner numbers belong to nobody yet; match them on the review page',
+      ],
+    ],
+  ])('says it in the singular or plural English for a count of %i', async (count, lines) => {
+    useUiStore.setState({ language: 'en' });
+    const unmapped = Array.from({ length: count }, (_, i) => ({
+      ...preview.unmapped[0],
+      scannerNumber: String(70 + i),
+    }));
+    post.mockResolvedValueOnce({ ...preview, unmapped }).mockResolvedValueOnce({
+      importId: 'i1',
+      fileName: 'Export.xls',
+      dateFrom: '2026-09-01',
+      dateTo: '2026-09-30',
+      lines: 29,
+      days: { added: 29, changed: 0, unchanged: 0 },
+      byStatus: { ...byStatus, WAITING: count },
+      punchesAdded: count,
+      lockedDays: count,
+      unmapped,
+    });
+    renderPage();
+
+    await userEvent.upload(
+      screen.getByLabelText('Choose a file'),
+      new File(['x'], 'Export.xls', { type: 'application/octet-stream' }),
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Import this file' }));
+
+    for (const line of lines) expect(await screen.findByText(line)).toBeInTheDocument();
+  });
+
   it('shows the files imported before', async () => {
     get.mockResolvedValue([
       {

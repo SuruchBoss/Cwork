@@ -44,6 +44,10 @@ this file only says where the dev room stands.
   autoplay playsinline>` because an animated WebP that size decodes to about a gigabyte on a
   tablet. Run it on a freshly seeded database (it changes it); `KEEP_SCRATCH=1` keeps the pictures.
   The cash sheet has one (Thai) edition and a red draft note about the pilot's paper form.
+- **Small ticket from the PO, done here:** English singular/plural on the scanner import
+  page (`plural(count, one, other)` in `web/src/lib/i18n`, singular keys with their own Thai
+  entries; no helper existed). Other pages still have "{count} problems" style strings
+  (`SpreadsheetImport.tsx` shares one); not touched. No screenshot shows these lines.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
   CW-086 (#89) are not queued.
 
