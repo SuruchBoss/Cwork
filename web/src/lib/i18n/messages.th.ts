@@ -920,6 +920,8 @@ export const thMessages: Record<string, string> = {
     'วันที่ {from} ถึง {to}: วันใหม่ {added} วัน วันที่มีเวลาเพิ่ม {changed} วัน เหมือนเดิม {same} วัน',
   '{count} days were left as they were because payroll has already used them':
     '{count} วันไม่ถูกแก้ เพราะเงินเดือนใช้ไปแล้ว',
+  '{count} days are in a month payroll has already used; they will be left as they are':
+    '{count} วันอยู่ในเดือนที่เงินเดือนใช้ไปแล้ว จะไม่ถูกแก้',
   '{count} days are waiting for HR to decide, and are not counted until then':
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
   '{count} scanner numbers belong to nobody yet; match them on the review page':

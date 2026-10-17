@@ -36,6 +36,7 @@ export interface ScannerPreview {
   days: DayCounts;
   byStatus: Record<ScannerDayStatus, number>;
   punchesToAdd: number;
+  lockedDays: number;
   unmapped: UnmappedNumber[];
 }
 

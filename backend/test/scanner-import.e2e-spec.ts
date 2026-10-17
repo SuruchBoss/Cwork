@@ -796,5 +796,17 @@ describe('Fingerprint scanner import (e2e)', () => {
       expect(late.body).toMatchObject({ punchesAdded: 0, lockedDays: 1 });
       expect(await punchesOn(28)).toBe(0);
     });
+
+    it('counts a new day that waits for HR inside the paid month, in the preview and in the result', async () => {
+      const file = scannerFile([paidLine(29, '08:00')]);
+      const preview = await api.upload('/attendance/scanner/preview', hr, file);
+      expect(preview.body).toMatchObject({ days: { added: 1 }, lockedDays: 1, punchesToAdd: 0 });
+
+      const imported = await api.upload('/attendance/scanner/import', hr, file);
+      expect(imported.body).toMatchObject({ days: { added: 1 }, lockedDays: 1, punchesAdded: 0 });
+      // The review page and the import result agree: that day is locked.
+      const day = await paidDays('&status=LOCKED');
+      expect(day.items.find((d: any) => d.workDate === paidIso(29))?.locked).toBe(true);
+    });
   });
 });
