@@ -772,6 +772,14 @@ entry, tags it and publishes the notes.
   is put right in a later period, not by changing the paid one; the Thai guide
   `docs/guide/scanner-import.th.md` says so.
 
+- **The scanner import reported `lockedDays: 0` for a new day inside a paid month.**
+  The count only included days whose punches would have changed, so a day that
+  waits for HR (one time) and was brought by a file into a paid period showed 0
+  while the review page showed it locked. `lockedDays` now counts every day of
+  the file that payroll has used, by the rule the review page applies, and the
+  preview reports it too; the import page says how many days will be left as
+  they are.
+
 - **Uploads failed with an error in the production image.** `/app/uploads` was
   created root-owned when a volume was mounted there and the API runs as an
   unprivileged user; the Dockerfile now creates it owned by that user.

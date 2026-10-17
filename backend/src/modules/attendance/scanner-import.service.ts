@@ -74,6 +74,8 @@ export interface ScannerPreview {
   byStatus: Record<ScannerDayStatus, number>;
   /** Punches this file would add to attendance. */
   punchesToAdd: number;
+  /** Days of the file payroll has already used (same rule as the review page): left as they are. */
+  lockedDays: number;
   unmapped: UnmappedNumber[];
 }
 
@@ -86,7 +88,7 @@ export interface ScannerCommitResult {
   days: { added: number; changed: number; unchanged: number };
   byStatus: Record<ScannerDayStatus, number>;
   punchesAdded: number;
-  /** Days whose attendance a payroll run already used: left as they were. */
+  /** Days of the file payroll has already used (same rule as the review page): left as they were. */
   lockedDays: number;
   unmapped: UnmappedNumber[];
 }
@@ -223,6 +225,7 @@ export class ScannerImportService {
         days: { added: 0, changed: 0, unchanged: 0 },
         byStatus: EMPTY_BY_STATUS(),
         punchesToAdd: 0,
+        lockedDays: 0,
         unmapped: [],
       };
     }
@@ -247,6 +250,7 @@ export class ScannerImportService {
       problems,
       ...this.summarise(plan, lines),
       punchesToAdd,
+      lockedDays: await this.countLockedDays(user.organizationId, plan.entries),
       unmapped: this.unmappedOf(plan.entries),
     };
   }
@@ -327,7 +331,7 @@ export class ScannerImportService {
 
     // Everything the file touched, with what is already known about each day.
     const touched = await this.loadDays(organizationId, lines);
-    const sync = await this.syncPunches(
+    const added = await this.syncPunches(
       organizationId,
       organization.timezone,
       user.userId,
@@ -339,7 +343,7 @@ export class ScannerImportService {
 
     await this.prisma.scannerImport.update({
       where: { id: imported.id },
-      data: { punchesAdded: sync.added + late.punchesAdded },
+      data: { punchesAdded: added + late.punchesAdded },
     });
 
     const result: ScannerCommitResult = {
@@ -350,8 +354,8 @@ export class ScannerImportService {
       lines: lines.length,
       days: summary.days,
       byStatus: summary.byStatus,
-      punchesAdded: sync.added + late.punchesAdded,
-      lockedDays: sync.locked,
+      punchesAdded: added + late.punchesAdded,
+      lockedDays: await this.countLockedDays(organizationId, plan.entries),
       unmapped: this.unmappedOf(plan.entries),
     };
 
@@ -991,6 +995,23 @@ export class ScannerImportService {
     return new Set(punches.map((p) => `${p.employeeId}|${p.clientPunchId}`));
   }
 
+  /** Days of the file a payroll run has used, by the rule the review page applies. */
+  private async countLockedDays(
+    organizationId: string,
+    entries: Array<Pick<PlanEntry, 'employeeId'> & { line: Pick<ScannerLine, 'workDate'> }>,
+  ): Promise<number> {
+    const mapped = entries.filter((e) => e.employeeId !== null);
+    if (mapped.length === 0) return 0;
+    const dates = mapped.map((e) => e.line.workDate).sort();
+    const locked = await this.lockedSet(
+      organizationId,
+      mapped.map((e) => e.employeeId!),
+      dates[0]!,
+      dates[dates.length - 1]!,
+    );
+    return mapped.filter((e) => locked.has(`${e.employeeId}|${e.line.workDate}`)).length;
+  }
+
   /**
    * Brings the punch stream in line with what each day now is: punches the day
    * should have and does not are written (or counted again, if they were once
@@ -1003,7 +1024,7 @@ export class ScannerImportService {
     timezone: string,
     userId: string,
     days: LoadedDay[],
-  ): Promise<{ added: number; locked: number }> {
+  ): Promise<number> {
     const mapped = days.filter((d) => d.employeeId !== null);
     const dates = mapped.map((d) => formatDateOnly(d.workDate)).sort();
     const locked = mapped.length
@@ -1016,7 +1037,6 @@ export class ScannerImportService {
       : new LockedDays(new Set(), new Map());
 
     let added = 0;
-    let lockedDays = 0;
     for (const day of mapped) {
       const employeeId = day.employeeId!;
       const date = formatDateOnly(day.workDate);
@@ -1035,10 +1055,7 @@ export class ScannerImportService {
       );
       const right = wanted.size === active.size && [...wanted.keys()].every((k) => active.has(k));
       if (right) continue;
-      if (locked.has(`${employeeId}|${date}`)) {
-        lockedDays += 1;
-        continue;
-      }
+      if (locked.has(`${employeeId}|${date}`)) continue;
 
       const decisionId = inForce(day, day.times) ? (day.decisions[0]?.id ?? null) : null;
       const created = await this.prisma.$transaction(async (tx) => {
@@ -1091,7 +1108,7 @@ export class ScannerImportService {
       await this.attendance.recalculateDay(organizationId, employeeId, day.workDate, timezone);
     }
     void userId;
-    return { added, locked: lockedDays };
+    return added;
   }
 
   /** Days of a number nobody had registered, now that someone has. */
@@ -1135,7 +1152,7 @@ export class ScannerImportService {
     }
     if (ids.length === 0) return { daysMatched: 0, punchesAdded: 0 };
     const days = await this.loadDaysByIds(organizationId, ids);
-    const sync = await this.syncPunches(organizationId, timezone, userId, days);
-    return { daysMatched, punchesAdded: sync.added };
+    const punchesAdded = await this.syncPunches(organizationId, timezone, userId, days);
+    return { daysMatched, punchesAdded };
   }
 }

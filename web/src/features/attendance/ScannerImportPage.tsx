@@ -280,6 +280,14 @@ export default function ScannerImportPage() {
                       </span>
                     ))}
                   </div>
+                  {preview.lockedDays > 0 && (
+                    <div className="alert alert--info" role="note">
+                      {t(
+                        '{count} days are in a month payroll has already used; they will be left as they are',
+                        { count: formatNumber(preview.lockedDays) },
+                      )}
+                    </div>
+                  )}
                   {preview.punchesToAdd === 0 &&
                     preview.days.added + preview.days.changed === 0 && (
                       <div className="alert alert--info" role="note">
