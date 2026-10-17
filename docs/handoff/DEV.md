@@ -6,37 +6,32 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- CW-061, CW-089, CW-062 (cloud side) and CW-090 (#93) passed review. `#62` stays open
-  for the real NAS: the owner has to approve `./check.sh` on it, and backups need a
-  USB drive or another machine.
-- **QA found four things; all four are done and wait for review.**
-  - #94 + #95 (scanner days and a paid month): `lockedSet()` in
-    `scanner-import.service.ts` now also treats a day as locked when the employee has
-    a payslip in a PAID run whose period covers it (what `markPaid` locks, whether or
-    not a record existed). A decision on it is `422 DAY_LOCKED` and a file adds no
-    punch. Locked days leave the default WAITING list and `totals.waiting` and have a
-    `LOCKED` filter ("Payroll has used it") in the API and the console. E2E in
-    `scanner-import.e2e-spec.ts` (last block, year 2038); the new cases fail without
-    the fix. QA's S15 can be run again.
-  - #96: `check.sh` reads `/proc/net/tcp` when `ss` and `netstat` are missing and warns
-    when it cannot tell. Checked against a real listener here.
-  - #97: new `deploy/nas/change-address.sh`; Thai guide has the authenticator and
-    recovery-code step, the true effect of an address change (the authority does not
-    change) and a `PATH` for the Task Scheduler line; `install.sh` text fixed. The
-    script was run against a stand-in `docker` (the recreate itself is what QA saw work);
-    nothing here was run on a Synology.
-- **CW-065 (#68), add one employee from the console, is built and waits for review.**
-  `/employees/new` (`EmployeeCreatePage`, rules in `new-employee.ts`), same route and
-  checks as the import; `POST /employees` takes an optional `bankAccount` (encrypted)
-  and refuses a probation before the hire date. Offering a sign-in waits for CW-064.
-- Full e2e 433, web 249 passed; doc counts updated.
+- Reviewed and accepted by the PO: CW-061, CW-089, CW-062 (cloud side), CW-090, #94-#97,
+  CW-065. `#62` stays open for the real NAS: the owner has to approve `./check.sh` on it.
+- **CI of `1f85420` was red on one test, now fixed here.** `telemetry.e2e-spec.ts` "writes
+  outbox.delivery.failed ..." drains the outbox once; a drain claims only the oldest
+  `OUTBOX_BATCH_SIZE` (20) pending events, so when earlier specs left more than 20
+  pending, this test's two events (the newest) were never claimed and no log line
+  appeared. Reproduced by adding 25 older pending events (same failure message), fixed
+  by emptying the pending queue first, as `outbox.e2e-spec.ts` does; with the 25 events
+  and the fix it passes. Nothing in product code was wrong; the spec count of pending
+  events grows with every spec that pays a run or raises a notification.
+- **CW-073 (#78), documents expiring, is built and waits for review.**
+  `GET /employees/expiring-documents` (`employee:read`, names/codes/dates/window, no
+  numbers), console page Employees -> Documents expiring, daily job `document-expiry-notices`
+  (02:00 UTC, lock id 10) that tells every user who may update employees once as a document
+  enters the 90, 60 and 30-day windows and once when expired (`employee_document_notices`,
+  migration `20261017120000`). Logic in `domain/document-expiry.ts` and
+  `document-expiry.service.ts`. A renewal is a new date and starts new windows. E2E in
+  `employee-document-expiry.e2e-spec.ts` (8 cases, walks one date through 90/60/30/expired
+  with an injected `now`). Thai guide `docs/guide/expiring-documents.th.md`. Not walked in a
+  browser.
+- Full e2e 441 and web 251 passed; doc counts updated.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
-  CW-086 (#89) are not queued.
+  CW-086 (#89) are not queued. QA has not yet re-run S15 (#94/#95): tell room
+  `session_01FygupdPGTCw1Qe7C1BYSCg` once CI on `main` is green.
 
 ## Next
 
-- CW-073 (#78): passports and work permits expiring in 30/60/90 days, one notice per
-  band, no document numbers in the list or the notice. Start it once the PO has said
-  the four fixes and CW-065 are accepted.
-- Do not start CW-085, CW-080 or CW-086, nor the support-scope page. Do not touch the
-  real NAS until the owner approves.
+- Nothing queued once CW-073 is accepted. Do not start CW-085, CW-080 or CW-086, nor the
+  support-scope page. Do not touch the real NAS until the owner approves.

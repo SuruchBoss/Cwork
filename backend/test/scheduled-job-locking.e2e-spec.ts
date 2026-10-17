@@ -287,6 +287,7 @@ describe('Scheduled job locking (e2e)', () => {
       await task.pruneExpiredTokens();
       await task.rolloverLeaveYear();
       await task.purgeDeliveredOutbox();
+      await task.notifyExpiringDocuments();
 
       spy.mockRestore();
 

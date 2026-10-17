@@ -364,6 +364,10 @@ describe('telemetry contract v1.1', () => {
     it('writes outbox.delivery.failed for a failed attempt, keyed by the event, without the recipient', async () => {
       const prisma = ctx.app.get(PrismaService);
       const organization = await prisma.organization.findFirstOrThrow({ select: { id: true } });
+      // A drain claims the oldest pending events, a batch of OUTBOX_BATCH_SIZE, so
+      // events other specs left pending would be claimed first and these two,
+      // the newest, not at all. Start from an empty queue, as outbox.e2e-spec does.
+      await prisma.outboxEvent.deleteMany({ where: { processedAt: null, failedAt: null } });
       const failing = `telemetry.failing.${randomUUID().slice(0, 8)}`;
       const refused = `telemetry.refused.${randomUUID().slice(0, 8)}`;
 
