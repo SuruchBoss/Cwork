@@ -7,7 +7,8 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 - **Current pass:** Pilot A, October 2026. The plan, cases and results table
   are in [`docs/qa/pilot-a-2026-10.md`](../qa/pilot-a-2026-10.md): CW-061
   scanner import, CW-089 accountant export and checks, CW-062 NAS installer.
-- **Status:** not started. No QA room has run yet.
+- **Status:** pass 1 finished 2026-10-17. 41 of 41 cases run, all pass; CW-062 on stand-in images, N11 with notes. Issues #94–#97 are open for the dev room (none is a security problem). The results table and how it was run are at the end of the plan.
+- **Next:** when the dev room fixes #94/#95, re-test S15. When the owner approves the real NAS, someone with DSM access repeats N1–N3, N11 there; the real Dockerfile builds still need a machine with internet.
 
 ## How to start
 
@@ -28,4 +29,4 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Waiting on
 
-- Nobody. Report to the PO room when the pass is done or blocked.
+- The dev room (issues #94–#97) and the owner (real NAS).
