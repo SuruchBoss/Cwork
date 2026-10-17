@@ -33,8 +33,15 @@ this file only says where the dev room stands.
   says how many days will be left as they are. One e2e case added (preview and import).
   `sso-shortfall.e2e-spec.ts` now checks its empty year with 2041: it used 2035, which
   `period-check` pays a run in, so it failed whenever `period-check` ran first.
-- Full e2e 442 and web 252 passed locally; doc counts updated. Waiting for CI of `main`
-  54730ed to finish before pushing to `main`.
+- `lockedDays` ticket is on `main` (4fe0cd1). CI of it is being watched.
+- **Pictures for the READMEs and landing page (PO, separate PR):** branch
+  `claude/new-session-syszvt` carries them on top of PR #98's branch
+  (`claude/serene-carson-fr7k0k`, merged in): `docs/screenshots/capture-office.mjs`
+  writes stills 24-29 (th and en), landing webp copies, and the clip
+  (`docs/demo/office.<lang>.webp/.gif`); README.md, README.th.md and the landing
+  page use them. Run it on a freshly seeded database; it changes that database.
+  The cash sheet has one (Thai) edition and a red draft note about the pilot's
+  paper form, which the picture shows: waiting on the PO's call.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
   CW-086 (#89) are not queued.
 
