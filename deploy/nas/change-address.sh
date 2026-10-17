@@ -49,6 +49,8 @@ if [ "$ASSUME_YES" != 1 ]; then
 fi
 
 tmp="$ENV_FILE.new"
+# The new file holds the passwords and the key: never readable by anyone else, not even for a moment.
+umask 077
 sed -e "s#^CWORK_HOST=.*#CWORK_HOST=$NEW#" -e "s#^PUBLIC_WEB_URL=.*#PUBLIC_WEB_URL=$NEW_URL#" "$ENV_FILE" > "$tmp" || die "could not write the new .env"
 chmod 600 "$tmp"
 grep -q "^CWORK_HOST=$NEW\$" "$tmp" && grep -q "^PUBLIC_WEB_URL=$NEW_URL\$" "$tmp" || { rm -f "$tmp"; die ".env has no CWORK_HOST or PUBLIC_WEB_URL line to change. Nothing was changed."; }

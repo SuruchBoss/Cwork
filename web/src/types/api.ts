@@ -737,3 +737,21 @@ export interface AuditLogEntry {
   createdAt: string;
   actor: { id: string; email: string } | null;
 }
+
+/** A passport or work permit that has expired or will within 90 days (CW-073). Never carries the number. */
+export interface ExpiringDocument {
+  employeeId: string;
+  employeeCode: string;
+  name: string;
+  document: 'PASSPORT' | 'WORK_PERMIT';
+  expiresOn: string;
+  daysLeft: number;
+  /** 90, 60, 30, or 0 once the date has passed. */
+  window: number;
+}
+
+export interface ExpiringDocumentsReport {
+  today: string;
+  within: number;
+  items: ExpiringDocument[];
+}

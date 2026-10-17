@@ -156,7 +156,6 @@ const EMPTY_BY_STATUS = (): Record<ScannerDayStatus, number> => ({
   DECIDED_IGNORE: 0,
 });
 
-/** The decision of a day, as long as it was made about the times the day has. */
 /**
  * The days payroll has used. A day is used when its attendance record is locked,
  * or when it lies inside a period the employee was paid for.
@@ -177,6 +176,7 @@ class LockedDays {
   }
 }
 
+/** The decision of a day, as long as it was made about the times the day has. */
 function inForce(day: Pick<LoadedDay, 'decisions'>, times: string[]): DayDecision | null {
   const latest = day.decisions[0];
   if (!latest || !sameTimes(latest.timesAtDecision, times)) return null;

@@ -17,6 +17,7 @@ const ApprovalsPage = lazy(() => import('@/features/approvals/ApprovalsPage'));
 const EmployeeListPage = lazy(() => import('@/features/employees/EmployeeListPage'));
 const EmployeeDetailPage = lazy(() => import('@/features/employees/EmployeeDetailPage'));
 const EmployeeCreatePage = lazy(() => import('@/features/employees/EmployeeCreatePage'));
+const ExpiringDocumentsPage = lazy(() => import('@/features/employees/ExpiringDocumentsPage'));
 const EmployeeImportPage = lazy(() => import('@/features/employees/EmployeeImportPage'));
 const OffboardingPage = lazy(() => import('@/features/employees/OffboardingPage'));
 const LeavePage = lazy(() => import('@/features/leave/LeavePage'));
@@ -115,6 +116,11 @@ export const router = createBrowserRouter([
                 element: <RequirePermission any={[P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM]} />,
                 children: [
                   { index: true, element: <EmployeeListPage /> },
+                  {
+                    path: 'documents-expiring',
+                    element: <RequirePermission any={[P.EMPLOYEE_READ]} />,
+                    children: [{ index: true, element: <ExpiringDocumentsPage /> }],
+                  },
                   {
                     path: 'new',
                     element: <RequirePermission any={[P.EMPLOYEE_CREATE]} />,

@@ -8,6 +8,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import { APP_CONFIG } from '../../core/config/config.token';
 import type { RootConfig } from '../../core/config/configuration';
 import { AttendanceService } from '../attendance/attendance.service';
+import { DocumentExpiryService } from '../employees/document-expiry.service';
 import { OffboardingService } from '../employees/offboarding.service';
 import { EmployeeRetentionService } from '../employees/retention.service';
 import { FilesService } from '../files/files.service';
@@ -40,6 +41,7 @@ export class ScheduledTasksService {
     private readonly attendance: AttendanceService,
     private readonly offboarding: OffboardingService,
     private readonly retention: EmployeeRetentionService,
+    private readonly documentExpiry: DocumentExpiryService,
     private readonly leaveBalances: LeaveBalanceService,
     private readonly applications: ApplicationsService,
     private readonly files: FilesService,
@@ -140,6 +142,28 @@ export class ScheduledTasksService {
           'Separation finalisation failed',
           error instanceof Error ? error.stack : String(error),
         );
+      }
+    });
+  }
+
+  /**
+   * 02:00 UTC = 09:00 Asia/Bangkok. Tells HR about passports and work permits
+   * that have entered a 90, 60 or 30-day window, or expired (CW-073). Once per
+   * window, so running it twice, or a day late, tells nobody twice.
+   */
+  @Cron('0 2 * * *', { name: 'document-expiry-notices' })
+  async notifyExpiringDocuments(): Promise<void> {
+    await this.locks.runExclusively('document-expiry-notices', async () => {
+      const organizations = await this.activeOrganizations();
+      for (const org of organizations) {
+        try {
+          await this.documentExpiry.sendDueNotices(org.id);
+        } catch (error) {
+          this.logger.error(
+            `[${org.code}] document expiry notices failed`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        }
       }
     });
   }

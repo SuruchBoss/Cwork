@@ -229,6 +229,7 @@ land in the early hours of Asia/Bangkok.
 |---|---|---|
 | `attendance-close-out` | 18:00 daily | Marks no-shows ABSENT, missing clock-outs INCOMPLETE |
 | `finalise-separations` | 18:30 daily | Ends employment past the final working day, disables the login |
+| `document-expiry-notices` | 02:00 daily | Tells HR once as a passport or work permit comes within 90, 60 and 30 days, and once when it has expired (CW-073) |
 | `purge-expired-candidates` | 03:00 daily | PDPA: scrubs candidate PII past its retention deadline |
 | `purge-rate-limit-counters` | 04:00 daily | Clears dead windows from the shared rate-limit table |
 | `rescan-pending-files` | hourly | Gives a verdict to uploads stored while clamd was unreachable |
