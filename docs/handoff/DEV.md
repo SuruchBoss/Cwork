@@ -28,10 +28,12 @@ this file only says where the dev room stands.
   browser.
 - Full e2e 441 and web 251 passed; doc counts updated.
 - Waiting on others: CW-085 (#88) needs the owner's redacted sample file; CW-080 and
-  CW-086 (#89) are not queued. QA has not yet re-run S15 (#94/#95): tell room
-  `session_01FygupdPGTCw1Qe7C1BYSCg` once CI on `main` is green.
+  CW-086 (#89) are not queued. QA re-ran S15 (#94/#95) on `main` 814ecc5: all four checks
+  pass. One minor note, not a ticket: the import result reports `lockedDays: 0` for new days
+  inside a paid period, because it counts only days that already had a record; the review
+  page shows them as locked. No data impact; PO decides whether to fix it.
 
 ## Next
 
-- Nothing queued once CW-073 is accepted. Do not start CW-085, CW-080 or CW-086, nor the
+- Nothing queued. Do not start CW-085, CW-080 or CW-086, nor the
   support-scope page. Do not touch the real NAS until the owner approves.
