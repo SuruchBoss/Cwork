@@ -12,8 +12,8 @@ this file only says where the PO room stands.
   next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
   pilot's real NAS, which nothing touches until the owner approves.
 - **QA:** first pass done 2026-10-17, 41 cases, results merged
-  (`docs/qa/pilot-a-2026-10.md`). The QA room
-  (`session_01FygupdPGTCw1Qe7C1BYSCg`) re-tests S15 on the fix for #94/#95. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
+  (`docs/qa/pilot-a-2026-10.md`). S15 re-tested and passed; its minor note
+  (the import's locked-day count) fixed in `6103469`. Nothing waits on QA. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
   sample file and November. Not queued: CW-080, CW-086 (#89), a
   scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
   on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
