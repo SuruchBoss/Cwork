@@ -44,8 +44,8 @@ const COPY = {
   'งาน HR ทั้งบริษัท': 'All of HR, company-wide',
   'ไม่ต้องจ่าย': 'with no ',
   'รายหัว': 'per-seat fee',
-  'เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA — ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว ไม่มีสัญญารายปี':
-    'Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, no annual contract.',
+  'เงินเดือนตามกฎหมายไทย ลงเวลาที่โกงยาก อนุมัติได้จากมือถือ และข้อมูลพนักงานที่ปลอดภัยตาม PDPA — ครบในระบบเดียว ติดตั้งบนเซิร์ฟเวอร์ของบริษัทคุณ จ่ายแค่ค่าเครื่อง ไม่มีค่ารายหัว และรุ่นฟรีไม่มีสัญญารายปี':
+    'Payroll to Thai law, attendance that is hard to fake, approvals from a phone, and employee data kept safe under PDPA — in one system, installed on your own server. You pay for the machine and nothing else: no charge per employee, and no annual contract for the free edition.',
   'ติดตั้งเอง': 'Install it yourself',
   'เข้าเป็น HR ของบริษัทตัวอย่างในเบราว์เซอร์ ไม่ต้องสมัคร ไม่ต้องใช้รหัสผ่าน · ข้อมูลกลับเป็นค่าเริ่มต้นทุกชั่วโมง · ถ้าไม่มีใครใช้มาสักพัก ครั้งแรกอาจรอเครื่องตื่นราวหนึ่งนาที':
     'Opens in your browser as HR at a demo company — no sign-up, no password · Everything goes back to the start every hour · If nobody has used it for a while, the first visit may wait about a minute for it to wake',
@@ -163,9 +163,9 @@ const COPY = {
   'สลิปที่อธิบายได้แม้ผ่านไปเป็นปี': 'Payslips you can explain a year later',
   'แยกเงินสมทบฝั่งนายจ้างออกจากยอดที่หักพนักงาน และพนักงานเปิดดูสลิปเองได้ในแอป':
     'Employer contributions shown apart from what was deducted, and employees open their own payslips in the app.',
-  'กำลังพัฒนา': 'In progress',
-  'ไฟล์ยื่น ภ.ง.ด.1 ประกันสังคม และไฟล์โอนเงินธนาคาร':
-    'PND 1 and social-security filing files, and bank transfer files',
+  'วางแผนไว้ในรุ่น Pro': 'Planned for Cwork Pro',
+  'ยื่นแบบ ภ.ง.ด.1 และประกันสังคมออนไลน์ และไฟล์โอนเงินธนาคาร':
+    'Online PND 1 and social security filing, and bank transfer files',
   'รอบที่ปิดแล้ว — รายได้รวม รายการหัก ยอดสุทธิ และต้นทุนนายจ้าง':
     'A closed run — gross pay, deductions, net pay and employer cost',
   // ----------------------------------------------------- 03 attendance
