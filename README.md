@@ -83,7 +83,7 @@ every figure and name on this page is synthetic.</sub>
   or four to an A4 sheet, with a wage-receipt sheet to sign.
   [Guide (Thai)](./docs/guide/printing-payslips.th.md)
 
-  <img src="./docs/screenshots/en/28-cash-sheet.png" alt="Page one of the cash-preparation sheet for a month: for each employee the net pay and how many notes and coins of each kind, the total to withdraw from the bank and the remainder under 25 satang (the sheet itself is in Thai)" width="780">
+  <img src="./docs/screenshots/en/28-cash-sheet.png" alt="Page one of the cash-preparation sheet for a month: for each employee the net pay and how many notes and coins of each kind, the total to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai, and a red line on it says its table layout is still waiting to be compared with a real paper form" width="780">
 
 - **A file for the outside accountant, and a check against what was filed.** An
   approved or paid period exports with each person's tax ID and income type,

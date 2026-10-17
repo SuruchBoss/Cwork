@@ -121,10 +121,10 @@ const COPY = {
     'HR’s own per-person figures compared with Cwork: two people differ, with the column and the difference in baht marked',
   'รันคู่ขนาน': 'Running beside your method',
   'ชี้ทุกคนและทุกช่องที่ต่างจากตัวเลขของ HR': 'Every person and column that differs from HR’s figures, marked',
-  'ใบเตรียมเงินสดหน้าแรก: เงินสุทธิของแต่ละคน จำนวนแบงก์และเหรียญแต่ละชนิด ยอดที่ต้องถอนจากธนาคาร และเศษที่น้อยกว่า 25 สตางค์':
-    'Page one of the cash-preparation sheet: each person’s net pay, how many notes and coins of each kind, the amount to withdraw from the bank and the remainder under 25 satang (the printout is in Thai)',
-  'แบงก์และเหรียญต่อคน ยอดที่ต้องถอน และเศษที่ไม่ปัด (ใบพิมพ์เป็นภาษาไทย)':
-    'Notes and coins per person, the amount to withdraw, and the remainder, not rounded (the printout is in Thai)',
+  'ใบเตรียมเงินสดหน้าแรก: เงินสุทธิของแต่ละคน จำนวนแบงก์และเหรียญแต่ละชนิด ยอดที่ต้องถอนจากธนาคาร เศษที่น้อยกว่า 25 สตางค์ และบรรทัดแดงบอกว่ารูปแบบตารางยังรอเทียบกับแบบฟอร์มกระดาษจริง':
+    'Page one of the cash-preparation sheet: each person’s net pay, how many notes and coins of each kind, the amount to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai, and a red line on it says its table layout is still waiting to be compared with a real paper form',
+  'แบงก์และเหรียญต่อคน ยอดที่ต้องถอน และเศษที่ไม่ปัด (ใบพิมพ์เป็นภาษาไทย รูปแบบตารางยังรอเทียบกับแบบฟอร์มจริง)':
+    'Notes and coins per person, the amount to withdraw, and the remainder, not rounded (printed in Thai; the table layout is still waiting to be compared with a real form)',
   'พาสปอร์ตและใบอนุญาตทำงานที่หมดอายุภายใน 90 วัน แสดงชื่อ เอกสาร วันหมดอายุ และจำนวนวันที่เหลือ มีหนึ่งรายการที่หมดอายุแล้ว':
     'Passports and work permits expiring within 90 days, with the employee, the document, the date and the days left; one has already expired',
   'เอกสารใกล้หมดอายุ': 'Documents expiring',
