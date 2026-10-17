@@ -20,6 +20,8 @@ COPY prisma ./prisma
 COPY prisma.config.ts tsconfig*.json nest-cli.json ./
 RUN npx prisma generate
 COPY src ./src
+# `npm run db:verify` (operations.md) runs from this tools image.
+COPY scripts/verify-db-objects.mjs scripts/verify-db-objects.sql ./scripts/
 RUN npm run build
 
 # ---- prod-deps --------------------------------------------------------------
@@ -36,6 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl curl \
 
 # Run as a non-root user: a compromised process should not own the filesystem.
 RUN useradd --system --create-home --uid 10001 cwork
+# Uploaded files go to ./uploads (STORAGE_LOCAL_PATH). The directory must exist and
+# belong to this user *in the image*: a named volume mounted there takes its
+# ownership from the image, and a root-owned mount point makes every upload fail.
+RUN mkdir -p /app/uploads && chown cwork:cwork /app/uploads
 USER cwork
 
 COPY --chown=cwork:cwork --from=prod-deps /app/node_modules ./node_modules

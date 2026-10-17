@@ -563,3 +563,249 @@ docker compose start api web
 
 Restore `FIELD_ENCRYPTION_KEY` to the value that was in use when the backup was
 taken, or the encrypted columns will not decrypt.
+
+## Running on a NAS (Synology)
+
+Everything for a small office that keeps its servers in a cupboard lives in
+[`deploy/nas/`](../deploy/nas): one compose file, a handful of scripts and a
+Caddyfile. It is free, installs without a licence key and never ties an update
+or a backup to one. A non-IT person's checklist, in Thai, is
+[`docs/guide/nas-install.th.md`](./guide/nas-install.th.md); what was actually
+run before this was written is in
+[`docs/nas-rehearsal-2026-10.md`](./nas-rehearsal-2026-10.md). **Read that file
+before relying on any DSM-specific step below: the rehearsal was on a clean
+Linux Docker host, not a Synology.**
+
+Run every script as root, from `deploy/nas` (`sudo -i` first on DSM, over SSH).
+
+### Which way applies: `./check.sh`
+
+`check.sh` changes nothing and says which path fits the machine it runs on. It
+reads the DSM version, whether Docker (Container Manager) answers, the free
+memory and the free disk where Docker keeps its data, whether the port is free
+and what else is already running, and exits 0 for path A, 2 for path B and 1 when
+something blocks the install.
+
+| Path | When | What you do |
+|---|---|---|
+| **A** | Container Manager is installed | `./install.sh` |
+| **B** | It is not | Install *Container Manager* from DSM's Package Center, then `./check.sh` again, then path A |
+| **C** | Fallback: the NAS must hold only the data | PostgreSQL on the NAS (`--mode db`), API and console on an office PC (`--mode app`); see below |
+
+DSM 7.2 or later is expected (earlier DSM calls the package *Docker* and has an
+older Compose); `check.sh` warns about it.
+
+### Getting the files onto the NAS
+
+Two ways, the same result:
+
+- **Bring the images** (no internet needed on the NAS). On any x86-64 machine
+  with Docker and the internet, `deploy/nas/make-bundle.sh <version>` builds
+  every image the stack needs into `images.tar.gz` and writes `images.version`.
+  Copy the whole `deploy/nas` folder, those two files included, to the NAS. The
+  bundle holds the machine's own architecture (a DS925+ is x86-64; an Apple-silicon
+  Mac would build images it cannot run) and the scripts refuse a mismatch.
+- **Build there.** Copy the whole Cwork folder (`backend/` and `web/` as well);
+  `install.sh` builds the images, which needs Docker Hub and npm and takes about
+  ten minutes.
+
+### Install: `./install.sh`
+
+```bash
+./install.sh --backup-dir /volumeUSB1/usbshare/cwork-backup
+./first-admin.sh --web        # prints a one-hour token; finish in a browser
+./show-key.sh                 # copy FIELD_ENCRYPTION_KEY into a password manager NOW
+./export-ca.sh                # the file office PCs trust (see HTTPS below)
+```
+
+The installer runs `check.sh` first, asks to confirm the address staff will type
+(it picks the NAS's LAN address), writes `.env` with secrets made on the spot
+(`chmod 600`, never copy it into a backup folder), loads or builds the images,
+starts PostgreSQL, applies the migrations, **then** starts the API, and checks
+that the hand-written database objects are in place. It refuses to run over an
+installation that holds data; `./uninstall.sh` erases one on purpose and asks for
+the word `ERASE`. An install that stopped before it made any data can simply be
+run again.
+
+What it opens: **one port, 8443 by default** (`--port` changes it), HTTPS only.
+PostgreSQL, the API and the console's web server are on Docker's internal network
+and publish nothing. Docker volumes keep the data on the NAS's own disk:
+PostgreSQL's data directory is **never** on a shared folder (SMB or NFS corrupts a
+database). Memory limits are set so a runaway container cannot starve the NAS's
+other services (PostgreSQL 1 GB, API 768 MB, the rest 128 MB each; measured idle
+use was about 150 MB for all four).
+
+### HTTPS, inside the office only
+
+Caddy is the front door. It makes **its own certificate authority** and issues the
+console's certificate from it, so nothing is fetched from the internet and no
+public name is needed. The decision to take, and what it costs:
+
+- Each office PC has to trust that authority **once**. `./export-ca.sh` writes
+  `cwork-office-ca.crt` and prints its SHA-256 fingerprint to compare on the PC.
+  On Windows: double-click the file, *Install Certificate*, *Local Machine*,
+  *Trusted Root Certification Authorities*, then restart the browser. Not tried on
+  a real Windows PC.
+- The certificate is made for **the address in `CWORK_HOST`**, and the console must
+  be opened at exactly that (`https://<address>:8443`). A different name or
+  address in the browser shows a certificate warning. Give the NAS a fixed LAN
+  address (DHCP reservation) before installing.
+- The authority lives in a Docker volume. If the machine is rebuilt, a new
+  authority is made and each PC has to trust the new file; it is deliberately not
+  in the backup (whoever holds it can mint certificates every office PC trusts).
+- The proxy adds no HSTS header, but the API itself sends one in production
+  (`backend/src/main.ts`, one year). Browsers do not apply HSTS to an IP address,
+  which is how the console is reached by default. If the NAS is given a *name*
+  and staff use it, a replaced or expired authority becomes a page that cannot be
+  clicked through until the PC trusts the new file (`export-ca.sh`).
+- The mobile app accepts only HTTPS with a certificate the phone trusts
+  ([security](./security.md#transport-and-headers)), and Android apps ignore
+  authorities installed by the user unless they opt in, so the app is not
+  expected to work against this private authority. Not tested; the pilot clocks in
+  with a scanner, not the app.
+- The console's page asks Google Fonts for its Thai font. A PC with no internet
+  uses its own font instead; nothing breaks.
+
+`/api/*` goes straight to the API, not through the console's nginx: the API
+trusts exactly one proxy hop (`trust proxy` = 1), and a second hop would make every
+user appear to come from the same address.
+
+### Keeping it inside the office
+
+Cwork publishes only the HTTPS port, and only on the NAS. Keep it that way:
+
+- Do **not** forward the port on the router, and do not publish it through DSM's
+  reverse proxy or QuickConnect.
+- In DSM's firewall, allow the port from the office subnet and nothing else.
+- To prove nothing else answers, from **another PC on the office network**:
+  `nmap -p- <NAS address>` should list DSM's own services and the Cwork port, and
+  nothing that was not there before (5432, 3000, 80 and 443 of Cwork are not
+  published). From outside the office, the same scan should find nothing at all.
+  The rehearsal ran the scan on a Docker host (only the Cwork and Odoo ports were
+  published); an outside-the-office scan has not been done.
+
+### Backups: `./backup.sh`
+
+```bash
+./backup.sh                      # to CWORK_BACKUP_DIR from .env
+./backup.sh --dir /path --tag before-the-audit
+```
+
+Each run writes `cwork-<date>-<time>.sql.gz` (the database), `….uploads.tar.gz`
+(uploaded files) and a `.sha256` beside them, and removes backups older than
+`CWORK_BACKUP_KEEP_DAYS` (14). It checks that the dump finished (a cut-off dump
+is refused and nothing is kept) and **refuses a folder on the same disk as
+Docker's data**: a backup that dies with the disk it protects is not one. That
+check compares the filesystem `df` reports, because on a Synology every shared
+folder is its own btrfs subvolume but all of them fail with the same volume. On a
+one-volume NAS the backup therefore goes to a USB drive, a second volume or
+another machine's share. `--allow-same-disk` exists for tests only.
+
+It never writes `FIELD_ENCRYPTION_KEY`. The backup alone must not be enough to
+read staff IDs and bank accounts, and the key alone is useless without the data:
+keep the key in a password manager, the backup on the drive. **Losing the key
+makes those columns unreadable for good; `./show-key.sh` prints it on request.**
+
+A nightly run, in DSM: *Control Panel → Task Scheduler → Create → Scheduled Task
+→ User-defined script*, user **root**, daily, script
+`cd /volume1/docker/cwork/deploy/nas && ./backup.sh` (adjust the path). Not tried
+on a real Synology. Look at the folder the morning after the first night.
+
+### Restore: `./restore.sh`
+
+```bash
+./restore.sh /path/to/cwork-20261017-020000.sql.gz
+```
+
+It checks the checksums and that the dump is complete, then **loads the backup
+into a scratch database and tries the encryption key on its encrypted values
+before touching the real one**; a wrong key stops it with nothing changed (the
+alternative, found in the rehearsal, is a sign-in that fails with a 500 and no
+hint why). It then takes a safety backup of what is there (tag `before-restore`),
+replaces the database and the uploaded files, applies any newer migrations and
+restarts. It asks for the word `RESTORE`.
+
+Rebuilding a machine after a loss:
+
+```bash
+./install.sh --mode full --field-key '<the saved key>' --backup-dir /path
+./restore.sh /path/to/the/last/backup.sql.gz
+./export-ca.sh        # a new authority was made: office PCs trust the new file
+```
+
+### Update and rollback
+
+An update is replacing the files (a new `deploy/nas` with its `images.tar.gz`, or
+the whole folder to build from) and running:
+
+```bash
+./update.sh
+```
+
+It **takes a backup first and stops if it cannot**, keeps the running images as
+`:previous`, loads or builds the new ones, stops the console, applies the
+migrations, starts the new version and checks the database objects. If a step
+fails it says to run:
+
+```bash
+./rollback.sh
+```
+
+which puts the `:previous` images back and restores the pre-update backup. What
+staff entered after the update is not in that backup; a safety backup of the
+current state is taken first so it can be recovered. Migrations are forward-only,
+so going back is always "old program, old data", never "old program, new data".
+
+### Beside Odoo
+
+Nothing in the stack is shared with another project on the same Docker host: its
+own project name (`cwork`), its own network, volumes and containers, one
+published port. The defaults avoid 8069 (Odoo), 80, 443 and DSM's 5000/5001; if
+8443 is taken, `check.sh` says so and `--port` changes it. Odoo's containers were
+left running and untouched through install, backup, update, restore and rollback
+in the rehearsal (same start time throughout, its login page answering).
+
+### Path C: the data on the NAS, the app on a PC
+
+Use it only if the NAS cannot run the whole stack. It still needs Container
+Manager on the NAS, because PostgreSQL runs as a container there.
+
+```bash
+# on the NAS
+./install.sh --mode db --backup-dir /volumeUSB1/usbshare/cwork-backup
+# on the office PC (Docker installed there too)
+./install.sh --mode app --host <the PC's address> --db-host <the NAS address> --db-password '<POSTGRES_PASSWORD from the NAS .env>'
+```
+
+Know what you are choosing:
+
+- **PostgreSQL is offered on the LAN** (only on the NAS's address, port 5432) and
+  the connection is not encrypted. In DSM's firewall allow 5432 from the PC's
+  address only. The office network then carries payroll queries in clear; path A
+  or B does not.
+- **Two machines hold state.** The database is on the NAS; uploaded files and the
+  certificate authority are on the PC. Run `./backup.sh` on both (the NAS saves
+  the database, the PC the uploaded files only), keep `FIELD_ENCRYPTION_KEY`
+  (it is on the PC) apart, and note that the PC must be on whenever HR works.
+- **Updating:** `./backup.sh --tag pre-update` on the NAS, then `./update.sh` on
+  the PC. Rolling back: `./rollback.sh` on the PC (programs) and, if the update
+  changed the database, on the NAS (restores the pre-update backup).
+- **Restoring the database on the NAS** cannot check the key (it is on the PC):
+  sign in afterwards; a failing sign-in or blank IDs mean the PC's key is not the
+  backup's.
+- The console is reached at the **PC's** address.
+
+A PC without Docker (running the Node app directly on Windows) was not built: it
+is a second, separate deployment to maintain; ask before starting it.
+
+### Troubleshooting
+
+- `check.sh` fails on memory or disk: it prints the numbers it saw. Free memory
+  counts what DSM could give up (cache), not what is idle.
+- The browser warns about the certificate: the address typed is not `CWORK_HOST`,
+  or the PC does not trust the authority yet (`export-ca.sh`).
+- Sign-in answers with an error after a restore: the key in `.env` is not the
+  backup's. `restore.sh` should have caught it; put the saved key in `.env` and
+  restore again.
+- Anything else: `./status.sh`, then `docker logs cwork-api-1` (or `cwork-proxy-1`,
+  `cwork-postgres-1`).

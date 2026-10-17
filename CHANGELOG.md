@@ -21,6 +21,26 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Run Cwork on a NAS, beside what it already runs** (CW-062). `deploy/nas/`
+  is one compose file and a handful of scripts for a small office's NAS (a
+  Synology, for the pilot) that keeps Odoo and other containers on it. `check.sh`
+  reads the machine and says which of three ways applies: Container Manager is
+  there (A), it has to be installed first (B), or the NAS holds only the data and
+  an office PC runs the app (C). `install.sh` makes the secrets, loads
+  `images.tar.gz` (no internet needed; built with `make-bundle.sh`) or builds,
+  migrates before the API starts and opens **one** HTTPS port. HTTPS comes from an
+  authority the install makes, trusted once per office PC with `export-ca.sh`.
+  `backup.sh` writes the database and the uploaded files with checksums to a
+  folder on **another disk**, refuses the same disk, and never writes the
+  encryption key; `restore.sh` tries the key on a scratch copy before replacing
+  anything; `update.sh` backs up first and stops if it cannot, `rollback.sh` returns
+  to the old programs and the pre-update data. Free, tied to no key.
+  `docs/operations.md` "Running on a NAS", Thai checklist
+  `docs/guide/nas-install.th.md`, and the rehearsal record
+  `docs/nas-rehearsal-2026-10.md`, which says plainly what was run (a clean Docker
+  host, with Odoo beside it) and what was not (any Synology, DSM's screens, a
+  Windows PC trusting the authority, a scan from outside, two real machines).
+
 - **The accountant's month, and a check against what was filed** (CW-089). For
   a company whose ภ.ง.ด.1 is filed by an outside accounting firm, **Payroll →
   Export for the accountant** is the period's usual export with two columns
@@ -682,6 +702,13 @@ entry, tags it and publishes the notes.
   captions, ending on a line that the English locale was still on the backlog.
 
 ### Fixed
+
+- **Uploads failed with an error in the production image.** `/app/uploads` was
+  created root-owned when a volume was mounted there and the API runs as an
+  unprivileged user; the Dockerfile now creates it owned by that user. The tools
+  image also now carries the SQL file `db:verify` reads (the script itself still
+  needs `psql`, which the image does not have; the NAS scripts run the same SQL
+  through the PostgreSQL container).
 
 - **A monthly salary is prorated over the employee's own work calendar**
   (CW-082). Payroll still counted a month's working days as Monday to Friday

@@ -64,3 +64,10 @@ mobile/ios/Flutter/Generated.xcconfig
 mobile/ios/Flutter/flutter_export_environment.sh
 mobile/ios/Runner/GeneratedPluginRegistrant.*
 mobile/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# CW-062 NAS installer: local state and the image bundle (never committed)
+deploy/nas/images.tar.gz*
+deploy/nas/images.version
+deploy/nas/.last-*
+deploy/nas/.previous-version
+deploy/nas/cwork-office-ca.crt
