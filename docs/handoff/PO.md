@@ -6,14 +6,14 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** CW-096 sent 21:0x (QA pass 2 findings #112–#115 in one PR, #114
-  first: the cash sheet printed a project note naming the pilot company).
-  CW-095 merged at `7a589eb` (PR #111, merged by the PO under the standing
-  permissions without a block).
-- **QA:** pass 2 done on `9baa043`, results in PR #116 (docs only, PO merges
-  when green): 41 old cases and the new cases pass except D6 (dark-theme
-  contrast, #113). The QA room re-tests #112–#115 once CW-096 merges. Not
-  covered: #111, the Render wake-up time, the real NAS.
+- **Dev:** CW-096 (QA pass 2 findings #112–#115) is PR #117 at `481acdb`, red:
+  `payslip-print.e2e-spec.ts:276` still expects the cash-sheet note the PR
+  removes. The dev room is fixing it with a new commit; the PO merges when
+  green. CW-097 (README cash-sheet picture and alt text, dark-theme red,
+  "ค่าตอบแทน" in warnings) is sent, to start after #117 merges.
+- **QA:** pass 2 merged (PR #116, `8f6dbf4`): 41 old cases and the new cases
+  pass except D6 (dark-theme contrast, #113). The QA room re-tests #112–#115
+  once CW-096 merges. Not covered: #111, the Render wake-up time, the real NAS.
 - **Scanner number on the employee page:** already done, CW-090 (closed
   2026-10-17). Not a new ticket.
 - **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the
