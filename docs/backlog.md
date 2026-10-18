@@ -700,6 +700,11 @@ unaided (before 31 October, still open), tasks 3 and 6, the mobile app.
 Approving a run needs a second person with the permission, so the guide says so
 at that step; whether the pilot has one is for the owner to confirm.
 
+Merged as #103 (`feca645`). The PO checked the guide's "do not press Record
+payment and publish payslips" step against `PayrollService.markPaid`: it
+notifies employees, closes the period, locks the attendance days and the run
+can no longer be cancelled, so the step stands and now says so.
+
 **Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
 `mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
 `web/src/features/leave/LeaveImportPage.tsx`, `docs/`

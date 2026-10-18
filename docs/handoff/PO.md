@@ -40,7 +40,6 @@ this file only says where the PO room stands.
   on Safari or a real tablet.
 - PR #101 merged at `f4af52b`, green: the scanner import page uses the
   English singular for a count of one (`plural()` in `web/src/lib/i18n`).
-  Left over: `SpreadsheetImport.tsx` still says "1 problems". Dev queue empty.
 - PR #102 merged at `20fb92b`, green: the สปส.1-10 PDF follows the redacted
   sample's layout (total in Thai words, title in the name column, sheet
   numbers top right, ruled total row). Not on it, because no field exists:
@@ -48,7 +47,20 @@ this file only says where the PO room stands.
   address. Adding organisation fields for them is an open question for the
   owner, not urgent while HR files online.
 
+## Done 2026-10-18
+
+- PR #103 merged at `feca645`, green: CW-066's HR half. Guide
+  `docs/guide/hr-daily-tasks.th.md` (four tasks, 14 demo screenshots) and the
+  screen fixes where a first-time HR user stopped; `SpreadsheetImport`'s
+  "1 problems" is fixed too. PO review added what "Record payment and publish
+  payslips" really does (checked in `markPaid`). #69 stays open for the real
+  HR test. Dev queue empty again.
+
 ## Waiting on the owner
+
+- For CW-066 (#69): the pilot's HR doing the four tasks in the guide unaided
+  before 31 October, and whether the pilot has a second person (the owner) to
+  approve payroll runs, since whoever calculates cannot approve.
 
 - For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
   (it reports the DSM version, Container Manager and free space), a USB
