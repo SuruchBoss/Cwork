@@ -1054,6 +1054,16 @@ not because there is a date.
 ## P2 — worth doing
 
 
+### CW-095 · A manager's pages ask for departments and get 403
+`P2` · web · backend · **S** · found by the UX room, 2026-10-18
+
+Signed in as eng.manager, the employee register and the shifts and rota pages
+call `GET /api/v1/departments` and get 403 in the console; the pages still
+render. Probably older than PR #110. Either the manager role may read
+departments (for its own team's filters) or the pages should not ask without
+the permission. Acceptance: no 403 in the console for the seeded manager on
+those pages, and the filter shows what the manager may see.
+
 ### CW-094 · A top-menu console in earth tones (direction B)
 `P2` · UX · web · **L** · after the Pilot A install
 
