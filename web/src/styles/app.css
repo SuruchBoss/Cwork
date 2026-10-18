@@ -165,7 +165,7 @@ p { margin: 0 0 8px; }
 .nav-link__badge {
   margin-left: auto;
   background: var(--danger);
-  color: #fff;
+  color: var(--text-inverse);
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
@@ -478,7 +478,7 @@ table.table {
 }
 .btn--danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .btn--danger:hover:not(:disabled) {
   filter: brightness(0.92);

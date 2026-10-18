@@ -71,11 +71,22 @@ describe('text on the brand colour', () => {
     }
   });
 
+  it('reads at 4.5:1 or better on the red fills too, in every theme (CW-097: 2.8:1 in the dark one)', () => {
+    const danger = pairs('danger');
+    const inverse = pairs('text-inverse');
+    expect([danger.length, inverse.length]).toEqual([3, 3]);
+    for (let theme = 0; theme < 3; theme++) {
+      expect(contrast(inverse[theme], danger[theme])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it.each([
     '.btn--primary',
     '.sidebar__logo',
     ".date-input__day[aria-pressed='true']",
     '.chat__bubble--user',
+    '.btn--danger',
+    '.nav-link__badge',
   ])('is set from --text-inverse, not a fixed white, on %s', (selector) => {
     expect(declarations(selector)).toMatch(/color:\s*var\(--text-inverse\)/);
   });

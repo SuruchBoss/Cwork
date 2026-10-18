@@ -83,7 +83,7 @@ every figure and name on this page is synthetic.</sub>
   or four to an A4 sheet, with a wage-receipt sheet to sign.
   [Guide (Thai)](./docs/guide/printing-payslips.th.md)
 
-  <img src="./docs/screenshots/en/28-cash-sheet.png" alt="Page one of the cash-preparation sheet for a month: for each employee the net pay and how many notes and coins of each kind, the total to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai, and a red line on it says its table layout is still waiting to be compared with a real paper form" width="780">
+  <img src="./docs/screenshots/en/28-cash-sheet.png" alt="Page one of the cash-preparation sheet for a month: for each employee the net pay and how many notes and coins of each kind, the total to withdraw from the bank and the remainder under 25 satang. The sheet is printed in Thai" width="780">
 
 - **A file for the outside accountant, and a check against what was filed.** An
   approved or paid period exports with each person's tax ID and income type,
@@ -693,7 +693,7 @@ means a new rule set and that translation pass, not a rewrite.
 ## Status
 
 Working and verified end to end — sign-in through payroll. 788 backend unit
-tests, 313 web, 101 mobile, plus a 447-check end-to-end suite that drives the real
+tests, 321 web, 101 mobile, plus a 447-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -752,7 +752,7 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 788 backend unit tests, 313 web,
+- Every suite passes, in CI, on every push — 788 backend unit tests, 321 web,
   101 mobile, 447 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design

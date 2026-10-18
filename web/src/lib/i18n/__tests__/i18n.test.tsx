@@ -5,6 +5,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatMinutes, formatMoney, yearsOfService } from '@/lib/format';
 import { plural, translate } from '@/lib/i18n';
+import { thMessages } from '@/lib/i18n/messages.th';
 import { useT } from '@/lib/i18n/useT';
 import { useUiStore } from '@/stores/ui.store';
 
@@ -86,5 +87,21 @@ describe('useT', () => {
       useUiStore.getState().setLanguage('en');
     });
     expect(screen.getByTestId('label')).toHaveTextContent('Sign out');
+  });
+});
+
+describe('payroll warnings that send HR to the pay card (CW-097)', () => {
+  const sendsToCard = Object.entries(thMessages).filter(([english]) =>
+    /page under Compensation/.test(english),
+  );
+
+  it('finds the four warnings, so the check below is not empty', () => {
+    expect(sendsToCard).toHaveLength(4);
+  });
+
+  it.each(sendsToCard)('names the card as the employee page does, in "%s"', (_english, thai) => {
+    // The card is titled "Pay" (ค่าจ้าง); "ค่าตอบแทน" is only the sidebar group.
+    expect(thai).toContain(thMessages['Pay']);
+    expect(thai).not.toContain('ค่าตอบแทน');
   });
 });
