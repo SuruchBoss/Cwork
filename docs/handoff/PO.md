@@ -6,8 +6,17 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue (2026-10-17, owner: do what can be done while documents are
-  awaited):** empty. Closed 2026-10-17: CW-090, CW-065, CW-073 and the
+- **Dev queue (2026-10-18):** CW-031 (#29) fix, sent 14:05. The demo the owner
+  deployed on Render (`https://cwork-demo.onrender.com`, main `ecf5ded`)
+  re-ran every migration and a "first boot" reset on waking, and its resets did
+  not restore the seed. Cause, reproduced on Postgres 16: the Render database
+  user is `cwork_demo`, the demo's marker schema has the same name, so once the
+  marker exists `"$user", public` makes `current_schema()` the marker schema and
+  every demo raw query looks in the wrong place. CI's user is `cwork`, so CI
+  never saw it. Asked for: raw SQL naming the app schema, a test that boots twice
+  with `cwork_demo` first on the search path. After merge the owner redeploys and
+  times it again (64 s at 13:52, one-minute target).
+  Closed 2026-10-17: CW-090, CW-065, CW-073 and the
   QA findings #94–#97 (a day inside a paid month is locked; fixes go in the
   next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
   pilot's real NAS, which nothing touches until the owner approves.
