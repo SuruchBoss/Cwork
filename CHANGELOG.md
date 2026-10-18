@@ -777,8 +777,9 @@ entry, tags it and publishes the notes.
   in the wrong place: every wake-up re-applied the migrations (about 16 seconds
   of the slow wake), the guard saw an empty database and logged "first boot"
   again, a reset emptied the marker schema's `state` table instead of the
-  application's tables so visitors' changes stayed (the manager's pending leave
-  request did not come back), and the visitor-address triggers were not attached
+  application's tables so nothing done in the demo was undone (the manager's
+  inbox was found empty; the owner approved nothing, and since the demo is public
+  who did is not known), and the visitor-address triggers were not attached
   to later boots. The demo's SQL now names the application's schema, the
   `schema=` of `DATABASE_URL` or `public` (`appSchema()`), and asks nothing of
   `current_schema()`. `pendingMigrations` moved to its own file so a test can call
