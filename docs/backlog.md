@@ -371,6 +371,29 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
+### CW-096 · QA pass 2 findings before the pilot (#112–#115)
+`P1` · web · backend · docs · **S** · found by the QA room, 2026-10-18 (pass 2 on `9baa043`)
+
+One PR for four small findings, in this order:
+
+1. **#114, cash-preparation sheet.** The sheet prints a red project note under
+   the title that names the pilot company, and the "ลำดับ" header wraps. The note
+   goes; the comparison with the pilot's paper form stays an open question for
+   the owner (after CW-088), not text on a print-out. The header fits on one line.
+2. **#113, dark-theme primary buttons.** White on `rgb(111,160,245)` is 2.62:1.
+   Every primary button label and the sidebar logo reach at least 4.5:1 in the
+   dark theme; the light theme does not change. A token change, not a redesign:
+   CW-094 replaces the palette after the install.
+3. **#112, scanner errors in English.** The scanner flow's `BusinessRuleError`
+   codes (at least `EMPLOYEE_HAS_SCANNER_NUMBER` and `DAY_LOCKED`) show Thai text
+   in the Thai console, keyed by code, with the English kept for the English
+   console. A web test fails if a known code falls back to the server sentence.
+4. **#115, polish.** `ErrorState` uses a drawn icon like the empty states, and
+   task 3 of `docs/guide/hr-daily-tasks.th.md` names the pay card and its button
+   as the screen does, for an employee with and without pay.
+
+Acceptance: each issue's own expected result; the QA room re-tests all four.
+
 ### CW-091 · The sidebar scrolls sideways, and HR cannot see its footer
 `P1` · UX · web · **S** · Pilot A, before the install (2-6 Nov)
 

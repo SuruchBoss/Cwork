@@ -6,14 +6,14 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** queue empty. CW-095 merged at `7a589eb` (PR #111, green, merged by
-  the PO under the standing permissions without a block): a manager's
-  department filters no longer call `/departments`; they list the departments
-  of the people the manager can see.
-- **QA:** pass 2 sent 20:1x on `9baa043`: the 41 cases of
-  `docs/qa/pilot-a-2026-10.md` again, plus cases for what merged today
-  (#103 CW-066, #104 CW-031, #109 CW-093/CW-091, #110 CW-092). Results go in a
-  "Pass 2" section of that file, by PR.
+- **Dev:** CW-096 sent 21:0x (QA pass 2 findings #112–#115 in one PR, #114
+  first: the cash sheet printed a project note naming the pilot company).
+  CW-095 merged at `7a589eb` (PR #111, merged by the PO under the standing
+  permissions without a block).
+- **QA:** pass 2 done on `9baa043`, results in PR #116 (docs only, PO merges
+  when green): 41 old cases and the new cases pass except D6 (dark-theme
+  contrast, #113). The QA room re-tests #112–#115 once CW-096 merges. Not
+  covered: #111, the Render wake-up time, the real NAS.
 - **Scanner number on the employee page:** already done, CW-090 (closed
   2026-10-17). Not a new ticket.
 - **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the
