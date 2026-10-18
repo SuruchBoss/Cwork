@@ -1081,9 +1081,9 @@ retaken at the end.
 
 **2026-10-18, relayed by the Asuna Bot room:** the owner picked direction B
 (top menu) with an earth-tone palette; the UX room is reworking its tickets for
-B. Not confirmed in the PO room yet, and whether it lands before or after the
-Pilot A install is still open. Under B the left sidebar goes, so the footer half
-of CW-091 is on hold until that timing is decided.
+B. Not confirmed in the PO room yet. Timing, relayed at 14:57: "B ทำหลัง Pilot A
+ก็ได้", so B comes after the install. The left sidebar stays for the pilot's
+first weeks, so CW-091's footer fix still goes in before the install.
 
 Not started until the owner types the direction and colour in the PO room.
 
