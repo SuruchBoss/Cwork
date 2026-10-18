@@ -4,12 +4,26 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Where things are
 
-- **Current pass:** Pilot A, October 2026. The plan, cases and results table
+- **Current pass:** Pilot A, October 2026. The plan, cases and results tables
   are in [`docs/qa/pilot-a-2026-10.md`](../qa/pilot-a-2026-10.md): CW-061
-  scanner import, CW-089 accountant export and checks, CW-062 NAS installer.
-- **Status:** pass 1 finished 2026-10-17. 41 of 41 cases run, all pass; CW-062 on stand-in images, N11 with notes. Issues #94–#97 are open for the dev room (none is a security problem). The results table and how it was run are at the end of the plan.
-- **Re-test:** S15 (#94/#95) passed again on main `814ecc5`; nothing waiting on the dev room.
-- **Next:** When the owner approves the real NAS, someone with DSM access repeats N1–N3, N11 there; the real Dockerfile builds still need a machine with internet.
+  scanner import, CW-089 accountant export and checks, CW-062 NAS installer,
+  and "Pass 2" at the end.
+- **Status:** pass 1 (2026-10-17) and pass 2 (2026-10-18, main `9baa043`) are
+  finished. Pass 2 re-ran all 41 cases (all pass; CW-062 on stand-in images) and
+  added the HR guide's four tasks (CW-066), the demo's second boot (#104), the
+  approvals switch (#109), the sidebar, empty states, overdue badge and dark
+  theme (#110). One failure: dark-theme contrast, #113.
+- **Open issues for the dev room:** #112 English errors in the Thai console,
+  #113 dark-theme button contrast (the failing case), #114 cash sheet header and
+  printed project note, #115 `ErrorState` glyph and guide wording. None is a
+  security problem. #94–#97 from pass 1 are fixed and verified.
+- **PR:** pass 2 results are on branch `claude/qa-pilot-a-pass2`, for the PO to
+  review and merge.
+- **Not covered:** #111 (CW-095) landed after pass 2 began; the demo's wake-up
+  time on Render (the owner times it); DSM and the real NAS.
+- **Next:** when the dev room fixes #112–#115, re-test those four. When the
+  owner approves the real NAS, someone with DSM access repeats N1–N3 and N11
+  there; the real Dockerfile builds still need a machine with internet.
 
 ## How to start
 
@@ -17,9 +31,12 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 2. Run the stack the way the dev room does (`docs/handoff/DEV.md`, README
    "Try it in five minutes"). Containers in a cloud room have no internet, so the real
    Dockerfiles do not build here; CI builds them.
-3. Generate synthetic files with a script kept outside the repository, or
+3. To try the demo locally: `DEMO_MODE=true node dist/modules/demo/demo-main.js`
+   against an empty database whose owner role is named `cwork_demo`, with
+   `METRICS_PORT` moved if another API is already running.
+4. Generate synthetic files with a script kept outside the repository, or
    under `backend/test/fixtures/` if it is worth keeping as a regression test.
-4. Fill in the results table as you go and commit it.
+5. Fill in the results table as you go and commit it.
 
 ## Rules
 
@@ -30,4 +47,5 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Waiting on
 
-- The dev room (issues #94–#97) and the owner (real NAS).
+- The PO, to review and merge the pass 2 PR.
+- The dev room (issues #112–#115) and the owner (real NAS).
