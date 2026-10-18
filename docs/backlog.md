@@ -1079,6 +1079,12 @@ first), UX-13 approvals as rows with filters, an outlined reject button and the
 leave balance after approval (check the API first). Every guide screenshot is
 retaken at the end.
 
+**2026-10-18, relayed by the Asuna Bot room:** the owner picked direction B
+(top menu) with an earth-tone palette; the UX room is reworking its tickets for
+B. Not confirmed in the PO room yet, and whether it lands before or after the
+Pilot A install is still open. Under B the left sidebar goes, so the footer half
+of CW-091 is on hold until that timing is decided.
+
 Not started until the owner types the direction and colour in the PO room.
 
 
