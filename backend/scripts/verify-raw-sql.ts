@@ -109,7 +109,7 @@ const REVIEWED: { file: string; marker: string; scoping: Scoping; why: string }[
   },
   {
     file: 'modules/demo/demo-database.ts',
-    marker: 'SELECT "code", "name" FROM "organizations"',
+    marker: 'SELECT "code", "name" FROM ${Prisma.raw(quoteIdent(schema))}."organizations"',
     scoping: 'not-tenant-data',
     why: "reads every organisation on purpose: the demo guard's question is whether any of them is not the demo's",
   },
@@ -168,14 +168,14 @@ const REVIEWED: { file: string; marker: string; scoping: Scoping; why: string }[
     why: 'the demo reset empties everything, inside the transaction that re-ran the guard',
   },
   {
-    file: 'modules/demo/demo-main.ts',
-    marker: "._prisma_migrations', current_schema()",
+    file: 'modules/demo/demo-migrations.ts',
+    marker: "._prisma_migrations', ${schema}::text",
     scoping: 'not-tenant-data',
     why: "asks whether Prisma's migration table exists yet",
   },
   {
-    file: 'modules/demo/demo-main.ts',
-    marker: 'SELECT migration_name FROM _prisma_migrations',
+    file: 'modules/demo/demo-migrations.ts',
+    marker: 'SELECT migration_name FROM ${Prisma.raw(quoteIdent(schema))}._prisma_migrations',
     scoping: 'not-tenant-data',
     why: 'compares applied migrations with the ones the image ships',
   },
