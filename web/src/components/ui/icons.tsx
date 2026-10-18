@@ -25,6 +25,7 @@ const PATHS = {
       <path d="m8 12 3 3 5-6" />
     </>
   ),
+  check: <path d="m5 12.5 4.5 4.5L19 7" />,
   sparkles: (
     <>
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />

@@ -8,39 +8,33 @@ this file only says where the dev room stands.
 
 - On `main`: CW-061, CW-089, CW-062 (cloud side), CW-090, CW-065, CW-073, #94-#97, the
   office pictures and clip, CW-085's PDF layout (#102), CW-066's HR half (#103) and CW-031's
-  schema fix (#104: the demo's SQL names the application's schema, `appSchema()`, instead of
-  asking `current_schema()`; five e2e tests). `#62` stays open for the real NAS: the owner
-  has to approve `./check.sh` on it.
-- **On branch `claude/new-session-syszvt`, waiting for the PO to open the PR: why the
-  manager's inbox looked empty on the demo at 13:5x (CW-031 follow-up).** The owner found it
-  full again at 14:3x, so nothing was lost; the earlier theory (a visitor approved the
-  request) is dropped. Cause found in the web app: the approvals list has one query key for
-  everyone (`['approvals','tasks','PENDING']`) and an answer stays fresh for 30 seconds, and
-  nothing cleared the cache when the session changed (only the demo's reset overlay did).
-  Landing as HR asks for the approvals once, an empty answer, so "View as manager" straight
-  after showed HR's empty list. The cache is now cleared when a session is adopted (password,
-  second factor, enrolment, demo) and at sign-out, in `auth.store.ts`. Three tests in
-  `stores/__tests__/auth.store.test.tsx`: the HR-to-manager switch shows the manager's request
-  (failed before the fix), and both drops. Web counts 270. Not proved: that this, and not
-  something else, is what the owner saw at 13:5x, since this room cannot reach onrender.com;
-  the mechanism is reproduced. The owner's next timing run after the manual deploy answers it.
-  Ordinary users on one shared PC (the pilot's HR) were exposed to the same thing.
-- **Same branch, its own commit (`59ea39a`): CW-091 (#105), the side menu scrolls sideways.**
-  Thai only, every desktop width: the footer's "ออกจากระบบ" button kept the row from
-  shrinking, 6 px past the column, and `overflow-y` alone makes `overflow-x` scroll. Fix is
-  padding 10 to 8, `min-width: 0` on the wide button and `overflow-x: hidden` on `.sidebar`;
-  a stylesheet test keeps both rules (it failed before) and `docs/screenshots/capture.mjs`
-  now fails when the menu is wider than its column. Measured 247 px of 247 at 1280, 1366 and
-  1920, Thai and English. It is independent of the cache fix: the PO can split the two commits
-  into two PRs. Web counts 272 with both.
-- Pictures: capture scripts change the database they run on; run them on a freshly seeded
-  one. `KEEP_SCRATCH=1` keeps the frames.
+  schema fix (#104).
+- **PR #109 (open, head `bc6f5c4`, not touched since the PO reviewed it):** CW-093, the web cache
+  is cleared when a session is adopted and at sign-out (`auth.store.ts`, three tests), plus the
+  overflow half of CW-091 (the Thai sign-out button made the menu scroll sideways).
+- **On top of it, on branch `claude/new-session-syszvt`, not pushed (the PO asked for CW-092 as
+  a new branch after #109 merges):** CW-092's four items and the CHANGELOG fix. HR dashboard
+  card and empty-box wording, a drawn check icon in place of ✓ (four pages), dark `--text-subtle`
+  #8a94a2, the overdue badge and order on the approvals page (`overdue.ts`), and the CW-031
+  CHANGELOG entry no longer says the inbox was emptied (the cache entry is labelled CW-093).
+  Web counts 283, docs updated, `verify:docs`, tsc, eslint and licence headers pass.
+- **Dropped by the PO at 15:00 and not in the branch:** the pinned footer, 36 px rows and
+  inside-scrolling list of CW-091, and the "Report a problem" icon of CW-092, because direction B
+  removes the left menu. The full version (menu changes, `capture.mjs` footer checks, the retaken
+  HR guide pictures, the icon) exists only as local branch `backup-full-091-092` and as
+  `full-091-footer-and-092.patch` in the Dev room's scratchpad; it is gone when the container is.
+  Footer measured at 1366x768 as hr.manager: it fits when the list scrolls inside.
+- Not done: README and landing pictures still show the old dashboard card wording (the HR
+  guide's pictures do not show the dashboard). The ⏸ in the dashboard's recent-leave box is the
+  same kind of character as the old ✓ and was left alone (not in the ticket).
+- Pictures: capture scripts change the database they run on; run them on a freshly seeded one.
+  `KEEP_SCRATCH=1` keeps the frames.
 - Waiting on others: CW-066's two owner items (a real HR person doing the four jobs before
   31 October; a second person who may approve a payroll run); CW-085 upload file needs the
   e-Services layout; CW-080 and CW-086 (#89) are not queued.
 
 ## Next
 
-- Do not start CW-085's upload file, CW-080 or CW-086, nor the support-scope page. Do not
-  touch the real NAS until the owner approves. The UXUI room is proposing a new look; the
-  menu fix is only the overflow.
+- When #109 merges, restart the room branch from `main`, push CW-092 and report. Do not start
+  CW-094 (direction B, after the Pilot A install), CW-085's upload file, CW-080 or CW-086, nor
+  the support-scope page. Do not touch the real NAS until the owner approves.

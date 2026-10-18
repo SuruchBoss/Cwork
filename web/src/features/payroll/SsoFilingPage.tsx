@@ -16,6 +16,7 @@ import {
   Select,
   TableSkeleton,
 } from '@/components/ui';
+import { Icon } from '@/components/ui/icons';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatMoney, formatMonthYear, formatYear } from '@/lib/format';
@@ -217,7 +218,7 @@ function FilingTable({ sheet }: { sheet: SsoFilingSheet }) {
   if (sheet.rows.length === 0 && sheet.problems.length === 0) {
     return (
       <EmptyState
-        icon="✓"
+        icon={<Icon name="check" size={28} />}
         title={t('Nobody was insured in {month}', {
           month: formatMonthYear(sheet.year, sheet.month),
         })}

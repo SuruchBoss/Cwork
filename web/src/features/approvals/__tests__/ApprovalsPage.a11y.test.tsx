@@ -82,4 +82,37 @@ describe('ApprovalsPage accessibility', () => {
     expect(reason).toHaveFocus();
     await expectNoAxeViolations(container);
   });
+
+  it('marks a late request, puts it first, and draws the empty state with an icon, not a character', async () => {
+    const late: ApprovalTask = {
+      ...task,
+      id: 'task-late',
+      dueAt: new Date(Date.now() - 3 * 86_400_000 - 3_600_000).toISOString(),
+      instance: {
+        ...task.instance,
+        id: 'inst-late',
+        submittedBy: {
+          ...task.instance.submittedBy,
+          employee: { firstNameTh: 'มานี', lastNameTh: 'มีสุข', employeeCode: 'EMP-003' },
+        },
+      },
+    };
+    vi.mocked(api.get).mockResolvedValue([task, late]);
+    renderWithProviders(<ApprovalsPage />);
+    await screen.findByText('มานี มีสุข');
+
+    expect(screen.getByText('เลยกำหนด 4 วัน')).toBeInTheDocument();
+    const names = screen.getAllByText(/สมชาย ใจดี|มานี มีสุข/).map((el) => el.textContent);
+    expect(names).toEqual(['มานี มีสุข', 'สมชาย ใจดี']);
+  });
+
+  it('says nothing is waiting for you, with a drawn check mark', async () => {
+    vi.mocked(api.get).mockResolvedValue([]);
+    const { container } = renderWithProviders(<ApprovalsPage />);
+    await screen.findByText('ไม่มีรายการรอคุณอนุมัติ');
+    expect(screen.queryByText(/เคลียร์งานหมดแล้ว/)).not.toBeInTheDocument();
+    // The ✓ character comes out as √ in IBM Plex Sans Thai, so it is a drawing.
+    expect(container.querySelector('.empty__icon svg.icon')).not.toBeNull();
+    expect(container.querySelector('.empty__icon')?.textContent).toBe('');
+  });
 });

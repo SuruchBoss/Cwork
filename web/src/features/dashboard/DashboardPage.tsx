@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import { Badge, Card, EmptyState, PageHeader, Person, Stat } from '@/components/ui';
+import { Icon } from '@/components/ui/icons';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney, formatPeriod, formatRelative } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
@@ -76,9 +77,9 @@ export default function DashboardPage() {
         )}
         {canSeeLeave && (
           <Stat
-            label={t('Leave requests pending')}
+            label={t('Leave requests waiting for a manager')}
             value={pendingLeave.data?.meta.total ?? '—'}
-            hint={t('Across the organisation you can see')}
+            hint={t('The whole organisation, not your task')}
             to="/leave"
           />
         )}
@@ -141,9 +142,8 @@ export default function DashboardPage() {
             </div>
           ) : (
             <EmptyState
-              icon="✓"
-              title={t('No approvals waiting')}
-              description={t('You are all caught up')}
+              icon={<Icon name="check" size={28} />}
+              title={t('Nothing is waiting for your approval')}
             />
           )}
         </Card>

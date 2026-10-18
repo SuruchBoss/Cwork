@@ -422,6 +422,9 @@ table.table {
 .empty__icon {
   font-size: 28px;
   margin-bottom: 8px;
+  /* A drawn icon is a block; centre it like the character it replaces. */
+  display: flex;
+  justify-content: center;
 }
 
 /* --------------------------------------------------------------- controls - */

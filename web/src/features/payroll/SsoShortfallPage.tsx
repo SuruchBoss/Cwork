@@ -17,6 +17,7 @@ import {
   Select,
   TableSkeleton,
 } from '@/components/ui';
+import { Icon } from '@/components/ui/icons';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatMoney, formatMonthYear, formatYear } from '@/lib/format';
@@ -131,7 +132,7 @@ export default function SsoShortfallPage() {
           />
         ) : (
           <EmptyState
-            icon="✓"
+            icon={<Icon name="check" size={28} />}
             title={t('Nothing owed for {year}', { year: formatYear(year) })}
             description={t(
               'Every locked and paid run deducted what the ceiling for the year gives.',

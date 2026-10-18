@@ -220,7 +220,7 @@ export function EmptyState({
   description,
   action,
 }: {
-  icon?: string;
+  icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
