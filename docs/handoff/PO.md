@@ -6,20 +6,24 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue (2026-10-18), in order:** CW-093 (#108) why the manager's inbox
-  showed empty at 13:5x although dev1's two items were there (nothing was
-  approved; suspects: an approvals cache not keyed by user on persona switch, or
-  a session opened during a reset), and correct #104's CHANGELOG line; CW-091
-  (#105) sidebar sideways scroll plus HR's footer below the fold; CW-092 (#107)
-  five small screen fixes. All from the owner's demo and the UX room's
-  candidates of 2026-10-18; scope in the backlog. CW-094 (direction A redesign,
-  P2, after the install) waits on the owner choosing direction and main colour.
+- **Dev queue (2026-10-18):** CW-092 (#107), four small screen fixes (HR
+  dashboard wording, check icon, dark-theme `--text-subtle`, overdue badge on
+  approvals) plus correcting #104's CHANGELOG line about the "emptied" inbox.
+  Done today: CW-093 (#108, cache cleared at every sign-in) and CW-091's
+  sideways scroll (#105), both in #109 at `8e1b32d`; CW-091's footer pin and
+  CW-092's menu icon dropped because CW-094 replaces the left menu.
+- **CW-094 confirmed by the owner (15:00):** direction B, top menu, earth tones,
+  after the Pilot A install; main colour olive #5b6b34 (left to the Asuna Bot
+  room, which chose it). Palette, dark theme, UX-20 to UX-25 and the API notes
+  are in the backlog. Not started before the install.
 - **CW-031 (#29):** PR #104 merged at `a4bf64a`, green: the demo's raw SQL names
   the app schema (`appSchema()`), because Render's database user `cwork_demo`
   shares the marker schema's name and made `current_schema()` the marker after
   the first boot, so wake-ups re-ran migrations and resets restored nothing.
-  Waiting on the owner: Manual Deploy, log should say reset `boot`, then time a
-  cold start again (64 s at 13:52, one-minute target; Starter plan is his call).
+  Deployed by the owner at 14:52 from `a4bf64a`: log shows reset `boot`, no
+  migrations. Waiting on the owner: redeploy at `8e1b32d` or later, then time a
+  cold start with HR → manager inside 30 s (64 s at 13:52, one-minute target;
+  Starter plan is his call). Close #29 when that passes.
   Closed 2026-10-17: CW-090, CW-065, CW-073 and the
   QA findings #94–#97 (a day inside a paid month is locked; fixes go in the
   next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
