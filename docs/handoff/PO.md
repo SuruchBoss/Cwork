@@ -6,16 +6,14 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue (2026-10-18):** (1) CW-031 follow-up: why the manager's inbox
-  showed empty at 13:5x although dev1's two items were there (the owner saw them
-  at 14:3x; nobody approved anything). Suspects: an approvals cache not keyed by
-  user when switching persona, or a session opened during a reset. Separate PR,
-  with a test that switching HR → manager shows the manager's list. Correct the
-  CHANGELOG line from #104 that calls the inbox emptied once the cause is known.
-  (2) New bug: the left sidebar scrolls sideways (owner's screenshot from the
-  demo); fix the overflow only, no redesign, Dev opens the issue. UXUI is drafting
-  a refreshed look and will send candidate tickets for the PO to order (before or
-  after the Pilot A install).
+- **Dev queue (2026-10-18), in order:** CW-093 (#108) why the manager's inbox
+  showed empty at 13:5x although dev1's two items were there (nothing was
+  approved; suspects: an approvals cache not keyed by user on persona switch, or
+  a session opened during a reset), and correct #104's CHANGELOG line; CW-091
+  (#105) sidebar sideways scroll plus HR's footer below the fold; CW-092 (#107)
+  five small screen fixes. All from the owner's demo and the UX room's
+  candidates of 2026-10-18; scope in the backlog. CW-094 (direction A redesign,
+  P2, after the install) waits on the owner choosing direction and main colour.
 - **CW-031 (#29):** PR #104 merged at `a4bf64a`, green: the demo's raw SQL names
   the app schema (`appSchema()`), because Render's database user `cwork_demo`
   shares the marker schema's name and made `current_schema()` the marker after
