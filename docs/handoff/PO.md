@@ -6,15 +6,15 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** CW-097 is PR #118 at `a9b2e0f` (README cash-sheet picture retaken
-  and checked by eye, alt text, dark-theme danger red, "ค่าจ้าง" in warnings);
-  the PO merges when green. CW-098 (the same four warnings in English) is
-  sent, to start after #118. CW-096 merged at
+- **Dev:** CW-098 in progress (the four payroll warnings in English, and #119:
+  the scanner days list's range error still English). CW-097 merged at
+  `31bf0a8` (PR #118); CW-096 at `4b78ff0` (PR #117). CW-096 merged at
   `4b78ff0` (PR #117, #112–#115 closed); its first CI run was red on a
   cash-sheet e2e that still wanted the removed note, fixed in `c107be8`.
-- **QA:** pass 2 merged (PR #116, `8f6dbf4`). Re-test of #112–#115 on
-  `4b78ff0` sent 21:5x; results go in a "Pass 2 re-test" section. Not covered
-  yet: #111, the Render wake-up time, the real NAS.
+- **QA:** pass 2 merged (PR #116). Re-test of #112–#115 on `4b78ff0` done:
+  #113, #114, #115 pass, #112 passes except the range error (#119, in CW-098).
+  Results are PR #120, merged by the PO after #118. Not covered yet: #111,
+  CW-097, the Render wake-up time, the real NAS.
 - **Scanner number on the employee page:** already done, CW-090 (closed
   2026-10-17). Not a new ticket.
 - **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the
