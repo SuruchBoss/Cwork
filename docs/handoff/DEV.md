@@ -20,6 +20,14 @@ this file only says where the dev room stands.
   like Render's user and drop the URL's `schema=` (with it Prisma pins the path, which is
   why CI never saw this); they failed before the fix. `docs/demo.md` explains, the raw-SQL
   registry and the counts (447 e2e) are updated.
+  - The manager's missing leave request is **not explained by the schema bug alone**. Booted
+    twice on the old behaviour with nobody touching anything, the manager's box was intact
+    (same leave, same approvals, dev1's manager still eng.manager). What the bug does is make
+    every reset a no-op for visitors' changes: with one approval made between the boots, the
+    old code kept it, the fixed code puts the request back. So someone approved, rejected or
+    cancelled it between 11:27 and 13:52 and nothing could undo it. Who, is unknown: the
+    owner says it was not him, and the demo is public. The audit page of the demo (sign in as
+    HR) shows it with the time, until the next reset wipes it.
   - Render's database should recover by itself after the owner deploys this: the old reset
     left `cwork_demo.state` empty, the next boot's `prepareDemoSchema` inserts a row with
     no `seeded_at`, which is a `boot` reset that now truncates `public` and seeds. A test

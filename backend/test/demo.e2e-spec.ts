@@ -536,6 +536,21 @@ describe('Public demo (e2e)', () => {
         expect((await again.api.get('/demo')).body.resetting).toBe(false);
         const signedIn = await again.api.post('/demo/sign-in', undefined, { as: 'manager' });
         expect(signedIn.status).toBe(200);
+        // And what the manager came to see is still there, routed to the manager.
+        const tasks = await again.api.get(
+          '/approvals/tasks?status=PENDING',
+          signedIn.body.accessToken,
+        );
+        const leave = (tasks.body.data ?? tasks.body).filter(
+          (task: { instance?: { entityType?: string } }) =>
+            task.instance?.entityType === 'LEAVE_REQUEST',
+        );
+        expect(leave).toHaveLength(1);
+        const dev1 = await again.app.get(PrismaService).employee.findFirstOrThrow({
+          where: { user: { email: DEMO_ACCOUNTS.employee } },
+          select: { manager: { select: { user: { select: { email: true } } } } },
+        });
+        expect(dev1.manager?.user?.email).toBe(DEMO_ACCOUNTS.manager);
       } finally {
         await again.close();
       }
@@ -603,7 +618,8 @@ describe('Public demo (e2e)', () => {
         });
         expect(await pending()).toBe(0);
 
-        await demo.reset('idle');
+        // Hourly, as on Render. The old code left a visitor's approval in place here.
+        await demo.reset('hourly');
 
         expect(await pending()).toBe(1);
         expect(await prisma.employee.count()).toBe(employees);
