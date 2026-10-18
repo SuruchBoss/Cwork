@@ -365,6 +365,26 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       expect(screen.queryByText(/payroll run has already used/)).toBeNull();
     });
 
+    it('says in Thai that the range is too long, in the list itself, with the limit (#119)', async () => {
+      get.mockImplementation((path: string) => {
+        if (path === '/attendance/scanner/days') {
+          return Promise.reject(
+            new ApiError(422, 'RANGE_NOT_SUPPORTED', 'Choose a range of 1 to 93 days', {
+              from: '2026-01-01',
+              to: '2026-12-31',
+              max: 93,
+            }),
+          );
+        }
+        if (path === '/attendance/scanner/unmapped') return Promise.resolve([]);
+        return Promise.reject(new Error(`unexpected ${path}`));
+      });
+      renderPage();
+
+      expect(await screen.findByText('เลือกช่วงวันที่ตั้งแต่ 1 ถึง 93 วัน')).toBeInTheDocument();
+      expect(screen.queryByText(/Choose a range/)).toBeNull();
+    });
+
     it('keeps the English sentence on the English screen', async () => {
       useUiStore.setState({ language: 'en' });
       serve([], unmapped);

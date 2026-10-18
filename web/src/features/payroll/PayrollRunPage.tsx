@@ -400,8 +400,8 @@ export default function PayrollRunPage() {
             {t(
               plural(
                 skipped.length,
-                '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page under Compensation, then calculate again.',
-                '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page under Compensation, then calculate again.',
+                '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page, in the Pay card, then calculate again.',
+                '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page, in the Pay card, then calculate again.',
               ),
               { count: skipped.length, codes: skipped.map((item) => item.employeeCode).join(', ') },
             )}
@@ -493,10 +493,10 @@ export default function PayrollRunPage() {
                 ? t('Press “Calculate payroll” to create a payslip for every employee')
                 : data.period.payFrequency === 'SEMI_MONTHLY'
                   ? t(
-                      'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page under Compensation, then calculate again.',
+                      'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.',
                     )
                   : t(
-                      'Nobody has a monthly salary set for this period. Set it on the employee’s page under Compensation, then calculate again.',
+                      'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.',
                     )
             }
           />
