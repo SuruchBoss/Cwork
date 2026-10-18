@@ -90,18 +90,24 @@ describe('useT', () => {
   });
 });
 
-describe('payroll warnings that send HR to the pay card (CW-097)', () => {
-  const sendsToCard = Object.entries(thMessages).filter(([english]) =>
-    /page under Compensation/.test(english),
+describe('payroll warnings that send HR to the pay card (CW-097, CW-098)', () => {
+  // The four warnings that say where to set pay, found by what they say, not by how they name the card.
+  const sendsToCard = Object.entries(thMessages).filter(
+    ([english]) => /employee’s page/.test(english) && /calculate again/.test(english),
   );
 
-  it('finds the four warnings, so the check below is not empty', () => {
+  it('finds the four warnings, so the checks below are not empty', () => {
     expect(sendsToCard).toHaveLength(4);
   });
 
-  it.each(sendsToCard)('names the card as the employee page does, in "%s"', (_english, thai) => {
-    // The card is titled "Pay" (ค่าจ้าง); "ค่าตอบแทน" is only the sidebar group.
-    expect(thai).toContain(thMessages['Pay']);
-    expect(thai).not.toContain('ค่าตอบแทน');
-  });
+  it.each(sendsToCard)(
+    'names the card as the screen does, in both languages, in "%s"',
+    (english, thai) => {
+      // The card is titled "Pay" (ค่าจ้าง); "Compensation" (ค่าตอบแทน) is only the sidebar group.
+      expect(english).toContain('Pay card');
+      expect(english).not.toContain('Compensation');
+      expect(thai).toContain(thMessages['Pay']);
+      expect(thai).not.toContain('ค่าตอบแทน');
+    },
+  );
 });

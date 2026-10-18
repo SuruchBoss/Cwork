@@ -14,6 +14,7 @@ import type {
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from './icons';
 import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/api-messages';
 import { useT } from '@/lib/i18n/useT';
 
 /** Small, unstyled-by-convention primitives. Styling lives in styles/app.css. */
@@ -259,8 +260,12 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const t = useT();
   const apiError = error instanceof ApiError ? error : null;
-  const message =
-    apiError?.message ?? (error instanceof Error ? error.message : t('Something went wrong'));
+  // A list that fails reads in the page's language like any other refusal (CW-098, #119).
+  const message = apiError
+    ? describeApiError(apiError, t, t('Something went wrong'))
+    : error instanceof Error
+      ? error.message
+      : t('Something went wrong');
 
   return (
     <div className="empty">

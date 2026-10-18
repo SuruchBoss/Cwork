@@ -779,6 +779,15 @@ entry, tags it and publishes the notes.
   page of the employee list returns); anyone who can read the organisation still
   gets every department, as before. No role gained or lost a permission.
 
+- **A list that fails speaks the page's language** (CW-098). The scanner days
+  page showed the server's English "Choose a range of 1 to 93 days" in the Thai
+  console when the range was too long, because a failed list drew its error
+  without going through the translation the buttons use (#119). The error box
+  now does, so any mapped refusal that comes back from a list reads in Thai on a
+  Thai page, with the limit filled in, and unchanged on an English page. The four
+  English payroll warnings that said to set pay "under Compensation" now say
+  "in the Pay card", the card's name on the English screen.
+
 - **What CW-096 left** (CW-097). In the dark theme the danger buttons and the
   sidebar's red count are dark on the light red (6.7:1) instead of white on it
   (2.8:1); the light theme is unchanged. The four payroll warnings that send HR

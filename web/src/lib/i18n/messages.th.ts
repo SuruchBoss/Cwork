@@ -443,13 +443,13 @@ export const thMessages: Record<string, string> = {
   'Calculation failed: {reason}': 'การคำนวณล้มเหลว: {reason}',
   'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
     'ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
-  '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page under Compensation, then calculate again.':
+  '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page, in the Pay card, then calculate again.':
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
-  '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page under Compensation, then calculate again.':
+  '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page, in the Pay card, then calculate again.':
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงานแต่ละคน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
-  'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page under Compensation, then calculate again.':
+  'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ไม่มีใครได้รับค่าจ้างรายวัน งวดครึ่งเดือนจ่ายเฉพาะพนักงานที่ตั้งค่าจ้างรายวันไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
-  'Nobody has a monthly salary set for this period. Set it on the employee’s page under Compensation, then calculate again.':
+  'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ยังไม่มีใครตั้งเงินเดือนไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   'Total deductions': 'รายการหักรวม',
   'Employer cost {amount}': 'ต้นทุนนายจ้าง {amount}',
