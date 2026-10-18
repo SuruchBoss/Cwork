@@ -493,6 +493,11 @@ describe('Fingerprint scanner import (e2e)', () => {
       });
       expect(again.status).toBe(422);
       expect(again.body.code).toBe('EMPLOYEE_HAS_SCANNER_NUMBER');
+      // The Thai console builds its sentence from these, so they must be there (CW-096).
+      expect(again.body.details).toEqual({
+        employeeCode: expect.any(String),
+        scannerNumber: '9099', // the number the employee already holds
+      });
     });
 
     describe('a number edited on the employee page (CW-090)', () => {

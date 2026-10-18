@@ -106,10 +106,34 @@ describe('CashSheetRenderer', () => {
     expect(texts).toContain(sheet.totals.net);
   });
 
-  it('says the layout still awaits the pilot form', async () => {
+  it('prints nothing that is a note for the project (CW-096)', async () => {
     const sheet = cashSheet(run, slips(2));
     const { texts } = await drawn(() => renderer.render(sheet));
-    expect(texts).toContain(sheet.layoutNotice);
+    expect(texts.join('\n')).not.toMatch(/บริษัทนำร่อง|ยังรอเทียบ|แบบฟอร์มกระดาษ/);
+  });
+
+  it('keeps every column heading on one line (CW-096: "ลำดับ" broke into "ลำดั" and "บ")', () => {
+    const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 36 });
+    doc.registerFont('Sarabun-Bold', join(process.cwd(), 'assets', 'fonts', 'Sarabun-Bold.ttf'));
+    doc.font('Sarabun-Bold').fontSize(9.5);
+    const columns = cashColumns(DENOMINATIONS, doc.page.width);
+    const headings = [
+      columns.index,
+      columns.code,
+      columns.name,
+      columns.net,
+      ...columns.denominations,
+      columns.cash,
+      columns.remainder,
+    ];
+    for (const cell of headings) {
+      // The renderer draws a heading in `width - 4`; one line is one line height tall.
+      const height = doc.heightOfString(cell.text, { width: cell.width - 4 });
+      expect({ heading: cell.text, lines: Math.round(height / doc.currentLineHeight()) }).toEqual({
+        heading: cell.text,
+        lines: 1,
+      });
+    }
   });
 
   it('is landscape A4', async () => {

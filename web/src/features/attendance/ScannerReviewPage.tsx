@@ -19,7 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
-import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/api-messages';
 import { formatDate, formatNumber } from '@/lib/format';
 import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
@@ -44,9 +44,6 @@ const FILTERS: ScannerStatusFilter[] = [
   'LOCKED',
   'ALL',
 ];
-
-const reasonOf = (caught: unknown, fallback: string) =>
-  caught instanceof ApiError ? caught.message : fallback;
 
 /**
  * What HR does with one day the scanner could not settle on its own: pick the
@@ -167,7 +164,7 @@ function BindControl({
         }),
       );
     },
-    onError: (caught) => setProblem(reasonOf(caught, t('Something went wrong'))),
+    onError: (caught) => setProblem(describeApiError(caught, t, t('Something went wrong'))),
   });
 
   const people = matches.data?.data ?? [];
@@ -299,7 +296,7 @@ export default function ScannerReviewPage() {
                 }),
       );
     },
-    onError: (caught) => setFailure(reasonOf(caught, t('Something went wrong'))),
+    onError: (caught) => setFailure(describeApiError(caught, t, t('Something went wrong'))),
     onSettled: () => setDeciding(null),
   });
 
@@ -315,7 +312,7 @@ export default function ScannerReviewPage() {
         }),
       );
     },
-    onError: (caught) => setFailure(reasonOf(caught, t('Something went wrong'))),
+    onError: (caught) => setFailure(describeApiError(caught, t, t('Something went wrong'))),
   });
 
   const data = days.data;

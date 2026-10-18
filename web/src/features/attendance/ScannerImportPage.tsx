@@ -8,6 +8,7 @@ import { qk } from '@/app/query-client';
 import { Button, Card, ErrorState, PageHeader, Stat } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/api-messages';
 import { formatDate, formatDateTime, formatNumber } from '@/lib/format';
 import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
@@ -60,8 +61,7 @@ export default function ScannerImportPage() {
     queryFn: () => api.get<ScannerImportRow[]>('/attendance/scanner/imports'),
   });
 
-  const reason = (caught: unknown) =>
-    caught instanceof ApiError ? caught.message : t('Something went wrong');
+  const reason = (caught: unknown) => describeApiError(caught, t, t('Something went wrong'));
 
   async function check(file: File) {
     setError(null);
