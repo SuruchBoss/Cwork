@@ -79,6 +79,9 @@ p { margin: 0 0 8px; }
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  /* Said outright: with only overflow-y set, the browser makes overflow-x auto
+     too, and anything a few pixels too wide adds a sideways scrollbar. */
+  overflow-x: hidden;
 }
 
 .sidebar__brand {
@@ -182,10 +185,13 @@ p { margin: 0 0 8px; }
 }
 .sidebar__control {
   min-height: 40px;
-  padding: 6px 10px;
+  padding: 6px 8px;
 }
 .sidebar__control--wide {
   flex: 1;
+  /* A flex item will not shrink below its text on its own; in Thai "ออกจากระบบ"
+     is wide enough to push the row past the sidebar and give it a sideways scroll. */
+  min-width: 0;
 }
 
 .main {
