@@ -265,7 +265,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   return (
     <div className="empty">
       <div className="empty__icon" aria-hidden>
-        ⚠
+        <Icon name="alert" size={28} />
       </div>
       <div style={{ fontWeight: 600, color: 'var(--text)' }}>{message}</div>
       {apiError?.code && <p className="mono subtle">{apiError.code}</p>}

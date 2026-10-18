@@ -39,3 +39,44 @@ describe('dark theme text colours', () => {
     expect(contrast(dark, '#171a21')).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+/**
+ * Text on a filled brand surface (CW-096): white on the dark theme's light blue
+ * was 2.62:1. The text takes --text-inverse, which is white in the light theme
+ * and near-black in the dark one, so each theme has its own readable pair.
+ */
+const app = readFileSync(join(__dirname, '..', 'app.css'), 'utf8');
+
+function declarations(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`).exec(app);
+  if (!match) throw new Error(`no rule for ${selector}`);
+  return match[1];
+}
+
+describe('text on the brand colour', () => {
+  /** Each theme's brand, brand on hover, and inverse text, in the order the file writes them. */
+  const pairs = (name: string) =>
+    [...css.matchAll(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, 'gi'))].map((m) => m[1]);
+
+  it('reads at 4.5:1 or better in the light theme and in both ways of getting the dark one', () => {
+    const brand = pairs('brand');
+    const hover = pairs('brand-hover');
+    const inverse = pairs('text-inverse');
+    // light, prefers-color-scheme: dark, [data-theme='dark']
+    expect([brand.length, hover.length, inverse.length]).toEqual([3, 3, 3]);
+    for (let theme = 0; theme < 3; theme++) {
+      expect(contrast(inverse[theme], brand[theme])).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(inverse[theme], hover[theme])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each([
+    '.btn--primary',
+    '.sidebar__logo',
+    ".date-input__day[aria-pressed='true']",
+    '.chat__bubble--user',
+  ])('is set from --text-inverse, not a fixed white, on %s', (selector) => {
+    expect(declarations(selector)).toMatch(/color:\s*var\(--text-inverse\)/);
+  });
+});

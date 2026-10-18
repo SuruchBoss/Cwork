@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 import { useUiStore } from '@/stores/ui.store';
 import { expectNoAxeViolations, renderWithProviders } from '@/test/a11y';
 import ScannerReviewPage from '../ScannerReviewPage';
@@ -294,6 +295,87 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(
       await screen.findByText('บันทึกเลข 77 แล้ว จับคู่ได้ 2 วัน เพิ่มรายการลงเวลา 4 รายการ'),
     ).toBeInTheDocument();
+  });
+
+  describe('a refusal from the server, in the language of the screen (CW-096)', () => {
+    const unmapped = [
+      {
+        scannerNumber: '999',
+        name: 'ชั่วคราว หนึ่ง',
+        days: 1,
+        daysWithTimes: 1,
+        firstDay: '2026-09-03',
+        lastDay: '2026-09-03',
+      },
+    ];
+    const hasNumber = () =>
+      new ApiError(
+        422,
+        'EMPLOYEE_HAS_SCANNER_NUMBER',
+        'Employee EMP-0009 already has scanner number 999',
+        { employeeCode: 'EMP-0009', scannerNumber: '999' },
+      );
+
+    async function bindNumber(label: { find: string; pick: string; save: string }) {
+      await userEvent.type(await screen.findByLabelText(label.find), 'มานี');
+      await userEvent.selectOptions(await screen.findByLabelText(label.pick), 'e9');
+      await userEvent.click(screen.getByRole('button', { name: label.save }));
+    }
+    const thai = {
+      find: 'ค้นหาพนักงานของเลข 999',
+      pick: 'พนักงานของเลข 999',
+      save: 'บันทึกเลขนี้',
+    };
+    const english = {
+      find: 'Find an employee for number 999',
+      pick: 'Employee for number 999',
+      save: 'Register this number',
+    };
+
+    it('says in Thai that the employee already has a scanner number', async () => {
+      serve([], unmapped);
+      post.mockRejectedValue(hasNumber());
+      renderPage();
+      await bindNumber(thai);
+
+      expect(
+        await screen.findByText(
+          'พนักงาน EMP-0009 มีเลขสแกน 999 อยู่แล้ว ถ้าจะเปลี่ยนเลข ให้แก้ที่หน้าพนักงาน',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/already has scanner number/)).toBeNull();
+    });
+
+    it('says in Thai that payroll has used the day', async () => {
+      serve([waiting]);
+      post.mockRejectedValue(
+        new ApiError(
+          422,
+          'DAY_LOCKED',
+          'A payroll run has already used this day, so it can no longer change',
+        ),
+      );
+      renderPage();
+      await screen.findByText('08:00 12:01 17:30');
+      await userEvent.click(screen.getByRole('button', { name: 'ใช้เวลาเหล่านี้' }));
+
+      expect(
+        await screen.findByText('วันนี้ถูกใช้ในรอบเงินเดือนไปแล้ว จึงแก้ไม่ได้อีก'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/payroll run has already used/)).toBeNull();
+    });
+
+    it('keeps the English sentence on the English screen', async () => {
+      useUiStore.setState({ language: 'en' });
+      serve([], unmapped);
+      post.mockRejectedValue(hasNumber());
+      renderPage();
+      await bindNumber(english);
+
+      expect(
+        await screen.findByText('Employee EMP-0009 already has scanner number 999'),
+      ).toBeInTheDocument();
+    });
   });
 
   it('says there is nothing to decide when nothing is waiting', async () => {

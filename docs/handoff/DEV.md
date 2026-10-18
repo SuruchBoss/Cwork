@@ -6,27 +6,36 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #110 (CW-092, CW-093 and the overflow half of CW-091 included).
-- **On branch `claude/new-session-syszvt`, restarted from main `9baa043` (CW-095, pushed, the PO
-  opens the PR):** the department filter on the employee register and on the shifts and roster page
-  no longer calls `/departments` for someone without `org:read`. `useDepartmentOptions`
-  (`web/src/lib/departments.ts`) asks `/departments` only with `org:read`; without it, it lists
-  `/employees` (limit 200, the most the API allows) and offers the departments of those people,
-  once each, by name. Without `org:read` and without any employee-read permission it asks nothing.
-  No permission changed; the assign-a-schedule form on the roster page is HR-only and unchanged.
-- Tests: hook (`lib/__tests__/departments.test.tsx`) and one per page, as manager and as HR; the
-  manager ones fail on the old code (checked by stashing the page edits). Web tests 293; README,
-  README.th, `docs/spec.md` and `verify-doc-counts.ts` say 293.
+- On `main`: everything up to #111 (CW-095, the department filter that no longer asks
+  `/departments` without `org:read`).
+- **On branch `claude/new-session-syszvt`, restarted from main `43820ee` (CW-096, pushed, the PO
+  opens the PR):** the four QA pass 2 issues in one branch, in the PO's order.
+  1. #114 cash sheet: the red pilot note is gone from `cash-sheet.ts` and the renderer (and from the
+     printing guide's wording); the "ลำดับ" column is 36 pt, and a renderer test measures every
+     heading with the real font so none breaks.
+  2. #113 dark primary buttons: text on `--brand` fills (`.btn--primary`, `.sidebar__logo`, the
+     date-input day, the user chat bubble) uses `--text-inverse`, white in light and `#0f1116` in
+     dark (7.2:1; hover 9:1). `styles/__tests__/theme.test.ts` checks the ratio of each theme's
+     pair and that those four rules use the token.
+  3. #112 scanner errors in Thai: `web/src/lib/api-messages.ts` maps the scanner flow's codes to
+     message keys, filled from the error's `details`; both scanner pages use it. The backend now
+     sends `{employeeCode, scannerNumber}` for `EMPLOYEE_HAS_SCANNER_NUMBER` and
+     `DUPLICATE_SCANNER_ID`, and `max` for `RANGE_NOT_SUPPORTED` (e2e checks the first).
+  4. #115 `ErrorState` draws the new `alert` icon; guide task 3 says card "ค่าจ้าง" and the button
+     "เปลี่ยนค่าจ้าง" when pay exists.
+- Not touched, and worth the PO's eye: the danger button and the nav badge are also white on a light
+  fill in the dark theme (about 2.8:1); and a few Thai warnings in `messages.th.ts` (payroll run
+  messages) still send HR to "หัวข้อค่าตอบแทน" on the employee page, where the card is called
+  "ค่าจ้าง".
+- Counts: web 313, backend unit 788 (README, README.th, `docs/spec.md`, `verify-doc-counts.ts`).
 - **Not built, by the PO's decision:** pinned footer / 36 px rows of CW-091 and the "Report a
   problem" icon of CW-092 (direction B removes the left menu, built after the Pilot A install).
-- `EmployeeCreatePage` and `AccountRolesCard` still call `/departments`; both are HR-only screens.
-- Pictures: capture scripts change the database they run on; run them on a freshly seeded one.
 - Waiting on others: CW-066's two owner items (a real HR person doing the four jobs before
   31 October; a second person who may approve a payroll run); CW-085 upload file needs the
   e-Services layout; CW-080 and CW-086 (#89) are not queued.
 
 ## Next
 
-- PO opens the CW-095 PR, reviews and merges. Do not start CW-094 (direction B, after the Pilot A
-  install), CW-085's upload file, CW-080 or CW-086, nor the support-scope page. Do not touch the
-  real NAS until the owner approves.
+- PO opens the CW-096 PR, reviews and merges; QA retests the four issues. Do not start CW-094
+  (direction B, after the Pilot A install), CW-085's upload file, CW-080 or CW-086, nor the
+  support-scope page. Do not touch the real NAS until the owner approves.

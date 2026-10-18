@@ -779,6 +779,20 @@ entry, tags it and publishes the notes.
   page of the employee list returns); anyone who can read the organisation still
   gets every department, as before. No role gained or lost a permission.
 
+- **Four things the second QA pass found** (CW-096). The cash-preparation sheet no
+  longer prints the project's red note about the pilot company's paper form, and
+  its first column heading "ลำดับ" stays on one line. In the dark theme the text
+  on primary buttons, the logo mark, the selected day of a date picker and the
+  assistant's user bubble is dark on the light blue (7.2:1) instead of white on
+  it (2.6:1); the light theme is unchanged. The scanner screens show the
+  server's refusals in Thai when the page is Thai (an employee who already has a
+  scanner number, a number that belongs to someone else, a day payroll has
+  already used, a bad range, an unusable clock-in or clock-out), and the server
+  now sends the employee code and number in the error's details so the sentence
+  can name them. The error box draws its icon like every empty state, and task 3
+  of the HR guide names the card "ค่าจ้าง" and both buttons ("ตั้งค่าจ้าง",
+  "เปลี่ยนค่าจ้าง").
+
 - **The public demo resets for real on Render** (CW-031). On Render the database
   user is `cwork_demo`, the same as the demo's marker schema, so after the first
   boot `current_schema()` was the marker and four pieces of the demo's SQL looked

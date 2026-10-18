@@ -25,6 +25,12 @@ const PATHS = {
       <path d="m8 12 3 3 5-6" />
     </>
   ),
+  alert: (
+    <>
+      <path d="M12 4 2.8 19.5h18.4L12 4Z" />
+      <path d="M12 10v4.5M12 17.2v.1" />
+    </>
+  ),
   ban: (
     <>
       <circle cx="12" cy="12" r="9" />

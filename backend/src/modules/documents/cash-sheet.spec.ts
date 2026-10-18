@@ -3,7 +3,6 @@
 
 import { Decimal } from '../../core/utils/money.util';
 import {
-  CASH_SHEET_LAYOUT_NOTICE,
   DENOMINATIONS,
   cashSheet,
   splitCash,
@@ -199,11 +198,9 @@ describe('cashSheet', () => {
     expect(cashSheet(run, slips).columns).toEqual([1000, 500, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.25]);
   });
 
-  it('names the run and says the layout still awaits the pilot form', () => {
+  it('names the run', () => {
     const sheet = cashSheet(run, slips);
     expect(sheet.organizationName).toBe('บริษัท ทดสอบ จำกัด');
     expect(sheet.runNo).toBe('RUN-2026-12-H1');
-    expect(sheet.layoutNotice).toBe(CASH_SHEET_LAYOUT_NOTICE);
-    expect(sheet.layoutNotice).toContain('รอเทียบกับแบบฟอร์ม');
   });
 });

@@ -425,7 +425,7 @@ export class ScannerImportService {
       throw new BusinessRuleError(
         'RANGE_NOT_SUPPORTED',
         `Choose a range of 1 to ${MAX_REVIEW_DAYS} days`,
-        { from, to },
+        { from, to, max: MAX_REVIEW_DAYS },
       );
     }
 
@@ -656,6 +656,7 @@ export class ScannerImportService {
       throw new BusinessRuleError(
         'EMPLOYEE_HAS_SCANNER_NUMBER',
         `Employee ${employee.employeeCode} already has scanner number ${employee.scannerId}`,
+        { employeeCode: employee.employeeCode, scannerNumber: employee.scannerId },
       );
     }
     const holder = await this.prisma.employee.findFirst({
@@ -666,6 +667,7 @@ export class ScannerImportService {
       throw new BusinessRuleError(
         'DUPLICATE_SCANNER_ID',
         `Scanner number ${dto.scannerNumber} already belongs to employee ${holder.employeeCode}`,
+        { employeeCode: holder.employeeCode, scannerNumber: dto.scannerNumber },
       );
     }
 

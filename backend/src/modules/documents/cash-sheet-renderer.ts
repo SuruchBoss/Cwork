@@ -42,7 +42,7 @@ export function cashColumns(
   pageWidth: number,
 ): CashColumns {
   const total = pageWidth - MARGIN * 2;
-  const index = 24;
+  const index = 36;
   const code = 54;
   const net = 66;
   const cash = 70;
@@ -146,9 +146,6 @@ export class CashSheetRenderer {
           { width: tableWidth, align: 'center' },
         );
       y = doc.y;
-      doc.font(REGULAR).fontSize(8.5).fillColor('#9a3412');
-      doc.text(sheet.layoutNotice, MARGIN, y + 1, { width: tableWidth, align: 'center' });
-      doc.fillColor('black');
       y = doc.y + 4;
 
       // The group heading over the note columns and over the coin columns.

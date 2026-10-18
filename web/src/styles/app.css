@@ -100,7 +100,7 @@ p { margin: 0 0 8px; }
   height: 28px;
   border-radius: 8px;
   background: var(--brand);
-  color: #fff;
+  color: var(--text-inverse);
   display: grid;
   place-items: center;
   font-size: 13px;
@@ -455,7 +455,7 @@ table.table {
 }
 .btn--primary {
   background: var(--brand);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .btn--primary:hover:not(:disabled) {
   background: var(--brand-hover);
@@ -611,7 +611,7 @@ table.table {
 .date-input__day[aria-pressed='true'] {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .date-input__day:disabled {
   color: var(--text-subtle);
@@ -1053,7 +1053,7 @@ table.table {
 .chat__bubble--user {
   align-self: flex-end;
   background: var(--brand);
-  color: #fff;
+  color: var(--text-inverse);
   border-bottom-right-radius: 4px;
 }
 .chat__bubble--assistant {

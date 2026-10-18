@@ -107,13 +107,7 @@ export interface CashSheet {
     withdraw: string;
     remainder: string;
   };
-  /** Said on the printed page until the layout is checked against the paper form in use. */
-  layoutNotice: string;
 }
-
-/** Stated on every page, since the columns follow common practice and not a form seen yet. */
-export const CASH_SHEET_LAYOUT_NOTICE =
-  'รูปแบบตารางตามที่ใช้กันทั่วไป ยังรอเทียบกับแบบฟอร์มกระดาษของบริษัทนำร่อง';
 
 export function cashSheet(run: PrintableRun, slips: PrintablePayslip[]): CashSheet {
   const totalCounts = emptyCounts();
@@ -152,6 +146,5 @@ export function cashSheet(run: PrintableRun, slips: PrintablePayslip[]): CashShe
       withdraw: formatBaht(withdraw),
       remainder: formatBaht(remainder),
     },
-    layoutNotice: CASH_SHEET_LAYOUT_NOTICE,
   };
 }

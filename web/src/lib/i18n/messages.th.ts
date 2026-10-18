@@ -1567,4 +1567,21 @@ export const thMessages: Record<string, string> = {
   'The last day has already passed.': 'วันสุดท้ายผ่านไปแล้ว',
   'This role cannot be limited to a department.': 'บทบาทนี้จำกัดไว้แผนกเดียวไม่ได้',
   'This account is disabled.': 'บัญชีนี้ถูกปิดใช้งานแล้ว',
+  // Business-rule errors of the scanner flow, by code (CW-096)
+  'This scanner number belongs to no employee yet; register it first':
+    'เลขสแกนนี้ยังไม่มีเจ้าของ ต้องลงทะเบียนเลขนี้ให้พนักงานก่อน',
+  'Employee {employeeCode} already has scanner number {scannerNumber}':
+    'พนักงาน {employeeCode} มีเลขสแกน {scannerNumber} อยู่แล้ว ถ้าจะเปลี่ยนเลข ให้แก้ที่หน้าพนักงาน',
+  'Scanner number {scannerNumber} already belongs to employee {employeeCode}':
+    'เลขสแกน {scannerNumber} เป็นของพนักงาน {employeeCode} อยู่แล้ว',
+  'Choose a range of 1 to {max} days': 'เลือกช่วงวันที่ตั้งแต่ 1 ถึง {max} วัน',
+  'The scanner recorded no time this day': 'วันนี้เครื่องสแกนไม่มีเวลาที่บันทึกไว้',
+  'A payroll run has already used this day, so it can no longer change':
+    'วันนี้ถูกใช้ในรอบเงินเดือนไปแล้ว จึงแก้ไม่ได้อีก',
+  'Pick at least one of the times to use, or ignore the day':
+    'เลือกเวลาที่จะใช้อย่างน้อยหนึ่งเวลา หรือเลือกไม่นับวันนี้',
+  'Pick among the times the scanner recorded that day':
+    'เลือกจากเวลาที่เครื่องสแกนบันทึกไว้ในวันนั้นเท่านั้น',
+  'The clock-out must be later than the clock-in': 'เวลาออกต้องหลังเวลาเข้า',
+  'Ignoring a day takes no times': 'ถ้าเลือกไม่นับวันนี้ ต้องไม่เลือกเวลาใดเลย',
 };
