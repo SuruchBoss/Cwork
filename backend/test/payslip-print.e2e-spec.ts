@@ -273,7 +273,8 @@ describe('Printed payslips and wage receipts (e2e)', () => {
       expect(texts).toContain(money(cash / 100));
       expect(texts).toContain(money(left / 100));
       expect(texts).toContain(`เงินที่ต้องถอนจากธนาคาร ${money(cash / 100)} บาท`);
-      expect(texts.some((t) => t.includes('ยังรอเทียบกับแบบฟอร์ม'))).toBe(true);
+      // No note for the project goes on a sheet the pilot hands around (CW-096).
+      expect(texts.some((t) => /บริษัทนำร่อง|ยังรอเทียบ/.test(t))).toBe(false);
       // The payslip itself is untouched: it still shows the exact net pay.
       expect((await onScreen(h1.runId)).netPay).toBe(slip.netPay);
     });
