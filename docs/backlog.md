@@ -371,12 +371,16 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
-### CW-098 · English payroll warnings say "Compensation" for the Pay card
-`P2` · web · **XS** · raised by the dev room while doing CW-097, 2026-10-18
+### CW-098 · English payroll warnings say "Compensation"; the scanner days list still shows a raw error (#119)
+`P2` · web · **XS** · raised by the dev room while doing CW-097, and by the QA re-test of CW-096, 2026-10-18
 
-The four payroll warnings CW-097 fixed in Thai still say "under Compensation" in
-English, where the employee page's card is "Pay". They name the card as the
-English screen does, and the CW-097 test fails if "Compensation" comes back.
+1. The four payroll warnings CW-097 fixed in Thai still say "under Compensation"
+   in English, where the employee page's card is "Pay". They name the card as
+   the English screen does, and the CW-097 test fails if "Compensation" returns.
+2. **#119:** on the scanner days page, a range longer than 93 days shows the
+   server's English sentence in the Thai console, because the list's
+   `ErrorState` does not go through `describeApiError`. It does, Thai names the
+   limit, and a page test fails if the raw sentence comes back.
 Not the landing page: its cash-sheet picture and alt text still show the removed
 note, and landing wording waits on the owner's own words.
 
