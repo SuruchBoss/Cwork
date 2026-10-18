@@ -6,11 +6,10 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** CW-095 sent 20:1x (a manager's pages ask for departments and get
-  403). Direction: no new permission; the web does not call `/departments`
-  without `ORG_READ`, and the manager's department filter comes from the
-  employees the manager can see. The dev room may push back once. PO reviews
-  and merges when CI is green.
+- **Dev:** queue empty. CW-095 merged at `7a589eb` (PR #111, green, merged by
+  the PO under the standing permissions without a block): a manager's
+  department filters no longer call `/departments`; they list the departments
+  of the people the manager can see.
 - **QA:** pass 2 sent 20:1x on `9baa043`: the 41 cases of
   `docs/qa/pilot-a-2026-10.md` again, plus cases for what merged today
   (#103 CW-066, #104 CW-031, #109 CW-093/CW-091, #110 CW-092). Results go in a

@@ -1054,22 +1054,6 @@ not because there is a date.
 ## P2 — worth doing
 
 
-### CW-095 · A manager's pages ask for departments and get 403
-`P2` · web · backend · **S** · found by the UX room, 2026-10-18
-
-Signed in as eng.manager, the employee register and the shifts and rota pages
-call `GET /api/v1/departments` and get 403 in the console; the pages still
-render. Probably older than PR #110. Either the manager role may read
-departments (for its own team's filters) or the pages should not ask without
-the permission. Acceptance: no 403 in the console for the seeded manager on
-those pages, and the filter shows what the manager may see.
-
-**Sent to the dev room 2026-10-18.** PO decision: no new permission. The web
-does not call `/departments` without `ORG_READ`; a manager's department filter
-lists the departments of the employees that manager can see, and HR and admin
-keep the full list. A web or e2e test fails if the pages ask again. No role's
-permissions change.
-
 ### CW-094 · A top-menu console in earth tones (direction B)
 `P2` · UX · web · **L** · after the Pilot A install
 
@@ -1554,3 +1538,4 @@ Kept so the reasoning survives.
 | **CW-065** · A single new hire needed a one-row import file | An "Add employee" button on the directory opens `/employees/new` with the import's fields and checks (Thai or English name alone, hire date, ID number with or without dashes, probation not before hire, a bank account complete or left out entirely) and posts to the same `POST /employees`; ID numbers and the account number are encrypted as in the import. The backend gained an optional bank account on create and the `PROBATION_BEFORE_HIRE` check. Creating a sign-in waits on CW-064. e2e and web tests added. 8308aaa and 1f85420, closed 2026-10-17. |
 | **QA pass 1 findings (#94–#97)** · Found by the Pilot A QA pass, 2026-10-17 | #94/#95: a scanner day inside a period the employee was paid for (a paid run with a payslip for them) is locked whether or not it had an attendance record; a decision is 422 `DAY_LOCKED`, a later file adds no punch, and locked days leave the waiting queue and `totals.waiting` for their own LOCKED filter. Decided by the PO: a day forgotten before payday is corrected in the next period, never in the paid one; the guide says so. #96: `check.sh` reads `/proc/net/tcp` and `tcp6` when neither `ss` nor `netstat` exists, and warns that it cannot tell rather than calling a port free. #97: `deploy/nas/change-address.sh`; the Thai guide gains the authenticator and recovery-code step, the corrected address-change row, `PATH` in the Task Scheduler line, and `install.sh` no longer asks for a backup folder it was given. The QA room re-tested S15 on `814ecc5` and it passed. Its one minor note, the import result counting no locked days for new days the review list already flags, is fixed in `6103469`: the preview (new `lockedDays` field) and the import result count every locked day of the file with the review page's `LockedDays` rule, with one e2e and one web test. The same run moved the empty-year shortfall test to 2041, because a year another spec pays in made it depend on spec order (`5141da5`). 133d884, a2ca743 and 6103469, closed 2026-10-17. |
 | **CW-073** · A foreign worker's passport or work permit could lapse with nobody told | `GET /employees/expiring-documents` (`employee:read`) lists active employees' passports and work permits expiring within 30, 60 or 90 days or already expired, with names, codes, dates and the window, never a document number; the console has an Expiring documents page off the directory. A daily job (`document-expiry-notices`, 02:00 UTC, its own lock) tells everyone who may edit the employee once per window (90, 60, 30) and once more on expiry, department-scoped users only about their own department; sent windows are kept in `employee_document_notices` (additive migration). A renewal is a new date and starts its own windows; a date first entered inside 30 days notices that window only; leavers are neither listed nor notified. e2e covers once-only notices over repeated runs, renewal, the four windows in turn, expiry, leavers, missing dates and permissions, and no document number in the list or the notice. Guide: `docs/guide/expiring-documents.th.md`. 1be372f and 15a40f7, closed 2026-10-17. |
+| **CW-095** · A manager's pages asked for departments and got 403 | Signed in as the seeded manager, the employee register and the roster tab called `GET /departments`, which needs `org:read`, and filled the console with 403s. PO decision: no new permission, because `org:read` opens more than department names. `useDepartmentOptions` (`web/src/lib/departments.ts`) lists every department for someone with `org:read`, empty ones included; without it, it never calls `/departments` and builds the list from the people the user can see (one page of `/employees`, 200, the API's ceiling), one entry per department. Both pages use it. Eight web tests; the manager tests fail on the old code. Known limit: a manager who sees more than 200 people may miss a department whose members are all past the first page. `EmployeeCreatePage` and `AccountRolesCard` still ask, both HR-only. No role changed. PR #111, `be5d6e2`, merged at `7a589eb`, closed 2026-10-18. |
