@@ -76,9 +76,9 @@ export default function DashboardPage() {
         )}
         {canSeeLeave && (
           <Stat
-            label={t('Leave requests pending')}
+            label={t('Leave requests waiting for a manager')}
             value={pendingLeave.data?.meta.total ?? '—'}
-            hint={t('Across the organisation you can see')}
+            hint={t('The whole organisation, not your task')}
             to="/leave"
           />
         )}
@@ -141,9 +141,8 @@ export default function DashboardPage() {
             </div>
           ) : (
             <EmptyState
-              icon="✓"
-              title={t('No approvals waiting')}
-              description={t('You are all caught up')}
+              icon="check"
+              title={t('Nothing is waiting for your approval')}
             />
           )}
         </Card>
@@ -194,7 +193,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <EmptyState icon="⏸" title={t('No leave requests pending')} />
+              <EmptyState icon="umbrella" title={t('No leave requests pending')} />
             )}
           </Card>
         )}

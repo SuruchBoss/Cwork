@@ -245,7 +245,7 @@ function ShiftsTab({ canManage }: { canManage: boolean }) {
           </div>
         ) : (
           <EmptyState
-            icon="◷"
+            icon="clock"
             title={t('No shifts yet')}
             description={t('Add a shift to set clock times and lateness')}
           />
@@ -433,7 +433,7 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
           </div>
         ) : (
           <EmptyState
-            icon="▦"
+            icon="calendar"
             title={t('No schedules yet')}
             description={t('Create a weekly schedule, then assign it to employees on the Roster tab')}
           />
@@ -636,7 +636,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
           </div>
         ) : (
           <EmptyState
-            icon="◷"
+            icon="users"
             title={t('No employees in this range')}
             description={t('Pick a date range or department, then assign schedules to see the roster')}
           />

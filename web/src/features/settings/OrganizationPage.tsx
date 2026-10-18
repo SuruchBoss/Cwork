@@ -147,7 +147,7 @@ export default function OrganizationPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState icon="⌗" title={t('No departments yet')} />
+            <EmptyState icon="sitemap" title={t('No departments yet')} />
           )}
         </Card>
 
@@ -201,7 +201,7 @@ export default function OrganizationPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="⌗" title={t('No positions yet')} />
+            <EmptyState icon="sitemap" title={t('No positions yet')} />
           )}
         </Card>
 
@@ -260,7 +260,7 @@ export default function OrganizationPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="⌗" title={t('No work locations yet')} />
+            <EmptyState icon="sitemap" title={t('No work locations yet')} />
           )}
         </Card>
       </div>

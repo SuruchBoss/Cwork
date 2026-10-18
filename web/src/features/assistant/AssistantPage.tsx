@@ -117,7 +117,7 @@ export default function AssistantPage() {
         <PageHeader title={t('HR assistant')} />
         <Card>
           <EmptyState
-            icon="✦"
+            icon="sparkles"
             title={t('The HR assistant is not enabled')}
             description={t(
               'Set ASSISTANT_ENABLED and a model provider key in the backend .env to enable it. The rest of the HRIS works normally without AI.',
@@ -150,7 +150,7 @@ export default function AssistantPage() {
           <div className="chat__messages" ref={scrollRef}>
             {turns.length === 0 && (
               <EmptyState
-                icon="✦"
+                icon="sparkles"
                 title={t('Ask anything about HR')}
                 description={t('The assistant answers from your company policies and sees only your own data')}
               />

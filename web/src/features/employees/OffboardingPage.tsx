@@ -183,7 +183,7 @@ export default function OffboardingPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="↪" title={t('No resignations match')} />
+          <EmptyState icon="door" title={t('No resignations match')} />
         )}
       </Card>
 

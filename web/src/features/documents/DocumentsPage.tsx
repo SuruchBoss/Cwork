@@ -128,7 +128,7 @@ export default function DocumentsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="▣" title={t('No document requests match')} />
+          <EmptyState icon="file" title={t('No document requests match')} />
         )}
       </Card>
     </div>

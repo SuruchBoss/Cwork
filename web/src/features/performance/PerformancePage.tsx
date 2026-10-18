@@ -178,7 +178,7 @@ export default function PerformancePage() {
                 </div>
               ) : (
                 <EmptyState
-                  icon="◈"
+                  icon="target"
                   title={t('No team KPI data yet')}
                   description={t('Set goals for your reports first')}
                 />
@@ -189,7 +189,7 @@ export default function PerformancePage() {
       ) : (
         <Card>
           <EmptyState
-            icon="◈"
+            icon="target"
             title={t('No review cycles yet')}
             description={t('Create a review cycle to start setting KPIs')}
           />

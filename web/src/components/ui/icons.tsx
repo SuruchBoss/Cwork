@@ -25,6 +25,19 @@ const PATHS = {
       <path d="m8 12 3 3 5-6" />
     </>
   ),
+  ban: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m5.6 5.6 12.8 12.8" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4.5 4.5" />
+    </>
+  ),
+  check: <path d="m5 12.5 4.5 4.5L19 7" />,
   sparkles: (
     <>
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />

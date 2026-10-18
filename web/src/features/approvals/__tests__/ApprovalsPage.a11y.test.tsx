@@ -40,6 +40,14 @@ const task: ApprovalTask = {
   },
 };
 
+/** Just after midnight, three calendar days ago on the browser's calendar. */
+function threeCalendarDaysAgo(): string {
+  const due = new Date();
+  due.setDate(due.getDate() - 3);
+  due.setHours(0, 1, 0, 0);
+  return due.toISOString();
+}
+
 describe('ApprovalsPage accessibility', () => {
   beforeEach(() => {
     vi.mocked(api.get).mockResolvedValue([task]);
@@ -81,5 +89,38 @@ describe('ApprovalsPage accessibility', () => {
     const reason = screen.getByLabelText('เหตุผลที่ไม่อนุมัติ');
     expect(reason).toHaveFocus();
     await expectNoAxeViolations(container);
+  });
+
+  it('marks a late request, puts it first, and draws the empty state with an icon, not a character', async () => {
+    const late: ApprovalTask = {
+      ...task,
+      id: 'task-late',
+      dueAt: threeCalendarDaysAgo(),
+      instance: {
+        ...task.instance,
+        id: 'inst-late',
+        submittedBy: {
+          ...task.instance.submittedBy,
+          employee: { firstNameTh: 'มานี', lastNameTh: 'มีสุข', employeeCode: 'EMP-003' },
+        },
+      },
+    };
+    vi.mocked(api.get).mockResolvedValue([task, late]);
+    renderWithProviders(<ApprovalsPage />);
+    await screen.findByText('มานี มีสุข');
+
+    expect(screen.getByText('เลยกำหนด 3 วัน')).toBeInTheDocument();
+    const names = screen.getAllByText(/สมชาย ใจดี|มานี มีสุข/).map((el) => el.textContent);
+    expect(names).toEqual(['มานี มีสุข', 'สมชาย ใจดี']);
+  });
+
+  it('says nothing is waiting for you, with a drawn check mark', async () => {
+    vi.mocked(api.get).mockResolvedValue([]);
+    const { container } = renderWithProviders(<ApprovalsPage />);
+    await screen.findByText('ไม่มีรายการรอคุณอนุมัติ');
+    expect(screen.queryByText(/เคลียร์งานหมดแล้ว/)).not.toBeInTheDocument();
+    // The ✓ character comes out as √ in IBM Plex Sans Thai, so it is a drawing.
+    expect(container.querySelector('.empty__icon svg.icon')).not.toBeNull();
+    expect(container.querySelector('.empty__icon')?.textContent).toBe('');
   });
 });

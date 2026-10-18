@@ -18,9 +18,11 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber, formatRelative } from '@/lib/format';
+import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import { approvalEntityLabels, documentTypeLabels, overtimeTypeLabels } from '@/lib/labels';
 import type { ApprovalTask, LeaveType } from '@/types/api';
+import { overdueDays, overdueFirst } from './overdue';
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 
@@ -29,6 +31,10 @@ export default function ApprovalsPage() {
   const t = useT();
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [comment, setComment] = useState('');
+
+  // Read once per render: a task that turns late while the page is open is
+  // marked at the next refetch, which is soon enough for a count of days.
+  const now = Date.now();
 
   const tasks = useQuery({
     queryKey: qk.approvalTasks('PENDING'),
@@ -86,8 +92,9 @@ export default function ApprovalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {tasks.data.map((task) => {
+                {overdueFirst(tasks.data, now).map((task) => {
                   const submitter = task.instance.submittedBy.employee;
+                  const late = overdueDays(task.dueAt, now);
                   const isRejecting = rejecting === task.id;
                   const pending = decide.isPending && decide.variables?.taskId === task.id;
 
@@ -118,6 +125,13 @@ export default function ApprovalsPage() {
                             <div className="subtle">
                               {t('Due {date}', { date: formatDate(task.dueAt) })}
                             </div>
+                          )}
+                          {late !== null && (
+                            <Badge tone="danger">
+                              {t(plural(late, 'Overdue by {count} day', 'Overdue by {count} days'), {
+                                count: late,
+                              })}
+                            </Badge>
                           )}
                         </div>
                       </td>
@@ -188,9 +202,8 @@ export default function ApprovalsPage() {
           </div>
         ) : (
           <EmptyState
-            icon="✓"
-            title={t('No approvals waiting')}
-            description={t('You are all caught up')}
+            icon="check"
+            title={t('Nothing is waiting for your approval')}
           />
         )}
       </Card>

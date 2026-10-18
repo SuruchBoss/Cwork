@@ -191,7 +191,7 @@ function MonthError({ error, onRetry }: { error: unknown; onRetry: () => void })
   if (error instanceof ApiError && error.code === 'NO_PAYROLL_FOR_MONTH') {
     return (
       <EmptyState
-        icon="฿"
+        icon="wallet"
         title={t('No payroll for this month')}
         description={t('There is no pay period for it yet.')}
       />
@@ -200,7 +200,7 @@ function MonthError({ error, onRetry }: { error: unknown; onRetry: () => void })
   if (error instanceof ApiError && error.code === 'SSO_MONTH_NOT_FINISHED') {
     return (
       <EmptyState
-        icon="…"
+        icon="clock"
         title={t('This month is not finished')}
         description={t(
           'Every pay period of the month needs an approved or paid run, and both halves of a half-month pay. {reason}',
@@ -217,7 +217,7 @@ function FilingTable({ sheet }: { sheet: SsoFilingSheet }) {
   if (sheet.rows.length === 0 && sheet.problems.length === 0) {
     return (
       <EmptyState
-        icon="✓"
+        icon="check"
         title={t('Nobody was insured in {month}', {
           month: formatMonthYear(sheet.year, sheet.month),
         })}

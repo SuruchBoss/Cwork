@@ -168,7 +168,7 @@ export default function KnowledgePage() {
           </div>
         ) : (
           <EmptyState
-            icon="◫"
+            icon="book"
             title={t('No policy documents yet')}
             description={t('Add company policies so the assistant can answer employee questions')}
           />

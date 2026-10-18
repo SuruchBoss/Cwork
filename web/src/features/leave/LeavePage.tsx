@@ -263,7 +263,7 @@ export default function LeavePage() {
             )}
           </>
         ) : (
-          <EmptyState icon="⏸" title={t('No leave requests match')} />
+          <EmptyState icon="umbrella" title={t('No leave requests match')} />
         )}
       </Card>
     </div>

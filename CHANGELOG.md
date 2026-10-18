@@ -777,9 +777,8 @@ entry, tags it and publishes the notes.
   in the wrong place: every wake-up re-applied the migrations (about 16 seconds
   of the slow wake), the guard saw an empty database and logged "first boot"
   again, a reset emptied the marker schema's `state` table instead of the
-  application's tables so nothing done in the demo was undone (the manager's
-  inbox was found empty; the owner approved nothing, and since the demo is public
-  who did is not known), and the visitor-address triggers were not attached
+  application's tables so nothing done in the demo was undone, and the
+  visitor-address triggers were not attached
   to later boots. The demo's SQL now names the application's schema, the
   `schema=` of `DATABASE_URL` or `public` (`appSchema()`), and asks nothing of
   `current_schema()`. `pendingMigrations` moved to its own file so a test can call
@@ -790,14 +789,15 @@ entry, tags it and publishes the notes.
   its bookkeeping row emptied is put back at the next boot. `docs/demo.md` says
   why.
 
-- **A new session no longer starts on the last person's data** (CW-031). The
+- **A new session no longer starts on the last person's data** (CW-093). The
   console's server data is cached by key, the approvals list is the same key for
   everyone, and an answer stays fresh for 30 seconds. So on the demo, "View as
-  manager" straight after landing as HR shows HR's cached, empty approvals. It
-  is the likely reason the manager's inbox read "nothing waiting" on the owner's
-  timing run while the request was in the database, and two later looks showed
-  it (not proved: the dev room cannot reach the hosted demo, but the mechanism
-  is reproduced in a test). Two people sharing one PC meet the same. The cache is now dropped at
+  manager" straight after landing as HR shows HR's cached, empty approvals, while
+  the manager's request was in the database all along (it was never lost). That
+  is the likely reason the manager's inbox looked empty on the owner's timing run
+  and full on later looks (not proved: the dev room cannot reach the hosted demo,
+  but the mechanism is reproduced in a test). Two people sharing one PC meet the
+  same. The cache is now dropped at
   every sign-in (password, second factor, enrolment, demo) and at sign-out. Tests
   switch HR to the manager and expect the manager's approvals at once, and check
   both drops.
@@ -809,6 +809,26 @@ entry, tags it and publishes the notes.
   take 8 px of side padding instead of 10, the wide one may shrink, and the menu
   says `overflow-x: hidden`. English was never affected. The screenshot run now
   fails when the menu is wider than its column, and a test keeps the two rules.
+
+- **Four small fixes for a small screen** (CW-092). (1) HR's third dashboard card
+  said "Leave requests pending" as if the work were HR's; it now says "Leave
+  requests waiting for a manager" and, under it, "The whole organisation, not your
+  task". The empty "Pending approvals" box says "Nothing is waiting for your
+  approval" and drops the congratulation (Thai and English). (2) The ✓ in empty
+  states came out as √ in IBM Plex Sans Thai, and the other symbols used as
+  empty-state icons (⏸ ⌗ ◷ ❑ ⎙ and about twenty more) depend on the fonts a machine
+  has in the same way. `EmptyState` now takes the name of a drawn icon from
+  `components/ui/icons.tsx`, so every empty state in the console (dashboard,
+  approvals, leave, payroll, social security, attendance, roster, organisation,
+  audit, recruitment, performance, assistant, documents, access denied, page not
+  found) draws its own picture, and the type checker refuses a character; `ban`
+  and `search` are new and `check` replaces ✓.
+  (3) With the console's own dark switch, the quiet text colour was #6f7887, about
+  3.9:1 on the dark surface; it is #8a94a2 like the OS-preference dark theme, and
+  a test keeps the two equal and above 4.5:1. (4) A task past its due time gets a red
+  "Overdue by N days" badge on the approvals page and moves to the top, the most
+  late first. N counts calendar days from the due date shown beside it ("Due 4 Oct"
+  read on 18 Oct says 14), and lateness on the due day itself counts as one.
 
 - **The scanner import page no longer says "1 days" or "1 scanner numbers belong
   to nobody".** English has a singular, and the page's counted messages (punches
