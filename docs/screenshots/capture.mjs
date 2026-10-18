@@ -127,6 +127,15 @@ async function settle(page) {
   if (!families.includes('IBM Plex Sans Thai')) {
     throw new Error('IBM Plex Sans Thai never loaded — refusing to capture a fallback face');
   }
+  // A sideways scrollbar in the menu is a bug (the Thai "ออกจากระบบ" once caused
+  // one) and jsdom has no layout to catch it, so this run does.
+  const sideways = await page.evaluate(() => {
+    const menu = document.querySelector('.sidebar');
+    return menu ? menu.scrollWidth - menu.clientWidth : 0;
+  });
+  if (sideways > 0) {
+    throw new Error(`the menu is ${sideways}px wider than its column — it would scroll sideways`);
+  }
   await page.waitForTimeout(500);
 }
 

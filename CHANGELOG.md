@@ -802,6 +802,14 @@ entry, tags it and publishes the notes.
   switch HR to the manager and expect the manager's approvals at once, and check
   both drops.
 
+- **The side menu no longer scrolls sideways** (CW-091, #105). In Thai the menu was
+  6 px wider than its column at every desktop width, because the sign-out
+  button's text, "ออกจากระบบ", would not let the footer row shrink; and with only
+  `overflow-y` set the browser makes `overflow-x` scroll too. The footer buttons
+  take 8 px of side padding instead of 10, the wide one may shrink, and the menu
+  says `overflow-x: hidden`. English was never affected. The screenshot run now
+  fails when the menu is wider than its column, and a test keeps the two rules.
+
 - **The scanner import page no longer says "1 days" or "1 scanner numbers belong
   to nobody".** English has a singular, and the page's counted messages (punches
   added, days left as they were, days waiting for HR, scanner numbers with no
