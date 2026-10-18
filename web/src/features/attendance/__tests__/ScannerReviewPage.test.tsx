@@ -185,7 +185,7 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'ไม่นับวันนี้' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      'สมชาย ใจดี วันที่ 9 ก.ย. 2569: ไม่นับวันนี้ แล้ว',
+      'สมชาย ใจดี วันที่ 9 ก.ย. 2569: ไม่นับวันนี้แล้ว',
     );
   });
 

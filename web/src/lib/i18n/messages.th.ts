@@ -981,7 +981,7 @@ export const thMessages: Record<string, string> = {
   'No clock-out': 'ไม่มีเวลาออก',
   'In {time}': 'เข้า {time}',
   'Out {time}': 'ออก {time}',
-  '{who}, {day}: left out, not counted': '{who} วันที่ {day}: ไม่นับวันนี้ แล้ว',
+  '{who}, {day}: left out, not counted': '{who} วันที่ {day}: ไม่นับวันนี้แล้ว',
   '{who}, {day}: counted {from} to {to}': '{who} วันที่ {day}: นับเวลา {from} ถึง {to} แล้ว',
   '{who}, {day}: counted with clock-in {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาเข้า {time} แล้ว',
   '{who}, {day}: counted with clock-out {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาออก {time} แล้ว',
