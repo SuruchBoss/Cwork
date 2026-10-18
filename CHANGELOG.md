@@ -779,6 +779,14 @@ entry, tags it and publishes the notes.
   page of the employee list returns); anyone who can read the organisation still
   gets every department, as before. No role gained or lost a permission.
 
+- **What CW-096 left** (CW-097). In the dark theme the danger buttons and the
+  sidebar's red count are dark on the light red (6.7:1) instead of white on it
+  (2.8:1); the light theme is unchanged. The four payroll warnings that send HR
+  to the employee page now name the card the way the screen does, "ค่าจ้าง", not
+  the sidebar group "ค่าตอบแทน". The README's cash-sheet picture is retaken, so it
+  no longer shows the red note CW-096 removed, and the picture's description no
+  longer mentions it.
+
 - **Four things the second QA pass found** (CW-096). The cash-preparation sheet no
   longer prints the project's red note about the pilot company's paper form, and
   its first column heading "ลำดับ" stays on one line. In the dark theme the text

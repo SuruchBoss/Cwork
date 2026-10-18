@@ -6,28 +6,25 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #111 (CW-095, the department filter that no longer asks
-  `/departments` without `org:read`).
-- **On branch `claude/new-session-syszvt`, restarted from main `43820ee` (CW-096, pushed, the PO
-  opens the PR):** the four QA pass 2 issues in one branch, in the PO's order.
-  1. #114 cash sheet: the red pilot note is gone from `cash-sheet.ts` and the renderer (and from the
-     printing guide's wording); the "ลำดับ" column is 36 pt, and a renderer test measures every
-     heading with the real font so none breaks.
-  2. #113 dark primary buttons: text on `--brand` fills (`.btn--primary`, `.sidebar__logo`, the
-     date-input day, the user chat bubble) uses `--text-inverse`, white in light and `#0f1116` in
-     dark (7.2:1; hover 9:1). `styles/__tests__/theme.test.ts` checks the ratio of each theme's
-     pair and that those four rules use the token.
-  3. #112 scanner errors in Thai: `web/src/lib/api-messages.ts` maps the scanner flow's codes to
-     message keys, filled from the error's `details`; both scanner pages use it. The backend now
-     sends `{employeeCode, scannerNumber}` for `EMPLOYEE_HAS_SCANNER_NUMBER` and
-     `DUPLICATE_SCANNER_ID`, and `max` for `RANGE_NOT_SUPPORTED` (e2e checks the first).
-  4. #115 `ErrorState` draws the new `alert` icon; guide task 3 says card "ค่าจ้าง" and the button
-     "เปลี่ยนค่าจ้าง" when pay exists.
-- Not touched, and worth the PO's eye: the danger button and the nav badge are also white on a light
-  fill in the dark theme (about 2.8:1); and a few Thai warnings in `messages.th.ts` (payroll run
-  messages) still send HR to "หัวข้อค่าตอบแทน" on the employee page, where the card is called
-  "ค่าจ้าง".
-- Counts: web 313, backend unit 788 (README, README.th, `docs/spec.md`, `verify-doc-counts.ts`).
+- On `main`: everything up to #117 (CW-096: the cash-sheet note and column, dark primary buttons,
+  Thai scanner errors, the error icon and the guide's pay-card words).
+- **On branch `claude/new-session-syszvt`, restarted from main `4b78ff0` (CW-097, pushed, the PO
+  opens the PR):**
+  1. README picture: `docs/screenshots/28-cash-sheet.png` and `en/28-cash-sheet.png` retaken with
+     `capture-office.mjs` on a freshly seeded throwaway database (synthetic data, no red note,
+     "ลำดับ" on one line, checked by eye); the red-line sentence is out of both alt texts. The
+     script also rewrote the expiring-documents pictures and the landing's webp files; those were
+     put back, so only the two cash-sheet files changed.
+  2. Dark theme red: `.btn--danger` and `.nav-link__badge` take `--text-inverse` (6.7:1 on the dark
+     red); light unchanged. `styles/__tests__/theme.test.ts` checks the ratio for the red too and
+     that both rules use the token.
+  3. The four payroll warnings now say "การ์ดค่าจ้าง" (`messages.th.ts`); an i18n test finds them by
+     their English key and fails if a Thai one drops the card's title or says "ค่าตอบแทน" again.
+- Counts: web 321 (README, README.th, `docs/spec.md`, `verify-doc-counts.ts`); backend unit 788.
+- **Not touched, for the PO:** the landing still shows the old cash-sheet picture
+  (`landing/assets/shots/cash-sheet.{th,en}.webp`) and its two alt texts still mention the red line.
+  The picture is stale, the alt texts are public wording, so both wait for the owner. The English
+  versions of the four warnings still say "under Compensation" (the English card is titled "Pay").
 - **Not built, by the PO's decision:** pinned footer / 36 px rows of CW-091 and the "Report a
   problem" icon of CW-092 (direction B removes the left menu, built after the Pilot A install).
 - Waiting on others: CW-066's two owner items (a real HR person doing the four jobs before
@@ -36,6 +33,6 @@ this file only says where the dev room stands.
 
 ## Next
 
-- PO opens the CW-096 PR, reviews and merges; QA retests the four issues. Do not start CW-094
-  (direction B, after the Pilot A install), CW-085's upload file, CW-080 or CW-086, nor the
-  support-scope page. Do not touch the real NAS until the owner approves.
+- PO opens the CW-097 PR, reviews and merges. Do not start CW-094 (direction B, after the Pilot A
+  install), CW-085's upload file, CW-080 or CW-086, nor the support-scope page. Do not touch the
+  real NAS until the owner approves.
