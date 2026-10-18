@@ -5,9 +5,12 @@ import { describe, expect, it } from 'vitest';
 import type { ApprovalTask } from '@/types/api';
 import { overdueDays, overdueFirst } from '../overdue';
 
-const NOW = Date.parse('2026-10-18T12:00:00.000Z');
-const hoursAgo = (h: number) => new Date(NOW - h * 3_600_000).toISOString();
-const hoursAhead = (h: number) => new Date(NOW + h * 3_600_000).toISOString();
+// Local times on purpose: the days are counted on the browser's calendar, the
+// way formatDate writes the due date, so the tests build their dates the same way.
+const at = (month: number, day: number, hour: number, minute = 0) =>
+  new Date(2026, month - 1, day, hour, minute);
+const iso = (date: Date) => date.toISOString();
+const NOW = at(10, 18, 15).getTime();
 
 function task(id: string, dueAt: string | null): ApprovalTask {
   return {
@@ -30,15 +33,26 @@ function task(id: string, dueAt: string | null): ApprovalTask {
 describe('overdueDays', () => {
   it('is null without a due time, before it, and exactly at it', () => {
     expect(overdueDays(null, NOW)).toBeNull();
-    expect(overdueDays(hoursAhead(5), NOW)).toBeNull();
-    expect(overdueDays(new Date(NOW).toISOString(), NOW)).toBeNull();
+    expect(overdueDays(iso(at(10, 18, 20)), NOW)).toBeNull();
+    expect(overdueDays(iso(new Date(NOW)), NOW)).toBeNull();
   });
 
-  it('counts any lateness up to a day as one day, then whole days', () => {
-    expect(overdueDays(hoursAgo(1), NOW)).toBe(1);
-    expect(overdueDays(hoursAgo(24), NOW)).toBe(1);
-    expect(overdueDays(hoursAgo(25), NOW)).toBe(2);
-    expect(overdueDays(hoursAgo(24 * 5), NOW)).toBe(5);
+  it('counts calendar days between the due date and today', () => {
+    // "Due 4 Oct" read on 18 Oct is 14 days late, whatever the hours
+    expect(overdueDays(iso(at(10, 4, 9)), NOW)).toBe(14);
+    expect(overdueDays(iso(at(10, 4, 23, 59)), NOW)).toBe(14);
+    expect(overdueDays(iso(at(10, 4, 0, 1)), NOW)).toBe(14);
+    expect(overdueDays(iso(at(10, 17, 9)), NOW)).toBe(1);
+  });
+
+  it('counts a due time crossed at midnight as one day', () => {
+    const justAfterMidnight = at(10, 18, 1).getTime();
+    expect(overdueDays(iso(at(10, 17, 23)), justAfterMidnight)).toBe(1);
+  });
+
+  it('counts lateness on the due day itself as one day, never zero', () => {
+    expect(overdueDays(iso(at(10, 18, 9)), NOW)).toBe(1);
+    expect(overdueDays(iso(at(10, 18, 14, 59)), NOW)).toBe(1);
   });
 });
 
@@ -47,12 +61,12 @@ describe('overdueFirst', () => {
     const ordered = overdueFirst(
       [
         task('a', null),
-        task('b', hoursAhead(3)),
-        task('c', hoursAgo(30)),
+        task('b', iso(at(10, 19, 9))),
+        task('c', iso(at(10, 16, 9))),
         task('d', null),
-        task('e', hoursAgo(80)),
-        task('f', hoursAgo(31)),
-        task('g', hoursAgo(100)),
+        task('e', iso(at(10, 14, 9))),
+        task('f', iso(at(10, 16, 18))),
+        task('g', iso(at(10, 13, 9))),
       ],
       NOW,
     );
@@ -61,7 +75,7 @@ describe('overdueFirst', () => {
   });
 
   it('does not change the list it is given', () => {
-    const input = [task('a', null), task('b', hoursAgo(30))];
+    const input = [task('a', null), task('b', iso(at(10, 16, 9)))];
     overdueFirst(input, NOW);
     expect(input.map((t) => t.id)).toEqual(['a', 'b']);
   });

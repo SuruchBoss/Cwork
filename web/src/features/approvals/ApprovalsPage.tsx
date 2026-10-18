@@ -127,7 +127,7 @@ export default function ApprovalsPage() {
                             </div>
                           )}
                           {late !== null && (
-                            <Badge tone="warning">
+                            <Badge tone="danger">
                               {t(plural(late, 'Overdue by {count} day', 'Overdue by {count} days'), {
                                 count: late,
                               })}

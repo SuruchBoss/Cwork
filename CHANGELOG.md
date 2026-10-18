@@ -825,9 +825,10 @@ entry, tags it and publishes the notes.
   and `search` are new and `check` replaces ✓.
   (3) With the console's own dark switch, the quiet text colour was #6f7887, about
   3.9:1 on the dark surface; it is #8a94a2 like the OS-preference dark theme, and
-  a test keeps the two equal and above 4.5:1. (4) A task past its due time gets an
-  orange "Overdue by N days" badge on the approvals page and moves to the top, the
-  most late first; up to one day late counts as one day.
+  a test keeps the two equal and above 4.5:1. (4) A task past its due time gets a red
+  "Overdue by N days" badge on the approvals page and moves to the top, the most
+  late first. N counts calendar days from the due date shown beside it ("Due 4 Oct"
+  read on 18 Oct says 14), and lateness on the due day itself counts as one.
 
 - **The scanner import page no longer says "1 days" or "1 scanner numbers belong
   to nobody".** English has a singular, and the page's counted messages (punches

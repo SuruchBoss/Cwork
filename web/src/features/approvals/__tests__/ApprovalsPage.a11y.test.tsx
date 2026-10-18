@@ -40,6 +40,14 @@ const task: ApprovalTask = {
   },
 };
 
+/** Just after midnight, three calendar days ago on the browser's calendar. */
+function threeCalendarDaysAgo(): string {
+  const due = new Date();
+  due.setDate(due.getDate() - 3);
+  due.setHours(0, 1, 0, 0);
+  return due.toISOString();
+}
+
 describe('ApprovalsPage accessibility', () => {
   beforeEach(() => {
     vi.mocked(api.get).mockResolvedValue([task]);
@@ -87,7 +95,7 @@ describe('ApprovalsPage accessibility', () => {
     const late: ApprovalTask = {
       ...task,
       id: 'task-late',
-      dueAt: new Date(Date.now() - 3 * 86_400_000 - 3_600_000).toISOString(),
+      dueAt: threeCalendarDaysAgo(),
       instance: {
         ...task.instance,
         id: 'inst-late',
@@ -101,7 +109,7 @@ describe('ApprovalsPage accessibility', () => {
     renderWithProviders(<ApprovalsPage />);
     await screen.findByText('มานี มีสุข');
 
-    expect(screen.getByText('เลยกำหนด 4 วัน')).toBeInTheDocument();
+    expect(screen.getByText('เลยกำหนด 3 วัน')).toBeInTheDocument();
     const names = screen.getAllByText(/สมชาย ใจดี|มานี มีสุข/).map((el) => el.textContent);
     expect(names).toEqual(['มานี มีสุข', 'สมชาย ใจดี']);
   });

@@ -459,6 +459,7 @@ export default function ScannerReviewPage() {
           <ErrorState error={days.error} onRetry={() => void days.refetch()} />
         ) : !data || data.items.length === 0 ? (
           <EmptyState
+            icon="clock"
             title={
               status === 'WAITING'
                 ? t('Nothing is waiting for you')
