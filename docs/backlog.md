@@ -1058,8 +1058,14 @@ not because there is a date.
 `P2` · UX · web · **L** · after the Pilot A install
 
 **Confirmed by the owner in the PO room, 2026-10-18 15:00:** "ยืนยัน CW-094 ทาง B
-สี earth tone ทำหลังติดตั้ง Pilot A". The main colour is still to pick from the
-UX room's four (terracotta #a24a28 is the default). Prototype (the owner shares
+สี earth tone ทำหลังติดตั้ง Pilot A". Main colour: olive #5b6b34. The owner left
+the choice to the Asuna Bot room (15:02, "ส่วนสี ชั้นให้เธอเลือก"), which picked
+olive because terracotta and ochre clash with the red and yellow status colours
+and clay disappears into the background; the UX room agreed. With olive, the
+success status is a blue-green soft badge with a check icon, never a solid fill
+(#24574a on #dcebe4, dark #7fc0a8 on #1e3a31), solid olive is kept for the
+primary button only; links are dark olive #46532a (dark #c4d08f); rust #8a3c1e is
+kept for overdue and warnings; accent wash #e7ead8 (dark #33381f). Prototype (the owner shares
 it first): claude.ai artifact P9XkPvTu1qroAoE2URig92. Direction A (document-like
 left menu) was the UX room's first recommendation and is not taken.
 
