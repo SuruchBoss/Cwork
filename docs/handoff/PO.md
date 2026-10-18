@@ -6,12 +6,12 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue (2026-10-18):** CW-092 (#107), four small screen fixes (HR
-  dashboard wording, check icon, dark-theme `--text-subtle`, overdue badge on
-  approvals) plus correcting #104's CHANGELOG line about the "emptied" inbox.
-  Done today: CW-093 (#108, cache cleared at every sign-in) and CW-091's
-  sideways scroll (#105), both in #109 at `8e1b32d`; CW-091's footer pin and
-  CW-092's menu icon dropped because CW-094 replaces the left menu.
+- **Dev queue (2026-10-18):** empty. Done today: CW-093 (#108) and CW-091's
+  sideways scroll (#105) in #109 at `8e1b32d`; CW-092 (#107) in #110 at
+  `4725aa0` (HR dashboard wording, drawn empty-state icons in 30+ places,
+  dark-theme `--text-subtle`, red overdue badge counting calendar days),
+  reviewed on screen by the UX room. Not queued: CW-095 (departments 403 on a
+  manager's pages), P2.
 - **CW-094 confirmed by the owner (15:00):** direction B, top menu, earth tones,
   after the Pilot A install; main colour olive #5b6b34 (left to the Asuna Bot
   room, which chose it). Palette, dark theme, UX-20 to UX-25 and the API notes
