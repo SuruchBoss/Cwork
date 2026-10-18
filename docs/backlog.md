@@ -371,6 +371,60 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
+### CW-091 · The sidebar scrolls sideways, and HR cannot see its footer
+`P1` · UX · web · **S** · Pilot A, before the install (2-6 Nov)
+
+Found by the owner on the demo (2026-10-18) and measured by the UX room
+(UX-01, UX-02 of its 2026-10-18 candidates). In Thai the sign-out button in
+`.sidebar__controls` is 6px wider than the sidebar (scrollWidth 253, clientWidth
+247), and `.sidebar { overflow-y: auto }` makes the x axis auto as well, so the
+whole sidebar scrolls sideways. HR's menu is about 20 rows, 1254px tall on a
+768px screen, so the name, theme, language and sign-out sit below the fold.
+
+**Acceptance**
+- Thai and English at 1280, 1366 and 1920: `sidebar.scrollWidth ===
+  sidebar.clientWidth`; the three footer buttons stay at least 40px tall.
+- At 1366x768 as hr.manager the footer is visible without scrolling: the nav
+  scrolls on its own and the footer is pinned; rows 36px on a pointer screen,
+  44px on touch.
+- Screenshots that show the sidebar are retaken with `docs/guide/capture-*.mjs`.
+- Overflow and layout only; the redesign is CW-094.
+
+### CW-092 · Small screen fixes before the pilot
+`P1` · UX · web · **S** · Pilot A, before the install
+
+From the UX room's 2026-10-18 candidates (UX-03 to UX-07); frontend only.
+- **HR dashboard wording** (UX-03): the third card reads "requests waiting on a
+  manager, organisation-wide, not yours", and the empty box "nothing waiting for
+  you" (drop "you have cleared everything"), so "0 for you" beside "2 leave
+  requests" no longer contradicts itself. Thai and English match.
+- **The ✓ in empty states** (UX-04) renders as √ in IBM Plex Sans Thai: add a
+  line `check` icon to `components/ui/icons.tsx` and use it on the dashboard,
+  approvals, SSO filing and SSO shortfall pages.
+- **Dark theme contrast** (UX-05): `--text-subtle` under
+  `:root[data-theme='dark']` is #6f7887 (about 3.9:1); use #8a94a2 as the
+  system-dark block does.
+- **Overdue approvals** (UX-06): an item whose `dueAt` has passed gets an
+  orange "overdue N days" badge and is listed first.
+- **Report a problem** (UX-07) gets its own icon instead of `inbox`, which
+  Approvals already uses.
+
+### CW-093 · The manager's inbox looked empty right after the demo woke
+`P1` · web · demo · **S** · follow-up to CW-031
+
+At 13:5x on 2026-10-18 the owner opened the demo cold, chose the manager in the
+demo bar and saw "no items waiting"; at 14:3x the same steps showed dev1's two
+items. The data was never lost (the dev room reproduced the old reset and every
+count stayed the same), so something showed the wrong list: suspects are an
+approvals query or badge not keyed by the signed-in user when the persona
+switches, or a demo session opened while a reset was running.
+
+**Acceptance**
+- Reproduced first, or what was tried is written here.
+- A test: switching HR to manager shows the manager's list straight away.
+- The CW-031 entry in CHANGELOG stops calling the inbox emptied.
+
+
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
@@ -1000,6 +1054,32 @@ not because there is a date.
 
 
 ## P2 — worth doing
+
+
+### CW-094 · A calmer, less generic console (direction A)
+`P2` · UX · web · **L** · after the Pilot A install; waits on the owner
+
+The owner asked for a look that is more current and less "AI generated". The UX
+room proposed two directions on 2026-10-18 with a prototype the owner can
+share (claude.ai artifact P9XkPvTu1qroAoE2URig92):
+- **A (recommended):** keep the left menu, make it document-like: paper
+  background (#f4f3ef), thin rules (#e2e0d9), no shadows, text-only menu with a
+  pinned footer, tabular figures in IBM Plex Mono; the HR dashboard becomes
+  "your work" and "waiting on others" ordered by age. Paths and menu names stay,
+  so the HR guide still reads true.
+- **B:** a top menu bar with dropdowns and Ctrl K search. Looks more like a new
+  SaaS, but changes every page, every guide screenshot, and mobile separately.
+  Kept as an option after the first parallel run (about 15 Nov).
+
+Pieces once the owner picks a direction and a main colour (the prototype offers
+four; #17607a is the default, #1f5fd0 is today's): UX-10 colours and surfaces,
+UX-11 text-only menu with a "..." footer menu, UX-12 HR dashboard (needs an API
+listing pending requests organisation-wide with their approver; dev estimates
+first), UX-13 approvals as rows with filters, an outlined reject button and the
+leave balance after approval (check the API first). Every guide screenshot is
+retaken at the end.
+
+Not started until the owner types the direction and colour in the PO room.
 
 
 ### CW-012 · Expense claims on mobile
