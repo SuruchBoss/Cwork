@@ -394,6 +394,21 @@ One PR for four small findings, in this order:
 
 Acceptance: each issue's own expected result; the QA room re-tests all four.
 
+### CW-097 · What CW-096 left: the README's cash-sheet picture, red in the dark theme, "ค่าตอบแทน" in warnings
+`P1` · web · docs · **S** · raised by the dev room while doing CW-096, 2026-10-18
+
+1. **The README picture.** `docs/screenshots/28-cash-sheet.png` and its `en/`
+   copy still show the red note CW-096 removed, and both alt texts describe
+   it. Retake both with `docs/screenshots/capture-office.mjs` after CW-096 is on
+   `main`, and drop the red-line sentence from the two alt texts. No other
+   README wording changes (the storytelling rewrite waits on the owner).
+2. **Red in the dark theme.** Danger buttons and the sidebar's red count are
+   white on light red, about 2.8:1. Every one reaches at least 4.5:1 in the dark
+   theme, the same way #113 did; the light theme does not change.
+3. **"ค่าตอบแทน" in payroll warnings.** The Thai warnings in `messages.th.ts`
+   that send HR to the employee page's "ค่าตอบแทน" card name it as the screen
+   does, "ค่าจ้าง".
+
 ### CW-091 · The sidebar scrolls sideways, and HR cannot see its footer
 `P1` · UX · web · **S** · Pilot A, before the install (2-6 Nov)
 
