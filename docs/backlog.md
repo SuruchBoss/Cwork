@@ -384,11 +384,9 @@ whole sidebar scrolls sideways. HR's menu is about 20 rows, 1254px tall on a
 **Acceptance**
 - Thai and English at 1280, 1366 and 1920: `sidebar.scrollWidth ===
   sidebar.clientWidth`; the three footer buttons stay at least 40px tall.
-- At 1366x768 as hr.manager the footer is visible without scrolling: the nav
-  scrolls on its own and the footer is pinned; rows 36px on a pointer screen,
-  44px on touch.
-- Screenshots that show the sidebar are retaken with `docs/guide/capture-*.mjs`.
-- Overflow and layout only; the redesign is CW-094.
+- Overflow only; the redesign is CW-094. **Dropped 2026-10-18:** pinning the
+  footer above the fold, because CW-094 (after the install) removes this menu and
+  the change would mean retaking the HR guide's screenshots twice.
 
 ### CW-092 · Small screen fixes before the pilot
 `P1` · UX · web · **S** · Pilot A, before the install
@@ -406,8 +404,8 @@ From the UX room's 2026-10-18 candidates (UX-03 to UX-07); frontend only.
   system-dark block does.
 - **Overdue approvals** (UX-06): an item whose `dueAt` has passed gets an
   orange "overdue N days" badge and is listed first.
-- **Report a problem** (UX-07) gets its own icon instead of `inbox`, which
-  Approvals already uses.
+- ~~Report a problem gets its own icon~~ (UX-07): dropped, CW-094 moves it to
+  the account menu.
 
 ### CW-093 · The manager's inbox looked empty right after the demo woke
 `P1` · web · demo · **S** · follow-up to CW-031
@@ -1056,37 +1054,54 @@ not because there is a date.
 ## P2 — worth doing
 
 
-### CW-094 · A calmer, less generic console (direction A)
-`P2` · UX · web · **L** · after the Pilot A install; waits on the owner
+### CW-094 · A top-menu console in earth tones (direction B)
+`P2` · UX · web · **L** · after the Pilot A install
 
-The owner asked for a look that is more current and less "AI generated". The UX
-room proposed two directions on 2026-10-18 with a prototype the owner can
-share (claude.ai artifact P9XkPvTu1qroAoE2URig92):
-- **A (recommended):** keep the left menu, make it document-like: paper
-  background (#f4f3ef), thin rules (#e2e0d9), no shadows, text-only menu with a
-  pinned footer, tabular figures in IBM Plex Mono; the HR dashboard becomes
-  "your work" and "waiting on others" ordered by age. Paths and menu names stay,
-  so the HR guide still reads true.
-- **B:** a top menu bar with dropdowns and Ctrl K search. Looks more like a new
-  SaaS, but changes every page, every guide screenshot, and mobile separately.
-  Kept as an option after the first parallel run (about 15 Nov).
+**Confirmed by the owner in the PO room, 2026-10-18 15:00:** "ยืนยัน CW-094 ทาง B
+สี earth tone ทำหลังติดตั้ง Pilot A". The main colour is still to pick from the
+UX room's four (terracotta #a24a28 is the default). Prototype (the owner shares
+it first): claude.ai artifact P9XkPvTu1qroAoE2URig92. Direction A (document-like
+left menu) was the UX room's first recommendation and is not taken.
 
-Pieces once the owner picks a direction and a main colour (the prototype offers
-four; #17607a is the default, #1f5fd0 is today's): UX-10 colours and surfaces,
-UX-11 text-only menu with a "..." footer menu, UX-12 HR dashboard (needs an API
-listing pending requests organisation-wide with their approver; dev estimates
-first), UX-13 approvals as rows with filters, an outlined reject button and the
-leave balance after approval (check the API first). Every guide screenshot is
-retaken at the end.
+Earth-tone palette from the UX room, every text pair at 4.5:1 or better:
+background #f3eee5, card #fffcf6, rule #e3dacb, text #2b2620, secondary text
+#6b6052, top bar #2f2a23 with menu text #cdbfa9; main colour one of terracotta
+#a24a28, olive #5b6b34, clay #8a5a3c, ochre #7d6420; overdue badge #8a3c1e on
+#f6dfcf; good status #4f5d2c. The dark theme comes from the UX room before UX-20.
 
-**2026-10-18, relayed by the Asuna Bot room:** the owner picked direction B
-(top menu) with an earth-tone palette; the UX room is reworking its tickets for
-B. Not confirmed in the PO room yet. Timing, relayed at 14:57: "B ทำหลัง Pilot A
-ก็ได้", so B comes after the install. The left sidebar stays for the pilot's
-first weeks, so CW-091's footer fix still goes in before the install.
+- **UX-20** earth-tone tokens in `theme.css`, light and dark; no colour defined
+  only in the dark block; every text pair at 4.5:1.
+- **UX-21** top menu replaces the left one: groups from `NAV` in
+  `navigation.ts`, a single-item group is a direct link, others open a dropdown
+  with a one-line description per item; a sub-row for the open group; the
+  approvals count on the overview group; one account button for theme, language,
+  report a problem and sign-out; Ctrl K searches menu names first (employee
+  search only if an API exists). Paths and menu names unchanged. Keyboard: Tab
+  reaches the dropdowns, Esc closes, `aria-expanded` right; no wrapping at 1280
+  and 1366.
+- **UX-22** below 960px and on phones: logo, search and a "menu" button opening
+  a full-screen list with collapsible groups (the current page's open); rows at
+  least 44px; no sideways scroll at 390px. Replaces the left drawer.
+- **UX-23** HR dashboard: cards renamed ("waiting for you", "waiting on a
+  manager"), a company-wide table of pending requests with who they wait on and
+  when they are due, overdue first, plus "this week" and shortcuts. Needs an API
+  listing pending requests organisation-wide with their approver; dev estimates
+  first.
+- **UX-24** approvals as rows with type filters, an outlined reject button, the
+  leave balance after approval (check the API) and the overdue badge from CW-092.
+- **UX-25** guides and screenshots: all 14 images of `hr-daily-tasks.th.md`,
+  the 14 of `import-from-excel.th.md`, the 28 + 28 README screenshots (84 in
+  all) retaken with the capture scripts on a fresh `db:seed`; menu wording fixed
+  in 10 guide pages (`report-a-problem` now under the account menu,
+  `scanner-import`, `account-roles`, `cash-advances`, `expiring-documents`,
+  `period-check`, `sso-filing`, `sso-shortfall` and the two with images). The
+  Flutter app is not affected.
 
-Not started until the owner types the direction and colour in the PO room.
+Before the install only the overflow fix of CW-091 (#109) and CW-092 go in; the
+footer half of CW-091 and CW-092's menu-icon item are dropped because B removes
+that menu, and they would mean retaking the guide's screenshots twice.
 
+---
 
 ### CW-012 · Expense claims on mobile
 `P2` · mobile · **M**
