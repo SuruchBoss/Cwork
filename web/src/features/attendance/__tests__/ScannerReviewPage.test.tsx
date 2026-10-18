@@ -150,6 +150,52 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       clockIn: '08:00',
       clockOut: '12:01',
     });
+    // The row leaves the waiting list, so the page says what happened to it.
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'สมชาย ใจดี วันที่ 8 ก.ย. 2569: นับเวลา 08:00 ถึง 12:01 แล้ว',
+    );
+  });
+
+  it('labels each time as an in or an out, so the lists read without their captions', async () => {
+    serve([waiting]);
+    renderPage();
+    await screen.findByText('08:00 12:01 17:30');
+
+    expect(screen.getByRole('option', { name: 'เข้า 12:01' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'ออก 17:30' })).toBeInTheDocument();
+  });
+
+  it('says when only one time was counted, not a dash', async () => {
+    serve([one]);
+    renderPage();
+    await screen.findByRole('cell', { name: '08:15' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'ใช้เวลาเหล่านี้' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'สมชาย ใจดี วันที่ 9 ก.ย. 2569: นับเฉพาะเวลาเข้า 08:15 แล้ว',
+    );
+  });
+
+  it('says a left-out day is not counted', async () => {
+    serve([one]);
+    renderPage();
+    await screen.findByRole('cell', { name: '08:15' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'ไม่นับวันนี้' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'สมชาย ใจดี วันที่ 9 ก.ย. 2569: ไม่นับวันนี้ แล้ว',
+    );
+  });
+
+  it('keeps the days with no punch apart from the numbers nobody registered', async () => {
+    serve([waiting]);
+    renderPage();
+    await screen.findByText('08:00 12:01 17:30');
+
+    expect(screen.getByText('ยังไม่นับจนกว่าจะบอกว่าเป็นของใคร')).toBeInTheDocument();
+    expect(screen.getByText(/มี 4 วันที่ไม่มีการสแกนเลย/)).toBeInTheDocument();
   });
 
   it('offers a single time only as a clock-in until HR says otherwise, and can leave the day out', async () => {

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
 import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
+import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import { payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
@@ -128,8 +129,7 @@ function RunExplanationPanel({ runId }: { runId: string }) {
   });
 
   const explain = useMutation({
-    mutationFn: () =>
-      api.post<RunExplanation>(`/assistant/payroll-runs/${runId}/explanation`),
+    mutationFn: () => api.post<RunExplanation>(`/assistant/payroll-runs/${runId}/explanation`),
   });
 
   if (!status.data?.enabled) return null;
@@ -278,10 +278,18 @@ export default function PayrollRunPage() {
     refetchInterval: (query) => (query.state.data?.status === 'CALCULATING' ? 2000 : false),
   });
 
+  /** The people the last calculation left out for lack of pay, from the server's own list. */
+  const [skipped, setSkipped] = useState<Array<{ employeeCode: string; reason: string }>>([]);
+
   const act = useMutation({
     mutationFn: (action: 'calculate' | 'approve' | 'pay' | 'cancel') =>
-      api.post(`/payroll/runs/${id}/${action}`),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['payroll'] }),
+      api.post<{ skipped?: Array<{ employeeCode: string; reason: string }> }>(
+        `/payroll/runs/${id}/${action}`,
+      ),
+    onSuccess: (result, action) => {
+      if (action === 'calculate') setSkipped(result?.skipped ?? []);
+      void queryClient.invalidateQueries({ queryKey: ['payroll'] });
+    },
   });
 
   if (run.isLoading) {
@@ -363,9 +371,7 @@ export default function PayrollRunPage() {
           </span>
         )}
         {data.paidAt && (
-          <span className="subtle">
-            {t('Paid {date}', { date: formatDateTime(data.paidAt) })}
-          </span>
+          <span className="subtle">{t('Paid {date}', { date: formatDateTime(data.paidAt) })}</span>
         )}
       </div>
 
@@ -384,8 +390,22 @@ export default function PayrollRunPage() {
       {data.status === 'CALCULATED' && (
         <div className="alert alert--info">
           {t(
-            'Whoever calculated this run cannot approve their own — another authorised person must approve it',
+            'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.',
           )}
+        </div>
+      )}
+      {skipped.length > 0 && (
+        <div className="alert alert--warning" role="status">
+          <p style={{ margin: 0 }}>
+            {t(
+              plural(
+                skipped.length,
+                '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page under Compensation, then calculate again.',
+                '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page under Compensation, then calculate again.',
+              ),
+              { count: skipped.length, codes: skipped.map((item) => item.employeeCode).join(', ') },
+            )}
+          </p>
         </div>
       )}
 
@@ -396,7 +416,10 @@ export default function PayrollRunPage() {
       <div className="grid grid--4">
         <Stat label={t('Employees')} value={data.employeeCount} />
         <Stat label={t('Total gross')} value={formatMoney(data.totalGross, data.currency)} />
-        <Stat label={t('Total deductions')} value={formatMoney(data.totalDeduction, data.currency)} />
+        <Stat
+          label={t('Total deductions')}
+          value={formatMoney(data.totalDeduction, data.currency)}
+        />
         <Stat
           label={t('Net pay')}
           value={formatMoney(data.totalNet, data.currency)}
@@ -465,7 +488,17 @@ export default function PayrollRunPage() {
           <EmptyState
             icon="฿"
             title={t('No payslips in this run yet')}
-            description={t('Press “Calculate payroll” to create a payslip for every employee')}
+            description={
+              data.status === 'DRAFT'
+                ? t('Press “Calculate payroll” to create a payslip for every employee')
+                : data.period.payFrequency === 'SEMI_MONTHLY'
+                  ? t(
+                      'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page under Compensation, then calculate again.',
+                    )
+                  : t(
+                      'Nobody has a monthly salary set for this period. Set it on the employee’s page under Compensation, then calculate again.',
+                    )
+            }
           />
         )}
       </Card>

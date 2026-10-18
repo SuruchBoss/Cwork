@@ -3,7 +3,7 @@
 
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
@@ -134,5 +134,47 @@ describe('Social security shortfall link (CW-075)', () => {
     render();
     expect(await screen.findByRole('link', { name: 'เงินเบิกล่วงหน้า' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'ส่วนต่างประกันสังคม' })).toBeNull();
+  });
+});
+
+describe('First-time use of the periods page', () => {
+  it('fills the pay date with the end of the period until HR picks one', async () => {
+    render();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /สร้างงวดใหม่/ }));
+    expect(screen.getByLabelText('วันจ่าย')).toHaveValue('31 ต.ค. 2569');
+    await user.selectOptions(screen.getByLabelText('งวดการจ่าย'), 'H1');
+    expect(screen.getByLabelText('วันจ่าย')).toHaveValue('15 ต.ค. 2569');
+  });
+
+  it('opens the run it just created, where the next step is', async () => {
+    post.mockResolvedValue({ id: 'run-new' });
+    renderWithProviders(
+      <MemoryRouter>
+        <Routes>
+          <Route path="/" element={<PayrollPage />} />
+          <Route path="/payroll/runs/:id" element={<p>run page</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'สร้างรอบคำนวณ' }));
+
+    expect(await screen.findByText('run page')).toBeInTheDocument();
+    expect(post).toHaveBeenCalledWith('/payroll/runs', { periodId: 'p-h1' });
+  });
+
+  it('says why a run could not be created', async () => {
+    post.mockRejectedValueOnce(
+      new ApiError(409, 'RUN_EXISTS', 'This period already has a run', {}),
+    );
+    render();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'สร้างรอบคำนวณ' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This period already has a run');
   });
 });

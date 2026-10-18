@@ -199,7 +199,7 @@ export default function ScannerImportPage() {
             <div className="stack">
               <p className="muted" style={{ margin: 0 }}>
                 {t(
-                  'Use the file the scanner wrote, as it is: it may be called .xls but it is read as text. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.',
+                  'Use the file the scanner wrote, as it is: do not open it in Excel and save it again. It may be called .xls. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.',
                 )}
               </p>
               <label className="btn btn--secondary file-button">

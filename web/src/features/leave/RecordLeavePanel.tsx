@@ -43,6 +43,8 @@ export interface RecordedLeave {
   type: string;
   name: string;
   dates: string;
+  /** What the leave was recorded as, so the list can show where it landed. */
+  status: 'APPROVED' | 'PENDING';
 }
 
 const STATUS_KEY = 'cwork.recordLeave.approved';
@@ -172,6 +174,7 @@ export function RecordLeavePanel({
         type: context.type,
         name: context.name,
         dates: oneDay ? formatDate(startDate) : `${formatDate(startDate)} – ${formatDate(endDate)}`,
+        status: approved ? 'APPROVED' : 'PENDING',
       });
       if (!next) return onClose();
       // The next person: same leave type and status, new employee and dates.

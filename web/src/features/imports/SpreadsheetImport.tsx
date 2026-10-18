@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Button, Card, PageHeader } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
+import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import { useUiStore } from '@/stores/ui.store';
 import { describeProblem, type ImportProblem } from './import-problems';
@@ -215,7 +216,11 @@ export function SpreadsheetImport<P extends { problems: ImportProblem[] }, R>(
               <div className="stack" style={{ padding: '12px 16px 0' }}>
                 <p className="muted" style={{ margin: 0 }} role="status">
                   {t(
-                    '{count} problems. Nothing has been imported: fix them in the file and upload it again.',
+                    plural(
+                      preview.problems.length,
+                      '{count} problem. Nothing has been imported: fix it in the file and upload it again.',
+                      '{count} problems. Nothing has been imported: fix them in the file and upload it again.',
+                    ),
                     { count: preview.problems.length },
                   )}
                 </p>
