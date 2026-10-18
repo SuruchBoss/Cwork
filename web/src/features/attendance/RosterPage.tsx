@@ -19,6 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
+import { useDepartmentOptions } from '@/lib/departments';
 import { isoDate, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { P } from '@/lib/permissions';
@@ -26,7 +27,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import type { Roster, Shift, WorkSchedule } from '@/types/api';
 
 type Tab = 'roster' | 'shifts' | 'schedules';
-type NamedRef = { id: string; name: string };
 
 // `key` is an English weekday abbreviation, translated at render.
 const WEEKDAYS = [
@@ -459,10 +459,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
     effectiveTo: '',
   });
 
-  const departments = useQuery({
-    queryKey: qk.departments,
-    queryFn: () => api.get<NamedRef[]>('/departments'),
-  });
+  const departments = useDepartmentOptions();
   const schedules = useQuery({
     queryKey: qk.workSchedules(),
     queryFn: () => api.get<WorkSchedule[]>('/work-schedules'),
@@ -509,7 +506,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
           <Field label={t('Department')}>
             <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
               <option value="">{t('All departments')}</option>
-              {(departments.data ?? []).map((dept) => (
+              {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
                 </option>
@@ -549,7 +546,7 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                   onChange={(e) => setAssignForm({ ...assignForm, departmentId: e.target.value })}
                 >
                   <option value="">{t('— Select a department —')}</option>
-                  {(departments.data ?? []).map((dept) => (
+                  {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>

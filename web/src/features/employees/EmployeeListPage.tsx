@@ -19,6 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api-client';
+import { useDepartmentOptions } from '@/lib/departments';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import { formatDate, yearsOfService } from '@/lib/format';
@@ -44,10 +45,7 @@ export default function EmployeeListPage() {
     page: 1,
   });
 
-  const departments = useQuery({
-    queryKey: qk.departments,
-    queryFn: () => api.get<Array<{ id: string; name: string }>>('/departments'),
-  });
+  const departments = useDepartmentOptions();
 
   const employees = useQuery({
     queryKey: qk.employees(filters),
@@ -124,7 +122,7 @@ export default function EmployeeListPage() {
               onChange={(e) => update({ departmentId: e.target.value })}
             >
               <option value="">{t('All departments')}</option>
-              {departments.data?.map((d) => (
+              {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
                 </option>
