@@ -19,6 +19,7 @@ import { PrismaClient, UserStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { inspectDemoDatabase } from 'src/modules/demo/demo-database';
+import { pendingMigrations } from 'src/modules/demo/demo-migrations';
 import { DemoModule } from 'src/modules/demo/demo.module';
 import {
   DEMO_ACCOUNTS,
@@ -38,8 +39,11 @@ const EXPECTED_ROLE: Record<DemoRole, string> = {
   hr: 'HR_ADMIN',
 };
 
-async function withClient<T>(run: (prisma: PrismaClient) => Promise<T>): Promise<T> {
-  const prisma = new PrismaClient({ datasources: { db: { url: resolveDatabaseUrl() } } });
+async function withClient<T>(
+  run: (prisma: PrismaClient) => Promise<T>,
+  url: string = resolveDatabaseUrl(),
+): Promise<T> {
+  const prisma = new PrismaClient({ datasources: { db: { url } } });
   try {
     return await run(prisma);
   } finally {
@@ -455,6 +459,157 @@ describe('Public demo (e2e)', () => {
           await rotated.close();
         }
       });
+    });
+  });
+  /**
+   * Render names the database user after the database, `cwork_demo`, which is
+   * also the demo's marker schema. Postgres's default search path starts with
+   * the user's name, so once the marker exists `current_schema()` stops being
+   * `public` for that connection, and every query that asked for it looked in
+   * the wrong place: the migration check re-ran every migration, the guard saw
+   * an empty database ("first boot" again), and a reset emptied the marker
+   * schema instead of the tables. CI's user is `cwork`, which hid all of it.
+   * The same search path is set here on the CI user, for the new connections,
+   * and the connection string has no `schema=` (Render's has none): with one,
+   * Prisma pins the search path to it and the collision cannot happen.
+   */
+  describe('when the database user shares the marker schema’s name', () => {
+    let role = '';
+    const plainUrl = resolveDatabaseUrl().replace(/[?&]schema=[^&]*/, '');
+    const PLAIN_ENV = { ...DEMO_ENV, DATABASE_URL: plainUrl };
+
+    const withRole = async <T>(run: (prisma: PrismaClient) => Promise<T>): Promise<T> =>
+      withClient(run, plainUrl);
+
+    beforeAll(async () => {
+      await truncateAll();
+      await dropDemoMarker();
+
+      // Seeded the way a first boot does it: before the marker schema exists.
+      const first = await createTestApp({ env: PLAIN_ENV, imports: [DemoModule] });
+      try {
+        first.app.get(DemoService).stopSchedule();
+        const until = Date.now() + 120_000;
+        while ((await first.api.get('/demo')).body.resetting && Date.now() < until) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      } finally {
+        await first.close();
+      }
+
+      await withRole(async (prisma) => {
+        const [row] = await prisma.$queryRaw<{ name: string }[]>`SELECT current_user AS name`;
+        role = row.name;
+        await prisma.$executeRawUnsafe(`ALTER ROLE "${role}" SET search_path = cwork_demo, public`);
+      });
+    });
+
+    afterAll(async () => {
+      await withRole((prisma) =>
+        prisma.$executeRawUnsafe(`ALTER ROLE "${role}" RESET search_path`),
+      );
+      await truncateAll();
+      await dropDemoMarker();
+      seedDemoCompany(undefined, { quiet: true });
+    });
+
+    it('sees the application’s schema as the default one no longer, to start with', async () => {
+      await withRole(async (prisma) => {
+        const [row] = await prisma.$queryRaw<{ schema: string }[]>`
+          SELECT current_schema() AS schema
+        `;
+        expect(row.schema).toBe('cwork_demo');
+      });
+    });
+
+    it('finds the migrations applied, so a wake-up runs none', async () => {
+      await withRole(async (prisma) => {
+        expect(await pendingMigrations(prisma)).toEqual([]);
+      });
+    });
+
+    it('recognises its own database on the next boot instead of seeding it again', async () => {
+      const again = await createTestApp({ env: PLAIN_ENV, imports: [DemoModule] });
+      try {
+        again.app.get(DemoService).stopSchedule();
+        // A boot that thinks the database is empty, or dirty, closes the demo at once.
+        expect((await again.api.get('/demo')).body.resetting).toBe(false);
+        const signedIn = await again.api.post('/demo/sign-in', undefined, { as: 'manager' });
+        expect(signedIn.status).toBe(200);
+      } finally {
+        await again.close();
+      }
+    });
+
+    it('puts back a database the old code left without its bookkeeping row (Render today)', async () => {
+      // The old reset emptied the marker schema's `state` table instead of the
+      // application's tables. The next boot finds the row missing, says the
+      // data was never marked as seeded, and seeds it properly.
+      await withRole((prisma) => prisma.$executeRawUnsafe('TRUNCATE TABLE cwork_demo.state'));
+
+      const ctx = await createTestApp({ env: PLAIN_ENV, imports: [DemoModule] });
+      try {
+        ctx.app.get(DemoService).stopSchedule();
+        expect((await ctx.api.get('/demo')).body.resetting).toBe(true);
+
+        const until = Date.now() + 120_000;
+        while ((await ctx.api.get('/demo')).body.resetting && Date.now() < until) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        expect((await ctx.api.get('/demo')).body.resetting).toBe(false);
+        const [row] = await ctx.app.get(PrismaService).$queryRaw<{ seeded_at: Date | null }[]>`
+          SELECT seeded_at FROM cwork_demo.state
+        `;
+        expect(row.seeded_at).not.toBeNull();
+      } finally {
+        await ctx.close();
+      }
+    });
+
+    it('puts the leave request back after a visitor approved it, and loses no one', async () => {
+      const ctx = await createTestApp({ env: PLAIN_ENV, imports: [DemoModule] });
+      try {
+        const demo = ctx.app.get(DemoService);
+        demo.stopSchedule();
+        // The sign-in two tests ago left the data changed, so this boot puts it
+        // back first, as it should; wait for that before looking.
+        const until = Date.now() + 120_000;
+        while ((await ctx.api.get('/demo')).body.resetting && Date.now() < until) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+        const prisma = ctx.app.get(PrismaService);
+        const employees = await prisma.employee.count();
+
+        const pending = async (): Promise<number> => {
+          const token = (await ctx.api.post('/demo/sign-in', undefined, { as: 'manager' })).body
+            .accessToken as string;
+          const tasks = await ctx.api.get('/approvals/tasks?status=PENDING', token);
+          return (tasks.body.data ?? tasks.body).filter(
+            (task: { instance?: { entityType?: string } }) =>
+              task.instance?.entityType === 'LEAVE_REQUEST',
+          ).length;
+        };
+        const token = (await ctx.api.post('/demo/sign-in', undefined, { as: 'manager' })).body
+          .accessToken as string;
+        const tasks = await ctx.api.get('/approvals/tasks?status=PENDING', token);
+        const leave = (tasks.body.data ?? tasks.body).find(
+          (task: { instance?: { entityType?: string } }) =>
+            task.instance?.entityType === 'LEAVE_REQUEST',
+        );
+        expect(leave).toBeDefined();
+        await ctx.api.post(`/approvals/tasks/${leave.id}/decide`, token, {
+          decision: 'APPROVE',
+          comment: 'อนุมัติจาก demo',
+        });
+        expect(await pending()).toBe(0);
+
+        await demo.reset('idle');
+
+        expect(await pending()).toBe(1);
+        expect(await prisma.employee.count()).toBe(employees);
+      } finally {
+        await ctx.close();
+      }
     });
   });
 });

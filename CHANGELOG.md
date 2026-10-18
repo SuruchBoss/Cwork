@@ -771,6 +771,24 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The public demo resets for real on Render** (CW-031). On Render the database
+  user is `cwork_demo`, the same as the demo's marker schema, so after the first
+  boot `current_schema()` was the marker and four pieces of the demo's SQL looked
+  in the wrong place: every wake-up re-applied the migrations (about 16 seconds
+  of the slow wake), the guard saw an empty database and logged "first boot"
+  again, a reset emptied the marker schema's `state` table instead of the
+  application's tables so visitors' changes stayed (the manager's pending leave
+  request did not come back), and the visitor-address triggers were not attached
+  to later boots. The demo's SQL now names the application's schema, the
+  `schema=` of `DATABASE_URL` or `public` (`appSchema()`), and asks nothing of
+  `current_schema()`. `pendingMigrations` moved to its own file so a test can call
+  it. Five e2e tests set the search path the way Render's user does (and drop the
+  URL's `schema=`, which makes Prisma pin it): the migration check finds nothing
+  to apply, the next boot recognises its database, a reset puts the approved
+  leave request back and loses no employee, and a database the old code left with
+  its bookkeeping row emptied is put back at the next boot. `docs/demo.md` says
+  why.
+
 - **The scanner import page no longer says "1 days" or "1 scanner numbers belong
   to nobody".** English has a singular, and the page's counted messages (punches
   added, days left as they were, days waiting for HR, scanner numbers with no

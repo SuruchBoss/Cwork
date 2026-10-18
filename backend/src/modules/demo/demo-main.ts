@@ -16,34 +16,9 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import { DemoRefused, inspectDemoDatabase } from './demo-database';
+import { pendingMigrations } from './demo-migrations';
 import { DemoModule } from './demo.module';
-
-/** Where the image keeps the migrations; `prisma migrate deploy` reads the same folder. */
-const MIGRATIONS_DIR = join(process.cwd(), 'prisma', 'migrations');
-
-async function pendingMigrations(prisma: PrismaClient): Promise<string[]> {
-  const shipped = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isDirectory() && existsSync(join(MIGRATIONS_DIR, entry.name, 'migration.sql')),
-    )
-    .map((entry) => entry.name);
-
-  const [table] = await prisma.$queryRaw<{ present: boolean }[]>`
-    SELECT to_regclass(format('%I._prisma_migrations', current_schema())) IS NOT NULL AS "present"
-  `;
-  if (!table?.present) return shipped;
-
-  const applied = await prisma.$queryRaw<{ migration_name: string }[]>`
-    SELECT migration_name FROM _prisma_migrations
-    WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
-  `;
-  const done = new Set(applied.map((row) => row.migration_name));
-  return shipped.filter((name) => !done.has(name));
-}
 
 async function main(): Promise<void> {
   if (!DemoModule.enabledBy(process.env)) {

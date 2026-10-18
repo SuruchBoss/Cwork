@@ -23,6 +23,34 @@ import { DEMO_ORG_CODE } from './seed/demo-company';
 export class DemoRefused extends Error {}
 
 /**
+ * The schema the application's tables live in: the `schema` of DATABASE_URL,
+ * which is what Prisma reads too, and `public` when the URL has none.
+ *
+ * The demo's raw SQL names it instead of asking `current_schema()`. Postgres
+ * puts the connected user's own name first on the search path, and Render's
+ * database user is called `cwork_demo`, the same as the marker schema: once
+ * the marker exists, `current_schema()` is the marker, and every query that
+ * asked it where the application's tables are looked in the wrong place.
+ */
+export function appSchema(url: string | undefined = process.env.DATABASE_URL): string {
+  try {
+    return new URL(url ?? '').searchParams.get('schema') || 'public';
+  } catch {
+    return 'public';
+  }
+}
+
+/** A schema name as an SQL identifier, quoted; for the places a bound value cannot go. */
+export function quoteIdent(name: string): string {
+  return `"${name.replace(/"/g, '""')}"`;
+}
+
+/** A schema name as an SQL string literal, for a `DO` block, which takes no parameters. */
+function quoteLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+/**
  * Anything that runs raw SQL: the client, or a transaction on it. The client
  * has every member a transaction has, so either can be passed.
  */
@@ -38,15 +66,17 @@ export type DemoDatabase = 'empty' | 'demo';
 export async function inspectDemoDatabase(db: RawSql): Promise<DemoDatabase> {
   // Looked up by name rather than queried through the client, because this
   // runs before the migrations and must work on a database that has none.
+  const schema = appSchema();
   const [found] = await db.$queryRaw<{ organizations: boolean; marker: boolean }[]>`
     SELECT
-      to_regclass(format('%I.organizations', current_schema())) IS NOT NULL AS "organizations",
+      to_regclass(format('%I.organizations', ${schema}::text)) IS NOT NULL AS "organizations",
       to_regnamespace('cwork_demo') IS NOT NULL AS "marker"
   `;
   if (!found?.organizations) return 'empty';
 
   const organizations = await db.$queryRaw<{ code: string; name: string }[]>`
-    SELECT "code", "name" FROM "organizations" ORDER BY "createdAt" LIMIT 20
+    SELECT "code", "name" FROM ${Prisma.raw(quoteIdent(schema))}."organizations"
+    ORDER BY "createdAt" LIMIT 20
   `;
   if (organizations.length === 0) return 'empty';
 
@@ -106,18 +136,20 @@ export async function prepareDemoSchema(db: RawSql): Promise<void> {
   `;
   await db.$executeRaw`
     DO $do$
-    DECLARE t record;
+    DECLARE
+      t record;
+      app_schema constant text := ${Prisma.raw(quoteLiteral(appSchema()))};
     BEGIN
       FOR t IN
         SELECT table_name, string_agg(quote_literal(column_name), ', ') AS cols
         FROM information_schema.columns
-        WHERE table_schema = current_schema() AND column_name IN ('ipAddress', 'userAgent')
+        WHERE table_schema = app_schema AND column_name IN ('ipAddress', 'userAgent')
         GROUP BY table_name
       LOOP
         EXECUTE format(
           'CREATE OR REPLACE TRIGGER cwork_demo_forget_visitor BEFORE INSERT OR UPDATE ' ||
-          'ON %I FOR EACH ROW EXECUTE FUNCTION cwork_demo.forget_visitor(%s)',
-          t.table_name, t.cols);
+          'ON %I.%I FOR EACH ROW EXECUTE FUNCTION cwork_demo.forget_visitor(%s)',
+          app_schema, t.table_name, t.cols);
       END LOOP;
     END
     $do$
@@ -162,14 +194,17 @@ export function keyFingerprint(key: string): string {
  * Takes the transaction the caller has just re-run `inspectDemoDatabase` in.
  */
 export async function truncateDemoData(tx: RawSql): Promise<void> {
+  const schema = appSchema();
   const tables = await tx.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
-    WHERE schemaname = current_schema() AND tablename <> '_prisma_migrations'
+    WHERE schemaname = ${schema} AND tablename <> '_prisma_migrations'
   `;
   if (tables.length === 0) return;
 
   // TRUNCATE rather than DELETE: audit_logs and attendance_punches carry an
   // append-only trigger that raises on DELETE, and rightly so.
-  const list = Prisma.join(tables.map((t) => Prisma.raw(`"${t.tablename.replace(/"/g, '""')}"`)));
+  const list = Prisma.join(
+    tables.map((t) => Prisma.raw(`${quoteIdent(schema)}.${quoteIdent(t.tablename)}`)),
+  );
   await tx.$executeRaw`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`;
 }

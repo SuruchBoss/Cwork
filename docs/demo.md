@@ -83,6 +83,21 @@ A database seeded with `npm run db:seed` is refused too: same company, but the
 demo did not make it, and it cannot tell that database from somebody's
 evaluation install with real edits in it.
 
+### The database user is named like the marker schema
+
+`render.yaml` names the database user `cwork_demo`, and so is the marker schema.
+Postgres puts the connected user's name first on the search path, so once the
+marker exists `current_schema()` is the marker for that connection, not
+`public`. The demo's SQL therefore never asks `current_schema()`: it names the
+schema the application uses, the `schema=` of `DATABASE_URL` or `public` when
+there is none (`appSchema()` in `demo-database.ts`), which is what Prisma does.
+Left to ask, every wake-up re-ran the migrations, the guard saw an empty database
+and "first boot" again, and a reset emptied the marker schema instead of the
+application's tables (found on 2026-10-18, after the first sleep). If you add raw
+SQL to the demo, name the schema the same way. CI's user is called `cwork` and
+its URL has a `schema=`, so it hides this; the e2e spec sets the search path
+itself and drops the `schema=` to reproduce it.
+
 ## What was found about Render's free tier
 
 render.com could not be reached from the sessions that built this, so each of
