@@ -3,6 +3,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { queryClient } from '@/app/query-client';
 import { api } from '@/lib/api-client';
 import type { DemoRole } from '@/features/demo/demo';
 import type {
@@ -47,11 +48,17 @@ interface AuthState {
   canAny: (...permissions: string[]) => boolean;
 }
 
-/** One place where a successful sign-in becomes a session, whichever route it took. */
-function adoptSession(
-  set: (partial: Partial<AuthState>) => void,
-  session: LoginSession,
-): void {
+/**
+ * One place where a successful sign-in becomes a session, whichever route it took.
+ *
+ * What the server answered for the last person is dropped with it. The query
+ * keys do not say whose data they hold (the approvals list is the same key for
+ * everyone), and an answer stays fresh for thirty seconds, so without this the
+ * demo's "View as manager", straight after HR, showed HR's empty approvals.
+ * The same goes for two people sharing one PC.
+ */
+function adoptSession(set: (partial: Partial<AuthState>) => void, session: LoginSession): void {
+  queryClient.clear();
   set({
     accessToken: session.accessToken,
     refreshToken: session.refreshToken,
@@ -112,7 +119,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       async demoSignIn(role) {
-        const result = await api.post<LoginSession>('/demo/sign-in', { as: role }, { anonymous: true });
+        const result = await api.post<LoginSession>(
+          '/demo/sign-in',
+          { as: role },
+          { anonymous: true },
+        );
         adoptSession(set, result);
         set({ demoRole: role });
       },
@@ -124,6 +135,7 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Signing out locally must succeed even if the server is unreachable.
         }
+        queryClient.clear();
         set({
           accessToken: null,
           refreshToken: null,

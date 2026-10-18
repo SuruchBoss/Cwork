@@ -790,6 +790,18 @@ entry, tags it and publishes the notes.
   its bookkeeping row emptied is put back at the next boot. `docs/demo.md` says
   why.
 
+- **A new session no longer starts on the last person's data** (CW-031). The
+  console's server data is cached by key, the approvals list is the same key for
+  everyone, and an answer stays fresh for 30 seconds. So on the demo, "View as
+  manager" straight after landing as HR shows HR's cached, empty approvals. It
+  is the likely reason the manager's inbox read "nothing waiting" on the owner's
+  timing run while the request was in the database, and two later looks showed
+  it (not proved: the dev room cannot reach the hosted demo, but the mechanism
+  is reproduced in a test). Two people sharing one PC meet the same. The cache is now dropped at
+  every sign-in (password, second factor, enrolment, demo) and at sign-out. Tests
+  switch HR to the manager and expect the manager's approvals at once, and check
+  both drops.
+
 - **The scanner import page no longer says "1 days" or "1 scanner numbers belong
   to nobody".** English has a singular, and the page's counted messages (punches
   added, days left as they were, days waiting for HR, scanner numbers with no
