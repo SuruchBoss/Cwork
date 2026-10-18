@@ -6,15 +6,13 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** CW-098 in progress (the four payroll warnings in English, and #119:
-  the scanner days list's range error still English). CW-097 merged at
-  `31bf0a8` (PR #118); CW-096 at `4b78ff0` (PR #117). CW-096 merged at
-  `4b78ff0` (PR #117, #112–#115 closed); its first CI run was red on a
-  cash-sheet e2e that still wanted the removed note, fixed in `c107be8`.
-- **QA:** pass 2 merged (PR #116). Re-test of #112–#115 on `4b78ff0` done:
-  #113, #114, #115 pass, #112 passes except the range error (#119, in CW-098).
-  Results are PR #120, merged by the PO after #118. Not covered yet: #111,
-  CW-097, the Render wake-up time, the real NAS.
+- **Dev:** queue empty. Merged tonight under the standing permissions: CW-096
+  (#117, `4b78ff0`; its first CI run was red on a cash-sheet e2e that still
+  wanted the removed note, fixed in `c107be8`), CW-097 (#118, `31bf0a8`),
+  CW-098 (#121, `d08c985`, closes #119). Deploy the demo from `d08c985` or later.
+- **QA:** pass 2 (#116) and its re-test (#120) merged; #112–#115 pass. #119 and
+  CW-097 sent for re-test on `d08c985`. Not covered yet: #111, the Render
+  wake-up time, the real NAS.
 - **Scanner number on the employee page:** already done, CW-090 (closed
   2026-10-17). Not a new ticket.
 - **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the

@@ -371,19 +371,6 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
-### CW-098 · English payroll warnings say "Compensation"; the scanner days list still shows a raw error (#119)
-`P2` · web · **XS** · raised by the dev room while doing CW-097, and by the QA re-test of CW-096, 2026-10-18
-
-1. The four payroll warnings CW-097 fixed in Thai still say "under Compensation"
-   in English, where the employee page's card is "Pay". They name the card as
-   the English screen does, and the CW-097 test fails if "Compensation" returns.
-2. **#119:** on the scanner days page, a range longer than 93 days shows the
-   server's English sentence in the Thai console, because the list's
-   `ErrorState` does not go through `describeApiError`. It does, Thai names the
-   limit, and a page test fails if the raw sentence comes back.
-Not the landing page: its cash-sheet picture and alt text still show the removed
-note, and landing wording waits on the owner's own words.
-
 ### CW-091 · The sidebar scrolls sideways, and HR cannot see its footer
 `P1` · UX · web · **S** · Pilot A, before the install (2-6 Nov)
 
@@ -1554,3 +1541,4 @@ Kept so the reasoning survives.
 | **CW-095** · A manager's pages asked for departments and got 403 | Signed in as the seeded manager, the employee register and the roster tab called `GET /departments`, which needs `org:read`, and filled the console with 403s. PO decision: no new permission, because `org:read` opens more than department names. `useDepartmentOptions` (`web/src/lib/departments.ts`) lists every department for someone with `org:read`, empty ones included; without it, it never calls `/departments` and builds the list from the people the user can see (one page of `/employees`, 200, the API's ceiling), one entry per department. Both pages use it. Eight web tests; the manager tests fail on the old code. Known limit: a manager who sees more than 200 people may miss a department whose members are all past the first page. `EmployeeCreatePage` and `AccountRolesCard` still ask, both HR-only. No role changed. PR #111, `be5d6e2`, merged at `7a589eb`, closed 2026-10-18. |
 | **CW-096** · QA pass 2 found four small faults before the pilot (#112–#115) | One PR, in the PO's order. **#114:** the cash-preparation sheet printed a red project note under its title that named the pilot company; the note is gone from the code and the page, the "ลำดับ" column is 36 pt so its header fits, and tests measure every header in the real Sarabun font and fail if the note's words come back. **#113:** text on `--brand` uses `--text-inverse` (white in the light theme, `#0f1116` in the dark), 7.2:1 in the dark theme, covering primary buttons, the logo mark, the selected day and the user's chat bubble; the light theme is unchanged. **#112:** `web/src/lib/api-messages.ts` maps the scanner flow's business-rule codes to Thai, with values from new `details` on three backend errors (codes and statuses unchanged); English and unknown codes still show the server sentence. **#115:** `ErrorState` draws an `alert` icon; task 3 of the HR guide names the "ค่าจ้าง" card and its two buttons. The first CI run was red: `payslip-print.e2e-spec.ts` still required the removed note, and the dev room had run only the scanner e2e; fixed in `c107be8`, then the full e2e suite passed locally. PR #117, `481acdb` and `c107be8`, merged at `4b78ff0`, closed 2026-10-18. Left for CW-097: the README picture still shows the note, danger red in the dark theme, "ค่าตอบแทน" in payroll warnings. |
 | **CW-097** · CW-096 left the README's cash-sheet picture showing the removed note, red too faint in the dark theme, and "ค่าตอบแทน" in payroll warnings | `docs/screenshots/28-cash-sheet.png` and its `en/` copy retaken with `capture-office.mjs` on a fresh synthetic seed (checked by eye: no red note, the header on one line), and the red-line sentence removed from both alt texts; no other README wording changed. Danger buttons and the sidebar's red count use `--text-inverse`, 6.7:1 in the dark theme (was about 2.8:1), covered by the contrast test. The four Thai payroll warnings name the "การ์ดค่าจ้าง", with a test that fails if "ค่าตอบแทน" returns. Not done here: the landing page's copy of the picture and its alt text (landing wording waits on the owner). PR #118, `a9b2e0f`, merged at `31bf0a8`, closed 2026-10-18. |
+| **CW-098** · English payroll warnings said "Compensation", and a failed list printed the server's English sentence (#119) | `ErrorState` builds an API error's message with `describeApiError`, as the buttons do, so a list that fails with a translated code reads in Thai (the scanner days page: "เลือกช่วงวันที่ตั้งแต่ 1 ถึง 93 วัน"); English, untranslated codes and non-API errors are unchanged, and the props are the same. The four English payroll warnings say "in the Pay card". A page test and the i18n test fail on the old code. PR #121, `ed2272a`, merged at `d08c985`, closed 2026-10-18. |
