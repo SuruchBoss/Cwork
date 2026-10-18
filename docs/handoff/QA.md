@@ -13,15 +13,15 @@ Overwritten at the end of each unit of work. Git history keeps the past.
   added the HR guide's four tasks (CW-066), the demo's second boot (#104), the
   approvals switch (#109), the sidebar, empty states, overdue badge and dark
   theme (#110). One failure: dark-theme contrast, #113.
-- **Open issues for the dev room:** #112 English errors in the Thai console,
+- **Re-test of #112–#115 (main `4b78ff0`, 2026-10-18):** #113, #114 and #115 pass; #112 passes except the range error on the scanner days page, still English: #119. Results in the plan under "Pass 2 re-test".
+- **Open issues for the dev room:** #112 English errors in the Thai console (mostly fixed; #119 is what is left),
   #113 dark-theme button contrast (the failing case), #114 cash sheet header and
   printed project note, #115 `ErrorState` glyph and guide wording. None is a
   security problem. #94–#97 from pass 1 are fixed and verified.
-- **PR:** pass 2 results are on branch `claude/qa-pilot-a-pass2`, for the PO to
-  review and merge.
+- **PR:** the re-test results are on branch `claude/qa-pass2-retest`, for the PO to review and merge (pass 2 itself is merged).
 - **Not covered:** #111 (CW-095) landed after pass 2 began; the demo's wake-up
   time on Render (the owner times it); DSM and the real NAS.
-- **Next:** when the dev room fixes #112–#115, re-test those four. When the
+- **Next:** when the dev room fixes #119, re-test it (Thai page, range over 93 days). When the
   owner approves the real NAS, someone with DSM access repeats N1–N3 and N11
   there; the real Dockerfile builds still need a machine with internet.
 
@@ -47,5 +47,5 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Waiting on
 
-- The PO, to review and merge the pass 2 PR.
-- The dev room (issues #112–#115) and the owner (real NAS).
+- The PO, to review and merge the re-test PR.
+- The dev room (#119; CW-097 for the dark-theme danger red) and the owner (real NAS).
