@@ -25,15 +25,14 @@ this file only says where the dev room stands.
   something else, is what the owner saw at 13:5x, since this room cannot reach onrender.com;
   the mechanism is reproduced. The owner's next timing run after the manual deploy answers it.
   Ordinary users on one shared PC (the pilot's HR) were exposed to the same thing.
-- **Written, not pushed (local branch `cw091-sidebar-overflow`, `8ef73f3`, from the old main):
-  CW-091 (#105), the side menu scrolls sideways.** Thai only, every desktop width: the footer's
-  "ออกจากระบบ" button kept the row from shrinking, 6 px past the column, and `overflow-y`
-  alone makes `overflow-x` scroll. Fix is padding 10 to 8, `min-width: 0` on the wide button
-  and `overflow-x: hidden` on `.sidebar`; a stylesheet test keeps both rules (it failed before)
-  and `docs/screenshots/capture.mjs` now fails when the menu is wider than its column.
-  Measured 247 px of 247 at 1280, 1366 and 1920, Thai and English. It goes to the branch
-  after the PR above merges (one branch, one open PR at a time); the counts line will need a
-  merge (web 267 now, +3 then +2).
+- **Same branch, its own commit (`59ea39a`): CW-091 (#105), the side menu scrolls sideways.**
+  Thai only, every desktop width: the footer's "ออกจากระบบ" button kept the row from
+  shrinking, 6 px past the column, and `overflow-y` alone makes `overflow-x` scroll. Fix is
+  padding 10 to 8, `min-width: 0` on the wide button and `overflow-x: hidden` on `.sidebar`;
+  a stylesheet test keeps both rules (it failed before) and `docs/screenshots/capture.mjs`
+  now fails when the menu is wider than its column. Measured 247 px of 247 at 1280, 1366 and
+  1920, Thai and English. It is independent of the cache fix: the PO can split the two commits
+  into two PRs. Web counts 272 with both.
 - Pictures: capture scripts change the database they run on; run them on a freshly seeded
   one. `KEEP_SCRATCH=1` keeps the frames.
 - Waiting on others: CW-066's two owner items (a real HR person doing the four jobs before
@@ -42,7 +41,6 @@ this file only says where the dev room stands.
 
 ## Next
 
-- After the cache PR merges: rebase the CW-091 commit onto main, fix the counts, push, report.
 - Do not start CW-085's upload file, CW-080 or CW-086, nor the support-scope page. Do not
   touch the real NAS until the owner approves. The UXUI room is proposing a new look; the
   menu fix is only the overflow.
