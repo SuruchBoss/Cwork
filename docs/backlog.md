@@ -1064,6 +1064,12 @@ departments (for its own team's filters) or the pages should not ask without
 the permission. Acceptance: no 403 in the console for the seeded manager on
 those pages, and the filter shows what the manager may see.
 
+**Sent to the dev room 2026-10-18.** PO decision: no new permission. The web
+does not call `/departments` without `ORG_READ`; a manager's department filter
+lists the departments of the employees that manager can see, and HR and admin
+keep the full list. A web or e2e test fails if the pages ask again. No role's
+permissions change.
+
 ### CW-094 · A top-menu console in earth tones (direction B)
 `P2` · UX · web · **L** · after the Pilot A install
 

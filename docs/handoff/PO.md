@@ -4,113 +4,61 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 Every ticket, its scope and acceptance live in [`docs/backlog.md`](../backlog.md);
 this file only says where the PO room stands.
 
-## Where things are
+## Where things are (2026-10-18, evening)
 
-- **Dev queue (2026-10-18):** empty. Done today: CW-093 (#108) and CW-091's
-  sideways scroll (#105) in #109 at `8e1b32d`; CW-092 (#107) in #110 at
-  `4725aa0` (HR dashboard wording, drawn empty-state icons in 30+ places,
-  dark-theme `--text-subtle`, red overdue badge counting calendar days),
-  reviewed on screen by the UX room. Not queued: CW-095 (departments 403 on a
-  manager's pages), P2.
-- **CW-094 confirmed by the owner (15:00):** direction B, top menu, earth tones,
-  after the Pilot A install; main colour olive #5b6b34 (left to the Asuna Bot
-  room, which chose it). Palette, dark theme, UX-20 to UX-25 and the API notes
-  are in the backlog. Not started before the install.
-- **CW-031 (#29):** PR #104 merged at `a4bf64a`, green: the demo's raw SQL names
-  the app schema (`appSchema()`), because Render's database user `cwork_demo`
-  shares the marker schema's name and made `current_schema()` the marker after
-  the first boot, so wake-ups re-ran migrations and resets restored nothing.
-  Deployed by the owner at 14:52 from `a4bf64a`: log shows reset `boot`, no
-  migrations. Waiting on the owner: redeploy at `8e1b32d` or later, then time a
-  cold start with HR → manager inside 30 s (64 s at 13:52, one-minute target;
-  Starter plan is his call). Close #29 when that passes.
-  Closed 2026-10-17: CW-090, CW-065, CW-073 and the
-  QA findings #94–#97 (a day inside a paid month is locked; fixes go in the
-  next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
-  pilot's real NAS, which nothing touches until the owner approves.
-- **QA:** first pass done 2026-10-17, 41 cases, results merged
-  (`docs/qa/pilot-a-2026-10.md`). S15 re-tested and passed; its minor note
-  (the import's locked-day count) fixed in `6103469`. Nothing waits on QA. CW-087 (#90) stays open for its support page. CW-085 (#88) waits on a
-  sample file and November. Not queued: CW-080, CW-086 (#89), a
-  scanner-number field on the employee page. Closed on 2026-10-16: CW-088;
-  on 2026-10-17: CW-061 (scanner import), CW-089 (accountant export and the
-  filed-total and parallel-run checks).
-- **Pilot A (by 31 October):** HR files social security itself (one keyed
-  file, uploaded); an outside accounting firm files ภ.ง.ด.1 via e-Filing.
-  Employee records come from HR into the CW-059 template. Real personal data
-  never goes into a cloud session.
-- **Pro edition:** decided and on `main` (`a6b0c88`): `ee/` under Elastic-2.0,
-  an annual self-hosted subscription, remote help only. Follow-ups are listed
-  in CW-077; CW-080 covers installation by a customer's own IT. Neither is
-  queued; the owner decides when. The landing page still says Apache-2.0 and
-  ฿0, which stays true of the free edition.
-
-## Done 2026-10-17 (evening)
-
-- PR #98 (README and landing page for the October features, the owner's Pro
-  and free-edition wording) and PR #99 (screenshots and a loop from the real
-  console, `docs/screenshots/capture-office.mjs`) merged at `6393314` and
-  `f93e1d7`, both green.
-- PR #100 merged at `d342b87`, green: the landing clip is now a 1920x1200
-  video (mp4 + webm + poster) instead of a 900px animated WebP that looked
-  soft on high-density tablets; the README GIF is 1600px wide. Not yet seen
-  on Safari or a real tablet.
-- PR #101 merged at `f4af52b`, green: the scanner import page uses the
-  English singular for a count of one (`plural()` in `web/src/lib/i18n`).
-- PR #102 merged at `20fb92b`, green: the สปส.1-10 PDF follows the redacted
-  sample's layout (total in Thai words, title in the name column, sheet
-  numbers top right, ruled total row). Not on it, because no field exists:
-  the employer's SSO account number, the six-digit branch number, the
-  address. Adding organisation fields for them is an open question for the
-  owner, not urgent while HR files online.
-
-## Done 2026-10-18
-
-- PR #103 merged at `feca645`, green: CW-066's HR half. Guide
-  `docs/guide/hr-daily-tasks.th.md` (four tasks, 14 demo screenshots) and the
-  screen fixes where a first-time HR user stopped; `SpreadsheetImport`'s
-  "1 problems" is fixed too. PO review added what "Record payment and publish
-  payslips" really does (checked in `markPaid`). #69 stays open for the real
-  HR test. Dev queue empty again.
+- **Dev:** CW-095 sent 20:1x (a manager's pages ask for departments and get
+  403). Direction: no new permission; the web does not call `/departments`
+  without `ORG_READ`, and the manager's department filter comes from the
+  employees the manager can see. The dev room may push back once. PO reviews
+  and merges when CI is green.
+- **QA:** pass 2 sent 20:1x on `9baa043`: the 41 cases of
+  `docs/qa/pilot-a-2026-10.md` again, plus cases for what merged today
+  (#103 CW-066, #104 CW-031, #109 CW-093/CW-091, #110 CW-092). Results go in a
+  "Pass 2" section of that file, by PR.
+- **Scanner number on the employee page:** already done, CW-090 (closed
+  2026-10-17). Not a new ticket.
+- **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the
+  owner on the web after the auto-mode classifier refused the push). Merging
+  a reviewed PR with green CI no longer needs asking; public wording still does.
+- **Storytelling draft:** `docs/drafts/storytelling-2026-10-18.th.md` on
+  branch `claude/serene-carson-fr7k0k` (`e89a850`), not on `main`. Waiting on
+  the owner, typed in this room: hero A or B, whether the six-problems heading
+  changes now or with CW-094, and the post. Then one PR for
+  `landing/index.html`, the COPY map in `landing/build-en.mjs` and both READMEs.
+- **CW-031 (#29):** fixes merged (#104, #109). Waiting on the owner: redeploy
+  at `8e1b32d` or later, then time a cold start with HR → manager inside 30 s
+  (64 s at 13:52; one-minute target; the Starter plan is his call). Close #29
+  when that passes.
+- **CW-094:** direction B, top menu, earth tones, olive main colour, after the
+  Pilot A install. Not started.
+- **Pilot A (by 31 October):** HR files social security itself; an outside
+  accounting firm files ภ.ง.ด.1. Real personal data never goes into a cloud
+  session. CW-062 (#62) stays open for the pilot's real NAS, untouched until
+  the owner approves.
 
 ## Waiting on the owner
 
-- For CW-066 (#69): the pilot's HR doing the four tasks in the guide unaided
-  before 31 October, and whether the pilot has a second person (the owner) to
-  approve payroll runs, since whoever calculates cannot approve.
-
-- For CW-062: approval to run the read-only `./check.sh` on the pilot's NAS
-  (it reports the DSM version, Container Manager and free space), a USB
-  drive or another machine for backups, and a password store for the key
-  `show-key.sh` prints. The HR import file.
-- After CW-089 (closed): what HR sends the accountant today, whether
-  e-Filing needs a finer income code than 40(1), and whether the first
-  payroll runs beside HR's method once.
-- A qualified reviewer for the payroll rules on #36, including the two
-  section 76 questions and question 4 (overtime in the SSO wage). Until it
-  is answered, carried advances should not be taken from a later payday
-  without the employee's signed consent.
-- For CW-085: the e-Services upload template HR uses (names, ID numbers and
-  amounts blanked). The printed form arrived redacted on 2026-10-17 and is
-  recorded in CW-085 as layout only; it is not the upload file. The owner
-  will ask HR.
-- After CW-088 (closed): how the pilot pays a remainder under 25 satang, its
-  blank paper form to compare with the printout, and what its accountant
-  keeps as proof of a cash payday (the owner is asking). How Pilot B pays
-  wages (bank files stay Pro until then).
-- CW-087: the support channel and response time (hours set 2026-10-17: 18:00–24:00 Thai time, temporary).
+- #69: the pilot's HR doing the four tasks in `docs/guide/hr-daily-tasks.th.md`
+  unaided before 31 October, and a second person to approve payroll runs.
+- CW-062: approval to run the read-only `./check.sh` on the pilot's NAS, a
+  backup drive, a password store for the key, the HR import file.
+- CW-085: the e-Services upload template HR uses, blanked.
+- After CW-088 and CW-089: remainders under 25 satang, the blank paper form,
+  proof of a cash payday, what HR sends the accountant, the e-Filing income
+  code, whether the first payroll runs beside HR's method.
+- #36: a qualified reviewer for the payroll rules.
+- CW-087: the support channel and response time (hours 18:00–24:00, temporary).
 - Prices and timing for the CW-077 items.
 
 ## How the PO room works
 
-- Reviews each ticket the dev room reports (`session_01A6A6oX85qwkQqRwjcjFy48`):
-  reads the diff against the acceptance, reproduces a red CI step locally,
-  and waits for every CI job on `main` (ten since `368c303`) to be green
-  before closing the issue with a comment.
-- Records the outcome in `docs/backlog.md` (Done row, phase table) and sends
-  the next ticket to the dev room. CI cancels an in-progress run on a new
-  push, so backlog commits go to `main` only while the dev room's CI is idle.
-- Changes to licences or public promises need the owner's own confirmation
-  typed in this room; a decision relayed from another room is not enough.
-- A vulnerability is never described in a public issue: draft an advisory for
-  the owner to file under Security → Report a vulnerability.
+- Dev room `session_01A6A6oX85qwkQqRwjcjFy48`, QA room
+  `session_01FygupdPGTCw1Qe7C1BYSCg`, UX room `session_01LMneSyoUa7YYq8CstMChdg`.
+- Reviews each branch against its acceptance, waits for every CI job, merges
+  with a pinned sha, records the outcome in the backlog, reports once to the
+  Asuna Bot room.
+- CI cancels an in-progress run on a new push: docs go to `main` only while
+  CI is idle, never straight after a merge.
+- Licences, editions and other public wording need the owner's own words
+  typed in this room. A vulnerability is never a public issue: draft an
+  advisory for the owner to file.
