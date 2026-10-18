@@ -16,17 +16,14 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   checked against WCAG 4.5:1.
 - The prototype is a private canvas owned by the project owner. Other rooms can open it
   only after the owner shares it.
-- **CW-092 (PR #110, `claude/new-session-syszvt`), screen review done 18 Oct.** It
-  passes, except for one fix requested before merge: the "overdue by N days" badge
-  counts 24-hour blocks (`Math.ceil` in `web/src/features/approvals/overdue.ts`), so a
-  task due on 4 Oct reads "15 days" on 18 Oct. It should count calendar days in the
-  company's time zone.
+- **CW-092 (PR #110), screen review passed on 18 Oct at `a930a07`.** The overdue badge
+  now counts calendar days in the browser's time zone (the same one `formatDate` shows),
+  is red, and the scanner-days empty state uses the clock icon. Merging is the PO's call.
 - CW-091 (sidebar horizontal scrollbar) is on `main` via #109. Verified: at 1366 px the
   sidebar's `scrollWidth` equals its `clientWidth` for both Thai and English.
 
 ## Next
 
-- Re-check only the overdue badge once the dev room pushes the fix to PR #110.
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
   questions about the two APIs it needs. `GET /approvals/pending` (organisation-wide,
   with the approver) does not exist yet. The leave balance after approval already
