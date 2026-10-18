@@ -6,16 +6,22 @@ this file only says where the PO room stands.
 
 ## Where things are
 
-- **Dev queue (2026-10-18):** CW-031 (#29) fix, sent 14:05. The demo the owner
-  deployed on Render (`https://cwork-demo.onrender.com`, main `ecf5ded`)
-  re-ran every migration and a "first boot" reset on waking, and its resets did
-  not restore the seed. Cause, reproduced on Postgres 16: the Render database
-  user is `cwork_demo`, the demo's marker schema has the same name, so once the
-  marker exists `"$user", public` makes `current_schema()` the marker schema and
-  every demo raw query looks in the wrong place. CI's user is `cwork`, so CI
-  never saw it. Asked for: raw SQL naming the app schema, a test that boots twice
-  with `cwork_demo` first on the search path. After merge the owner redeploys and
-  times it again (64 s at 13:52, one-minute target).
+- **Dev queue (2026-10-18):** (1) CW-031 follow-up: why the manager's inbox
+  showed empty at 13:5x although dev1's two items were there (the owner saw them
+  at 14:3x; nobody approved anything). Suspects: an approvals cache not keyed by
+  user when switching persona, or a session opened during a reset. Separate PR,
+  with a test that switching HR → manager shows the manager's list. Correct the
+  CHANGELOG line from #104 that calls the inbox emptied once the cause is known.
+  (2) New bug: the left sidebar scrolls sideways (owner's screenshot from the
+  demo); fix the overflow only, no redesign, Dev opens the issue. UXUI is drafting
+  a refreshed look and will send candidate tickets for the PO to order (before or
+  after the Pilot A install).
+- **CW-031 (#29):** PR #104 merged at `a4bf64a`, green: the demo's raw SQL names
+  the app schema (`appSchema()`), because Render's database user `cwork_demo`
+  shares the marker schema's name and made `current_schema()` the marker after
+  the first boot, so wake-ups re-ran migrations and resets restored nothing.
+  Waiting on the owner: Manual Deploy, log should say reset `boot`, then time a
+  cold start again (64 s at 13:52, one-minute target; Starter plan is his call).
   Closed 2026-10-17: CW-090, CW-065, CW-073 and the
   QA findings #94–#97 (a day inside a paid month is locked; fixes go in the
   next period). What remains waits on the owner or the pilot. CW-062 (#62) is done on the cloud side and stays open for the
