@@ -42,7 +42,7 @@ export function RequirePermission({ any }: { any: string[] }) {
     return (
       <div className="page">
         <EmptyState
-          icon="⊘"
+          icon="ban"
           title={t('You do not have access to this page')}
           description={t('If you think this is a mistake, contact your administrator')}
           action={

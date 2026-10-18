@@ -294,7 +294,7 @@ function PlansTab({ canManage }: { canManage: boolean }) {
           </div>
         ) : (
           <EmptyState
-            icon="❑"
+            icon="gift"
             title={t('No benefit plans yet')}
             description={t('Add a plan, then enrol employees so the cost enters payroll')}
           />
@@ -460,7 +460,7 @@ function EnrollTab() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="❑" title={t('This employee has no benefits yet')} />
+            <EmptyState icon="gift" title={t('This employee has no benefits yet')} />
           )}
         </Card>
       )}

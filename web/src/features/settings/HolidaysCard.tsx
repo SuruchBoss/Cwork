@@ -151,7 +151,7 @@ export function HolidaysCard({ year, canManage }: { year: number; canManage: boo
           </table>
         </div>
       ) : (
-        <EmptyState icon="⌗" title={t('No holidays set yet')} />
+        <EmptyState icon="calendar" title={t('No holidays set yet')} />
       )}
     </Card>
   );

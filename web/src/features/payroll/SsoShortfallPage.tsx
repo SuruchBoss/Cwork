@@ -17,7 +17,6 @@ import {
   Select,
   TableSkeleton,
 } from '@/components/ui';
-import { Icon } from '@/components/ui/icons';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatMoney, formatMonthYear, formatYear } from '@/lib/format';
@@ -126,13 +125,13 @@ export default function SsoShortfallPage() {
           <ShortfallTable report={data} />
         ) : data && data.payslipsChecked === 0 ? (
           <EmptyState
-            icon="฿"
+            icon="wallet"
             title={t('No locked or paid run in {year}', { year: formatYear(year) })}
             description={t('There is nothing to compare yet.')}
           />
         ) : (
           <EmptyState
-            icon={<Icon name="check" size={28} />}
+            icon="check"
             title={t('Nothing owed for {year}', { year: formatYear(year) })}
             description={t(
               'Every locked and paid run deducted what the ceiling for the year gives.',

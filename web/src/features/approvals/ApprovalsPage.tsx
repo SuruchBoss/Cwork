@@ -16,7 +16,6 @@ import {
   TableSkeleton,
   Textarea,
 } from '@/components/ui';
-import { Icon } from '@/components/ui/icons';
 import { api } from '@/lib/api-client';
 import { formatDate, formatNumber, formatRelative } from '@/lib/format';
 import { plural } from '@/lib/i18n';
@@ -203,7 +202,7 @@ export default function ApprovalsPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<Icon name="check" size={28} />}
+            icon="check"
             title={t('Nothing is waiting for your approval')}
           />
         )}

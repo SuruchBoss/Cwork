@@ -486,7 +486,7 @@ export default function PayrollRunPage() {
           </div>
         ) : (
           <EmptyState
-            icon="฿"
+            icon="wallet"
             title={t('No payslips in this run yet')}
             description={
               data.status === 'DRAFT'

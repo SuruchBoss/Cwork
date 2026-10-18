@@ -10,7 +10,7 @@ export default function NotFoundPage() {
   return (
     <div className="page">
       <EmptyState
-        icon="◌"
+        icon="search"
         title={t('Page not found')}
         description={t('The link may have changed, or you may not have access to this section')}
         action={

@@ -239,7 +239,7 @@ export default function AttendancePage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="◔" title={t('No attendance records in this range')} />
+          <EmptyState icon="clock" title={t('No attendance records in this range')} />
         )}
       </Card>
     </div>

@@ -355,7 +355,7 @@ export default function PayrollPage() {
           </div>
         ) : (
           <EmptyState
-            icon="฿"
+            icon="wallet"
             title={t('No pay periods yet')}
             description={t('Create the first period to start running payroll')}
           />
@@ -403,7 +403,7 @@ export default function PayrollPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="฿" title={t('No payroll runs yet')} />
+          <EmptyState icon="wallet" title={t('No payroll runs yet')} />
         )}
       </Card>
     </div>

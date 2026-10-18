@@ -247,7 +247,7 @@ export default function EmployeeDetailPage() {
               </table>
             </div>
           ) : (
-            <EmptyState icon="☰" title={t('No history yet')} />
+            <EmptyState icon="history" title={t('No history yet')} />
           )}
         </Card>
       )}

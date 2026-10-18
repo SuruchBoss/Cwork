@@ -131,7 +131,7 @@ export default function AdvancesPage() {
           />
         ) : (
           <EmptyState
-            icon="฿"
+            icon="wallet"
             title={owingOnly ? t('Nobody owes an advance') : t('No advances recorded')}
           />
         )}

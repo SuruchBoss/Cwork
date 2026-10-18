@@ -163,7 +163,7 @@ export default function AuditPage() {
             </div>
           </>
         ) : (
-          <EmptyState icon="⎙" title={t('No log entries match')} />
+          <EmptyState icon="history" title={t('No log entries match')} />
         )}
       </Card>
     </div>

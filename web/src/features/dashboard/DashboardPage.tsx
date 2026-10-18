@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import { Badge, Card, EmptyState, PageHeader, Person, Stat } from '@/components/ui';
-import { Icon } from '@/components/ui/icons';
 import { api } from '@/lib/api-client';
 import { formatDate, formatMoney, formatPeriod, formatRelative } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
@@ -142,7 +141,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <EmptyState
-              icon={<Icon name="check" size={28} />}
+              icon="check"
               title={t('Nothing is waiting for your approval')}
             />
           )}
@@ -194,7 +193,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <EmptyState icon="⏸" title={t('No leave requests pending')} />
+              <EmptyState icon="umbrella" title={t('No leave requests pending')} />
             )}
           </Card>
         )}

@@ -217,7 +217,7 @@ export default function EmployeeListPage() {
           </>
         ) : (
           <EmptyState
-            icon="☰"
+            icon="users"
             title={t('No employees match')}
             description={t('Try adjusting the filters')}
           />

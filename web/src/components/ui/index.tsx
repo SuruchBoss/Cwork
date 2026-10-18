@@ -12,6 +12,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { Link } from 'react-router-dom';
+import { Icon, type IconName } from './icons';
 import { ApiError } from '@/lib/api-error';
 import { useT } from '@/lib/i18n/useT';
 
@@ -215,12 +216,12 @@ export function Person({
 }
 
 export function EmptyState({
-  icon = '◌',
+  icon = 'file',
   title,
   description,
   action,
 }: {
-  icon?: ReactNode;
+  icon?: IconName;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -228,7 +229,7 @@ export function EmptyState({
   return (
     <div className="empty">
       <div className="empty__icon" aria-hidden>
-        {icon}
+        <Icon name={icon} size={28} />
       </div>
       <div style={{ fontWeight: 600, color: 'var(--text)' }}>{title}</div>
       {description && <p style={{ marginTop: 4 }}>{description}</p>}

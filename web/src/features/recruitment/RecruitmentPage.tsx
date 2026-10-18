@@ -122,7 +122,7 @@ export default function RecruitmentPage() {
       ) : total === 0 ? (
         <Card>
           <EmptyState
-            icon="⚑"
+            icon="userPlus"
             title={t('No applications yet')}
             description={t('Publish a posting to start receiving applications')}
           />

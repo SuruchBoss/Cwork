@@ -170,7 +170,7 @@ export default function ExpensesPage() {
             </table>
           </div>
         ) : (
-          <EmptyState icon="▤" title={t('No expense claims match')} />
+          <EmptyState icon="receipt" title={t('No expense claims match')} />
         )}
       </Card>
     </div>
