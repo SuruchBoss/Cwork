@@ -371,6 +371,15 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
+### CW-098 · English payroll warnings say "Compensation" for the Pay card
+`P2` · web · **XS** · raised by the dev room while doing CW-097, 2026-10-18
+
+The four payroll warnings CW-097 fixed in Thai still say "under Compensation" in
+English, where the employee page's card is "Pay". They name the card as the
+English screen does, and the CW-097 test fails if "Compensation" comes back.
+Not the landing page: its cash-sheet picture and alt text still show the removed
+note, and landing wording waits on the owner's own words.
+
 ### CW-097 · What CW-096 left: the README's cash-sheet picture, red in the dark theme, "ค่าตอบแทน" in warnings
 `P1` · web · docs · **S** · raised by the dev room while doing CW-096, 2026-10-18
 

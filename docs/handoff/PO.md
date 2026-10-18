@@ -6,8 +6,10 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-10-18, evening)
 
-- **Dev:** CW-097 in progress (README cash-sheet picture and alt text,
-  dark-theme danger red, "ค่าตอบแทน" in payroll warnings). CW-096 merged at
+- **Dev:** CW-097 is PR #118 at `a9b2e0f` (README cash-sheet picture retaken
+  and checked by eye, alt text, dark-theme danger red, "ค่าจ้าง" in warnings);
+  the PO merges when green. CW-098 (the same four warnings in English) is
+  sent, to start after #118. CW-096 merged at
   `4b78ff0` (PR #117, #112–#115 closed); its first CI run was red on a
   cash-sheet e2e that still wanted the removed note, fixed in `c107be8`.
 - **QA:** pass 2 merged (PR #116, `8f6dbf4`). Re-test of #112–#115 on
@@ -36,6 +38,10 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
+- The landing page's cash-sheet picture (`landing/assets/shots/cash-sheet.*.webp`)
+  and its Thai and English alt text still show and describe the red note that
+  named the pilot company. A new picture is ready (CW-097); landing wording needs
+  the owner's own words in this room.
 - #69: the pilot's HR doing the four tasks in `docs/guide/hr-daily-tasks.th.md`
   unaided before 31 October, and a second person to approve payroll runs.
 - CW-062: approval to run the read-only `./check.sh` on the pilot's NAS, a
