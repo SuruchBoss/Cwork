@@ -401,7 +401,8 @@ export const thMessages: Record<string, string> = {
   'No conversations yet': 'ยังไม่มีบทสนทนา',
 
   // Payroll
-  'Pay periods, runs and payslips': 'งวดเงินเดือน รอบการคำนวณ และสลิปเงินเดือน',
+  'Create a pay period, create its run, calculate it, have someone else approve it, then print the payslips':
+    'สร้างงวด สร้างรอบคำนวณของงวดนั้น คำนวณ ให้อีกคนอนุมัติ แล้วพิมพ์สลิป',
   'New pay period': 'สร้างงวดใหม่',
   'Latest run': 'รอบล่าสุด',
   'Total gross': 'รายได้รวม',
@@ -439,8 +440,16 @@ export const thMessages: Record<string, string> = {
   'Calculated {date}': 'คำนวณเมื่อ {date}',
   'Paid {date}': 'จ่ายเมื่อ {date}',
   'Calculation failed: {reason}': 'การคำนวณล้มเหลว: {reason}',
-  'Whoever calculated this run cannot approve their own — another authorised person must approve it':
-    'ผู้ที่คำนวณรอบนี้ไม่สามารถอนุมัติรอบของตัวเองได้ — ต้องให้ผู้มีสิทธิ์อีกคนอนุมัติ',
+  'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
+    'ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
+  '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page under Compensation, then calculate again.':
+    'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงาน หัวข้อค่าตอบแทน แล้วกดคำนวณอีกครั้ง',
+  '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page under Compensation, then calculate again.':
+    'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงานแต่ละคน หัวข้อค่าตอบแทน แล้วกดคำนวณอีกครั้ง',
+  'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page under Compensation, then calculate again.':
+    'งวดนี้ไม่มีใครได้รับค่าจ้างรายวัน งวดครึ่งเดือนจ่ายเฉพาะพนักงานที่ตั้งค่าจ้างรายวันไว้ ตั้งได้ที่หน้าพนักงาน หัวข้อค่าตอบแทน แล้วกดคำนวณอีกครั้ง',
+  'Nobody has a monthly salary set for this period. Set it on the employee’s page under Compensation, then calculate again.':
+    'งวดนี้ยังไม่มีใครตั้งเงินเดือนไว้ ตั้งได้ที่หน้าพนักงาน หัวข้อค่าตอบแทน แล้วกดคำนวณอีกครั้ง',
   'Total deductions': 'รายการหักรวม',
   'Employer cost {amount}': 'ต้นทุนนายจ้าง {amount}',
   'Payslips ({count})': 'สลิปเงินเดือน ({count})',
@@ -939,8 +948,8 @@ export const thMessages: Record<string, string> = {
   '{count} scanner number belongs to nobody yet; match it on the review page':
     'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
   '1. Choose the scanner’s file': '1. เลือกไฟล์จากเครื่องสแกน',
-  'Use the file the scanner wrote, as it is: it may be called .xls but it is read as text. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.':
-    'ใช้ไฟล์ที่เครื่องสแกนส่งออกมาตามเดิม ชื่อไฟล์อาจเป็น .xls แต่ระบบอ่านเป็นข้อความ ไฟล์จะถูกตรวจก่อน ยังไม่บันทึกอะไร ลายนิ้วมือไม่อยู่ในไฟล์และระบบไม่เก็บ',
+  'Use the file the scanner wrote, as it is: do not open it in Excel and save it again. It may be called .xls. It is checked first; nothing is saved yet. Fingerprints are never part of the file and are never kept.':
+    'ใช้ไฟล์ที่เครื่องสแกนส่งออกมาตามเดิม อย่าเปิดใน Excel แล้วบันทึกทับ ชื่อไฟล์เป็น .xls ได้ ไฟล์จะถูกตรวจก่อน ยังไม่บันทึกอะไร ลายนิ้วมือไม่อยู่ในไฟล์และระบบไม่เก็บ',
   '2. Fix these in the file': '2. แก้ไขรายการเหล่านี้ในไฟล์',
   Line: 'บรรทัด',
   '2. What this file holds': '2. ในไฟล์นี้มีอะไร',
@@ -970,6 +979,17 @@ export const thMessages: Record<string, string> = {
   'No clock-in': 'ไม่มีเวลาเข้า',
   'Clock-out for {day}': 'เวลาเลิกงานของ {day}',
   'No clock-out': 'ไม่มีเวลาออก',
+  'In {time}': 'เข้า {time}',
+  'Out {time}': 'ออก {time}',
+  '{who}, {day}: left out, not counted': '{who} วันที่ {day}: ไม่นับวันนี้แล้ว',
+  '{who}, {day}: counted {from} to {to}': '{who} วันที่ {day}: นับเวลา {from} ถึง {to} แล้ว',
+  '{who}, {day}: counted with clock-in {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาเข้า {time} แล้ว',
+  '{who}, {day}: counted with clock-out {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาออก {time} แล้ว',
+  'Not counted until you say whose they are': 'ยังไม่นับจนกว่าจะบอกว่าเป็นของใคร',
+  '{count} day has no punch at all. Choose “No punch” under Show to see it.':
+    'มี {count} วันที่ไม่มีการสแกนเลย ดูได้โดยเลือก “ไม่มีการสแกน” ในช่อง “แสดง”',
+  '{count} days have no punch at all. Choose “No punch” under Show to see it.':
+    'มี {count} วันที่ไม่มีการสแกนเลย ดูได้โดยเลือก “ไม่มีการสแกน” ในช่อง “แสดง”',
   'Use these times': 'ใช้เวลาเหล่านี้',
   'Do not count this day': 'ไม่นับวันนี้',
   'Number {number} registered: {days} days matched, {punches} punches added':

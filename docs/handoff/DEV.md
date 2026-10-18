@@ -7,29 +7,41 @@ this file only says where the dev room stands.
 ## Where things are
 
 - Accepted by the PO and on `main`: CW-061, CW-089, CW-062 (cloud side), CW-090, CW-065,
-  CW-073, #94-#97, the scanner import's `lockedDays`, the office pictures (#98, #99) and the
-  sharper clip (#100). `#62` stays open for the real NAS: the owner has to approve
-  `./check.sh` on it.
-- **On branch `claude/new-session-syszvt`, waiting for the PO to open the PR:**
-  - English singular/plural on the scanner import page (`a20df9b`): `plural(count, one,
-    other)` in `web/src/lib/i18n` picks between two keys; each singular has its own Thai
-    entry. `SpreadsheetImport.tsx` still says "{count} problems" for one (shared key, not
-    touched).
-  - CW-085 layout of the social security filing PDF (`87a55c0`): total of line 4 in Thai
-    words (new `core/utils/baht-text.util.ts`, the first amount-in-words in Cwork), name
-    column headed "คำนำหน้านาม-ชื่อ-ชื่อสกุล" with `Employee.titleTh` in front where HR
-    recorded one (passed by `exportFile`; `sheet()` and the calculation untouched), the rate
-    and "แผ่นที่ N ในจำนวน M แผ่น" in the heading of each part 2 sheet, a rule above "รวม".
-    Not on the PDF because Cwork has no such field: the establishment's social security
-    account number and the six-digit branch number. Counts now 787 backend unit, 255 web.
+  CW-073, #94-#97, the scanner import's `lockedDays`, the office pictures (#98, #99), the
+  sharper clip (#100), the English plural on the scanner import page, and the social
+  security filing PDF layout (CW-085, #102). `#62` stays open for the real NAS: the owner
+  has to approve `./check.sh` on it.
+- **On branch `claude/new-session-syszvt`, waiting for the PO to open the PR(s): CW-066,
+  the HR half.** The four jobs of the pilot's HR at a PC (scanner file, leave, shadow
+  payroll for 15 days and a month, payslips and receipt sheet) walked in Thai at 1366×768:
+  - Screen fixes (web only, with tests): scanner review says what a decision did and labels
+    each time in/out, keeps the date on one line, no longer shows "days with no punch" under
+    the unregistered numbers; the import page says not to open the file in Excel; leave
+    moves the list to the status it was recorded as; the pay date follows the period end,
+    creating a run opens it, a refused run says why, an empty run says whether nobody has a
+    daily wage or a salary and where to set it, left-out employees are named, the approval
+    note says who approves; date fields select on entry; "1 problems" on the spreadsheet
+    imports uses `plural()`. Web counts: 267.
+  - The guide `docs/guide/hr-daily-tasks.th.md`, a picture per step
+    (`docs/guide/img/hr-NN-*.png`), made by `docs/guide/capture-hr-tasks.mjs` on a freshly
+    seeded database (it imports, records leave and runs payroll for real).
+  - Re-shot because the screens changed: `07-payroll` (th, en), `24-scanner-days`,
+    `25-scanner-preview` and the landing stills of the same, the office clip and GIF. A
+    full `capture.mjs` run was thrown away except `07-payroll`: every other still is
+    unchanged apart from today's date.
+  - Splitting is possible: screen fixes and tests on one side, guide and pictures on the
+    other.
+- Not done, and the ticket's own acceptance: a real HR person doing the four jobs unaided
+  before 31 October, with what stopped them written in the ticket. Items 3 and 6 of the
+  re-aimed list and the mobile app are out of this ticket.
 - Pictures: `docs/screenshots/capture-office.mjs` takes its own 2x pictures (Playwright's
-  video is 1x whatever the pixel ratio) and encodes the landing clip as mp4/webm with a
-  poster and the README GIF. Run it on a freshly seeded database; it changes it.
-  `KEEP_SCRATCH=1` keeps the pictures.
+  video is 1x whatever the pixel ratio) and encodes the landing clip. Run any capture
+  script on a freshly seeded database; they change it. `KEEP_SCRATCH=1` keeps the frames.
 - Waiting on others: CW-085 upload file needs the e-Services layout (the owner will ask the
-  pilot's HR); CW-080 and CW-086 (#89) are not queued.
+  pilot's HR); CW-080 and CW-086 (#89) are not queued. Whether the pilot has a second
+  person who may approve a payroll run is for the owner (the guide tells HR to ask them).
 
 ## Next
 
-- Nothing queued. Do not start CW-085's upload file, CW-080 or CW-086, nor the
+- Nothing queued after CW-066. Do not start CW-085's upload file, CW-080 or CW-086, nor the
   support-scope page. Do not touch the real NAS until the owner approves.

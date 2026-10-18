@@ -46,7 +46,12 @@ export default function LeavePage() {
     queryKey: qk.leaveRequests({ status, leaveTypeId, page }),
     queryFn: () =>
       api.get<Page<LeaveRequest>>('/leave/requests', {
-        query: { status: status || undefined, leaveTypeId: leaveTypeId || undefined, page, limit: 25 },
+        query: {
+          status: status || undefined,
+          leaveTypeId: leaveTypeId || undefined,
+          page,
+          limit: 25,
+        },
       }),
     placeholderData: (previous) => previous,
   });
@@ -92,12 +97,24 @@ export default function LeavePage() {
       />
 
       {recording && (
-        <RecordLeavePanel onClose={() => setRecording(false)} onRecorded={setToast} />
+        <RecordLeavePanel
+          onClose={() => setRecording(false)}
+          onRecorded={(recorded) => {
+            setToast(recorded);
+            // Show the list where the new leave is, not under a filter that hides it.
+            setStatus(recorded.status);
+            setPage(1);
+          }}
+        />
       )}
       <div className="toast-region" role="status" aria-live="polite">
         {toast && (
           <div className="toast">
-            {t('{type} for {name}, {dates}, recorded', { ...toast })}
+            {t('{type} for {name}, {dates}, recorded', {
+              type: toast.type,
+              name: toast.name,
+              dates: toast.dates,
+            })}
           </div>
         )}
       </div>
@@ -191,14 +208,13 @@ export default function LeavePage() {
                             aria-hidden
                           />
                           {request.leaveType.name}
-                          {!request.leaveType.isPaid && (
-                            <Badge tone="neutral">{t('Unpaid')}</Badge>
-                          )}
+                          {!request.leaveType.isPaid && <Badge tone="neutral">{t('Unpaid')}</Badge>}
                         </span>
                       </td>
                       <td data-label={t('Date range')}>
                         {formatDate(request.startDate)}
-                        {request.startDate !== request.endDate && ` – ${formatDate(request.endDate)}`}
+                        {request.startDate !== request.endDate &&
+                          ` – ${formatDate(request.endDate)}`}
                       </td>
                       <td className="num" data-label={t('Days')}>
                         {formatNumber(request.totalDays, 1)}

@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import {
   Badge,
@@ -46,6 +46,7 @@ function cycleDates(year: number, month: number, cycle: Cycle) {
 
 export default function PayrollPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const can = useAuthStore((s) => s.can);
   const t = useT();
   const canRun = can(P.PAYROLL_RUN);
@@ -58,15 +59,24 @@ export default function PayrollPage() {
     year: now.getFullYear(),
     month: now.getMonth() + 1,
     ...cycleDates(now.getFullYear(), now.getMonth() + 1, 'MONTH'),
-    payDate: '',
+    payDate: cycleDates(now.getFullYear(), now.getMonth() + 1, 'MONTH').periodEnd,
   }));
+  /** Until HR picks a pay date, it follows the end of the period. */
+  const [payDateChosen, setPayDateChosen] = useState(false);
   /** A change of year, month or cycle moves the dates with it. */
   const choose = (next: { year?: number; month?: number; cycle?: Cycle }) => {
     const year = next.year ?? form.year;
     const month = next.month ?? form.month;
     const nextCycle = next.cycle ?? cycle;
     setCycle(nextCycle);
-    setForm({ ...form, year, month, ...cycleDates(year, month, nextCycle) });
+    const dates = cycleDates(year, month, nextCycle);
+    setForm({
+      ...form,
+      year,
+      month,
+      ...dates,
+      ...(payDateChosen ? {} : { payDate: dates.periodEnd }),
+    });
   };
 
   const periods = useQuery({
@@ -95,7 +105,11 @@ export default function PayrollPage() {
 
   const createRun = useMutation({
     mutationFn: (periodId: string) => api.post<PayrollRun>('/payroll/runs', { periodId }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['payroll'] }),
+    // The next step is on the run's own page, so go there.
+    onSuccess: (run) => {
+      void queryClient.invalidateQueries({ queryKey: ['payroll'] });
+      navigate(`/payroll/runs/${run.id}`);
+    },
   });
 
   // The server reconciles before it sends anything; a period that does not
@@ -116,7 +130,9 @@ export default function PayrollPage() {
     <div className="page">
       <PageHeader
         title={t('Payroll')}
-        description={t('Pay periods, runs and payslips')}
+        description={t(
+          'Create a pay period, create its run, calculate it, have someone else approve it, then print the payslips',
+        )}
         actions={
           (canRun || canExport) && (
             <>
@@ -178,7 +194,10 @@ export default function PayrollPage() {
               </Select>
             </Field>
             <Field label={t('Month')}>
-              <Select value={form.month} onChange={(e) => choose({ month: Number(e.target.value) })}>
+              <Select
+                value={form.month}
+                onChange={(e) => choose({ month: Number(e.target.value) })}
+              >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                   <option key={month} value={month}>
                     {formatDate(new Date(2000, month - 1, 1), 'LLLL')}
@@ -188,7 +207,9 @@ export default function PayrollPage() {
             </Field>
             <Field
               label={t('Pays')}
-              hint={cycle === 'MONTH' ? undefined : t('Half-month periods pay daily-wage employees')}
+              hint={
+                cycle === 'MONTH' ? undefined : t('Half-month periods pay daily-wage employees')
+              }
             >
               <Select value={cycle} onChange={(e) => choose({ cycle: e.target.value as Cycle })}>
                 <option value="MONTH">{t('The whole month')}</option>
@@ -213,7 +234,10 @@ export default function PayrollPage() {
             <Field label={t('Pay date')}>
               <DateInput
                 value={form.payDate}
-                onChange={(value) => setForm({ ...form, payDate: value })}
+                onChange={(value) => {
+                  setPayDateChosen(true);
+                  setForm({ ...form, payDate: value });
+                }}
               />
             </Field>
             <Button
@@ -233,9 +257,17 @@ export default function PayrollPage() {
         </Card>
       )}
 
+      {createRun.isError && (
+        <div className="alert alert--danger" role="alert">
+          {createRun.error instanceof ApiError ? createRun.error.message : t('Could not create')}
+        </div>
+      )}
+
       {exportPeriod.isError && (
         <div className="alert alert--danger" role="alert">
-          {exportPeriod.error instanceof ApiError ? exportPeriod.error.message : t('Could not export')}
+          {exportPeriod.error instanceof ApiError
+            ? exportPeriod.error.message
+            : t('Could not export')}
         </div>
       )}
 

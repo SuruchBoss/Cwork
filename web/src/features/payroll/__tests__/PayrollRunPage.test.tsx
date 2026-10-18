@@ -348,3 +348,50 @@ describe('Printing payslips and wage receipts (CW-071)', () => {
     expect(screen.queryByRole('button', { name: 'พิมพ์สลิปเงินเดือน' })).toBeNull();
   });
 });
+
+describe('A run HR meets for the first time', () => {
+  it('explains an empty half-month run instead of showing zero and nothing else', async () => {
+    serve({ ...secondHalf, status: 'CALCULATED', firstHalf: undefined });
+    render();
+
+    expect(
+      await screen.findByText(/งวดนี้ไม่มีใครได้รับค่าจ้างรายวัน งวดครึ่งเดือนจ่ายเฉพาะ/),
+    ).toBeInTheDocument();
+  });
+
+  it('explains an empty monthly run in its own words', async () => {
+    serve({
+      ...secondHalf,
+      status: 'CALCULATED',
+      firstHalf: undefined,
+      period: { ...secondHalf.period, payFrequency: 'MONTHLY', half: 0 },
+    });
+    render();
+
+    expect(await screen.findByText(/งวดนี้ยังไม่มีใครตั้งเงินเดือนไว้/)).toBeInTheDocument();
+  });
+
+  it('names the employees the calculation left out', async () => {
+    serve({ ...secondHalf, firstHalf: undefined });
+    vi.mocked(api.post).mockResolvedValue({
+      skipped: [{ employeeCode: 'D009', reason: 'No effective compensation record' }],
+    });
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'คำนวณเงินเดือน' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'มีพนักงาน 1 คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: D009',
+    );
+  });
+
+  it('tells whoever calculated who has to approve, and how', async () => {
+    serve({ ...secondHalf, status: 'CALCULATED', firstHalf: undefined, payslips: [slip] });
+    render();
+
+    expect(
+      await screen.findByText(/ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน/),
+    ).toBeInTheDocument();
+  });
+});

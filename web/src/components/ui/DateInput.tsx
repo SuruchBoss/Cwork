@@ -73,6 +73,7 @@ function ThaiDateInput({
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
+  const selectOnFocus = useRef(false);
 
   // A new value from outside (a reset, a date picked elsewhere) replaces what is shown.
   useEffect(() => {
@@ -132,7 +133,20 @@ function ThaiDateInput({
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
+          onFocus={(e) => {
+            // Typing replaces the date rather than landing in the middle of it.
+            selectOnFocus.current = true;
+            e.currentTarget.select();
+          }}
+          onMouseUp={(e) => {
+            // The click that focused the field would otherwise drop the selection.
+            if (selectOnFocus.current) e.preventDefault();
+            selectOnFocus.current = false;
+          }}
+          onBlur={() => {
+            selectOnFocus.current = false;
+            commit();
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') commit();
           }}

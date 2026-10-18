@@ -608,6 +608,24 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **The everyday HR tasks, walked as a first-time user would** (CW-066). Four jobs
+  at 1366×768 in Thai, from the scanner file to the printed payslips, and what
+  people would stop at: the scanner review page says what a decision did ("… 5
+  ต.ค. 2569: นับเวลา 08:07 ถึง 17:14 แล้ว"), labels each time in the lists as in
+  or out, keeps the date on one line, no longer hangs "days with no punch" under
+  the count of unregistered numbers, and the import page says not to open the
+  file in Excel and save it again. **Leave:** after recording leave the list moves
+  to the status it was recorded as, so the new row is on screen instead of hidden
+  behind the default "pending" filter. **Payroll:** the pay date fills with the end
+  of the period until HR picks one, creating a run opens it, a refused run says
+  why, the page's one-line description names the order of the steps, an empty run
+  says whether nobody has a daily wage (half-month) or a salary (month) and where
+  to set it, the employees a calculation left out are listed by code, and the note
+  on approval says who has to approve and how. **Date fields** select their
+  contents when entered, so typing replaces the date instead of landing in the
+  middle of it. Thai guide `docs/guide/hr-daily-tasks.th.md` with a picture per
+  step, made by `docs/guide/capture-hr-tasks.mjs` from the demo company.
+
 - **The social security filing PDF reads more like the form** (CW-085). Against a
   redacted, filed สปส.1-10: part 1 writes the total of line 4 in Thai words
   under the figure (a new `bahtText`, which is also the first amount-in-words in
@@ -759,7 +777,8 @@ entry, tags it and publishes the notes.
   owner, problems in the file, lines, days in a paid month) now read correctly for
   one. A small `plural(count, one, other)` picks between two keys, so the singular
   is its own English text with its own Thai entry (the same Thai: Thai does not
-  inflect). Tests cover a count of one and of two.
+  inflect). Tests cover a count of one and of two. The spreadsheet import pages'
+  "{count} problems" uses it too.
 - **NAS installer: a used port is never reported as free, and an address change has
   a script** (#96, #97). `check.sh` read "free" whenever neither `ss` nor
   `netstat` existed; it now reads the kernel's own table (`/proc/net/tcp`,

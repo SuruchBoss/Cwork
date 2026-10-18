@@ -683,6 +683,23 @@ can cancel started leave and, until CW-067, HR could not file leave for anyone. 
 the import pages from the UX review on #59, and a Thai guide for them merged as
 #76, which now points to the Organisation form from CW-072.
 
+**Status 2026-10-18: the HR half is walked.** The four jobs for HR at a PC (scanner
+file and one day corrected, leave recorded for an employee, the shadow payroll for
+a 15-day period and a month, payslips and the receipt sheet printed), at 1366×768
+in Thai, from a seeded company. Where a first-time user stops, and what changed:
+the scanner review did not say what a decision had done and hung "days with no
+punch" under the count of unregistered numbers; leave recorded as approved
+vanished behind the default "pending" filter; a period needed a pay date typed
+before it could be created, creating a run left HR on the list to find it, an empty
+run said nothing about why, the employees a calculation left out were never
+named, and the date field put typed digits in the middle of the old date. Fixed
+in the web screens with tests; "1 problems" on the spreadsheet imports now uses
+`plural()` too. The guide is `docs/guide/hr-daily-tasks.th.md` with a picture per
+step (`docs/guide/capture-hr-tasks.mjs`). Not done: a real HR person doing it
+unaided (before 31 October, still open), tasks 3 and 6, the mobile app.
+Approving a run needs a second person with the permission, so the guide says so
+at that step; whether the pilot has one is for the owner to confirm.
+
 **Files** `mobile/lib/features/leave/`, `mobile/lib/features/approvals/`,
 `mobile/lib/features/home/`, `web/src/features/employees/EmployeeImportPage.tsx`,
 `web/src/features/leave/LeaveImportPage.tsx`, `docs/`

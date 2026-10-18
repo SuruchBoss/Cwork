@@ -189,6 +189,13 @@ describe('Recording leave for an employee (CW-067)', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       /บันทึกลาป่วยของ สมชาย ใจดี .+ แล้ว/,
     );
+    // The list moves to where the new leave is, not a filter that hides it.
+    await waitFor(() =>
+      expect(get).toHaveBeenCalledWith(
+        '/leave/requests',
+        expect.objectContaining({ query: expect.objectContaining({ status: 'APPROVED' }) }),
+      ),
+    );
     // The panel stays open for the next person: employee cleared, leave type kept.
     const search = within(panel).getByLabelText('พนักงาน');
     expect(search).toHaveValue('');

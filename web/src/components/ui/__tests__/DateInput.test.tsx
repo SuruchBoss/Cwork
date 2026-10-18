@@ -49,6 +49,19 @@ describe('A Thai date field (CW-058)', () => {
     await expectNoAxeViolations(container);
   });
 
+  it('selects the whole date when the field is entered, so typing replaces it', async () => {
+    const onChange = vi.fn();
+    render(<Holder initial="2026-10-01" onChange={onChange} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByLabelText('วันเริ่ม'));
+    await user.keyboard('20/10/2569');
+    await user.tab();
+
+    expect(onChange).toHaveBeenCalledWith('2026-10-20');
+    expect(screen.getByLabelText('วันเริ่ม')).toHaveValue('20 ต.ค. 2569');
+  });
+
   it('stores the ISO date of what is typed', async () => {
     const onChange = vi.fn();
     render(<Holder onChange={onChange} />);

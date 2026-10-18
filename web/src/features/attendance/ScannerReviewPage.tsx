@@ -21,6 +21,7 @@ import {
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, formatNumber } from '@/lib/format';
+import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import type { EmployeeSummary, Page } from '@/types/api';
 import { ScannerStatusBadge, UnmappedTable } from './ScannerParts';
@@ -74,11 +75,12 @@ function DecisionControls({
     return <Badge tone="neutral">{t('Payroll has used this day')}</Badge>;
   }
 
-  const timeOptions = day.times.map((time) => (
-    <option key={time} value={time}>
-      {time}
-    </option>
-  ));
+  const optionsFor = (kind: 'In' | 'Out') =>
+    day.times.map((time) => (
+      <option key={time} value={time}>
+        {kind === 'In' ? t('In {time}', { time }) : t('Out {time}', { time })}
+      </option>
+    ));
   const label = formatDate(day.workDate);
   const valid = Boolean(clockIn || clockOut) && (!clockIn || !clockOut || clockOut > clockIn);
 
@@ -90,7 +92,7 @@ function DecisionControls({
         onChange={(event) => setClockIn(event.target.value)}
       >
         <option value="">{t('No clock-in')}</option>
-        {timeOptions}
+        {optionsFor('In')}
       </Select>
       <Select
         aria-label={t('Clock-out for {day}', { day: `${day.scannerNumber} ${label}` })}
@@ -98,7 +100,7 @@ function DecisionControls({
         onChange={(event) => setClockOut(event.target.value)}
       >
         <option value="">{t('No clock-out')}</option>
-        {timeOptions}
+        {optionsFor('Out')}
       </Select>
       <Button
         size="sm"
@@ -258,14 +260,44 @@ export default function ScannerReviewPage() {
   });
 
   const decide = useMutation({
-    mutationFn: ({ id, decision }: { id: string; decision: ScannerDecision }) =>
-      api.post(`/attendance/scanner/days/${id}/decision`, decision),
+    mutationFn: ({
+      id,
+      decision,
+    }: {
+      id: string;
+      decision: ScannerDecision;
+      who: string;
+      date: string;
+    }) => api.post(`/attendance/scanner/days/${id}/decision`, decision),
     onMutate: ({ id }) => {
       setFailure(null);
       setDeciding(id);
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, { decision, who, date }) => {
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      const day = formatDate(date);
+      setNotice(
+        decision.action === 'IGNORE'
+          ? t('{who}, {day}: left out, not counted', { who, day })
+          : decision.clockIn && decision.clockOut
+            ? t('{who}, {day}: counted {from} to {to}', {
+                who,
+                day,
+                from: decision.clockIn,
+                to: decision.clockOut,
+              })
+            : decision.clockIn
+              ? t('{who}, {day}: counted with clock-in {time} only', {
+                  who,
+                  day,
+                  time: decision.clockIn,
+                })
+              : t('{who}, {day}: counted with clock-out {time} only', {
+                  who,
+                  day,
+                  time: decision.clockOut ?? '—',
+                }),
+      );
     },
     onError: (caught) => setFailure(reasonOf(caught, t('Something went wrong'))),
     onSettled: () => setDeciding(null),
@@ -343,9 +375,21 @@ export default function ScannerReviewPage() {
           <Stat
             label={t('Number not registered')}
             value={formatNumber(totals.unmapped)}
-            hint={t('{count} days with no punch', { count: formatNumber(totals.noPunch) })}
+            hint={totals.unmapped > 0 ? t('Not counted until you say whose they are') : undefined}
           />
         </div>
+      )}
+      {totals && totals.noPunch > 0 && (
+        <p className="subtle" style={{ margin: 0 }}>
+          {t(
+            plural(
+              totals.noPunch,
+              '{count} day has no punch at all. Choose “No punch” under Show to see it.',
+              '{count} days have no punch at all. Choose “No punch” under Show to see it.',
+            ),
+            { count: formatNumber(totals.noPunch) },
+          )}
+        </p>
       )}
 
       {(unmapped.data?.length ?? 0) > 0 && (
@@ -442,7 +486,7 @@ export default function ScannerReviewPage() {
               <tbody>
                 {data.items.map((day) => (
                   <tr key={day.id}>
-                    <td>{formatDate(day.workDate)}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(day.workDate)}</td>
                     <td className="mono">{day.scannerNumber}</td>
                     <td>
                       {day.employee ? (
@@ -480,7 +524,14 @@ export default function ScannerReviewPage() {
                           key={`${day.id}:${day.times.join(',')}:${day.decision?.decidedAt ?? ''}`}
                           day={day}
                           busy={deciding === day.id}
-                          onDecide={(decision) => decide.mutate({ id: day.id, decision })}
+                          onDecide={(decision) =>
+                            decide.mutate({
+                              id: day.id,
+                              decision,
+                              who: day.employee?.name ?? day.name,
+                              date: day.workDate,
+                            })
+                          }
                         />
                       ) : day.locked ? (
                         <Badge tone="neutral">{t('Payroll has used this day')}</Badge>
