@@ -6,30 +6,27 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: CW-061, CW-089, CW-062 (cloud side), CW-090, CW-065, CW-073, #94-#97, the
-  office pictures and clip, CW-085's PDF layout (#102), CW-066's HR half (#103) and CW-031's
-  schema fix (#104).
-- **#109 merged (8e1b32d):** CW-093 (the web cache is cleared when a session is adopted and at
-  sign-out) and the overflow half of CW-091.
-- **On branch `claude/new-session-syszvt`, restarted from main after #109 (CW-092, pushed, the PO
-  opens the PR):** HR dashboard card and empty-box wording; every empty state in the console draws
-  a named icon (`EmptyState icon` is an `IconName`, so a character is a type error; `check`, `ban`,
-  `search` added) instead of ✓ ⏸ ⌗ ◷ and the like, which the PO asked for in one pass; dark
-  `--text-subtle` #8a94a2; overdue badge (red, calendar days from the due date as `formatDate`
-  shows it, so "Due 4 Oct" on 18 Oct is 14) and order on the approvals page (`overdue.ts`); the
-  CW-031 CHANGELOG entry no longer says the inbox was emptied and the cache entry is CW-093.
-- **Not in it, by the PO's decision:** pinned footer / 36 px rows of CW-091 and the "Report a
+- On `main`: everything up to #110 (CW-092, CW-093 and the overflow half of CW-091 included).
+- **On branch `claude/new-session-syszvt`, restarted from main `9baa043` (CW-095, pushed, the PO
+  opens the PR):** the department filter on the employee register and on the shifts and roster page
+  no longer calls `/departments` for someone without `org:read`. `useDepartmentOptions`
+  (`web/src/lib/departments.ts`) asks `/departments` only with `org:read`; without it, it lists
+  `/employees` (limit 200, the most the API allows) and offers the departments of those people,
+  once each, by name. Without `org:read` and without any employee-read permission it asks nothing.
+  No permission changed; the assign-a-schedule form on the roster page is HR-only and unchanged.
+- Tests: hook (`lib/__tests__/departments.test.tsx`) and one per page, as manager and as HR; the
+  manager ones fail on the old code (checked by stashing the page edits). Web tests 293; README,
+  README.th, `docs/spec.md` and `verify-doc-counts.ts` say 293.
+- **Not built, by the PO's decision:** pinned footer / 36 px rows of CW-091 and the "Report a
   problem" icon of CW-092 (direction B removes the left menu, built after the Pilot A install).
-  README and landing pictures keep the old card wording until the UX-25 retake.
+- `EmployeeCreatePage` and `AccountRolesCard` still call `/departments`; both are HR-only screens.
 - Pictures: capture scripts change the database they run on; run them on a freshly seeded one.
-  `KEEP_SCRATCH=1` keeps the frames.
 - Waiting on others: CW-066's two owner items (a real HR person doing the four jobs before
   31 October; a second person who may approve a payroll run); CW-085 upload file needs the
   e-Services layout; CW-080 and CW-086 (#89) are not queued.
 
 ## Next
 
-- PR #110 (CW-092): UXUI's review fixes pushed (day count, red badge, comment, scanner icon); wait
-  for the PO's merge. Do not start CW-094 (direction B, after the Pilot A
+- PO opens the CW-095 PR, reviews and merges. Do not start CW-094 (direction B, after the Pilot A
   install), CW-085's upload file, CW-080 or CW-086, nor the support-scope page. Do not touch the
   real NAS until the owner approves.

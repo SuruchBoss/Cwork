@@ -771,6 +771,14 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A manager no longer fills the browser console with 403s** (CW-095). The
+  employee register and the shifts and roster page asked `/departments` for the
+  department filter, which needs the permission to read the organisation and a
+  manager does not have it. Without that permission the filter now offers the
+  departments of the people the manager can see (up to 200 of them, the most a
+  page of the employee list returns); anyone who can read the organisation still
+  gets every department, as before. No role gained or lost a permission.
+
 - **The public demo resets for real on Render** (CW-031). On Render the database
   user is `cwork_demo`, the same as the demo's marker schema, so after the first
   boot `current_schema()` was the marker and four pieces of the demo's SQL looked
