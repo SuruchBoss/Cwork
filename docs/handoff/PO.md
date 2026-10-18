@@ -10,9 +10,10 @@ this file only says where the PO room stands.
   (#117, `4b78ff0`; its first CI run was red on a cash-sheet e2e that still
   wanted the removed note, fixed in `c107be8`), CW-097 (#118, `31bf0a8`),
   CW-098 (#121, `d08c985`, closes #119). Deploy the demo from `d08c985` or later.
-- **QA:** pass 2 (#116) and its re-test (#120) merged; #112–#115 pass. #119 and
-  CW-097 sent for re-test on `d08c985`. Not covered yet: #111, the Render
-  wake-up time, the real NAS.
+- **QA:** pass 2 (#116) and its re-tests (#120, #122) done: #112–#115, #119 and
+  CW-097 pass on `d08c985`, no new issues. The four payroll warnings were
+  checked from source and the card names, not rendered on screen. Nothing
+  waits on QA except the real NAS. Not covered: #111, the Render wake-up time.
 - **Scanner number on the employee page:** already done, CW-090 (closed
   2026-10-17). Not a new ticket.
 - **Standing permissions:** on `main` in `CLAUDE.md` (`9baa043`, pasted by the
