@@ -371,29 +371,6 @@ many of the pilot's employees use one.
 ## P1 — before payroll runs on real people
 
 
-### CW-096 · QA pass 2 findings before the pilot (#112–#115)
-`P1` · web · backend · docs · **S** · found by the QA room, 2026-10-18 (pass 2 on `9baa043`)
-
-One PR for four small findings, in this order:
-
-1. **#114, cash-preparation sheet.** The sheet prints a red project note under
-   the title that names the pilot company, and the "ลำดับ" header wraps. The note
-   goes; the comparison with the pilot's paper form stays an open question for
-   the owner (after CW-088), not text on a print-out. The header fits on one line.
-2. **#113, dark-theme primary buttons.** White on `rgb(111,160,245)` is 2.62:1.
-   Every primary button label and the sidebar logo reach at least 4.5:1 in the
-   dark theme; the light theme does not change. A token change, not a redesign:
-   CW-094 replaces the palette after the install.
-3. **#112, scanner errors in English.** The scanner flow's `BusinessRuleError`
-   codes (at least `EMPLOYEE_HAS_SCANNER_NUMBER` and `DAY_LOCKED`) show Thai text
-   in the Thai console, keyed by code, with the English kept for the English
-   console. A web test fails if a known code falls back to the server sentence.
-4. **#115, polish.** `ErrorState` uses a drawn icon like the empty states, and
-   task 3 of `docs/guide/hr-daily-tasks.th.md` names the pay card and its button
-   as the screen does, for an employee with and without pay.
-
-Acceptance: each issue's own expected result; the QA room re-tests all four.
-
 ### CW-097 · What CW-096 left: the README's cash-sheet picture, red in the dark theme, "ค่าตอบแทน" in warnings
 `P1` · web · docs · **S** · raised by the dev room while doing CW-096, 2026-10-18
 
@@ -1577,3 +1554,4 @@ Kept so the reasoning survives.
 | **QA pass 1 findings (#94–#97)** · Found by the Pilot A QA pass, 2026-10-17 | #94/#95: a scanner day inside a period the employee was paid for (a paid run with a payslip for them) is locked whether or not it had an attendance record; a decision is 422 `DAY_LOCKED`, a later file adds no punch, and locked days leave the waiting queue and `totals.waiting` for their own LOCKED filter. Decided by the PO: a day forgotten before payday is corrected in the next period, never in the paid one; the guide says so. #96: `check.sh` reads `/proc/net/tcp` and `tcp6` when neither `ss` nor `netstat` exists, and warns that it cannot tell rather than calling a port free. #97: `deploy/nas/change-address.sh`; the Thai guide gains the authenticator and recovery-code step, the corrected address-change row, `PATH` in the Task Scheduler line, and `install.sh` no longer asks for a backup folder it was given. The QA room re-tested S15 on `814ecc5` and it passed. Its one minor note, the import result counting no locked days for new days the review list already flags, is fixed in `6103469`: the preview (new `lockedDays` field) and the import result count every locked day of the file with the review page's `LockedDays` rule, with one e2e and one web test. The same run moved the empty-year shortfall test to 2041, because a year another spec pays in made it depend on spec order (`5141da5`). 133d884, a2ca743 and 6103469, closed 2026-10-17. |
 | **CW-073** · A foreign worker's passport or work permit could lapse with nobody told | `GET /employees/expiring-documents` (`employee:read`) lists active employees' passports and work permits expiring within 30, 60 or 90 days or already expired, with names, codes, dates and the window, never a document number; the console has an Expiring documents page off the directory. A daily job (`document-expiry-notices`, 02:00 UTC, its own lock) tells everyone who may edit the employee once per window (90, 60, 30) and once more on expiry, department-scoped users only about their own department; sent windows are kept in `employee_document_notices` (additive migration). A renewal is a new date and starts its own windows; a date first entered inside 30 days notices that window only; leavers are neither listed nor notified. e2e covers once-only notices over repeated runs, renewal, the four windows in turn, expiry, leavers, missing dates and permissions, and no document number in the list or the notice. Guide: `docs/guide/expiring-documents.th.md`. 1be372f and 15a40f7, closed 2026-10-17. |
 | **CW-095** · A manager's pages asked for departments and got 403 | Signed in as the seeded manager, the employee register and the roster tab called `GET /departments`, which needs `org:read`, and filled the console with 403s. PO decision: no new permission, because `org:read` opens more than department names. `useDepartmentOptions` (`web/src/lib/departments.ts`) lists every department for someone with `org:read`, empty ones included; without it, it never calls `/departments` and builds the list from the people the user can see (one page of `/employees`, 200, the API's ceiling), one entry per department. Both pages use it. Eight web tests; the manager tests fail on the old code. Known limit: a manager who sees more than 200 people may miss a department whose members are all past the first page. `EmployeeCreatePage` and `AccountRolesCard` still ask, both HR-only. No role changed. PR #111, `be5d6e2`, merged at `7a589eb`, closed 2026-10-18. |
+| **CW-096** · QA pass 2 found four small faults before the pilot (#112–#115) | One PR, in the PO's order. **#114:** the cash-preparation sheet printed a red project note under its title that named the pilot company; the note is gone from the code and the page, the "ลำดับ" column is 36 pt so its header fits, and tests measure every header in the real Sarabun font and fail if the note's words come back. **#113:** text on `--brand` uses `--text-inverse` (white in the light theme, `#0f1116` in the dark), 7.2:1 in the dark theme, covering primary buttons, the logo mark, the selected day and the user's chat bubble; the light theme is unchanged. **#112:** `web/src/lib/api-messages.ts` maps the scanner flow's business-rule codes to Thai, with values from new `details` on three backend errors (codes and statuses unchanged); English and unknown codes still show the server sentence. **#115:** `ErrorState` draws an `alert` icon; task 3 of the HR guide names the "ค่าจ้าง" card and its two buttons. The first CI run was red: `payslip-print.e2e-spec.ts` still required the removed note, and the dev room had run only the scanner e2e; fixed in `c107be8`, then the full e2e suite passed locally. PR #117, `481acdb` and `c107be8`, merged at `4b78ff0`, closed 2026-10-18. Left for CW-097: the README picture still shows the note, danger red in the dark theme, "ค่าตอบแทน" in payroll warnings. |
