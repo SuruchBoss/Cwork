@@ -1067,7 +1067,25 @@ Earth-tone palette from the UX room, every text pair at 4.5:1 or better:
 background #f3eee5, card #fffcf6, rule #e3dacb, text #2b2620, secondary text
 #6b6052, top bar #2f2a23 with menu text #cdbfa9; main colour one of terracotta
 #a24a28, olive #5b6b34, clay #8a5a3c, ochre #7d6420; overdue badge #8a3c1e on
-#f6dfcf; good status #4f5d2c. The dark theme comes from the UX room before UX-20.
+#f6dfcf; good status #4f5d2c.
+
+Dark theme (UX room, 2026-10-18, all text pairs 4.5:1 or better): background
+#1c1915, card #25211c, raised #2e2923, rule #3a342c, strong rule #4d453a, text
+#efe7da, secondary #b8ab97, faint #a89a85, top bar #141210 with menu text
+#b8ab97; main colour lightened (terracotta #d9825c, olive #a3b36e, clay
+#c99773, ochre #d1b05a) with dark text #1c1915 on it, so `--on-accent` has a
+light and a dark value; accent wash #3a2a20; overdue #f0a985 on #3d2619; good
+status #a9bd7a. Every value goes in both `@media (prefers-color-scheme: dark)`
+and `[data-theme='dark']` (the UX-05 bug was the two drifting apart).
+
+APIs (UX room read the backend on main): UX-23's organisation-wide pending list
+does not exist; `GET /approvals/tasks` returns only the caller's tasks and
+`GET /leave/requests` has no approver or due date. `ApprovalTask` already holds
+approver, `dueAt` and the snapshot, so a new endpoint (proposed `GET
+/approvals/pending`, permission for the dev to decide) is needed. UX-24's balance
+after approval exists: `GET /leave/balances/:employeeId` returns `available`
+with pending days already taken off; one call per employee, or add it to the
+`listMyTasks` payload.
 
 - **UX-20** earth-tone tokens in `theme.css`, light and dark; no colour defined
   only in the dark block; every text pair at 4.5:1.
