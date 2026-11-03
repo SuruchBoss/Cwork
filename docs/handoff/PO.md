@@ -6,17 +6,19 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-11-03, evening)
 
-- **Merged today:** #126 (CW-099), #128, #132, #135, #139 (access checks and
-  the performance note), #140, #141 (CW-101 to CW-106, `14fb65d`), #144 (QA
-  final regression, passed), #143 (CW-107 and two small follow-ups, `82e5009`),
-  #145 (sign-in, session end and installer hardening, `9a99475`; QA re-test
-  requested privately).
-- **Next:** UX guide #138 (CW-103 part) after a merge of `main`, then the
-  final blind test. Dev has no open ticket; waiting on QA and the blind test.
+- **Merged today:** #126 (CW-099), #128, #132, #135, #139, #140, #141
+  (CW-101 to CW-106), #144 (QA final regression, passed), #143 (CW-107),
+  #145, #138 (HR guide for CW-103 to CW-107), #147 (CW-108, sign-in and
+  installer hardening), `main` at `09fc821`.
+- **Blind test on the installed stack (`09fc821`):** findings went to the
+  owner privately; the fixes are in the dev queue (one PR, then CW-110,
+  then CW-109). The UX report #148 merges by squash once reworded.
+  QA re-test of #147 passed. The UX room re-checks the affected paths on the
+  installed stack once the fixes merge; its UX report follows as a PR.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
-  Still to run: the final blind test on a stack installed with
-  `deploy/nas/install.sh` (2 CPU / 2 GB). Report the gates to the Asuna Bot
+  Blind test ran on a stack installed with `deploy/nas/install.sh`
+  (2 CPU / 2 GB); it passes once its fixes merge and are re-checked. Report the gates to the Asuna Bot
   room before the install date is booked (target Saturday 14 Nov).
 - **Owner's choices today:** daily staff stay half-monthly and the compare
   page adds up the calendar month (18:38, CW-104); the second half may run
@@ -27,13 +29,14 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- File the private advisory (fixes are in #139 and #145), and two design choices
+- File the private advisory (fixes are in #139, #145 and #147), and two design choices
   sent privately. The pilot NAS's RAM, for the install checklist.
 - The law texts for CW-100 (sections 33, 34, 46, 47 and the สปส.6-09 page),
   or the domains to fetch them.
 - HR: which month a cross-month period counts toward, whether it rounds the
   net, and the field order of the social security web form.
-- #36: the law questions and a qualified reviewer for the payroll rules.
+- #36: the law questions and a qualified reviewer for the payroll rules;
+  how HR pays a daily-wage employee who works on a public holiday.
 - `./check.sh` on the pilot's NAS: approved 2026-11-03 17:18 (read-only,
   on-site). Still needed on the day: a backup drive, a password store, the HR
   file.

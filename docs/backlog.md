@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · CW-110 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -465,17 +465,43 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
-### CW-108 · The compare page still labels its picker "period", and two register columns align left
-`P2` · payroll · web · **XS** · found by the UX room · #146
+### CW-109 · A scanner number can be bound for a period
+`P1` · attendance · **M** · Pilot A · before the install
 
-Found while updating the HR guide (#138), 2026-11-03. The compare page reads
-the whole calendar month (CW-104) but its picker is still headed "งวด". In the
-register export (CW-099), the row-number and days-worked columns align left
-while every other number aligns right.
+A scanner number is bound to one employee with no dates, so a number later
+carried by someone else keeps counting to the first person. Bind it for a
+period instead.
+
+**Scope**
+- A new table holds (employee, number, from, to); an empty `to` means still
+  in use. The migration moves every current number across with no start date
+  (counted from the beginning), and the old single column goes. Two periods
+  of the same number never overlap.
+- The scanner import, the later matching of unowned days and binding from the
+  unowned-numbers page all match (number, date). A date outside every period
+  counts as an unowned number.
+- Binding from the decision page asks whether it is for these days only or
+  from now on. A binding can be ended with an end date.
+- The employee API and the employee import/export keep `scanner_id`, read as
+  the number in use now, so existing files still work.
 
 **Acceptance**
-- The picker names the month in Thai and English; the guide still matches.
-- Both columns align right in the exported file.
+- Tests: bind, end, overlapping periods refused (also two requests at once),
+  an import outside the period, later matching; the migration upgrades and
+  rolls back and `db:verify` passes.
+- The HR guide's binding step matches.
+
+### CW-110 · Three faults the final blind test found
+`P1` · attendance · payroll · web · **S** · Pilot A · before the install · #149
+
+From the UX room's blind test on the installed stack (#148): an evening-only
+scan is pre-filled as a clock-in; the owner's dashboard shows no run waiting
+for approval and a ฿0.00 draft as the latest run; a period that already has a
+run still offers "create run" and answers in English. Acceptance in #149.
+
+Open question for the owner (not in scope): a daily-wage employee scanned in
+on a public holiday (23 Oct) is paid as an ordinary day, with no holiday-work
+pay. Needs the owner's answer on how HR pays it today and the law check (#36).
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
@@ -1641,3 +1667,4 @@ Kept so the reasoning survives.
 | **CW-105** · The payroll register's fixes from the UX review | The totals sheet adds up (gross − tax − social security − other deductions = net, tested), and an incomplete month is explained in Thai with the next step in four cases: run awaiting approval, no run, missing second half, missing 14-day period. Print check in LibreOffice by the UX room. #136, in #141 at 14fb65d, 2026-11-03. |
 | **CW-106** · A day with one scan was paid as a full day, with no warning | A past day with only a clock-in, or only a clock-out, is INCOMPLETE with 0 minutes, never an error; the payslip shows `INCOMPLETE_PUNCH_COUNTED` with the date, today's open day stays PRESENT, and the import summary counts the single-scan days. How a counted day is paid is unchanged. #137, in #141 at 14fb65d, 2026-11-03. |
 | **CW-107** · The register exported a month with no monthly period, leaving monthly staff out without a word | When active staff on a monthly salary exist for the month and no monthly period covers it, the register export and the compare page refuse in Thai and name the next step (create the monthly period, calculate and approve it), checked after the missing half-month and 14-day periods. A company with no monthly staff is not warned; a month with both kinds of period is unchanged (tested). Found by the QA room. The same PR: another person's tax declaration answers "not found" for someone who may not read pay, and the record-leave panel test pastes its long note instead of typing it, with no timeout changed. #142, in #143 at 82e5009, 2026-11-03. |
+| **CW-108** · The compare page still labelled its picker "period", and two register columns aligned left | The picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" / "Month (any period of the month will do)"; the register's row-number and days-worked columns align right (a test reads the cell styles of the exported file); the HR guide and the period-check guide use the new label. Found by the UX room. #146, in #147 at 09fc821, 2026-11-03. |
