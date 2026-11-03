@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SchedulerRegistry } from '@nestjs/schedule';
+import { PrismaClient } from '@prisma/client';
+import { ScheduledTasksService } from 'src/modules/jobs/scheduled-tasks.service';
+import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type TestContext } from './utils/test-app';
 
 /**
@@ -26,5 +29,24 @@ describe('The app under test (e2e)', () => {
 
     expect(jobs.map(([name]) => name)).toContain('attendance-close-out');
     expect(jobs.filter(([, job]) => job.isActive).map(([name]) => name)).toEqual([]);
+  });
+
+  it('closes the Bangkok day that has just ended, when it runs at one in the morning there (CW-111)', async () => {
+    // A far-off week of its own, with the clock set, so nothing here reads today's date.
+    // 18:00 UTC on Thursday 10 June 2038 is 01:00 on Friday the 11th in Bangkok.
+    const prisma = new PrismaClient({ datasources: { db: { url: resolveDatabaseUrl() } } });
+    try {
+      await ctx.app.get(ScheduledTasksService).closeOutAttendance(new Date('2038-06-10T18:00:00Z'));
+
+      const closed = async (day: string) =>
+        prisma.attendanceRecord.count({ where: { workDate: new Date(`${day}T00:00:00Z`) } });
+      // The 10th just ended in Bangkok (a Thursday, a working day): it is closed.
+      expect(await closed('2038-06-10')).toBeGreaterThan(0);
+      // The 9th is not: it was closed the night before, and not by this run.
+      expect(await closed('2038-06-09')).toBe(0);
+      expect(await closed('2038-06-11')).toBe(0);
+    } finally {
+      await prisma.$disconnect();
+    }
   });
 });
