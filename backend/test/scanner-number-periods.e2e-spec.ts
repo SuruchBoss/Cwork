@@ -221,6 +221,27 @@ describe('A scanner number bound for a period (e2e)', () => {
     });
   });
 
+  it('gives every one of many rounds of the same race one winner and a refusal in words, never a server error', async () => {
+    // Two inserts for one number at the same moment can wait on each other and
+    // one used to be rolled back as a deadlock and answered as a server error,
+    // about once in a hundred rounds. The writes now take their turn.
+    const seen = new Set<string>();
+    await takeNumbers(prisma, [ben, cat]);
+    for (let round = 0; round < 150; round += 1) {
+      const number = `97${String(round).padStart(3, '0')}`;
+      const answers = await Promise.all([bind(number, ben, 'ALWAYS'), bind(number, cat, 'ALWAYS')]);
+      seen.add(
+        answers
+          .map((a) => `${a.status}${a.body.code ? `:${a.body.code}` : ''}`)
+          .sort()
+          .join(' + '),
+      );
+      await takeNumbers(prisma, [ben, cat]);
+    }
+
+    expect([...seen]).toEqual(['200 + 409:DUPLICATE_SCANNER_ID']);
+  });
+
   it('refuses two periods of one number that overlap, whoever writes them', async () => {
     const [one] = await periodsOf(N);
     await expect(

@@ -114,6 +114,22 @@ export class ScannerBindingsService {
     },
     db: Db = this.prisma,
   ): Promise<ScannerBindingView> {
+    return this.withNumberLocked(db, input.organizationId, input.scannerNumber, (tx) =>
+      this.bindIn(tx, input),
+    );
+  }
+
+  private async bindIn(
+    db: Db,
+    input: {
+      organizationId: string;
+      actorUserId: string;
+      employeeId: string;
+      scannerNumber: string;
+      from: string | null;
+      to: string | null;
+    },
+  ): Promise<ScannerBindingView> {
     const { organizationId, employeeId, scannerNumber, from, to } = input;
     if (from !== null && to !== null && to < from) {
       throw new BusinessRuleError('SCANNER_PERIOD_ORDER', 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น', {
@@ -167,6 +183,20 @@ export class ScannerBindingsService {
       scannerNumber: string | null;
     },
     db: Db = this.prisma,
+  ): Promise<{ changed: boolean; previous: string | null }> {
+    return this.withNumberLocked(db, input.organizationId, input.scannerNumber, (tx) =>
+      this.setInUseIn(tx, input),
+    );
+  }
+
+  private async setInUseIn(
+    db: Db,
+    input: {
+      organizationId: string;
+      actorUserId: string;
+      employeeId: string;
+      scannerNumber: string | null;
+    },
   ): Promise<{ changed: boolean; previous: string | null }> {
     const { organizationId, employeeId, scannerNumber } = input;
     const open = await db.employeeScannerNumber.findFirst({
@@ -385,6 +415,31 @@ export class ScannerBindingsService {
     );
   }
 
+  /**
+   * Runs the work with writes to one number taken one at a time. The database
+   * refuses overlapping periods by itself, but two inserts for one number at the
+   * same moment can wait on each other and one is then rolled back as a
+   * deadlock; a lock held to the end of the transaction makes the second wait
+   * its turn and meet the first one's committed period, so it is refused in
+   * words. Inside a transaction already open the lock lasts until it ends.
+   */
+  private async withNumberLocked<T>(
+    db: Db,
+    organizationId: string,
+    scannerNumber: string | null,
+    work: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    const locked = async (tx: Prisma.TransactionClient): Promise<T> => {
+      if (scannerNumber) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${organizationId}:${scannerNumber}`}))`;
+      }
+      return work(tx);
+    };
+    return '$transaction' in db
+      ? (db as PrismaService).$transaction(locked, { timeout: 20_000 })
+      : locked(db as Prisma.TransactionClient);
+  }
+
   /** A refusal by the database, said as the checks above would have said it. */
   private refusalFrom(error: unknown, employeeCode: string, scannerNumber: string) {
     const text = error instanceof Error ? error.message : '';
@@ -397,6 +452,16 @@ export class ScannerBindingsService {
     }
     if ((error as { code?: string } | null)?.code === 'P2002') {
       return this.alreadyHasNumber(employeeCode, scannerNumber);
+    }
+    // Two writes met and the database gave one of them up (a deadlock or a write
+    // conflict): the number is being bound by someone else at this moment.
+    const errorCode = (error as { code?: string } | null)?.code;
+    if (errorCode === 'P2034' || code === '40P01' || text.includes('deadlock detected')) {
+      return new ConflictError(
+        'SCANNER_NUMBER_BUSY',
+        `เลขสแกน ${scannerNumber} กำลังถูกผูกโดยอีกคำขอหนึ่ง ลองอีกครั้ง`,
+        { scannerNumber },
+      );
     }
     return null;
   }

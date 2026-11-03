@@ -680,7 +680,8 @@ entry, tags it and publishes the notes.
   days that is, and an end before a day that a calculated, approved or paid payroll run
   covers is refused in Thai, naming the day and the run. The choice "from now on" says the
   day it starts and how many waiting days it counts before it is saved, and a refusal of a
-  number names the period that is in the way.
+  number names the period that is in the way. Two people binding the same number at the
+  same moment get one result and one refusal in words.
 - **Someone else decides your own attendance.** A scanner day that belongs to the person
   deciding it is left to another holder of the attendance permission: the buttons on that row
   are closed with the reason, and the API answers in Thai. Where nobody else holds the
