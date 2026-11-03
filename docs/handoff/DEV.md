@@ -21,7 +21,9 @@ this file only says where the dev room stands.
   Recording leave as approved for oneself was already refused (`CANNOT_RECORD_OWN_LEAVE`).
   4. the e2e leave test takes today from the organization's calendar (Asia/Bangkok), not UTC;
      it failed between midnight and seven in the morning there (`test/utils/dates.ts`);
-  5. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
+  5. the app under an e2e spec no longer leaves its cron jobs running: the attendance close-out
+     (01:00 Bangkok, 18:00 UTC) fired inside the payroll test once a day and cost a day's pay;
+  6. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
      dashboard lists runs waiting for an approver and shows the latest run with figures, a
      period with a run offers "open", and the two period refusals are in Thai.
 - **In the working tree, not pushed (waits for #150 to merge):** CW-109, a scanner number bound
@@ -34,7 +36,7 @@ this file only says where the dev room stands.
   After #151 and #150 merge: merge main, recount the docs, push, tell the PO.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 365; backend unit 891, domain 558; e2e 574.
+- Counts: web 365; backend unit 891, domain 558; e2e 575.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
