@@ -39,10 +39,12 @@ export function ScannerNumberCard({
   const t = useT();
   const queryClient = useQueryClient();
   const canEnd = useAuthStore((s) => s.canAny)(P.ATTENDANCE_MANAGE);
-  const [ending, setEnding] = useState(false);
+  // The period being ended or made shorter: the one in use, or one that has already ended.
+  const [ending, setEnding] = useState<string | null>(null);
   const [endDate, setEndDate] = useState('');
   const periods = person.scannerNumbers ?? [];
   const inUse = periods.find((period) => period.validTo === null);
+  const target = periods.find((period) => period.id === ending) ?? null;
   const current = person.scannerId ?? '';
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(current);
@@ -71,7 +73,7 @@ export function ScannerNumberCard({
   const [preview, setPreview] = useState<EndPreview | null>(null);
   const askEnd = useMutation({
     mutationFn: () =>
-      api.get<EndPreview>(`/attendance/scanner/numbers/${inUse!.id}/end-preview`, {
+      api.get<EndPreview>(`/attendance/scanner/numbers/${target!.id}/end-preview`, {
         query: { endDate },
       }),
     onSuccess: (result) => {
@@ -95,12 +97,12 @@ export function ScannerNumberCard({
   });
 
   const end = useMutation({
-    mutationFn: () => api.post(`/attendance/scanner/numbers/${inUse!.id}/end`, { endDate }),
+    mutationFn: () => api.post(`/attendance/scanner/numbers/${target!.id}/end`, { endDate }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
       await queryClient.invalidateQueries({ queryKey: qk.employee(person.id) });
       setPreview(null);
-      setEnding(false);
+      setEnding(null);
       setSaved('cleared');
     },
     onError: (error) => {
@@ -219,18 +221,45 @@ export function ScannerNumberCard({
                       ? t('until {date}', { date: formatDate(period.validTo) })
                       : t('in use')}
                   </span>
+                  {canEdit && canEnd && period.validTo && !ending && (
+                    <>
+                      {' '}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label={t('End number {number} on an earlier day', {
+                          number: period.scannerNumber,
+                        })}
+                        onClick={() => {
+                          setProblem(null);
+                          setEndDate('');
+                          setEnding(period.id);
+                        }}
+                      >
+                        {t('End earlier')}
+                      </Button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
           )}
           {canEdit && canEnd && inUse && !ending && (
             <div>
-              <Button size="sm" variant="ghost" onClick={() => setEnding(true)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setProblem(null);
+                  setEndDate('');
+                  setEnding(inUse.id);
+                }}
+              >
                 {t('End this number on a date')}
               </Button>
             </div>
           )}
-          {ending && inUse && (
+          {target && (
             <form
               className="row"
               style={{ flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}
@@ -240,7 +269,12 @@ export function ScannerNumberCard({
               }}
             >
               <Field label={t('Last day this number counts')}>
-                <DateInput value={endDate} onChange={setEndDate} />
+                <DateInput
+                  value={endDate}
+                  onChange={setEndDate}
+                  min={target.validFrom ?? undefined}
+                  max={target.validTo ?? undefined}
+                />
               </Field>
               <Button
                 type="submit"
@@ -250,14 +284,14 @@ export function ScannerNumberCard({
               >
                 {t('End this number')}
               </Button>
-              <Button variant="ghost" onClick={() => setEnding(false)}>
+              <Button variant="ghost" onClick={() => setEnding(null)}>
                 {t('Cancel')}
               </Button>
             </form>
           )}
-          {preview && inUse && (
+          {preview && target && (
             <ConfirmDialog
-              title={t('End scanner number {number}?', { number: inUse.scannerNumber })}
+              title={t('End scanner number {number}?', { number: target.scannerNumber })}
               confirmLabel={t('End this number')}
               cancelLabel={t('Cancel')}
               busy={end.isPending}

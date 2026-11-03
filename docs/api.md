@@ -107,8 +107,14 @@ overlap, so setting a number that another employee holds on those days is
 were waiting on that number (CW-090); `null` ends it today. The files and the create and
 update bodies keep `scannerId` as before. `POST /attendance/scanner/unmapped/bind` takes
 `scope`: `ALWAYS` (default, from now on, as the number in use) or `THESE_DAYS` (only the
-days no one owns), and `POST /attendance/scanner/numbers/{id}/end` ends a number in use
-on a date: its later days that no one has decided go back to no one and are matched again
+days no one owns). With `THESE_DAYS`, `from` and `to` (`yyyy-MM-dd`) narrow it to the first
+and last day wanted inside the waiting stretch (`422 SCANNER_RANGE_OUTSIDE_WAITING_DAYS`
+outside it, `SCANNER_PERIOD_ORDER` the wrong way round); the rest keeps waiting.
+`GET /attendance/scanner/unmapped/bind-preview?scannerNumber=&employeeId=&from=&to=` says
+how many waiting days that would count and on how many of them the employee already has
+scans under another number. `POST /attendance/scanner/numbers/{id}/end` ends a number in
+use on a date, or makes a period that has already ended shorter (an earlier date than its
+end; a later or equal one is `422 SCANNER_NUMBER_ALREADY_ENDED`): its later days that no one has decided go back to no one and are matched again
 to any other period that holds them, decided days stay, and a later day in a calculated,
 approved or paid payroll run refuses the end (`422 SCANNER_DAY_IN_PAYROLL_RUN`).
 `GET /attendance/scanner/numbers/{id}/end-preview?endDate=` says what that would do
@@ -242,7 +248,7 @@ departments. The upload routes take one multipart part named `file`, up to 5 MB.
 | GET | `/attendance/scanner/days/:id` | one day |
 | POST | `/attendance/scanner/days/:id/decision` | `{action: USE\|IGNORE, clockIn?, clockOut?, note?}` |
 | GET | `/attendance/scanner/unmapped` | scanner numbers no employee holds |
-| POST | `/attendance/scanner/unmapped/bind` | `{scannerNumber, employeeId}` |
+| POST | `/attendance/scanner/unmapped/bind` | `{scannerNumber, employeeId, scope?, from?, to?}` |
 | POST | `/attendance/scanner/rematch` | after numbers were registered on employees |
 
 The file is the scanner's own text export: UTF-16 with a byte-order mark, tab

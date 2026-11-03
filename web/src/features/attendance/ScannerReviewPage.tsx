@@ -140,6 +140,15 @@ function DecisionControls({
 }
 
 /** Searching for the employee a scanner number belongs to, then registering it. */
+/** What registering a waiting number for some days would count (CW-115). */
+interface BindPreview {
+  from: string;
+  to: string;
+  days: number;
+  daysWithTimes: number;
+  daysAlsoScannedOnAnotherNumber: number;
+}
+
 function BindControl({
   item,
   onBound,
@@ -154,6 +163,9 @@ function BindControl({
   const [employeeId, setEmployeeId] = useState('');
   // Asked, not assumed: a number carried by someone else later is bound for these days only.
   const [scope, setScope] = useState<'' | 'THESE_DAYS' | 'ALWAYS'>('');
+  // The first and last of the waiting days to bind; the whole stretch unless narrowed (CW-115).
+  const [from, setFrom] = useState(item.firstDay);
+  const [to, setTo] = useState(item.lastDay);
   const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(() => {
@@ -168,12 +180,26 @@ function BindControl({
     enabled: term.length > 0,
   });
 
+  // Asked before it is done: how many waiting days the range counts, and how many of them
+  // the person already has scans for under another number.
+  const rangeKnown = scope === 'THESE_DAYS' && Boolean(employeeId) && Boolean(from) && Boolean(to);
+  const preview = useQuery({
+    queryKey: ['attendance', 'scanner-bind-preview', item.scannerNumber, employeeId, from, to],
+    queryFn: () =>
+      api.get<BindPreview>('/attendance/scanner/unmapped/bind-preview', {
+        query: { scannerNumber: item.scannerNumber, employeeId, from, to },
+      }),
+    enabled: rangeKnown,
+    retry: false,
+  });
+
   const bind = useMutation({
     mutationFn: () =>
       api.post<{ daysMatched: number; punchesAdded: number }>('/attendance/scanner/unmapped/bind', {
         scannerNumber: item.scannerNumber,
         employeeId,
         scope,
+        ...(scope === 'THESE_DAYS' ? { from, to } : {}),
       }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -254,16 +280,62 @@ function BindControl({
                   )}
           </option>
         </Select>
+        {scope === 'THESE_DAYS' && (
+          <>
+            <DateInput
+              aria-label={t('First day of number {number}', { number: item.scannerNumber })}
+              value={from}
+              min={item.firstDay}
+              max={item.lastDay}
+              onChange={(value) => {
+                setFrom(value);
+                setProblem(null);
+              }}
+            />
+            <DateInput
+              aria-label={t('Last day of number {number}', { number: item.scannerNumber })}
+              value={to}
+              min={item.firstDay}
+              max={item.lastDay}
+              onChange={(value) => {
+                setTo(value);
+                setProblem(null);
+              }}
+            />
+          </>
+        )}
         <Button
           size="sm"
           variant="primary"
-          disabled={!employeeId || !scope}
+          disabled={!employeeId || !scope || (scope === 'THESE_DAYS' && preview.isError)}
           loading={bind.isPending}
           onClick={() => bind.mutate()}
         >
           {t('Register this number')}
         </Button>
       </div>
+      {rangeKnown && preview.data && (
+        <p className="muted" role="status" style={{ margin: 0 }}>
+          {t('{count} waiting days from {from} to {to} would be counted for this person.', {
+            count: formatNumber(preview.data.days),
+            from: formatDate(preview.data.from),
+            to: formatDate(preview.data.to),
+          })}
+        </p>
+      )}
+      {rangeKnown && preview.data && preview.data.daysAlsoScannedOnAnotherNumber > 0 && (
+        <p className="alert alert--warning" role="alert" style={{ margin: 0 }}>
+          {t(
+            'This person already has scans under another number on {count} of these days. Both numbers would count for the same day. Choose fewer days if this card was not theirs on all of them.',
+            { count: formatNumber(preview.data.daysAlsoScannedOnAnotherNumber) },
+          )}
+        </p>
+      )}
+      {rangeKnown && preview.isError && (
+        <p className="alert alert--danger" role="alert" style={{ margin: 0 }}>
+          {describeApiError(preview.error, t, t('Something went wrong'))}
+        </p>
+      )}
       {problem && (
         <p className="alert alert--danger" role="alert" style={{ margin: 0 }}>
           {problem}

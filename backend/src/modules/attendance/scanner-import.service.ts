@@ -43,6 +43,7 @@ import {
   type WaitingReason,
 } from './domain/scanner-export';
 import type {
+  BindPreviewQueryDto,
   BindScannerNumberDto,
   DecideScannerDayDto,
   ScannerDaysQueryDto,
@@ -749,27 +750,24 @@ export class ScannerImportService {
     if (!employee) throw new NotFoundError('Employee', dto.employeeId);
 
     const scope = dto.scope ?? 'ALWAYS';
+    if (scope !== 'THESE_DAYS' && (dto.from || dto.to)) {
+      throw new BusinessRuleError(
+        'SCANNER_RANGE_NEEDS_THESE_DAYS',
+        'เลือกวันแรกและวันสุดท้ายได้เฉพาะตอนผูกเลขเฉพาะวันเหล่านี้',
+        { scannerNumber: dto.scannerNumber },
+      );
+    }
     let from: string | null;
     let to: string | null = null;
     if (scope === 'THESE_DAYS') {
-      const span = await this.prisma.scannerDay.aggregate({
-        where: {
-          organizationId: user.organizationId,
-          employeeId: null,
-          scannerNumber: dto.scannerNumber,
-        },
-        _min: { workDate: true },
-        _max: { workDate: true },
-      });
-      if (!span._min.workDate || !span._max.workDate) {
-        throw new BusinessRuleError(
-          'NO_UNOWNED_DAYS',
-          `ไม่มีวันของเลขสแกน ${dto.scannerNumber} ที่รอเจ้าของ`,
-          { scannerNumber: dto.scannerNumber },
-        );
-      }
-      from = formatDateOnly(span._min.workDate);
-      to = formatDateOnly(span._max.workDate);
+      const range = await this.waitingRange(
+        user.organizationId,
+        dto.scannerNumber,
+        dto.from,
+        dto.to,
+      );
+      from = range.from;
+      to = range.to;
     } else {
       from = await this.bindings.firstFreeStart(user.organizationId, dto.scannerNumber);
     }
@@ -807,6 +805,107 @@ export class ScannerImportService {
       },
     });
     return result;
+  }
+
+  /**
+   * The days of a number that wait for an owner, narrowed to the first and last day asked
+   * for (the whole waiting stretch when none is). A refusal in words when there is none, or
+   * when a bound lies outside the waiting days or the two are the wrong way round.
+   */
+  private async waitingRange(
+    organizationId: string,
+    scannerNumber: string,
+    wantedFrom?: string,
+    wantedTo?: string,
+  ) {
+    const waiting = await this.prisma.scannerDay.findMany({
+      where: { organizationId, employeeId: null, scannerNumber },
+      select: { workDate: true, times: true },
+      orderBy: { workDate: 'asc' },
+    });
+    if (waiting.length === 0) {
+      throw new BusinessRuleError(
+        'NO_UNOWNED_DAYS',
+        `ไม่มีวันของเลขสแกน ${scannerNumber} ที่รอเจ้าของ`,
+        { scannerNumber },
+      );
+    }
+    const first = formatDateOnly(waiting[0]!.workDate);
+    const last = formatDateOnly(waiting[waiting.length - 1]!.workDate);
+    const from = wantedFrom ?? first;
+    const to = wantedTo ?? last;
+    if (from > to) {
+      throw new BusinessRuleError('SCANNER_PERIOD_ORDER', 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น', {
+        from,
+        to,
+      });
+    }
+    if (from < first || to > last) {
+      throw new BusinessRuleError(
+        'SCANNER_RANGE_OUTSIDE_WAITING_DAYS',
+        `เลือกได้เฉพาะวันที่ ${first} ถึง ${last} ซึ่งเป็นวันของเลขสแกน ${scannerNumber} ที่รอเจ้าของ`,
+        { first, last },
+      );
+    }
+    const inside = waiting.filter((d) => {
+      const date = formatDateOnly(d.workDate);
+      return date >= from && date <= to;
+    });
+    if (inside.length === 0) {
+      throw new BusinessRuleError(
+        'NO_UNOWNED_DAYS',
+        `ไม่มีวันของเลขสแกน ${scannerNumber} ที่รอเจ้าของระหว่าง ${from} ถึง ${to}`,
+        { scannerNumber, from, to },
+      );
+    }
+    return {
+      from,
+      to,
+      days: inside.map((d) => formatDateOnly(d.workDate)),
+      daysWithTimes: inside
+        .filter((d) => d.times.length > 0)
+        .map((d) => formatDateOnly(d.workDate)),
+    };
+  }
+
+  /**
+   * What binding a waiting number to an employee for these days would count, worked out and
+   * nothing written: the waiting days in the range, and how many of them the employee
+   * already has scans for under another number. Both numbers' scans would count for the
+   * same day, which is rarely what a borrowed card means.
+   */
+  async previewBind(user: AuthenticatedUser, query: BindPreviewQueryDto) {
+    this.assertWholeCompany(user);
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: query.employeeId, organizationId: user.organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!employee) throw new NotFoundError('Employee', query.employeeId);
+    const range = await this.waitingRange(
+      user.organizationId,
+      query.scannerNumber,
+      query.from,
+      query.to,
+    );
+    const otherDays = await this.prisma.scannerDay.findMany({
+      where: {
+        organizationId: user.organizationId,
+        employeeId: employee.id,
+        scannerNumber: { not: query.scannerNumber },
+        workDate: { gte: toDateOnly(range.from), lte: toDateOnly(range.to) },
+        NOT: { times: { isEmpty: true } },
+      },
+      select: { workDate: true },
+    });
+    const scannedElsewhere = new Set(otherDays.map((d) => formatDateOnly(d.workDate)));
+    return {
+      from: range.from,
+      to: range.to,
+      days: range.days.length,
+      daysWithTimes: range.daysWithTimes.length,
+      daysAlsoScannedOnAnotherNumber: range.daysWithTimes.filter((d) => scannedElsewhere.has(d))
+        .length,
+    };
   }
 
   /**
@@ -885,7 +984,7 @@ export class ScannerImportService {
   /** The later days of a number held by an employee, who keeps them and who loses them. */
   private async planEnd(
     organizationId: string,
-    row: { employeeId: string; scannerNumber: string },
+    row: { employeeId: string; scannerNumber: string; validTo?: Date | null },
     endDate: string,
   ) {
     const later = await this.prisma.scannerDay.findMany({
@@ -893,7 +992,9 @@ export class ScannerImportService {
         organizationId,
         scannerNumber: row.scannerNumber,
         employeeId: row.employeeId,
-        workDate: { gt: toDateOnly(endDate) },
+        // A period that has already ended only gives back the days between the new end and
+        // its old one: later days of the number are another period's, even the same person's.
+        workDate: { gt: toDateOnly(endDate), ...(row.validTo ? { lte: row.validTo } : {}) },
       },
       orderBy: { workDate: 'asc' },
       select: { id: true, workDate: true, decisions: { select: { id: true }, take: 1 } },
