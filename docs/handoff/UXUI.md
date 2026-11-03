@@ -16,31 +16,27 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   checked against WCAG 4.5:1.
 - The prototype is a private canvas owned by the project owner. Other rooms can open it
   only after the owner shares it.
-- **CW-092 (PR #110), screen review passed on 18 Oct at `a930a07`.** The overdue badge
-  now counts calendar days in the browser's time zone (the same one `formatDate` shows),
-  is red, and the scanner-days empty state uses the clock icon. Merging is the PO's call.
-- CW-091 (sidebar horizontal scrollbar) is on `main` via #109. Verified: at 1366 px the
-  sidebar's `scrollWidth` equals its `clientWidth` for both Thai and English.
-
-- **Blind test of the four HR jobs (CW-066 guide), 3 Nov.** Report:
-  [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md), with the CW-099
-  register check. On `main` via #135. The PO opened CW-103 (#134), CW-105 (#136) and
-  CW-106 (#137, single-scan days and clock-out-only days) from it.
-- **CW-103 guide part, in review (#138).** `docs/guide/hr-daily-tasks.th.md` covers the
-  sign-in and first 2FA setup, unregistered scanner numbers, single-scan days as CW-106
-  made them (INCOMPLETE, counted in the import summary, a payslip warning for daily
-  staff), the month compare step with a `รหัสพนักงาน` column (picture `hr-15`), and the
-  no-payment warning. All guide pictures were taken again on `main` at `9a99475`.
+- CW-092 (#110) screen review passed on 18 Oct; CW-091 (#109) is on `main`.
+- **First blind test of the four HR jobs, 3 Nov,** on `main` via #135
+  ([report](../qa/blind-test-2026-11-03.md)); it led to CW-103, CW-105 and CW-106.
+- **CW-103 guide part, on `main` via #138.** `docs/guide/hr-daily-tasks.th.md` covers
+  sign-in with 2FA, unregistered numbers, single-scan days (CW-106), the month compare
+  with a `รหัสพนักงาน` column (picture `hr-15`) and the no-payment warning.
+- **Final blind test on the installed stack, 3–4 Nov, in review.** Report:
+  [`docs/qa/blind-test-2026-11-04.md`](../qa/blind-test-2026-11-04.md). Installed from
+  `09fc821` with `install.sh --mode full` and both secret files at 2 CPU / 2 GB; all five
+  parts finished, nothing blocks. Heaviest: an evening-only scan pre-filled as a
+  clock-in, pay runs missing from the owner's dashboard, a second "สร้างรอบคำนวณ" with an
+  English error, no guide case for a temporary card. Separation-of-duties observations
+  went to the PO room as a private message, not into the repo.
 - **CW-105 register printing, checked on #141 (`a1e460c`).** LibreOffice prints it
   landscape, one page wide, borders, centred group headings, rows 1-4 repeated on every
   page; the summary sheet adds up to the net. The register code has not changed since.
 
 ## Next
 
-- Final blind test after the security fixes, CW-103 and CW-104: install with
-  `deploy/nas/install.sh` in docker at 2 CPU and 2 GB (method in
-  `docs/qa/performance-pilot-a.md`), with a new tester, noting every hesitation.
-  Wait for the PO to say it is ready.
+- Wait for the PO room to triage the final blind test. If it opens tickets for the
+  guide (temporary card, the order of the parallel run), the UX room writes them.
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
   questions about the two APIs it needs. `GET /approvals/pending` (organisation-wide,
   with the approver) does not exist yet. The leave balance after approval already
