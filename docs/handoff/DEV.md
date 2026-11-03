@@ -21,7 +21,7 @@ this file only says where the dev room stands.
   Recording leave as approved for oneself was already refused (`CANNOT_RECORD_OWN_LEAVE`).
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 348; backend unit 881, domain 548; e2e 559.
+- Counts: web 348; backend unit 881, domain 548; e2e 562.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
