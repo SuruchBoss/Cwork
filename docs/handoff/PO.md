@@ -6,9 +6,9 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-11-03)
 
-- **Dev queue:** CW-099 (#123) the payroll register export, then the 8,556
-  social security tests and CW-100 (#124) the leaver warning, then CW-101
-  (#125) 14-day pay periods. Estimates: CW-099 Thu 5 Nov, CW-100 Fri 6 Nov,
+- **Dev queue:** PR #126 (CW-099 plus the three backend advisories) merging
+  on green, then the repo-wide audit, the 8,556 tests and CW-100 (#124), the
+  performance run, CW-101 (#125) 14-day pay periods. Estimates: CW-099 Thu 5 Nov, CW-100 Fri 6 Nov,
   CW-101 one to two weeks after, before Cwork pays real wages.
 - **Owner's choice (17:19):** the parallel run puts daily staff on monthly
   periods and compares at the month. Install from Mon 9 Nov; propose Wed or
@@ -22,6 +22,13 @@ this file only says where the PO room stands.
   is called "the approver role" in the repo. The install date is ours to
   propose: PO estimate, ready to book from Mon 9 Nov. Real personal data never
   goes into a cloud session.
+- **Gates before booking the install (owner 17:51, via Asuna Bot):** QA room:
+  the Pilot A regression (41 cases plus CW-099, 8,556 → 428, the monthly
+  parallel run, CW-100) and a security review (high findings block; vulnerabilities go
+  to an advisory, never a public issue). Dev: performance in docker with 2 CPU
+  and 2 GB, at 50 and 200 people, after CW-100. UXUI: a blind test of the four
+  guide tasks at 1366x768. All synthetic data. Suggested install date now Wed
+  11 or Thu 12 Nov.
 - **Social security, daily wages:** the sum and rounding are right (CW-084;
   372 × 23 = 8,556 gives 428). The pilot deducts once a month. Nothing changes
   until the owner decides (and #36 confirms the law).
