@@ -25,6 +25,7 @@ import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import type { EmployeeSummary, Page } from '@/types/api';
 import { ScannerStatusBadge, UnmappedTable } from './ScannerParts';
+import { suggestTimes } from './suggest-times';
 import type {
   ScannerDay,
   ScannerDaysPage,
@@ -61,12 +62,10 @@ function DecisionControls({
   busy: boolean;
 }) {
   const t = useT();
-  const first = day.times[0] ?? '';
-  const last = day.times[day.times.length - 1] ?? '';
-  const [clockIn, setClockIn] = useState(day.decision?.clockIn ?? first);
-  const [clockOut, setClockOut] = useState(
-    day.decision ? (day.decision.clockOut ?? '') : day.times.length > 1 ? last : '',
-  );
+  const suggested = suggestTimes(day.times);
+  const decided = day.decision?.action === 'USE' ? day.decision : null;
+  const [clockIn, setClockIn] = useState(decided ? (decided.clockIn ?? '') : suggested.clockIn);
+  const [clockOut, setClockOut] = useState(decided ? (decided.clockOut ?? '') : suggested.clockOut);
 
   if (day.locked) {
     return <Badge tone="neutral">{t('Payroll has used this day')}</Badge>;

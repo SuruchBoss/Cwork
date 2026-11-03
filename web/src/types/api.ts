@@ -570,6 +570,10 @@ export interface PayrollRun {
   approvedAt: string | null;
   paidAt: string | null;
   failureReason: string | null;
+  periodId?: string;
+  /** Who created and who last calculated the run: neither may approve it. */
+  createdById?: string | null;
+  calculatedById?: string | null;
   period?: {
     code: string;
     year: number;

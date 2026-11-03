@@ -263,7 +263,10 @@ export class PayrollService {
   async createRun(user: AuthenticatedUser, dto: CreatePayrollRunDto) {
     const period = await this.requirePeriod(user.organizationId, dto.periodId);
     if (period.status === PayrollPeriodStatus.CLOSED) {
-      throw new BusinessRuleError(ErrorCode.PAYROLL_PERIOD_LOCKED, 'This payroll period is closed');
+      throw new BusinessRuleError(
+        ErrorCode.PAYROLL_PERIOD_LOCKED,
+        'งวดเงินเดือนนี้ปิดแล้ว สร้างรอบใหม่ไม่ได้',
+      );
     }
 
     const existing = await this.prisma.payrollRun.findFirst({
@@ -278,7 +281,7 @@ export class PayrollService {
     if (existing && (dto.type ?? PayrollRunType.REGULAR) === PayrollRunType.REGULAR) {
       throw new BusinessRuleError(
         ErrorCode.PAYROLL_ALREADY_RUN,
-        `A regular run (${existing.runNo}) already exists for this period`,
+        `งวดนี้มีรอบปกติอยู่แล้ว (${existing.runNo}) เปิดรอบเดิมแทนการสร้างใหม่`,
         { runId: existing.id },
       );
     }

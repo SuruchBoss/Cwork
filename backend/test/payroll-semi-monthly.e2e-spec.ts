@@ -388,6 +388,21 @@ describe('Daily wages paid twice a month (e2e)', () => {
       expect(page.body.firstHalf).toMatchObject({ id: runId, status: PayrollRunStatus.CALCULATED });
     });
 
+    it('refuses a second regular run on a period that has one, in Thai, and names the run', async () => {
+      const first = await prisma.payrollPeriod.findFirstOrThrow({
+        where: { organizationId, code: `${YEAR}-11-H1` },
+        select: { id: true },
+      });
+
+      const again = await api.post('/payroll/runs', payrollToken, { periodId: first.id });
+
+      expect(again.status).toBe(422);
+      expect(again.body.code).toBe('PAYROLL_ALREADY_RUN');
+      expect(again.body.message).toMatch(/[\u0E00-\u0E7F]/);
+      expect(again.body.message).not.toMatch(/already exists/i);
+      expect(again.body.details).toMatchObject({ runId: firstHalfRun });
+    });
+
     it('counts the first half by attendance and holidays, and flags what HR should check', async () => {
       // Paid: 3, 4, 5 (incomplete), 6, 7, 11 (holiday), 12, 13 = 8 days × 500.
       const slip = await slipOf(firstHalfRun, factoryWorker);

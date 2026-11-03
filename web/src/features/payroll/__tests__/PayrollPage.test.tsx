@@ -214,4 +214,49 @@ describe('First-time use of the periods page', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('This period already has a run');
   });
+
+  describe('a period that already has a run', () => {
+    const runOf = (status: string, over: Record<string, unknown> = {}) => ({
+      id: `run-${status}`,
+      runNo: 'RUN-1',
+      type: 'REGULAR',
+      status,
+      periodId: 'p-h1',
+      totalNet: '1000',
+      currency: 'THB',
+      ...over,
+    });
+
+    function serveRuns(runs: unknown[]) {
+      get.mockImplementation((path: string) =>
+        Promise.resolve(
+          path === '/payroll/periods' ? halves : path === '/payroll/runs' ? runs : [],
+        ),
+      );
+    }
+
+    it('offers to open the run instead of creating a second one', async () => {
+      serveRuns([runOf('CALCULATED')]);
+      render();
+
+      const open = await screen.findByRole('link', { name: 'เปิดรอบ' });
+      expect(open).toHaveAttribute('href', '/payroll/runs/run-CALCULATED');
+      expect(screen.queryByRole('button', { name: 'สร้างรอบคำนวณ' })).not.toBeInTheDocument();
+    });
+
+    it('offers to create again when the only run was cancelled or failed', async () => {
+      serveRuns([runOf('CANCELLED'), runOf('FAILED', { id: 'run-f' })]);
+      render();
+
+      expect(await screen.findByRole('button', { name: 'สร้างรอบคำนวณ' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'เปิดรอบ' })).not.toBeInTheDocument();
+    });
+
+    it('offers to create for a period with no run of its own', async () => {
+      serveRuns([runOf('CALCULATED', { periodId: 'another-period' })]);
+      render();
+
+      expect(await screen.findByRole('button', { name: 'สร้างรอบคำนวณ' })).toBeInTheDocument();
+    });
+  });
 });

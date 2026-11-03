@@ -160,6 +160,17 @@ export default function PayrollPage() {
   });
 
   const latest = runs.data?.[0];
+  // A period that already has a regular run opens it instead of offering a
+  // second one: the server refuses that, and a failed or cancelled run does
+  // not count, as there.
+  const liveRunFor = (periodId: string) =>
+    runs.data?.find(
+      (run) =>
+        run.periodId === periodId &&
+        run.type === 'REGULAR' &&
+        run.status !== 'CANCELLED' &&
+        run.status !== 'FAILED',
+    );
 
   return (
     <div className="page">
@@ -369,15 +380,24 @@ export default function PayrollPage() {
                     <td>{period._count?.runs ?? 0}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        {canRun && period.status !== 'CLOSED' && (
-                          <Button
-                            size="sm"
-                            loading={createRun.isPending && createRun.variables === period.id}
-                            onClick={() => createRun.mutate(period.id)}
-                          >
-                            {t('Create run')}
-                          </Button>
-                        )}
+                        {canRun &&
+                          period.status !== 'CLOSED' &&
+                          (liveRunFor(period.id) ? (
+                            <Link
+                              className="btn btn--secondary btn--sm"
+                              to={`/payroll/runs/${liveRunFor(period.id)!.id}`}
+                            >
+                              {t('Open run')}
+                            </Link>
+                          ) : (
+                            <Button
+                              size="sm"
+                              loading={createRun.isPending && createRun.variables === period.id}
+                              onClick={() => createRun.mutate(period.id)}
+                            >
+                              {t('Create run')}
+                            </Button>
+                          ))}
                         {canExport && (
                           <>
                             <Button

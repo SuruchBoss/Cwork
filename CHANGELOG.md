@@ -890,6 +890,17 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A lone evening scan is offered as a clock-out.** On the page where HR settles days the
+  scanner could not, a day with one scan at 17:32 was pre-filled as a clock-in at half past
+  five. A lone scan before noon is still offered as the clock-in, one from 15:00 as the
+  clock-out, and one in between is left for HR to place; several scans offer the first and
+  the last, as before.
+- **The dashboard shows payroll the way an approver needs it.** A person who approves payroll
+  sees how many runs wait for them (a run they prepared waits on someone else and says so),
+  and the latest-run card shows the latest run that has figures instead of a draft at ฿0.00.
+- **A period that has a run opens it.** The pay-periods table offers "open" instead of
+  "create run" for a period with a regular run, and the refusals for a second run and for a
+  closed period are now worded in Thai.
 - **The compare page names its picker as the month** (CW-108). The box that chooses
   what to compare was headed "งวด" although the page reads the whole calendar month; it
   now reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (in English, "Month (any period of the month

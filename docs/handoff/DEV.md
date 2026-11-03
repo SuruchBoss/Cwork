@@ -19,9 +19,14 @@ this file only says where the dev room stands.
   3. approving a run and recording its payment each ask one question first (a shared
      `ConfirmDialog`); the payment one says it cannot be undone.
   Recording leave as approved for oneself was already refused (`CANNOT_RECORD_OWN_LEAVE`).
+  4. the e2e leave test takes today from the organization's calendar (Asia/Bangkok), not UTC;
+     it failed between midnight and seven in the morning there (`test/utils/dates.ts`);
+  5. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
+     dashboard lists runs waiting for an approver and shows the latest run with figures, a
+     period with a run offers "open", and the two period refusals are in Thai.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 348; backend unit 881, domain 548; e2e 562.
+- Counts: web 362; backend unit 881, domain 548; e2e 563.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

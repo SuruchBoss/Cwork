@@ -200,7 +200,7 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(screen.getByText(/มี 4 วันที่ไม่มีการสแกนเลย/)).toBeInTheDocument();
   });
 
-  it('offers a single time only as a clock-in until HR says otherwise, and can leave the day out', async () => {
+  it('offers a lone morning time as the clock-in until HR says otherwise, and can leave the day out', async () => {
     serve([one]);
     renderPage();
     await screen.findByRole('cell', { name: '08:15' });
@@ -213,6 +213,24 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(post).toHaveBeenCalledWith('/attendance/scanner/days/d-one/decision', {
       action: 'IGNORE',
     });
+  });
+
+  it('offers a lone evening time as the clock-out, not as a clock-in', async () => {
+    serve([day({ id: 'd-eve', times: ['17:32'], reason: 'ONE_TIME' })]);
+    renderPage();
+    await screen.findByRole('cell', { name: '17:32' });
+
+    expect((screen.getByLabelText(/เวลาเข้างานของ 7/) as HTMLSelectElement).value).toBe('');
+    expect((screen.getByLabelText(/เวลาเลิกงานของ 7/) as HTMLSelectElement).value).toBe('17:32');
+  });
+
+  it('offers the first and last of several times as the clock-in and clock-out', async () => {
+    serve([day({ id: 'd-three', times: ['08:00', '12:01', '17:30'], reason: 'MANY_TIMES' })]);
+    renderPage();
+    await screen.findByText('08:00 12:01 17:30');
+
+    expect((screen.getByLabelText(/เวลาเข้างานของ 7/) as HTMLSelectElement).value).toBe('08:00');
+    expect((screen.getByLabelText(/เวลาเลิกงานของ 7/) as HTMLSelectElement).value).toBe('17:30');
   });
 
   it('closes the buttons on the signed-in person’s own day while someone else may decide it, and says why', async () => {
