@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api, saveBlob } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUiStore } from '@/stores/ui.store';
@@ -24,6 +25,7 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 const get = vi.mocked(api.get);
+const post = vi.mocked(api.post);
 
 const secondHalf = {
   id: 'run-h2',
@@ -98,7 +100,7 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('A second-half run (CW-069)', () => {
-  it('says why it cannot be calculated while the first half is not paid', async () => {
+  it('says why it cannot be calculated while the first half is not approved', async () => {
     serve({
       ...secondHalf,
       firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'CALCULATED' },
@@ -113,7 +115,7 @@ describe('A second-half run (CW-069)', () => {
     const calculate = screen.getByRole('button', { name: 'คำนวณเงินเดือน' });
     expect(calculate).toBeDisabled();
     expect(calculate).toHaveAccessibleDescription(
-      expect.stringContaining('ต้องจ่ายครึ่งแรกก่อนจึงจะคำนวณครึ่งนี้ได้'),
+      expect.stringContaining('ต้องอนุมัติครึ่งแรกก่อนจึงจะคำนวณครึ่งนี้ได้'),
     );
     expect(screen.getByText(/16–30 พฤศจิกายน 2569/)).toBeInTheDocument();
     await expectNoAxeViolations(container);
@@ -123,8 +125,18 @@ describe('A second-half run (CW-069)', () => {
     serve({ ...secondHalf, firstHalf: null });
     render();
     expect(await screen.findByRole('status')).toHaveTextContent(
-      'แต่ครึ่งแรกยังไม่มีรอบคำนวณ ให้สร้างรอบครึ่งแรก คำนวณ อนุมัติ และจ่ายก่อน',
+      'แต่ครึ่งแรกยังไม่มีรอบคำนวณ ให้สร้างรอบครึ่งแรก คำนวณ และอนุมัติก่อน',
     );
+  });
+
+  it('lets the run be calculated once the first half is approved, paid or not (CW-104)', async () => {
+    serve({
+      ...secondHalf,
+      firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'APPROVED' },
+    });
+    render();
+    expect(await screen.findByRole('button', { name: 'คำนวณเงินเดือน' })).toBeEnabled();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('lets the run be calculated once the first half is paid', async () => {
@@ -135,6 +147,31 @@ describe('A second-half run (CW-069)', () => {
     render();
     expect(await screen.findByRole('button', { name: 'คำนวณเงินเดือน' })).toBeEnabled();
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('The refusal to approve one’s own run (CW-103)', () => {
+  it('is in Thai, and says who has to approve', async () => {
+    serve({
+      ...secondHalf,
+      status: 'CALCULATED',
+      calculatedAt: '2026-11-30T03:00:00.000Z',
+      firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+    });
+    post.mockRejectedValueOnce(
+      new ApiError(
+        422,
+        'SELF_APPROVAL_NOT_ALLOWED',
+        'A payroll run must be approved by someone other than the person who prepared it',
+      ),
+    );
+    render();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'รอบเงินเดือนต้องอนุมัติโดยคนอื่นที่ไม่ใช่คนเตรียมรอบ',
+    );
   });
 });
 

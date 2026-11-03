@@ -367,7 +367,7 @@ describe('Payroll register (e2e)', () => {
       // In Thai, with the month's name and Buddhist year, and the next step.
       expect(res.body.message).toContain('ยังส่งออกทะเบียนของเดือนเมษายน 2580 ไม่ได้');
       expect(res.body.message).toContain('ยังไม่มีรอบเงินเดือน');
-      expect(res.body.message).toContain('แล้วส่งออกอีกครั้ง');
+      expect(res.body.message).toContain('แล้วลองอีกครั้ง');
     });
 
     it('is refused while the second half of the daily wages is missing', async () => {

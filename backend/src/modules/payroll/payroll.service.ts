@@ -408,24 +408,26 @@ export class PayrollService {
   }
 
   /**
-   * The paid periods earlier in the month that this one builds on (CW-069,
-   * CW-101).
+   * The earlier periods of the month that this one builds on (CW-069, CW-101,
+   * CW-104).
    *
    * The second half, or a later 14-day period, withholds the month's tax and
-   * social security less what the periods before it took, so it needs them
-   * settled; and an earlier run is what marks the expense claims it paid, so
-   * calculating this one before they are paid would pay those claims twice.
-   * Both are reasons to refuse rather than guess.
+   * social security less what the periods before it took, so it needs their
+   * figures settled: an approved run's figures cannot change, so approved is
+   * enough, and a run still being worked on is refused rather than guessed at.
+   * The expense claims an earlier run pays are held when it is approved
+   * (`holdClaims`), so this one cannot pay them again before they are marked
+   * paid. The same rule serves half-months and 14-day periods.
    */
   private async firstHalfFor(organizationId: string, period: PayrollPeriodWindow) {
     const monthName = `${period.year}-${String(period.month).padStart(2, '0')}`;
 
     if (period.payFrequency === PayFrequency.SEMI_MONTHLY && period.half === 2) {
       const run = await this.firstHalfRunOf(organizationId, period);
-      if (run?.status !== PayrollRunStatus.PAID) {
+      if (run?.status !== PayrollRunStatus.APPROVED && run?.status !== PayrollRunStatus.PAID) {
         throw new BusinessRuleError(
-          'FIRST_HALF_NOT_PAID',
-          `The second half of ${monthName} is worked out from the first half: pay the first half first`,
+          'FIRST_HALF_NOT_APPROVED',
+          `The second half of ${monthName} is worked out from the first half: approve the first half first`,
           { firstHalfRunId: run?.id ?? null, firstHalfStatus: run?.status ?? null },
         );
       }
@@ -455,14 +457,18 @@ export class PayrollService {
           },
         },
       });
-      const notPaid = earlier.filter((p) => p.runs[0]?.status !== PayrollRunStatus.PAID);
-      if (notPaid.length > 0) {
+      const notApproved = earlier.filter(
+        (p) =>
+          p.runs[0]?.status !== PayrollRunStatus.APPROVED &&
+          p.runs[0]?.status !== PayrollRunStatus.PAID,
+      );
+      if (notApproved.length > 0) {
         throw new BusinessRuleError(
-          'EARLIER_PERIOD_NOT_PAID',
-          `This period of ${monthName} is worked out from the ones before it: pay ${notPaid
+          'EARLIER_PERIOD_NOT_APPROVED',
+          `This period of ${monthName} is worked out from the ones before it: approve ${notApproved
             .map((p) => p.code)
             .join(', ')} first`,
-          { unpaid: notPaid.map((p) => p.code) },
+          { unpaid: notApproved.map((p) => p.code) },
         );
       }
       return { runIds: earlier.map((p) => p.runs[0]!.id) };
@@ -598,13 +604,41 @@ export class PayrollService {
     }
     await this.advances.assertUnchangedSince(runId, run.calculatedAt);
 
-    return this.prisma.payrollRun.update({
-      where: { id: runId },
-      data: {
-        status: PayrollRunStatus.APPROVED,
-        approvedAt: new Date(),
-        approvedById: user.userId,
+    return this.prisma.$transaction(async (tx) => {
+      const approved = await tx.payrollRun.update({
+        where: { id: runId },
+        data: {
+          status: PayrollRunStatus.APPROVED,
+          approvedAt: new Date(),
+          approvedById: user.userId,
+        },
+      });
+      await this.holdClaims(tx, user.organizationId, runId);
+      return approved;
+    });
+  }
+
+  /**
+   * The expense claims an approved run pays are held for it from that moment
+   * (CW-104): a run worked out afterwards, such as the second half while the
+   * first is approved but not yet paid, does not take them again. They are
+   * found by the payslip lines that reimburse them, which carry the claim's
+   * number, so a claim approved after the run was calculated is not held.
+   */
+  private async holdClaims(tx: Prisma.TransactionClient, organizationId: string, runId: string) {
+    const lines = await tx.payslipItem.findMany({
+      where: { payslip: { runId }, type: PayComponentType.EARNING, isTaxable: false },
+      select: { code: true },
+    });
+    if (lines.length === 0) return;
+    await tx.expenseClaim.updateMany({
+      where: {
+        organizationId,
+        claimNo: { in: lines.map((line) => line.code) },
+        status: ExpenseClaimStatus.APPROVED,
+        payrollRunId: null,
       },
+      data: { payrollRunId: runId },
     });
   }
 
@@ -650,6 +684,8 @@ export class PayrollService {
           status: ExpenseClaimStatus.APPROVED,
           paymentMethod: 'PAYROLL',
           decidedAt: { lte: run.period.cutoffDate },
+          // Those held for this run when it was approved, and no others.
+          payrollRunId: runId,
         },
         data: { status: ExpenseClaimStatus.PAID, paidAt: new Date(), payrollRunId: runId },
       });
@@ -698,9 +734,17 @@ export class PayrollService {
       throw new BusinessRuleError('RUN_ALREADY_PAID', 'A paid run cannot be cancelled');
     }
 
-    return this.prisma.payrollRun.update({
-      where: { id: runId },
-      data: { status: PayrollRunStatus.CANCELLED },
+    return this.prisma.$transaction(async (tx) => {
+      const cancelled = await tx.payrollRun.update({
+        where: { id: runId },
+        data: { status: PayrollRunStatus.CANCELLED },
+      });
+      // What an approved run held goes back to be paid by the next one.
+      await tx.expenseClaim.updateMany({
+        where: { payrollRunId: runId, status: ExpenseClaimStatus.APPROVED },
+        data: { payrollRunId: null },
+      });
+      return cancelled;
     });
   }
 
@@ -964,6 +1008,8 @@ export class PayrollService {
           status: ExpenseClaimStatus.APPROVED,
           paymentMethod: 'PAYROLL',
           decidedAt: { lte: period.cutoffDate },
+          // Not one an approved run has already taken (CW-104).
+          payrollRunId: null,
         },
         select: { id: true, claimNo: true, title: true, approvedAmount: true, totalAmount: true },
       }),

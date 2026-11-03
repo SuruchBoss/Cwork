@@ -441,9 +441,14 @@ before Cwork (the opening balance) and a previous employer's pay, exactly as a
 monthly run does. The first half is added to the month, not to the year so far.
 
 The second half is worked out from the first, so it cannot be calculated until
-the first half's run is **paid** (`FIRST_HALF_NOT_PAID`). Paid, not just
-approved, also because marking a run paid is what marks the expense claims it
-paid; a second half calculated earlier would pay them again.
+the first half's run is **approved** (`FIRST_HALF_NOT_APPROVED`); paid is not
+required (CW-104). An approved run's figures cannot change, so the second half
+can build on them, and the expense claims the first half pays are *held* for it
+the moment it is approved (`payrollRunId` on the claim), so the second half does
+not pay them again before the first is marked paid. Cancelling the approved run
+releases them. Cash advances are not paid twice either: what is owed is the
+amount less what any run that still stands has taken back. During the parallel
+run HR need not record any payment in Cwork.
 
 ### Monthly items
 

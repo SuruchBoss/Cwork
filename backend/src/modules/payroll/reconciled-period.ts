@@ -29,6 +29,12 @@ export interface LoadOptions {
    * paid that month has to read all of them.
    */
   wholeMonth?: boolean;
+  /**
+   * What the caller was doing, in Thai, for the refusal of a month that is not
+   * all there: "ยัง{action}{month} ไม่ได้". The register says
+   * "ส่งออกทะเบียนของเดือน", the comparison "เทียบยอดของเดือน".
+   */
+  action?: string;
 }
 
 /**
@@ -86,7 +92,7 @@ export async function loadReconciledPeriod(
   });
 
   try {
-    if (options.wholeMonth) assertMonthIsComplete(periods, anchor);
+    if (options.wholeMonth) assertMonthIsComplete(periods, anchor, options.action);
     const reconciled = reconcilePeriod(
       options.wholeMonth
         ? { code: monthCode(anchor), year: anchor.year, month: anchor.month }
@@ -186,25 +192,24 @@ function assertMonthIsComplete(
     runs: Array<{ runNo: string; status: string }>;
   }>,
   month: { year: number; month: number },
+  action = 'ส่งออกทะเบียนของเดือน',
 ): void {
   const monthName = thaiMonthYear(month.year, month.month);
   const refuse = (what: string, next: string) =>
-    new PayrollReconciliationError(
-      `ยังส่งออกทะเบียนของเดือน${monthName} ไม่ได้ เพราะ${what} ${next}`,
-    );
+    new PayrollReconciliationError(`ยัง${action}${monthName} ไม่ได้ เพราะ${what} ${next}`);
 
   for (const period of periods) {
     if (period.runs.length === 0) {
       throw refuse(
         `${periodName(period)} ยังไม่มีรอบเงินเดือน`,
-        'สร้างรอบ คำนวณ และอนุมัติให้ครบทุกงวดของเดือน แล้วส่งออกอีกครั้ง',
+        'สร้างรอบ คำนวณ และอนุมัติให้ครบทุกงวดของเดือน แล้วลองอีกครั้ง',
       );
     }
     const open = period.runs.find((run) => !['APPROVED', 'PAID'].includes(run.status));
     if (open) {
       throw refuse(
         `${periodName(period)} มีรอบ ${open.runNo} ที่ยัง${RUN_STATUS_TH[open.status] ?? open.status}`,
-        'อนุมัติรอบนี้ (โดยคนที่ไม่ได้เป็นคนเตรียมรอบ) แล้วส่งออกอีกครั้ง',
+        'อนุมัติรอบนี้ (โดยคนที่ไม่ได้เป็นคนเตรียมรอบ) แล้วลองอีกครั้ง',
       );
     }
   }
@@ -215,7 +220,7 @@ function assertMonthIsComplete(
     if (halves.size > 0 && !halves.has(half)) {
       throw refuse(
         `ยังไม่มีงวด${half === 1 ? 'ครึ่งแรก' : 'ครึ่งหลัง'}ของค่าจ้างรายวัน`,
-        'สร้างงวดนั้น สร้างรอบ คำนวณ และอนุมัติ แล้วส่งออกอีกครั้ง',
+        'สร้างงวดนั้น สร้างรอบ คำนวณ และอนุมัติ แล้วลองอีกครั้ง',
       );
     }
   }

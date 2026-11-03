@@ -19,6 +19,7 @@ export type ImportProblemCode =
   | 'UNKNOWN_COLUMN'
   | 'DUPLICATE_COLUMN'
   | 'MISSING_COLUMN'
+  | 'MISSING_EMPLOYEE_CODE'
   | 'NO_ROWS'
   | 'TOO_MANY_ROWS'
   // A fingerprint scanner's export (CW-061).
@@ -83,6 +84,8 @@ const MESSAGES: Record<ImportProblemCode, string> = {
   UNKNOWN_COLUMN: 'Column "{header}" is not one this import knows',
   DUPLICATE_COLUMN: 'Column "{header}" appears more than once',
   MISSING_COLUMN: 'The file has no "{column}" column, which is required',
+  MISSING_EMPLOYEE_CODE:
+    'The file has no "รหัสพนักงาน" (employee code) column. HR\'s own register has none: add a column with that heading and put each person\'s Cwork employee code in it, then upload the file again',
   NO_ROWS: 'The file has a header row but no employees under it',
   TOO_MANY_ROWS: 'The file has {rows} rows; one import takes at most {max}',
   UNSUPPORTED_ENCODING:

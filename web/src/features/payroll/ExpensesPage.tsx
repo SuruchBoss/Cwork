@@ -120,14 +120,13 @@ export default function ExpensesPage() {
                     </td>
                     <td className="num">
                       {formatMoney(claim.approvedAmount ?? claim.totalAmount, claim.currency)}
-                      {claim.approvedAmount &&
-                        claim.approvedAmount !== claim.totalAmount && (
-                          <div className="subtle">
-                            {t('Claimed {amount}', {
-                              amount: formatMoney(claim.totalAmount, claim.currency),
-                            })}
-                          </div>
-                        )}
+                      {claim.approvedAmount && claim.approvedAmount !== claim.totalAmount && (
+                        <div className="subtle">
+                          {t('Claimed {amount}', {
+                            amount: formatMoney(claim.totalAmount, claim.currency),
+                          })}
+                        </div>
+                      )}
                     </td>
                     <td className="subtle">{formatDate(claim.submittedAt)}</td>
                     <td>
