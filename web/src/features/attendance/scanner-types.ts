@@ -35,6 +35,8 @@ export interface ScannerPreview {
   lines: number;
   days: DayCounts;
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR decided about them (CW-106). */
+  singleScanDays: number;
   punchesToAdd: number;
   lockedDays: number;
   unmapped: UnmappedNumber[];
@@ -48,6 +50,8 @@ export interface ScannerCommitResult {
   lines: number;
   days: DayCounts;
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR decided about them (CW-106). */
+  singleScanDays: number;
   punchesAdded: number;
   lockedDays: number;
   unmapped: UnmappedNumber[];

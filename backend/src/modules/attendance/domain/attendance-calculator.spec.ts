@@ -26,6 +26,61 @@ const dayShift: ShiftDefinition = {
 /** Helper: an instant at a Bangkok wall-clock time on 2026-09-15. */
 const bkk = (hhmm: string) => new Date(`2026-09-15T${hhmm}:00+07:00`);
 
+describe('a day with one scan (CW-106)', () => {
+  const day = (punches: Array<[PunchType, string]>, dayIsOver: boolean) =>
+    deriveAttendance({
+      workDate: toDateOnly('2026-09-15'),
+      timezone: TZ,
+      shift: dayShift,
+      isWorkingDay: true,
+      isHoliday: false,
+      dayIsOver,
+      punches: punches.map(([type, time]) => ({ type, punchedAt: bkk(time) })),
+    });
+
+  it('is INCOMPLETE when only the clock-in is there and the day is over', () => {
+    const result = day([[PunchType.CLOCK_IN, '08:55']], true);
+
+    expect(result.status).toBe(AttendanceStatus.INCOMPLETE);
+    expect(result.workedMinutes).toBe(0);
+    expect(result.firstClockInAt).toEqual(bkk('08:55'));
+    expect(result.lastClockOutAt).toBeNull();
+  });
+
+  it('is still PRESENT today, when the clock-out may yet come', () => {
+    expect(day([[PunchType.CLOCK_IN, '08:55']], false).status).toBe(AttendanceStatus.PRESENT);
+  });
+
+  it('is INCOMPLETE with no minutes, and no error, when only the clock-out is there', () => {
+    for (const over of [true, false]) {
+      const result = day([[PunchType.CLOCK_OUT, '18:02']], over);
+
+      expect(result.status).toBe(AttendanceStatus.INCOMPLETE);
+      expect(result.workedMinutes).toBe(0);
+      expect(result.overtimeMinutes).toBe(0);
+      expect(result.lateMinutes).toBe(0);
+      expect(Number.isNaN(result.workedMinutes)).toBe(false);
+      expect(result.firstClockInAt).toBeNull();
+      expect(result.lastClockOutAt).toEqual(bkk('18:02'));
+    }
+  });
+
+  it('leaves a complete day as it was, over or not', () => {
+    for (const over of [true, false]) {
+      const result = day(
+        [
+          [PunchType.CLOCK_IN, '08:55'],
+          [PunchType.CLOCK_OUT, '18:02'],
+        ],
+        over,
+      );
+
+      expect(result.status).toBe(AttendanceStatus.PRESENT);
+      expect(result.workedMinutes).toBe(487);
+    }
+  });
+});
+
 describe('deriveAttendance', () => {
   it('marks a clean full day as PRESENT with 8 worked hours', () => {
     const result = deriveAttendance({

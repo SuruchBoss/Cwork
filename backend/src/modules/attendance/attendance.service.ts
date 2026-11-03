@@ -526,6 +526,9 @@ export class AttendanceService {
     const holiday = isHoliday(calendarDay);
     const isWorkingDay = calendarDay.scheduled;
 
+    // A day before today will not get its clock-out (CW-106).
+    const dayIsOver = day.getTime() < workDateFor(new Date(), timezone).getTime();
+
     const derived = deriveAttendance({
       workDate: day,
       timezone,
@@ -534,6 +537,7 @@ export class AttendanceService {
       isWorkingDay,
       isHoliday: holiday,
       leaveDayValue: leaveDay ? Number(leaveDay.dayValue) : 0,
+      dayIsOver,
     });
 
     const status =

@@ -75,6 +75,8 @@ export interface ScannerPreview {
   days: { added: number; changed: number; unchanged: number };
   /** What each day of the file is, counting every line. */
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR has decided about them (CW-106). */
+  singleScanDays: number;
   /** Punches this file would add to attendance. */
   punchesToAdd: number;
   /** Days of the file payroll has already used (same rule as the review page): left as they are. */
@@ -90,6 +92,8 @@ export interface ScannerCommitResult {
   lines: number;
   days: { added: number; changed: number; unchanged: number };
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR has decided about them (CW-106). */
+  singleScanDays: number;
   punchesAdded: number;
   /** Days of the file payroll has already used (same rule as the review page): left as they were. */
   lockedDays: number;
@@ -227,6 +231,7 @@ export class ScannerImportService {
         lines: lines.length,
         days: { added: 0, changed: 0, unchanged: 0 },
         byStatus: EMPTY_BY_STATUS(),
+        singleScanDays: 0,
         punchesToAdd: 0,
         lockedDays: 0,
         unmapped: [],
@@ -357,6 +362,7 @@ export class ScannerImportService {
       lines: lines.length,
       days: summary.days,
       byStatus: summary.byStatus,
+      singleScanDays: summary.singleScanDays,
       punchesAdded: added + late.punchesAdded,
       lockedDays: await this.countLockedDays(organizationId, plan.entries),
       unmapped: this.unmappedOf(plan.entries),
@@ -922,8 +928,10 @@ export class ScannerImportService {
     const byStatus = EMPTY_BY_STATUS();
     let added = 0;
     let changed = 0;
+    let singleScanDays = 0;
     for (const e of plan.entries) {
       byStatus[e.verdict.status] += 1;
+      if (e.times.length === 1) singleScanDays += 1;
       if (e.isNew) added += 1;
       else if (e.changed) changed += 1;
     }
@@ -934,6 +942,7 @@ export class ScannerImportService {
       lines: lines.length,
       days: { added, changed, unchanged: plan.entries.length - added - changed },
       byStatus,
+      singleScanDays,
     };
   }
 

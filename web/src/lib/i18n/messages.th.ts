@@ -947,6 +947,10 @@ export const thMessages: Record<string, string> = {
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
   '{count} day is waiting for HR to decide, and is not counted until then':
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
+  '{count} day was scanned only once; check it before running payroll':
+    '{count} วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน',
+  '{count} days were scanned only once; check them before running payroll':
+    '{count} วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน',
   '{count} scanner numbers belong to nobody yet; match them on the review page':
     'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
   '{count} scanner number belongs to nobody yet; match it on the review page':

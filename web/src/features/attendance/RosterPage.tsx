@@ -435,7 +435,9 @@ function SchedulesTab({ canManage }: { canManage: boolean }) {
           <EmptyState
             icon="calendar"
             title={t('No schedules yet')}
-            description={t('Create a weekly schedule, then assign it to employees on the Roster tab')}
+            description={t(
+              'Create a weekly schedule, then assign it to employees on the Roster tab',
+            )}
           />
         )}
       </Card>
@@ -584,7 +586,9 @@ function RosterTab({ canManage }: { canManage: boolean }) {
                 {errorMessage(assign.error, t('Could not assign'))}
               </div>
             )}
-            {assign.isSuccess && <div className="alert alert--info">{t('Assigned successfully')}</div>}
+            {assign.isSuccess && (
+              <div className="alert alert--info">{t('Assigned successfully')}</div>
+            )}
           </div>
         </Card>
       )}
@@ -635,7 +639,9 @@ function RosterTab({ canManage }: { canManage: boolean }) {
           <EmptyState
             icon="users"
             title={t('No employees in this range')}
-            description={t('Pick a date range or department, then assign schedules to see the roster')}
+            description={t(
+              'Pick a date range or department, then assign schedules to see the roster',
+            )}
           />
         )}
       </Card>
@@ -656,9 +662,5 @@ function RosterCell({
   if (isDayOff) return <span className="subtle">{t('Off')}</span>;
   if (!shiftName) return <span className="subtle">—</span>;
   // An override is a deliberate one-off, so mark it apart from the routine schedule.
-  return source === 'override' ? (
-    <Badge tone="info">{shiftName}</Badge>
-  ) : (
-    <span>{shiftName}</span>
-  );
+  return source === 'override' ? <Badge tone="info">{shiftName}</Badge> : <span>{shiftName}</span>;
 }
