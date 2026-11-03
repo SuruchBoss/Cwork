@@ -468,7 +468,7 @@ export class PayrollService {
           `This period of ${monthName} is worked out from the ones before it: approve ${notApproved
             .map((p) => p.code)
             .join(', ')} first`,
-          { unpaid: notApproved.map((p) => p.code) },
+          { unapproved: notApproved.map((p) => p.code) },
         );
       }
       return { runIds: earlier.map((p) => p.runs[0]!.id) };

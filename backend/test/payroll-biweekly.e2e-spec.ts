@@ -214,7 +214,7 @@ describe('Daily wages paid every 14 days (e2e)', () => {
   });
 
   describe('paying the month', () => {
-    it('calculates each period only after the ones before it are paid', async () => {
+    it('calculates each period only after the ones before it are approved', async () => {
       for (const [n, id] of periodIds.entries()) {
         const run = await api.post('/payroll/runs', payroll, { periodId: id });
         expect(run.status).toBe(201);
@@ -225,11 +225,14 @@ describe('Daily wages paid every 14 days (e2e)', () => {
       expect(first.status).toBe(201);
 
       const early = await api.post(`/payroll/runs/${runIds[1]}/calculate`, payroll);
-      expect(early.body.code).toBe('EARLIER_PERIOD_NOT_PAID');
-      expect(early.body.details).toEqual({ unpaid: ['2040-01-B1'] });
+      expect(early.body.code).toBe('EARLIER_PERIOD_NOT_APPROVED');
+      expect(early.body.details).toEqual({ unapproved: ['2040-01-B1'] });
 
-      await settle(0);
+      // Approved is enough: nobody has recorded a payment.
+      expect((await api.post(`/payroll/runs/${runIds[0]}/approve`, ceo)).status).toBe(201);
       expect((await api.post(`/payroll/runs/${runIds[1]}/calculate`, payroll)).status).toBe(201);
+      const paid = await api.post(`/payroll/runs/${runIds[0]}/pay`, ceo);
+      expect(paid.body.status).toBe(PayrollRunStatus.PAID);
     });
 
     it('does not list the month while a period of it is still to come', async () => {

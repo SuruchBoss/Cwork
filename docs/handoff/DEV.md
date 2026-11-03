@@ -9,18 +9,23 @@ this file only says where the dev room stands.
 - On `main`: everything up to #126 (CW-099 the payroll register).
 - **#128** (dependency updates, the 8,556 social security test, the e2e count): open, all checks
   green on the latest run, waiting for the PO to merge.
-- **On branch `claude/new-session-syszvt`, not pushed until #128 merges:**
+- **On branch `claude/new-session-syszvt` (pushed; the PO opens the PR or PRs):** commits in this
+  order, each with its own tests:
   1. the Pilot A performance measurement, `docs/qa/performance-pilot-a.md`;
-  2. a set of access-check changes (tickets ADV-1 to ADV-7 of the PO's list), with their tests,
-     one migration (`20261103120000_payroll_run_calculated_by`), and a neutral CHANGELOG line;
+  2. the access-check changes (ADV-1 to ADV-7), one migration (`..._payroll_run_calculated_by`);
   3. CW-102 (#133): the scanner import reads and writes in groups; 200 people took 4.1 s in the
-     2 CPU / 2 GB stack, 41.5 s before;
-  4. CW-101 (#125): 14-day periods, `BIWEEKLY`, with a migration (`20261103130000_biweekly_pay_periods`,
-     the check on `half`), the month rule in one function (`monthCountedFor`, provisional: the month
-     the period is paid in), the monthly outputs adding a month's periods and waiting for the last,
-     and the web form and pay card to set it up. Not built, by the PO's decision: any option to
-     take the contribution once a month.
-- Counts: web 326; backend unit 829, domain 529; e2e 502.
+     2 CPU / 2 GB stack, 41.5 s before (no migration);
+  4. CW-101 (#125): 14-day periods, `BIWEEKLY`, one migration (`..._biweekly_pay_periods`), the month
+     rule in one function (`monthCountedFor`, provisional: the month the period is paid in);
+  5. CW-106 (#137): a past day with one scan is INCOMPLETE; the import summary counts them;
+  6. CW-105 (#136): the register's summary row, Thai refusal, print setup and borders;
+  7. CW-103 + CW-104 (#134, #127): the compare page reads the calendar month and HR's own register
+     (title and stacked headings, total row skipped, code column asked for); the second half, and a
+     later 14-day period, is calculated once the earlier ones are **approved**; the claims an approved
+     run pays are held for it (`payrollRunId`), released if it is cancelled.
+  The six commits before CW-106 were pushed first; CW-103 to CW-106 are stacked on them because a
+  single branch cannot carry separate PRs. CW-106, 105 and 103/104 do not depend on CW-102 or CW-101.
+- Counts: web 329; backend unit 843, domain 539; e2e 519.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
