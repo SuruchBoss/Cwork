@@ -16,6 +16,7 @@ import {
   type FilingProblem,
   type FilingSheet,
 } from './domain/sso-filing';
+import { anotherPeriodExpected, missingOrdinals } from './domain/pay-period';
 import { taxRulesFor } from './domain/thai-tax';
 import { ssoSlips } from './sso-slips';
 
@@ -241,6 +242,7 @@ export class SsoFilingService {
         code: true,
         payFrequency: true,
         half: true,
+        payDate: true,
         runs: { select: { status: true } },
       },
       orderBy: [{ half: 'asc' }, { code: 'asc' }],
@@ -261,17 +263,28 @@ export class SsoFilingService {
     );
     const missingHalves =
       halves.size > 0 ? [1, 2].filter((half) => !halves.has(half)) : ([] as number[]);
-    if (unfinished.length > 0 || missingHalves.length > 0) {
+    // A month paid every 14 days is finished only when no period is missing and
+    // the next one, fourteen days on, would belong to the following month.
+    const fortnights = periods.filter((p) => p.payFrequency === PayFrequency.BIWEEKLY);
+    const fortnightsToCome =
+      fortnights.length > 0 &&
+      (missingOrdinals(fortnights.map((p) => p.half)).length > 0 ||
+        anotherPeriodExpected(fortnights.reduce((a, b) => (a.half >= b.half ? a : b)).payDate, {
+          year,
+          month,
+        }));
+    if (unfinished.length > 0 || missingHalves.length > 0 || fortnightsToCome) {
       const reasons = [
         unfinished.length > 0 ? `no approved or paid run for ${unfinished.join(', ')}` : null,
         missingHalves.length > 0
           ? `no period for the ${missingHalves.map((h) => (h === 1 ? 'first' : 'second')).join(' and ')} half`
           : null,
+        fortnightsToCome ? 'more 14-day periods are still to come in the month' : null,
       ].filter(Boolean);
       throw new BusinessRuleError(
         'SSO_MONTH_NOT_FINISHED',
         `${year}-${String(month).padStart(2, '0')} cannot be filed yet: ${reasons.join('; ')}`,
-        { unfinished, missingHalves },
+        { unfinished, missingHalves, fortnightsToCome },
       );
     }
   }

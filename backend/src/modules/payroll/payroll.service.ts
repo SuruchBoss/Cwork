@@ -45,6 +45,7 @@ import {
   type PayslipWarning,
 } from './domain/daily-wage';
 import { taxRulesFor } from './domain/thai-tax';
+import { biweeklyEnd, monthCountedFor, whyNotNext } from './domain/pay-period';
 import { yearToDate } from './domain/year-to-date';
 import { EXPORT_FORMATS, resolveExportFormat } from './domain/payroll-export';
 import { AuditService } from '../audit/audit.service';
@@ -64,10 +65,11 @@ type PayrollPeriodWindow = {
 };
 
 /**
- * The first half of a semi-monthly month, as its second half needs it: the run
- * that paid it, so each employee's first-half payslip can be read (CW-069).
+ * What a later period of a month builds on: the runs that paid the earlier
+ * periods of the month (the first half, or the 14-day periods before it), so
+ * each employee's payslips there can be read and added up (CW-069, CW-101).
  */
-type FirstHalfRun = { runId: string } | null;
+type FirstHalfRun = { runIds: string[] } | null;
 
 /** The employee fields a payslip needs. */
 type PayrollSubject = {
@@ -103,12 +105,23 @@ export class PayrollService {
   }
 
   /**
-   * Opens a period: a whole month, or one half of a semi-monthly month
-   * (CW-069). A month has at most one monthly period and one of each half; a
-   * second one would pay the same month twice, so it is refused here, and the
-   * database's unique key refuses it again if two requests race.
+   * Opens a period: a whole month, one half of a semi-monthly month (CW-069), or
+   * fourteen days (CW-101). A month has at most one monthly period and one of
+   * each half; a second one would pay the same month twice, so it is refused
+   * here, and the database's unique key refuses it again if two requests race.
    */
   async createPeriod(organizationId: string, dto: CreatePayrollPeriodDto) {
+    const payFrequency = dto.payFrequency ?? PayFrequency.MONTHLY;
+    if (payFrequency === PayFrequency.BIWEEKLY)
+      return this.createBiweeklyPeriod(organizationId, dto);
+
+    if (dto.year === undefined || dto.month === undefined || dto.periodEnd === undefined) {
+      throw new BusinessRuleError(
+        'INVALID_PERIOD',
+        'Give the year, the month and the last day of the period',
+      );
+    }
+    const { year, month } = dto;
     const periodStart = toDateOnly(dto.periodStart);
     const periodEnd = toDateOnly(dto.periodEnd);
 
@@ -116,7 +129,6 @@ export class PayrollService {
       throw new BusinessRuleError('INVALID_PERIOD', 'The period must end after it starts');
     }
 
-    const payFrequency = dto.payFrequency ?? PayFrequency.MONTHLY;
     const semiMonthly = payFrequency === PayFrequency.SEMI_MONTHLY;
     if (semiMonthly !== (dto.half !== undefined)) {
       throw new BusinessRuleError(
@@ -127,11 +139,11 @@ export class PayrollService {
       );
     }
     const half = dto.half ?? 0;
-    const monthCode = `${dto.year}-${String(dto.month).padStart(2, '0')}`;
-    if (semiMonthly) assertHalfDates(dto.year, dto.month, half, periodStart, periodEnd);
+    const monthCode = `${year}-${String(month).padStart(2, '0')}`;
+    if (semiMonthly) assertHalfDates(year, month, half, periodStart, periodEnd);
 
     const existing = await this.prisma.payrollPeriod.findFirst({
-      where: { organizationId, payFrequency, year: dto.year, month: dto.month, half },
+      where: { organizationId, payFrequency, year, month, half },
       select: { id: true, code: true },
     });
     if (existing) {
@@ -146,14 +158,94 @@ export class PayrollService {
       data: {
         organizationId,
         code: dto.code ?? (semiMonthly ? `${monthCode}-H${half}` : monthCode),
-        year: dto.year,
-        month: dto.month,
+        year,
+        month,
         payFrequency,
         half,
         periodStart,
         periodEnd,
         cutoffDate: toDateOnly(dto.cutoffDate ?? dto.periodEnd),
         payDate: toDateOnly(dto.payDate),
+      },
+    });
+  }
+
+  /**
+   * A period of fourteen days (CW-101). It ends on its own, thirteen days after
+   * it starts, and follows the one before without a gap, so every day is in
+   * exactly one. The month it counts toward comes from `monthCountedFor`, and
+   * `half` numbers it within that month (1, 2 and sometimes 3).
+   */
+  private async createBiweeklyPeriod(organizationId: string, dto: CreatePayrollPeriodDto) {
+    if (dto.half !== undefined) {
+      throw new BusinessRuleError(
+        'INVALID_PERIOD_HALF',
+        'A 14-day period has no half: Cwork numbers it within its month',
+      );
+    }
+    const periodStart = toDateOnly(dto.periodStart);
+    const periodEnd = biweeklyEnd(periodStart);
+    if (
+      dto.periodEnd !== undefined &&
+      toDateOnly(dto.periodEnd).getTime() !== periodEnd.getTime()
+    ) {
+      throw new BusinessRuleError(
+        'INVALID_PERIOD_DATES',
+        `A 14-day period starting ${formatDateOnly(periodStart)} ends ${formatDateOnly(periodEnd)}`,
+        { periodStart: formatDateOnly(periodStart), periodEnd: formatDateOnly(periodEnd) },
+      );
+    }
+    const payDate = toDateOnly(dto.payDate);
+
+    const made = await this.prisma.payrollPeriod.findMany({
+      where: { organizationId, payFrequency: PayFrequency.BIWEEKLY },
+      select: { periodStart: true, periodEnd: true },
+    });
+    const problem = whyNotNext(made, periodStart);
+    if (problem?.reason === 'OVERLAPS') {
+      throw new ConflictError(
+        'PAYROLL_PERIOD_OVERLAPS',
+        `A 14-day period starting ${formatDateOnly(periodStart)} would overlap one already made`,
+      );
+    }
+    if (problem) {
+      throw new BusinessRuleError(
+        'PAYROLL_PERIOD_NOT_NEXT',
+        `The next 14-day period starts ${formatDateOnly(problem.expected)}, the day after the last one ends`,
+        { expectedStart: formatDateOnly(problem.expected) },
+      );
+    }
+
+    const { year, month } = monthCountedFor({ payDate });
+    if (
+      (dto.year !== undefined && dto.year !== year) ||
+      (dto.month !== undefined && dto.month !== month)
+    ) {
+      throw new BusinessRuleError(
+        'INVALID_PERIOD_MONTH',
+        `With pay date ${formatDateOnly(payDate)} this period counts toward ${year}-${String(month).padStart(2, '0')}`,
+        { year, month },
+      );
+    }
+
+    const inMonth = await this.prisma.payrollPeriod.aggregate({
+      where: { organizationId, payFrequency: PayFrequency.BIWEEKLY, year, month },
+      _max: { half: true },
+    });
+    const half = (inMonth._max.half ?? 0) + 1;
+
+    return this.prisma.payrollPeriod.create({
+      data: {
+        organizationId,
+        code: dto.code ?? `${year}-${String(month).padStart(2, '0')}-B${half}`,
+        year,
+        month,
+        payFrequency: PayFrequency.BIWEEKLY,
+        half,
+        periodStart,
+        periodEnd,
+        cutoffDate: toDateOnly(dto.cutoffDate ?? formatDateOnly(periodEnd)),
+        payDate,
       },
     });
   }
@@ -316,27 +408,66 @@ export class PayrollService {
   }
 
   /**
-   * The paid first half a second half builds on (CW-069).
+   * The paid periods earlier in the month that this one builds on (CW-069,
+   * CW-101).
    *
-   * The second half withholds the month's tax and social security less what
-   * the first half took, so it needs the first half settled; and the first
-   * half's run is what marks the expense claims it paid, so calculating the
-   * second half before it is paid would pay those claims twice. Both are
-   * reasons to refuse rather than guess.
+   * The second half, or a later 14-day period, withholds the month's tax and
+   * social security less what the periods before it took, so it needs them
+   * settled; and an earlier run is what marks the expense claims it paid, so
+   * calculating this one before they are paid would pay those claims twice.
+   * Both are reasons to refuse rather than guess.
    */
   private async firstHalfFor(organizationId: string, period: PayrollPeriodWindow) {
-    if (period.payFrequency !== PayFrequency.SEMI_MONTHLY || period.half !== 2) return null;
+    const monthName = `${period.year}-${String(period.month).padStart(2, '0')}`;
 
-    const run = await this.firstHalfRunOf(organizationId, period);
-    if (run?.status !== PayrollRunStatus.PAID) {
-      throw new BusinessRuleError(
-        'FIRST_HALF_NOT_PAID',
-        `The second half of ${period.year}-${String(period.month).padStart(2, '0')} is ` +
-          'worked out from the first half: pay the first half first',
-        { firstHalfRunId: run?.id ?? null, firstHalfStatus: run?.status ?? null },
-      );
+    if (period.payFrequency === PayFrequency.SEMI_MONTHLY && period.half === 2) {
+      const run = await this.firstHalfRunOf(organizationId, period);
+      if (run?.status !== PayrollRunStatus.PAID) {
+        throw new BusinessRuleError(
+          'FIRST_HALF_NOT_PAID',
+          `The second half of ${monthName} is worked out from the first half: pay the first half first`,
+          { firstHalfRunId: run?.id ?? null, firstHalfStatus: run?.status ?? null },
+        );
+      }
+      return { runIds: [run.id] };
     }
-    return { runId: run.id };
+
+    if (period.payFrequency === PayFrequency.BIWEEKLY && period.half >= 2) {
+      const earlier = await this.prisma.payrollPeriod.findMany({
+        where: {
+          organizationId,
+          payFrequency: PayFrequency.BIWEEKLY,
+          year: period.year,
+          month: period.month,
+          half: { lt: period.half },
+        },
+        orderBy: { half: 'asc' },
+        select: {
+          code: true,
+          runs: {
+            where: {
+              type: PayrollRunType.REGULAR,
+              status: { notIn: [PayrollRunStatus.CANCELLED, PayrollRunStatus.FAILED] },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, status: true },
+          },
+        },
+      });
+      const notPaid = earlier.filter((p) => p.runs[0]?.status !== PayrollRunStatus.PAID);
+      if (notPaid.length > 0) {
+        throw new BusinessRuleError(
+          'EARLIER_PERIOD_NOT_PAID',
+          `This period of ${monthName} is worked out from the ones before it: pay ${notPaid
+            .map((p) => p.code)
+            .join(', ')} first`,
+          { unpaid: notPaid.map((p) => p.code) },
+        );
+      }
+      return { runIds: earlier.map((p) => p.runs[0]!.id) };
+    }
+    return null;
   }
 
   /** The regular run of the same month's first half, if one was made and not cancelled. */
@@ -783,13 +914,17 @@ export class PayrollService {
     // silently paid as zero.
     if (!compensation) return null;
 
-    // A half-month period pays the daily-wage employees; a monthly one pays
-    // everyone else, as it always has (CW-069).
-    const semiMonthly = period.payFrequency === PayFrequency.SEMI_MONTHLY;
-    if (semiMonthly !== (compensation.payFrequency === PayFrequency.SEMI_MONTHLY)) {
-      return 'OTHER_PAY_FREQUENCY' as const;
-    }
-    const half = semiMonthly ? period.half : 0;
+    // A half-month or 14-day period pays the daily-wage employees set up for it;
+    // a monthly one pays everyone else, as it always has (CW-069, CW-101).
+    const partOfMonth = period.payFrequency !== PayFrequency.MONTHLY;
+    const paidByThisPeriod = partOfMonth
+      ? compensation.payFrequency === period.payFrequency
+      : compensation.payFrequency !== PayFrequency.SEMI_MONTHLY &&
+        compensation.payFrequency !== PayFrequency.BIWEEKLY;
+    if (!paidByThisPeriod) return 'OTHER_PAY_FREQUENCY' as const;
+    // 0 for a whole month; 1 for the first part; 2 for any later part, which
+    // is worked out from what the parts before it took.
+    const half = !partOfMonth ? 0 : period.half <= 1 ? 1 : 2;
     const dailyRate = compensation.dailyRate === null ? null : Number(compensation.dailyRate);
 
     const [
@@ -848,10 +983,10 @@ export class PayrollService {
         where: {
           employeeId,
           run: {
-            // A half reads the months before this one; its own first half is
-            // read on its own, below, because the second half adds it to the
-            // month rather than to the year so far (CW-069).
-            period: semiMonthly
+            // A part of a month reads the months before this one; the parts
+            // before it are read on their own, below, because a later part adds
+            // them to the month rather than to the year so far (CW-069).
+            period: partOfMonth
               ? { year: period.year, month: { lt: period.month } }
               : { year: period.year },
             status: { in: [PayrollRunStatus.APPROVED, PayrollRunStatus.PAID] },
@@ -930,8 +1065,10 @@ export class PayrollService {
     }
 
     // Monthly amounts are charged once a month: benefit premiums and standing
-    // allowances and deductions go on the second half (PO decision Q6).
-    const monthlyItemsHere = half !== 1;
+    // allowances and deductions go on the second half (PO decision Q6), or on the
+    // second 14-day period of the month, which every month has.
+    const monthlyItemsHere =
+      period.payFrequency === PayFrequency.BIWEEKLY ? period.half === 2 : half !== 1;
 
     // Owed as of the period's last day: an advance paid in this period, one
     // carried from the last, or one recorded late for a period already paid.
@@ -1074,14 +1211,14 @@ export class PayrollService {
   }
 
   /**
-   * What the employee's first half paid this month (CW-069). Someone who
-   * joined in the second half has no first-half payslip, which is a first
-   * half of nothing.
+   * What the employee's earlier periods paid this month, added up (CW-069,
+   * CW-101). Someone who joined after them has no payslip there, which is
+   * nothing paid so far.
    */
   private async firstHalfPaid(run: FirstHalfRun, employeeId: string): Promise<FirstHalfPaid> {
-    const slip = run
-      ? await this.prisma.payslip.findUnique({
-          where: { runId_employeeId: { runId: run.runId, employeeId } },
+    const slips = run
+      ? await this.prisma.payslip.findMany({
+          where: { runId: { in: run.runIds }, employeeId },
           select: {
             taxableIncome: true,
             withholdingTax: true,
@@ -1090,17 +1227,18 @@ export class PayrollService {
             snapshot: true,
           },
         })
-      : null;
-    if (!slip) {
-      return { taxableIncome: 0, withholdingTax: 0, ssoEmployee: 0, ssoWage: 0, pvdEmployee: 0 };
-    }
-    return {
-      taxableIncome: Number(slip.taxableIncome),
-      withholdingTax: Number(slip.withholdingTax),
-      ssoEmployee: Number(slip.ssoEmployee),
-      ssoWage: Number((slip.snapshot as { ssoWage?: number } | null)?.ssoWage ?? 0),
-      pvdEmployee: Number(slip.pvdEmployee),
-    };
+      : [];
+    return slips.reduce<FirstHalfPaid>(
+      (paid, slip) => ({
+        taxableIncome: paid.taxableIncome + Number(slip.taxableIncome),
+        withholdingTax: paid.withholdingTax + Number(slip.withholdingTax),
+        ssoEmployee: paid.ssoEmployee + Number(slip.ssoEmployee),
+        ssoWage:
+          paid.ssoWage + Number((slip.snapshot as { ssoWage?: number } | null)?.ssoWage ?? 0),
+        pvdEmployee: paid.pvdEmployee + Number(slip.pvdEmployee),
+      }),
+      { taxableIncome: 0, withholdingTax: 0, ssoEmployee: 0, ssoWage: 0, pvdEmployee: 0 },
+    );
   }
 
   /**

@@ -72,20 +72,25 @@ export function formatMonthYear(year: number, month: number): string {
  * A pay period's code as the dates it covers. A month, "2026-08", reads
  * "สิงหาคม 2569" / "August 2026"; a half of a semi-monthly month (CW-069),
  * "2026-11-H1", reads "1–15 พฤศจิกายน 2569" and "2026-11-H2" reads
- * "16–30 พฤศจิกายน 2569", the second half running to the month's last day.
- * Any other code is shown as HR wrote it.
+ * "16–30 พฤศจิกายน 2569", the second half running to the month's last day. A
+ * 14-day period (CW-101), "2040-01-B2", reads the month it counts toward and
+ * its place in it. Any other code is shown as HR wrote it.
  */
 export function formatPeriod(code: string | null | undefined): string {
   if (!code) return '—';
-  const match = /^(\d{4})-(\d{2})(?:-H([12]))?$/.exec(code);
+  const match = /^(\d{4})-(\d{2})(?:-([HB])([1-9]))?$/.exec(code);
   if (!match) return code;
   const year = Number(match[1]);
   const month = Number(match[2]);
   if (month < 1 || month > 12) return code;
   const monthYear = formatMonthYear(year, month);
   if (!match[3]) return monthYear;
+  // A 14-day period is numbered within the month it counts toward; its dates
+  // are on the period itself, so the code says only which of the month it is.
+  if (match[3] === 'B') return `${monthYear} · ${match[4]}`;
+  if (match[4] !== '1' && match[4] !== '2') return code;
   const lastDay = new Date(year, month, 0).getDate();
-  return match[3] === '1' ? `1–15 ${monthYear}` : `16–${lastDay} ${monthYear}`;
+  return match[4] === '1' ? `1–15 ${monthYear}` : `16–${lastDay} ${monthYear}`;
 }
 
 /** A Date as the API's date-only string, from its local calendar day: 2026-10-01. */
@@ -163,10 +168,7 @@ export function formatRelative(value: string | Date | null | undefined): string 
 }
 
 /** API decimals arrive as strings to avoid float drift; format, don't compute. */
-export function formatMoney(
-  value: string | number | null | undefined,
-  currency = 'THB',
-): string {
+export function formatMoney(value: string | number | null | undefined, currency = 'THB'): string {
   if (value === null || value === undefined) return '—';
   const amount = typeof value === 'string' ? Number(value) : value;
   if (Number.isNaN(amount)) return '—';
@@ -201,7 +203,9 @@ export function formatMinutes(minutes: number | null | undefined): string {
   return `${sign}${hours} ${hr} ${mins} ${min}`;
 }
 
-export function fullName(person: { firstNameTh: string; lastNameTh: string } | null | undefined): string {
+export function fullName(
+  person: { firstNameTh: string; lastNameTh: string } | null | undefined,
+): string {
   if (!person) return '—';
   return `${person.firstNameTh} ${person.lastNameTh}`.trim();
 }

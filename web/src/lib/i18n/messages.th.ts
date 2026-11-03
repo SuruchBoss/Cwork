@@ -449,6 +449,8 @@ export const thMessages: Record<string, string> = {
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงานแต่ละคน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ไม่มีใครได้รับค่าจ้างรายวัน งวดครึ่งเดือนจ่ายเฉพาะพนักงานที่ตั้งค่าจ้างรายวันไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
+  'Nobody is paid by the day every 14 days for this period. A 14-day period pays only employees whose daily wage is paid every 14 days; set it on the employee’s page, in the Pay card, then calculate again.':
+    'ไม่มีใครได้ค่าจ้างรายวันแบบทุก 14 วันในงวดนี้ งวด 14 วันจ่ายเฉพาะลูกจ้างที่ตั้งค่าจ้างรายวันให้จ่ายทุก 14 วัน ตั้งได้ที่การ์ดค่าจ้างในหน้าของพนักงาน แล้วคำนวณอีกครั้ง',
   'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ยังไม่มีใครตั้งเงินเดือนไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   'Total deductions': 'รายการหักรวม',
@@ -1359,6 +1361,7 @@ export const thMessages: Record<string, string> = {
   'From {date}': 'ตั้งแต่ {date}',
   Upcoming: 'รอมีผล',
   '{amount} a day, paid twice a month': 'วันละ {amount} จ่ายเดือนละ 2 ครั้ง',
+  '{amount} a day, paid every 14 days': 'วันละ {amount} จ่ายทุก 14 วัน',
   '{amount} a month': 'เดือนละ {amount}',
   'Choose the date the pay starts.': 'เลือกวันที่ค่าจ้างนี้เริ่มมีผล',
   'Enter the amount in baht, with at most two decimal places.':
@@ -1367,6 +1370,7 @@ export const thMessages: Record<string, string> = {
   'Paid as': 'จ่ายแบบ',
   'Monthly salary': 'เงินเดือน (รายเดือน)',
   'Daily wage, paid twice a month': 'ค่าจ้างรายวัน จ่ายเดือนละ 2 ครั้ง',
+  'Daily wage, paid every 14 days': 'ค่าจ้างรายวัน จ่ายทุก 14 วัน',
   'Baht a day': 'บาทต่อวัน',
   'Baht a month': 'บาทต่อเดือน',
   'Checked against the minimum wage set on the work location.':
@@ -1409,10 +1413,16 @@ export const thMessages: Record<string, string> = {
   Pays: 'งวดการจ่าย',
   'Half-month periods pay daily-wage employees': 'งวดครึ่งเดือนใช้จ่ายลูกจ้างรายวัน',
   'The whole month': 'ทั้งเดือน',
+  'Every 14 days': 'ทุก 14 วัน',
+  '14-day periods pay daily-wage employees set to be paid every 14 days, and count toward the month they are paid in':
+    'งวด 14 วันใช้จ่ายลูกจ้างรายวันที่ตั้งให้จ่ายทุก 14 วัน และนับเป็นของเดือนที่จ่าย',
   'First half (1st–15th)': 'ครึ่งแรก (วันที่ 1–15)',
   'Second half (16th–month end)': 'ครึ่งหลัง (วันที่ 16–สิ้นเดือน)',
   'That month already has this period: {period}': 'เดือนนั้นมีงวดนี้อยู่แล้ว: {period}',
   'A half runs from {from} to {to}': 'งวดครึ่งเดือนต้องเริ่ม {from} ถึง {to}',
+  'The next 14-day period starts {date}, the day after the last one ends':
+    'งวด 14 วันถัดไปต้องเริ่ม {date} คือวันถัดจากวันที่งวดก่อนจบ',
+  'That would overlap a 14-day period already made': 'ซ้อนกับงวด 14 วันที่สร้างไว้แล้ว',
   'Enter the minimum daily wage as an amount in baht.': 'ใส่ค่าแรงขั้นต่ำต่อวันเป็นจำนวนเงินบาท',
   'Say which Wage Committee announcement the minimum wage comes from.':
     'ระบุว่าค่าแรงขั้นต่ำนี้มาจากประกาศคณะกรรมการค่าจ้างฉบับไหน',

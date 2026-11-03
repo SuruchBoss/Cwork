@@ -491,13 +491,17 @@ export default function PayrollRunPage() {
             description={
               data.status === 'DRAFT'
                 ? t('Press “Calculate payroll” to create a payslip for every employee')
-                : data.period.payFrequency === 'SEMI_MONTHLY'
+                : data.period.payFrequency === 'BIWEEKLY'
                   ? t(
-                      'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.',
+                      'Nobody is paid by the day every 14 days for this period. A 14-day period pays only employees whose daily wage is paid every 14 days; set it on the employee’s page, in the Pay card, then calculate again.',
                     )
-                  : t(
-                      'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.',
-                    )
+                  : data.period.payFrequency === 'SEMI_MONTHLY'
+                    ? t(
+                        'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.',
+                      )
+                    : t(
+                        'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.',
+                      )
             }
           />
         )}

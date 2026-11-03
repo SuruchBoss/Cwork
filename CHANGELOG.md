@@ -21,6 +21,19 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Daily wages paid every 14 days** (CW-101). A daily wage can be set to
+  `BIWEEKLY`, and a 14-day period opened from a start date and a pay date: it ends
+  thirteen days later and must follow the last one without a gap, so every day is
+  in exactly one period. A period counts toward a month (provisionally the month
+  it is paid in, decided in one function until issue #36 is answered) and is
+  numbered within it, `2040-01-B1` to `B3`; some months have three. Social
+  security and withholding stay monthly: the first period takes what a first half
+  takes, each later one the month so far less what came before, so a month's
+  periods add up to one monthly run on the same total, rounded once. The
+  register, the accountant export and the สปส.1-10 file add a month's periods, and
+  wait until none is missing. Monthly and half-month periods are unchanged. A new
+  migration lets `half` hold the order of a 14-day period.
+
 - **The payroll register HR sends the accountant** (CW-099). `GET
   /payroll/periods/:id/export?format=register` is an Excel workbook in the order
   of the form HR already fills in: row number, name, salary, daily wage in three

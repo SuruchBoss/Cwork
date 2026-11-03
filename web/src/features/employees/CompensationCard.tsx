@@ -13,7 +13,7 @@ import { formatDate, formatMoney, todayIso } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import type { EmployeeCompensation, PayslipWarning } from '@/types/api';
 
-type PayBasis = 'SALARY' | 'DAILY';
+type PayBasis = 'SALARY' | 'DAILY' | 'DAILY14';
 
 /**
  * What an employee is paid (CW-069): a monthly salary, or a daily wage paid
@@ -156,9 +156,13 @@ function PayAmount({ record }: { record: EmployeeCompensation }) {
   const t = useT();
   return isDaily(record) ? (
     <>
-      {t('{amount} a day, paid twice a month', {
-        amount: formatMoney(Number(record.dailyRate)),
-      })}
+      {record.payFrequency === 'BIWEEKLY'
+        ? t('{amount} a day, paid every 14 days', {
+            amount: formatMoney(Number(record.dailyRate)),
+          })
+        : t('{amount} a day, paid twice a month', {
+            amount: formatMoney(Number(record.dailyRate)),
+          })}
     </>
   ) : (
     <>{t('{amount} a month', { amount: formatMoney(Number(record.baseSalary)) })}</>
@@ -190,7 +194,13 @@ function CompensationForm({
   const t = useT();
   const queryClient = useQueryClient();
   const [effectiveFrom, setEffectiveFrom] = useState(todayIso());
-  const [basis, setBasis] = useState<PayBasis>(current && isDaily(current) ? 'DAILY' : 'SALARY');
+  const [basis, setBasis] = useState<PayBasis>(
+    current && isDaily(current)
+      ? current.payFrequency === 'BIWEEKLY'
+        ? 'DAILY14'
+        : 'DAILY'
+      : 'SALARY',
+  );
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -220,9 +230,13 @@ function CompensationForm({
       return setProblem(t('Enter the amount in baht, with at most two decimal places.'));
     }
     const pay =
-      basis === 'DAILY'
-        ? { baseSalary: 0, payFrequency: 'SEMI_MONTHLY', dailyRate: Number(value) }
-        : { baseSalary: Number(value), payFrequency: 'MONTHLY' };
+      basis === 'SALARY'
+        ? { baseSalary: Number(value), payFrequency: 'MONTHLY' }
+        : {
+            baseSalary: 0,
+            payFrequency: basis === 'DAILY14' ? 'BIWEEKLY' : 'SEMI_MONTHLY',
+            dailyRate: Number(value),
+          };
     save.mutate({
       employeeId,
       effectiveFrom,
@@ -251,14 +265,15 @@ function CompensationForm({
           <Select value={basis} onChange={(e) => setBasis(e.target.value as PayBasis)}>
             <option value="SALARY">{t('Monthly salary')}</option>
             <option value="DAILY">{t('Daily wage, paid twice a month')}</option>
+            <option value="DAILY14">{t('Daily wage, paid every 14 days')}</option>
           </Select>
         </Field>
       </div>
       <div className="toolbar" style={{ alignItems: 'flex-start' }}>
         <Field
-          label={basis === 'DAILY' ? t('Baht a day') : t('Baht a month')}
+          label={basis !== 'SALARY' ? t('Baht a day') : t('Baht a month')}
           hint={
-            basis === 'DAILY'
+            basis !== 'SALARY'
               ? t('Checked against the minimum wage set on the work location.')
               : undefined
           }

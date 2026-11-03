@@ -3,6 +3,7 @@
 
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { anotherPeriodExpected, missingOrdinals } from './domain/pay-period';
 import {
   PayrollReconciliationError,
   reconcilePeriod,
@@ -156,7 +157,13 @@ const monthCode = (month: { year: number; month: number }) =>
  * a run, or a semi-monthly month without both halves, is refused by name.
  */
 function assertMonthIsComplete(
-  periods: Array<{ code: string; payFrequency: string; half: number; runs: unknown[] }>,
+  periods: Array<{
+    code: string;
+    payFrequency: string;
+    half: number;
+    payDate: Date;
+    runs: unknown[];
+  }>,
   month: { year: number; month: number },
 ): void {
   for (const period of periods) {
@@ -174,6 +181,20 @@ function assertMonthIsComplete(
       throw new PayrollReconciliationError(
         `The ${half === 1 ? 'first' : 'second'} half of ${monthCode(month)} has no period yet, ` +
           'so the daily wages of the month are not all there.',
+      );
+    }
+  }
+
+  // A month paid every 14 days is complete when no period is missing in it and
+  // the next one, fourteen days on, would belong to the following month.
+  const fortnights = periods.filter((period) => period.payFrequency === 'BIWEEKLY');
+  if (fortnights.length > 0) {
+    const missing = missingOrdinals(fortnights.map((period) => period.half));
+    const last = fortnights.reduce((a, b) => (a.half >= b.half ? a : b));
+    if (missing.length > 0 || anotherPeriodExpected(last.payDate, month)) {
+      throw new PayrollReconciliationError(
+        `${monthCode(month)} has more 14-day periods still to come, so the daily wages of the month ` +
+          'are not all there.',
       );
     }
   }

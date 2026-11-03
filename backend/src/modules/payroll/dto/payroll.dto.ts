@@ -38,27 +38,34 @@ export class CreatePayrollPeriodDto {
   @MaxLength(32)
   code?: string;
 
-  @ApiProperty({ example: 2026 })
+  @ApiPropertyOptional({
+    example: 2026,
+    description:
+      'Required, except for a BIWEEKLY period, which counts toward the month Cwork works out',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(2000)
   @Max(2200)
-  year!: number;
+  year?: number;
 
-  @ApiProperty({ example: 9, minimum: 1, maximum: 12 })
+  @ApiPropertyOptional({ example: 9, minimum: 1, maximum: 12 })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(12)
-  month!: number;
+  month?: number;
 
   @ApiPropertyOptional({
-    enum: [PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY],
+    enum: [PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY, PayFrequency.BIWEEKLY],
     default: PayFrequency.MONTHLY,
-    description: 'SEMI_MONTHLY pays the month in two halves (CW-069)',
+    description:
+      'SEMI_MONTHLY pays the month in two halves (CW-069); BIWEEKLY pays every 14 days (CW-101)',
   })
   @IsOptional()
-  @IsIn([PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY])
+  @IsIn([PayFrequency.MONTHLY, PayFrequency.SEMI_MONTHLY, PayFrequency.BIWEEKLY])
   payFrequency?: PayFrequency;
 
   @ApiPropertyOptional({ enum: [1, 2], description: 'Which half, for a SEMI_MONTHLY period' })
@@ -71,9 +78,13 @@ export class CreatePayrollPeriodDto {
   @IsDateString()
   periodStart!: string;
 
-  @ApiProperty({ example: '2026-09-30' })
+  @ApiPropertyOptional({
+    example: '2026-09-30',
+    description: 'Required, except for a BIWEEKLY period, which lasts 14 days',
+  })
+  @IsOptional()
   @IsDateString()
-  periodEnd!: string;
+  periodEnd?: string;
 
   @ApiPropertyOptional({ description: 'Defaults to periodEnd' })
   @IsOptional()

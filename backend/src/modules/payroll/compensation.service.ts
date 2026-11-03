@@ -263,23 +263,26 @@ export class CompensationService {
 }
 
 /**
- * How the employee is paid (CW-069): a monthly salary, or a daily wage paid in
- * two halves of the month. Nothing else is paid by Cwork yet, so anything else
- * is refused rather than stored and then paid as if it were monthly.
+ * How the employee is paid (CW-069, CW-101): a monthly salary, or a daily wage
+ * paid in two halves of the month or every 14 days. Nothing else is paid by
+ * Cwork yet, so anything else is refused rather than stored and then paid as if
+ * it were monthly.
  */
 function assertPayBasis(dto: SetCompensationDto): PayFrequency {
   const payFrequency = dto.payFrequency ?? PayFrequency.MONTHLY;
-  if (payFrequency !== PayFrequency.MONTHLY && payFrequency !== PayFrequency.SEMI_MONTHLY) {
+  const dailyWageFrequency =
+    payFrequency === PayFrequency.SEMI_MONTHLY || payFrequency === PayFrequency.BIWEEKLY;
+  if (payFrequency !== PayFrequency.MONTHLY && !dailyWageFrequency) {
     throw new BusinessRuleError(
       'PAY_FREQUENCY_NOT_SUPPORTED',
-      `Cwork pays a monthly salary, or a daily wage twice a month; ${payFrequency} is not supported yet`,
+      `Cwork pays a monthly salary, or a daily wage twice a month or every 14 days; ${payFrequency} is not supported yet`,
     );
   }
   if (dto.dailyRate === undefined) {
-    if (payFrequency === PayFrequency.SEMI_MONTHLY) {
+    if (dailyWageFrequency) {
       throw new BusinessRuleError(
         'DAILY_RATE_REQUIRED',
-        'Paying twice a month is for daily wages: give the daily rate',
+        'Paying twice a month or every 14 days is for daily wages: give the daily rate',
       );
     }
     return payFrequency;
@@ -290,10 +293,10 @@ function assertPayBasis(dto: SetCompensationDto): PayFrequency {
       'An employee is paid either a monthly salary or a daily wage, not both: set the salary to 0',
     );
   }
-  if (payFrequency !== PayFrequency.SEMI_MONTHLY) {
+  if (!dailyWageFrequency) {
     throw new BusinessRuleError(
       'DAILY_RATE_NEEDS_SEMI_MONTHLY',
-      'A daily wage is paid twice a month: set the pay frequency to SEMI_MONTHLY',
+      'A daily wage is paid twice a month or every 14 days: set the pay frequency to SEMI_MONTHLY or BIWEEKLY',
     );
   }
   return payFrequency;
