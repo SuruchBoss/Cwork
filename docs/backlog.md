@@ -1545,6 +1545,35 @@ the export is refused for a run that is not `APPROVED`.
 
 ---
 
+## Parked ideas
+
+Not tickets: no CW number, no issue, nothing started until the owner says so in
+this room.
+
+### Petty cash: the certificate in place of a receipt (ใบรับรองแทนใบเสร็จรับเงิน)
+`parked` · expenses · noted 2026-11-03 · outside Cwork's scope today
+
+The pilot uses this form for small cash expenses with no receipt from the
+seller (small supplies, fares). This is separate from payroll. Only the form's
+layout came with it, no data:
+
+- the title, and the buying company;
+- one or more rows: date · what was bought (for example "item X, n pieces @
+  unit price") · amount · note;
+- the total in figures and in Thai words ("…บาทถ้วน");
+- a statement by the person who paid, with their position, that no receipt
+  could be had and that the money was spent on the company's work between two
+  dates;
+- signatures of the person who paid and the approver;
+- the shop's cash bill attached when there is one.
+
+If petty cash is ever built (it would sit beside CW-012's expense claims), one
+rule must not be broken. The row describes the expense that really happened.
+No field or feature may keep "what was actually bought" apart from "what goes
+on the document".
+
+---
+
 ## Done
 
 Kept so the reasoning survives.
