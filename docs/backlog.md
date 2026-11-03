@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-111 · CW-115 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-115 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -464,25 +464,6 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
-
-### CW-111 · The nightly close-out closes the day that just ended
-`P1` · attendance · **S** · Pilot A · before the install
-
-The attendance close-out runs at 01:00 in Bangkok and takes "yesterday" from
-the UTC date, so it closes the day before the one that just ended: each day
-is closed about 25 hours after it ends, not about one. A run calculated the
-morning after a period ends can then miss the last day's absences and, once
-approved, overpay. Found by the Dev room while tracing a CI failure on #150.
-
-**Scope**
-- Close the day before `organization.today()` (Asia/Bangkok), not the UTC
-  date minus one.
-
-**Acceptance**
-- Tests with a fixed clock, never the real one: at 01:00 Bangkok the job
-  closes the Bangkok day that just ended; a time just before midnight UTC
-  gives the same day.
-- The comment on the job states when a day is closed.
 
 ### CW-115 · Choose the days when binding a scanner number for a stretch
 `P1` · attendance · web · **S** · Pilot A · before the install
@@ -1195,6 +1176,19 @@ not because there is a date.
 ## P2 — worth doing
 
 
+### CW-116 · A day with scans from two numbers waits for HR
+`P2` · attendance · **M** · after Pilot A
+
+When one employee has scans from two numbers on the same day (their own and
+a borrowed card), the scans count together. CW-115 warns before the binding is
+saved; a scan of the other number imported later still counts together with
+no prompt. Hold such a day for HR to decide which scans count, like a
+single-scan day. Found by the Dev room while doing CW-115.
+
+**Acceptance**
+- Tests: a later import that brings a second number's scans to a day already
+  counted holds that day for HR; deciding it counts only the chosen scans.
+
 ### CW-113 · The audit log reads in English
 `P2` · web · i18n · **M** · after Pilot A
 
@@ -1736,3 +1730,4 @@ Kept so the reasoning survives.
 | **CW-108** · The compare page still labelled its picker "period", and two register columns aligned left | The picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" / "Month (any period of the month will do)"; the register's row-number and days-worked columns align right (a test reads the cell styles of the exported file); the HR guide and the period-check guide use the new label. Found by the UX room. #146, in #147 at 09fc821, 2026-11-03. |
 | **CW-110** · Three faults the final blind test found | From the UX room's blind test on the installed stack (#148): an evening-only scan is no longer pre-filled as a clock-in, the owner's dashboard shows the run waiting for approval instead of a ฿0.00 draft, and a period that already has a run no longer offers "create run" and answers in Thai. Open for the owner: how a daily-wage employee who works on a public holiday is paid (#36). #149, in #150 at a93751d, 2026-11-04. |
 | **CW-109** · A scanner number can be bound for a period | A number is bound to an employee from a date to a date (`employee_scanner_numbers`); an empty start counts from the beginning and an empty end means still in use. The migration moved every number across with no dates; `down.sql` is the hand-run way back. The database refuses overlapping periods of one number and a second number in use for one employee; writes for one number take a per-number advisory lock of their own family. The import, later matching and binding match (number, date). Binding from the review page asks "these days only" or "from now on" and says the first day and how many waiting days it counts; ending a number on the employee page asks first, gives later undecided days back to no one, and is refused in Thai when a later day is in a calculated, approved or paid run. `scannerId` on the API and the employee file still reads as the number in use now. QA re-test in `docs/qa/pilot-a-2026-10.md`. #153 at 482d405, 2026-11-04. |
+| **CW-111** · The nightly close-out closes the day that just ended | The 01:00 Bangkok job closes the day before `organization.today()` instead of the UTC date minus one, so a day is closed about an hour after it ends, not about 25. Tested with a fixed clock (unit and e2e); a day closed as absent and then filled by a scanner file imported afterwards comes back with its worked time and leaves nothing absent for payroll. A shift that crosses midnight is CW-114. #154 at fadc709, 2026-11-04. |
