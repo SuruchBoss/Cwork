@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-101 before paying real wages · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-101 before paying real wages · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -541,6 +541,51 @@ the import fail even though it ran.
 - The CW-061 tests still pass unchanged.
 
 **Files** `backend/src/modules/attendance/` (scanner import)
+
+### CW-103 · What the first parallel run needs from the guide and the compare page
+`P1` · payroll · docs · UX · **S** · Pilot A · from the blind test · #134
+
+The UX room's blind test (2026-11-03, `docs/qa/blind-test-2026-11-03.md`): a
+first-time HR user, working only from `docs/guide/hr-daily-tasks.th.md` at
+1366x768 with synthetic data, finished all four tasks with no blocker. The
+problems below are ones the pilot's HR would hit in the very first parallel
+run. The PO's check of the compare page adds two more (the last two items
+under "Compare page").
+
+**Guide (UX room)**
+- Add the compare step: where it is (Payroll, "เทียบกับที่ยื่นไปแล้ว") and that
+  the same page takes HR's own per-person sheet.
+- Warn that during the parallel run "บันทึกการจ่ายและเผยแพร่สลิป" must not be
+  pressed.
+- Say what to do with a day scanned once (no clock-out), and with a scanner
+  number nobody owns (how to find whose it is, whether it can wait, whether it
+  changes pay).
+- Add the six-digit code step at sign-in.
+
+**Compare page (dev room)**
+- The page asks for a column "เงินสุทธิ", but the checker refuses it and wants
+  "สุทธิ / Net". Accept what the page says.
+- Accept the headers of the pilot's own register (CW-099): "รวมเงินได้" for
+  gross, "ภาษี", "ประกันสังคม", "รวมเงินได้สุทธิ" for net.
+- The pilot's register has no employee code; it has a row number and a name.
+  The guide must say to add a "รหัสพนักงาน" column before uploading, and the
+  page must say so when the column is missing, instead of only naming it.
+- The self-approval refusal is still shown in English.
+
+**Not before the install** (in the report, for later): a warning on screen
+during the parallel run, "trial" on printed slips, typing a clock-out time by
+hand, the owner's dashboard showing runs waiting for approval, and the
+smaller items.
+
+**Acceptance**
+- A synthetic HR sheet with the register's headers plus a "รหัสพนักงาน" column
+  uploads on the compare page and marks no difference against matching
+  figures (test).
+- The UX room re-reads the changed guide sections against the screen.
+
+**Files** `docs/guide/hr-daily-tasks.th.md`,
+`backend/src/modules/payroll/domain/period-check.ts`,
+`web/src/lib/i18n/messages.th.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
