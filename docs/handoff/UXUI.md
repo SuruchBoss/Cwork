@@ -22,6 +22,14 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
 - CW-091 (sidebar horizontal scrollbar) is on `main` via #109. Verified: at 1366 px the
   sidebar's `scrollWidth` equals its `clientWidth` for both Thai and English.
 
+- **Blind test of the four HR jobs (CW-066 guide), 3 Nov, for the PO before the Pilot A
+  install date.** Report: [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md).
+  No blocker on clean data; 5 heavy items (no compare step in the guide, the compare
+  page's net-pay header, no on-screen warning before recording payment in a parallel
+  run, single-scan days, unknown scanner numbers). Same file has the CW-099 register
+  check: a month with a 1-15 period cannot be exported during a parallel run, an English
+  error, a summary sheet that does not add up. The PO opens the tickets.
+
 ## Next
 
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
@@ -43,3 +51,7 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   `main` locally instead.
 - `prisma migrate reset` is refused when Claude Code runs it; use
   `prisma migrate deploy` followed by `db:seed`.
+- A fresh container has no pgvector: `apt-get install -y postgresql-16-pgvector`.
+- `db:seed` pays every month up to last month. To test a parallel run on last month,
+  seed a new database with the clock moved back (a `--require` preload that shifts `Date`).
+- Stop the API by pid, never `pkill -f` (it matches the shell running the command).
