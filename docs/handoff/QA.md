@@ -42,6 +42,6 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Waiting on
 
-- The PO: review and merge of the gate PR; which private findings are fixed and ready to re-test.
+- The PO: review and merge of the gate PR; which reported items are ready to re-test.
 - PR #126 (CW-099 and the backend advisories) and CW-100 to be merged.
 - The owner: the real NAS.
