@@ -46,9 +46,16 @@ this file only says where the PO room stands.
   and its Thai and English alt text still show and describe the red note that
   named the pilot company. A new picture is ready (CW-097); landing wording needs
   the owner's own words in this room.
-- HR answers 7-10: the parallel run, #69 (HR doing the four tasks in
-  `docs/guide/hr-daily-tasks.th.md` unaided, a second person to approve payroll
-  runs), the install date.
+- HR answers 7-10 (2026-11-03): the first period runs in parallel (HR pays
+  the old way, Cwork is compared, nothing paid from it); HR tries the four
+  tasks during that period (#69); the second approver is a company founder,
+  called only "the approver role" in the repo; the install date is ours to
+  propose. Before proposing it: CW-099 merged and QA-checked on synthetic
+  data (estimate Thu 5 Nov), then CW-100 and the 8,556 tests (Fri 6 Nov). The
+  PO's estimate is ready to book from Mon 9 Nov. Two things block that date,
+  neither code: `./check.sh` on the real NAS needs the owner's own words in
+  this room, and the half-month social security timing needs a decision
+  before a daily worker's first-half payday.
 - CW-062: approval to run the read-only `./check.sh` on the pilot's NAS, a
   backup drive, a password store for the key, the HR import file.
 - Social security timing (2026-11-03): the pilot takes a daily worker's social
