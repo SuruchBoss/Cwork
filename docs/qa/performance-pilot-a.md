@@ -90,3 +90,27 @@ and proxy together about 19 MB. The database is 31 MB.
 
 Not measured: more than 200 people; two people at once; the 14-day cycle (CW-101 is not
 built); a real Synology; the full-year scanner history.
+
+## After CW-102: the scanner import
+
+The import's time went to one loop over the person-days: about 16 round trips to the
+database for each (a transaction for the punches, then a rebuild of the day that read its
+shift, calendar, leave and punches and wrote its row), 0.6 ms each. Measured on a local
+database with the real app, 696 lines took 7.0 s (10.1 ms a line), and 98% of that was the
+loop; reading the file, planning and storing the days took about 40 ms together.
+
+The loop now reads what a group of people needs once, derives their days in memory with the
+same function the one-day rebuild uses, and writes punches and daily rows in bulk. The same
+kind of month, measured again in the same 2 CPU / 2 GB stack with the image built from the
+changed code (a single request each, 200 people already in the database):
+
+| People | Lines | Before | After |
+|---|---|---|---|
+| 50 | 1,004 (the earlier file had 1,051) | 10.0 s | **0.71 s** |
+| 200 | 4,400 (the earlier file had 4,017) | 41.5 s | **4.12 s** |
+
+The peak memory of the whole stack during the 200-person import was 536 MB (507 MB before).
+Everything else in the run was within a few percent of the first measurement, and the three
+payroll runs, the register and the exports still gave the same results. On the faster local
+core the same import took 2.6 s; the stack's number is the one to quote. The same limits about
+a real Synology hold: its core is slower than this machine's, so read 4.1 s as a floor.

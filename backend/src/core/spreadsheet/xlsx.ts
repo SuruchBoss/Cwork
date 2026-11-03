@@ -242,6 +242,14 @@ export interface SheetSpec {
    * text, so a figure typed or pasted into them stays a number.
    */
   amountColumns?: number[];
+  /**
+   * Prints on A4 landscape, one page wide however many columns, with the
+   * heading rows repeated on every page (CW-105). Without it the sheet prints
+   * at full size and splits its columns across pages.
+   */
+  print?: boolean;
+  /** Thin borders on every cell, and centred, wrapped headings. */
+  grid?: boolean;
 }
 
 const NS_MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -253,8 +261,12 @@ const XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 const STYLE_TEXT = 1;
 const STYLE_HEADER = 2;
 const STYLE_AMOUNT = 3;
+/** The same three with a thin border all round, the heading centred (`grid`). */
+const STYLE_TEXT_GRID = 4;
+const STYLE_HEADER_GRID = 5;
+const STYLE_AMOUNT_GRID = 6;
 
-const STYLES = `${XML_HEAD}<styleSheet xmlns="${NS_MAIN}"><fonts count="2"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+const STYLES = `${XML_HEAD}<styleSheet xmlns="${NS_MAIN}"><fonts count="2"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/><xf numFmtId="49" fontId="1" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 
 /** A workbook of plain text sheets, which Excel, LibreOffice and Google Sheets open. */
 export function writeXlsx(sheets: SheetSpec[]): Uint8Array {
@@ -276,7 +288,7 @@ export function writeXlsx(sheets: SheetSpec[]): Uint8Array {
           (sheet, i) =>
             `<sheet name="${escapeXml(sheet.name.slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`,
         )
-        .join('')}</sheets></workbook>`,
+        .join('')}</sheets>${definedNames(sheets)}</workbook>`,
     ),
     'xl/_rels/workbook.xml.rels': strToU8(
       `${XML_HEAD}<Relationships xmlns="${NS_PKG_REL}">${sheets
@@ -304,8 +316,12 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
       ? `<pane ySplit="${headerRows}" topLeftCell="A${headerRows + 1}" activePane="bottomLeft" state="frozen"/>`
       : '';
   const amounts = new Set(sheet.amountColumns ?? []);
-  const columnStyle = (c: number) =>
-    amounts.has(c) ? STYLE_AMOUNT : headerRows > 0 ? STYLE_TEXT : undefined;
+  const grid = sheet.grid === true;
+  const columnStyle = (c: number) => {
+    if (amounts.has(c)) return grid ? STYLE_AMOUNT_GRID : STYLE_AMOUNT;
+    if (grid) return STYLE_TEXT_GRID;
+    return headerRows > 0 ? STYLE_TEXT : undefined;
+  };
   const cols = Array.from({ length: columns }, (_, i) => {
     const width = sheet.widths?.[i] ?? 16;
     const style = columnStyle(i) === undefined ? '' : ` style="${columnStyle(i)}"`;
@@ -316,10 +332,13 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
       const cells = row
         .map((value, c) => {
           const ref = `${columnLetter(c)}${r + 1}`;
-          const styleIndex = r < headerRows ? STYLE_HEADER : columnStyle(c);
+          const styleIndex =
+            r < headerRows ? (grid ? STYLE_HEADER_GRID : STYLE_HEADER) : columnStyle(c);
           const style = styleIndex === undefined ? '' : ` s="${styleIndex}"`;
           // Left out rather than written empty: the column's format still applies.
-          if (value === '') return '';
+          // A heading cell is written even when empty with a grid, because the
+          // cells under a merged heading need their border drawn.
+          if (value === '') return grid && r < headerRows ? `<c r="${ref}"${style}/>` : '';
           if (typeof value === 'number' && Number.isFinite(value)) {
             return `<c r="${ref}"${style}><v>${value}</v></c>`;
           }
@@ -334,7 +353,24 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
         .map((range) => `<mergeCell ref="${escapeXml(range)}"/>`)
         .join('')}</mergeCells>`
     : '';
-  return `${XML_HEAD}<worksheet xmlns="${NS_MAIN}" xmlns:r="${NS_REL}"><sheetViews><sheetView workbookViewId="0"${selected ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${rows}</sheetData>${merges}</worksheet>`;
+  const fit = sheet.print ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '';
+  const page = sheet.print
+    ? '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>'
+    : '';
+  return `${XML_HEAD}<worksheet xmlns="${NS_MAIN}" xmlns:r="${NS_REL}">${fit}<sheetViews><sheetView workbookViewId="0"${selected ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${rows}</sheetData>${merges}${page}</worksheet>`;
+}
+
+/** The rows a printed sheet repeats at the top of every page (`print`). */
+function definedNames(sheets: SheetSpec[]): string {
+  const names = sheets.flatMap((sheet, i) => {
+    const rows = sheet.headerRows ?? (sheet.header ? 1 : 0);
+    if (!sheet.print || rows === 0) return [];
+    const quoted = escapeXml(`'${sheet.name.slice(0, 31).replace(/'/g, "''")}'`);
+    return [
+      `<definedName name="_xlnm.Print_Titles" localSheetId="${i}">${quoted}!$1:$${rows}</definedName>`,
+    ];
+  });
+  return names.length > 0 ? `<definedNames>${names.join('')}</definedNames>` : '';
 }
 
 function escapeXml(value: string): string {

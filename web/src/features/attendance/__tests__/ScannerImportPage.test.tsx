@@ -43,6 +43,7 @@ const preview: ScannerPreview = {
   lines: 29,
   days: { added: 29, changed: 0, unchanged: 0 },
   byStatus,
+  singleScanDays: 0,
   punchesToAdd: 40,
   lockedDays: 0,
   unmapped: [
@@ -112,6 +113,34 @@ describe('Importing the fingerprint scanner export (CW-061)', () => {
       await screen.findByText('นำเข้า Export.xls แล้ว เพิ่มรายการลงเวลา 40 รายการ'),
     ).toBeInTheDocument();
     expect(screen.getByText('3 วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน')).toBeInTheDocument();
+  });
+
+  it('says how many days were scanned only once, before and after the import (CW-106)', async () => {
+    post.mockResolvedValueOnce({ ...preview, singleScanDays: 2 }).mockResolvedValueOnce({
+      importId: 'i1',
+      fileName: 'Export.xls',
+      dateFrom: '2026-09-01',
+      dateTo: '2026-09-30',
+      lines: 29,
+      days: { added: 29, changed: 0, unchanged: 0 },
+      byStatus,
+      singleScanDays: 2,
+      punchesAdded: 40,
+      lockedDays: 0,
+      unmapped: preview.unmapped,
+    });
+    renderPage();
+
+    await choose();
+    expect(
+      await screen.findByText('2 วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน'),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'นำเข้าไฟล์นี้' }));
+    expect(
+      await screen.findByText('นำเข้า Export.xls แล้ว เพิ่มรายการลงเวลา 40 รายการ'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('2 วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน')).toBeInTheDocument();
   });
 
   it('shows each problem by line and offers no import button', async () => {

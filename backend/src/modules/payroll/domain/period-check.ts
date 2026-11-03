@@ -12,6 +12,7 @@ import {
   columnLetter,
   isBlank,
   normaliseHeading,
+  type Cell,
   type Table,
 } from '../../../core/spreadsheet/table';
 import { Decimal, round2 } from '../../../core/utils/money.util';
@@ -90,7 +91,8 @@ export function compareFiledTotals(
 
 export const PARALLEL_RUN_COLUMNS = {
   employeeCode: ['employee_code', 'รหัสพนักงาน', 'Employee code'],
-  gross: ['gross', 'เงินได้', 'รายได้', 'Gross', 'Gross earnings', 'รายได้รวม'],
+  // "รวมเงินได้" is the register HR already keeps (CW-099).
+  gross: ['gross', 'เงินได้', 'รายได้', 'Gross', 'Gross earnings', 'รายได้รวม', 'รวมเงินได้'],
   tax: ['tax', 'ภาษี', 'ภาษีหัก ณ ที่จ่าย', 'Tax', 'Withholding tax', 'Tax withheld'],
   sso: [
     'social_security',
@@ -100,7 +102,17 @@ export const PARALLEL_RUN_COLUMNS = {
     'Social security (employee)',
     'SSO',
   ],
-  net: ['net', 'สุทธิ', 'เงินได้สุทธิ', 'Net', 'Net pay', 'รับสุทธิ'],
+  // "เงินสุทธิ" is the name the page itself asks for; "รวมเงินได้สุทธิ" is the register's.
+  net: [
+    'net',
+    'สุทธิ',
+    'เงินสุทธิ',
+    'เงินได้สุทธิ',
+    'รวมเงินได้สุทธิ',
+    'Net',
+    'Net pay',
+    'รับสุทธิ',
+  ],
 } as const;
 
 type FigureKey = 'gross' | 'tax' | 'sso' | 'net';
@@ -188,7 +200,6 @@ export function compareParallelRun(
   table: Table,
   cwork: Map<string, CworkPerson>,
 ): ParallelRunResult {
-  const [header = [], ...body] = table.rows;
   const problems: ImportProblem[] = [];
 
   const keyByHeading = new Map<string, keyof typeof PARALLEL_RUN_COLUMNS>();
@@ -197,6 +208,8 @@ export function compareParallelRun(
       keyByHeading.set(normaliseHeading(heading), key as keyof typeof PARALLEL_RUN_COLUMNS);
     }
   }
+
+  const { header, headerRow, body } = findHeader(table.rows, keyByHeading);
 
   const columns: Partial<Record<keyof typeof PARALLEL_RUN_COLUMNS, number>> = {};
   header.forEach((cell, index) => {
@@ -208,22 +221,29 @@ export function compareParallelRun(
       problems.push(
         importProblem(
           'DUPLICATE_COLUMN',
-          { row: 1, column: columnLetter(index), header: heading },
+          { row: headerRow, column: columnLetter(index), header: heading },
           { header: heading },
         ),
       );
     } else columns[key] = index;
   });
   for (const key of Object.keys(PARALLEL_RUN_COLUMNS) as (keyof typeof PARALLEL_RUN_COLUMNS)[]) {
-    if (columns[key] === undefined) {
-      problems.push(importProblem('MISSING_COLUMN', { row: 1 }, { column: FIGURE_NAMES[key] }));
-    }
+    if (columns[key] !== undefined) continue;
+    // HR's own register has no employee code at all: say what to add, rather
+    // than only naming the column as missing.
+    problems.push(
+      key === 'employeeCode'
+        ? importProblem('MISSING_EMPLOYEE_CODE', { row: headerRow })
+        : importProblem('MISSING_COLUMN', { row: headerRow }, { column: FIGURE_NAMES[key] }),
+    );
   }
   if (problems.length > 0) return { ...EMPTY, problems };
 
   const lines = body
-    .map((cells, i) => ({ cells, row: i + 2 }))
-    .filter(({ cells }) => !isBlank(cells));
+    .map((cells, i) => ({ cells, row: headerRow + 1 + i }))
+    .filter(({ cells }) => !isBlank(cells))
+    // The register's own total row has no employee code, and is not a person.
+    .filter(({ cells }) => !isTotalRow(cells, columns.employeeCode!));
   if (lines.length === 0) return { ...EMPTY, problems: [importProblem('NO_ROWS', { row: 0 })] };
   if (lines.length > MAX_IMPORT_ROWS) {
     return {
@@ -313,4 +333,54 @@ export function compareParallelRun(
     .filter((person) => !seen.has(person.employeeCode))
     .map((person) => ({ employeeCode: person.employeeCode, name: person.name }));
   return { people, onlyInFile, onlyInCwork, problems };
+}
+
+/** The rows HR's sheet may have above its headings (a title, groups of columns) before they start. */
+const HEADER_SEARCH_ROWS = 8;
+
+/**
+ * Finds the headings of HR's sheet.
+ *
+ * A sheet that starts with its headings is read as it always was. HR's own
+ * register does not: a title line, then groups ("รายการเงินได้"), then column
+ * names over two or three rows. The headings end at the last of the first few
+ * rows that holds a heading Cwork knows, and each column is named by the
+ * nearest filled cell at or above that row, so a "ภาษี" written one row higher
+ * than the code column still names its column. The data starts below.
+ */
+function findHeader(
+  rows: Cell[][],
+  known: Map<string, keyof typeof PARALLEL_RUN_COLUMNS>,
+): { header: Cell[]; headerRow: number; body: Cell[][] } {
+  const isHeadingRow = (row: Cell[]) =>
+    row.some((cell) => {
+      const text = asText(cell);
+      return text !== null && known.has(normaliseHeading(text));
+    });
+  let last = -1;
+  rows.slice(0, HEADER_SEARCH_ROWS).forEach((row, i) => {
+    if (isHeadingRow(row)) last = i;
+  });
+  // Nothing known in the first rows: the first row is the header, as before, so
+  // the missing columns are named against it.
+  const end = last === -1 ? 0 : last;
+
+  const width = Math.max(0, ...rows.slice(0, end + 1).map((row) => row.length));
+  const header: Cell[] = Array.from({ length: width }, (_, column) => {
+    for (let r = end; r >= 0; r--) {
+      const cell = rows[r]?.[column] ?? null;
+      if (asText(cell) !== null) return cell;
+    }
+    return null;
+  });
+  return { header, headerRow: end + 1, body: rows.slice(end + 1) };
+}
+
+/** A line with no employee code that says "total", as the register's last row does. */
+function isTotalRow(cells: Cell[], codeIndex: number): boolean {
+  if (asText(cells[codeIndex] ?? null) !== null) return false;
+  return cells.some((cell) => {
+    const text = asText(cell);
+    return text !== null && /^(รวม|total)$/i.test(text.trim());
+  });
 }

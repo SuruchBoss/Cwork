@@ -203,6 +203,82 @@ describe('compareParallelRun', () => {
     expect(result.problems.map((p) => p.code)).toEqual(['MISSING_COLUMN']);
   });
 
+  describe('HR’s own register (CW-103)', () => {
+    // The pilot's register, and CW-099's own file: a title row, the groups, then
+    // the headings over two or three rows, then the people, then a total row,
+    // with only the "รหัสพนักงาน" column added by HR.
+    const register = (rows: Cell[][]) => ({ rows, dateSystem: 1900 as const });
+    const stacked: Cell[][] = [
+      ['ทะเบียนเงินเดือนประจำเดือน ตุลาคม ปี 2569', null, null, null, null, null],
+      ['', '', 'รายการเงินได้', null, 'รายการหัก', null, null],
+      ['', '', '', 'ภาษี', null, null],
+      [
+        'ลำดับที่',
+        'ชื่อ-สกุล',
+        'รวมเงินได้',
+        null,
+        'ประกันสังคม',
+        'รวมเงินได้สุทธิ',
+        'รหัสพนักงาน',
+      ],
+      [1, 'สมชาย ใจดี', 30000, 1000, 750, 27500, 'EMP001'],
+      [2, 'สมหญิง ขยัน', 20000, 250, 750, 18250, 'EMP002'],
+      [null, 'รวม', 50000, 1250, 1500, 45750, null],
+    ];
+
+    it('reads the headings from the register’s own words, under a title and groups', () => {
+      const result = compareParallelRun(register(stacked), people);
+
+      expect(result.problems).toEqual([]);
+      expect(result.people.map((p) => p.employeeCode)).toEqual(['EMP001', 'EMP002']);
+      expect(result.people.map((p) => p.differs)).toEqual([false, false]);
+      // Rows are numbered as the spreadsheet numbers them, not from the headings.
+      expect(result.people.map((p) => p.row)).toEqual([5, 6]);
+    });
+
+    it('does not take the register’s total row for a person with no code', () => {
+      const result = compareParallelRun(register(stacked), people);
+
+      expect(result.onlyInFile).toEqual([]);
+      expect(result.onlyInCwork).toEqual([]);
+    });
+
+    it('still marks a figure that differs, on the right row', () => {
+      const rows = stacked.map((row) => [...row]);
+      rows[5]![3] = 251;
+      const result = compareParallelRun(register(rows), people);
+
+      expect(result.people[1]!.figures.tax).toMatchObject({ theirs: '251.00', differs: true });
+      expect(result.people[1]!.row).toBe(6);
+    });
+
+    it('accepts the net column under the name the page asks for', () => {
+      const result = compareParallelRun(
+        {
+          rows: [
+            ['รหัสพนักงาน', 'รายได้', 'ภาษี', 'ประกันสังคม', 'เงินสุทธิ'],
+            ['EMP001', 30000, 1000, 750, 27500],
+            ['EMP002', 20000, 250, 750, 18250],
+          ],
+          dateSystem: 1900,
+        },
+        people,
+      );
+
+      expect(result.problems).toEqual([]);
+      expect(result.people.map((p) => p.differs)).toEqual([false, false]);
+    });
+
+    it('says what to add when the register has no employee code, not only that a column is missing', () => {
+      const noCode = stacked.map((row) => row.slice(0, 6));
+      const result = compareParallelRun(register(noCode), people);
+
+      expect(result.people).toEqual([]);
+      expect(result.problems.map((p) => p.code)).toEqual(['MISSING_EMPLOYEE_CODE']);
+      expect(result.problems[0]!.message).toContain('รหัสพนักงาน');
+    });
+  });
+
   it('refuses a blank figure, a bad amount and a code twice, by row and column', () => {
     const result = compareParallelRun(
       table(

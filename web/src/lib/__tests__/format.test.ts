@@ -41,6 +41,11 @@ describe('Buddhist-era years in Thai (CW-058)', () => {
     expect(formatPeriod('2026-11-H3')).toBe('2026-11-H3');
   });
 
+  it('labels a 14-day period by its month and its place in it (CW-101)', () => {
+    expect(formatPeriod('2040-01-B2')).toBe('มกราคม 2583 · 2');
+    expect(formatPeriod('2040-01-B0')).toBe('2040-01-B0');
+  });
+
   it('shows any other period code as HR wrote it', () => {
     expect(formatPeriod('2026-13')).toBe('2026-13');
     expect(formatPeriod('BONUS-Q3')).toBe('BONUS-Q3');

@@ -198,6 +198,30 @@ describe('payroll register (CW-099)', () => {
     expect(REGISTER_FORMAT.needsTaxIds).toBeUndefined();
   });
 
+  it('has a summary whose earnings less tax, social security and other deductions are the net pay (CW-105)', () => {
+    const bytes = REGISTER_FORMAT.build(reconciled()) as Uint8Array;
+    const xml = strFromU8(unzipSync(bytes)['xl/worksheets/sheet2.xml']!);
+    const figures = new Map<string, number>();
+    for (const [, row] of xml.matchAll(/<row r="\d+">(.*?)<\/row>/g)) {
+      const label = /<t[^>]*>([^<]*)<\/t>/.exec(row!)?.[1];
+      const value = /<v>([^<]*)<\/v>/.exec(row!)?.[1];
+      if (label && value !== undefined) figures.set(label, Number(value));
+    }
+    const of = (label: string) => figures.get(label)!;
+
+    expect(figures.has('หักอื่นๆ')).toBe(true);
+    expect(of('หักอื่นๆ')).toBeGreaterThan(0);
+    expect(
+      Math.round(
+        (of('รวมเงินได้') -
+          of('ภาษีหัก ณ ที่จ่าย') -
+          of('ประกันสังคม (ส่วนลูกจ้าง)') -
+          of('หักอื่นๆ')) *
+          100,
+      ),
+    ).toBe(Math.round(of('รวมเงินได้สุทธิ') * 100));
+  });
+
   it('adds up one person’s payslips from several runs into one row', () => {
     const half = (code: string, amount: string): ExportPayslip =>
       daily({

@@ -381,8 +381,11 @@ export interface ApprovalTask {
   };
 }
 
-/** MONTHLY pays the month at once; SEMI_MONTHLY in two halves (CW-069). */
-export type PayFrequency = 'MONTHLY' | 'SEMI_MONTHLY';
+/**
+ * MONTHLY pays the month at once; SEMI_MONTHLY in two halves (CW-069); BIWEEKLY
+ * every 14 days (CW-101).
+ */
+export type PayFrequency = 'MONTHLY' | 'SEMI_MONTHLY' | 'BIWEEKLY';
 
 /** A cash advance and what is still owed on it (CW-070). */
 export interface PayrollAdvance {

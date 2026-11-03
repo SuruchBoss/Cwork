@@ -364,7 +364,10 @@ describe('Payroll register (e2e)', () => {
         payrollToken,
       );
       expect(res.status).toBe(422);
-      expect(res.body.message).toMatch(/has no payroll runs/);
+      // In Thai, with the month's name and Buddhist year, and the next step.
+      expect(res.body.message).toContain('ยังส่งออกทะเบียนของเดือนเมษายน 2580 ไม่ได้');
+      expect(res.body.message).toContain('ยังไม่มีรอบเงินเดือน');
+      expect(res.body.message).toContain('แล้วลองอีกครั้ง');
     });
 
     it('is refused while the second half of the daily wages is missing', async () => {
@@ -377,7 +380,8 @@ describe('Payroll register (e2e)', () => {
         payrollToken,
       );
       expect(res.status).toBe(422);
-      expect(res.body.message).toMatch(/second half of 2037-05 has no period yet/);
+      expect(res.body.message).toContain('เดือนพฤษภาคม 2580');
+      expect(res.body.message).toContain('ยังไม่มีงวดครึ่งหลังของค่าจ้างรายวัน');
     });
 
     it('is refused while a run is not approved, naming the run, as the other formats are', async () => {
@@ -390,7 +394,9 @@ describe('Payroll register (e2e)', () => {
         payrollToken,
       );
       expect(res.status).toBe(422);
-      expect(res.body.message).toMatch(/not APPROVED/);
+      expect(res.body.message).toContain('เดือนมิถุนายน 2580');
+      expect(res.body.message).toContain('คำนวณแล้ว รออนุมัติ');
+      expect(res.body.message).toContain('อนุมัติรอบนี้');
     });
   });
 

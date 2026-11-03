@@ -19,6 +19,9 @@ import {
 import type { ComparePeriodDto } from './dto/period-check.dto';
 import { loadReconciledPeriod } from './reconciled-period';
 
+/** What a refused comparison says it was doing: "ยังเทียบยอดของเดือน … ไม่ได้". */
+const COMPARE_ACTION = 'เทียบยอดของเดือน';
+
 export interface ParallelRunReport extends ParallelRunResult {
   fileName: string;
   period: { code: string; year: number; month: number };
@@ -47,7 +50,15 @@ export class PeriodCheckService {
         'Enter the tax total, the social security total, or both',
       );
     }
-    const { reconciled } = await loadReconciledPeriod(this.prisma, user.organizationId, periodId);
+    // The whole calendar month: a month with daily staff is paid in several
+    // periods, and the filings are the month's (CW-104).
+    const { reconciled } = await loadReconciledPeriod(
+      this.prisma,
+      user.organizationId,
+      periodId,
+      undefined,
+      { wholeMonth: true, action: COMPARE_ACTION },
+    );
     return compareFiledTotals(reconciled, {
       tax: dto.taxFiled === undefined ? null : new Decimal(dto.taxFiled),
       sso: dto.ssoFiled === undefined ? null : new Decimal(dto.ssoFiled),
@@ -60,12 +71,17 @@ export class PeriodCheckService {
     periodId: string,
     file: UploadedTable,
   ): Promise<ParallelRunReport> {
-    const { period, reconciled } = await loadReconciledPeriod(
+    // Everyone paid in the calendar month, from all of its periods, added up
+    // for each person by the same month logic as the payroll register (CW-104).
+    const { reconciled } = await loadReconciledPeriod(
       this.prisma,
       user.organizationId,
       periodId,
+      undefined,
+      { wholeMonth: true, action: COMPARE_ACTION },
     );
-    const shown = { code: period.code, year: period.year, month: period.month };
+    const { code, year, month } = reconciled.period;
+    const shown = { code, year, month };
 
     let result: ParallelRunResult;
     try {

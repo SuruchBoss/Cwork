@@ -173,6 +173,18 @@ export default function ScannerImportPage() {
                 )}
               </div>
             )}
+            {step.result.singleScanDays > 0 && (
+              <div className="alert alert--info" role="note">
+                {t(
+                  plural(
+                    step.result.singleScanDays,
+                    '{count} day was scanned only once; check it before running payroll',
+                    '{count} days were scanned only once; check them before running payroll',
+                  ),
+                  { count: formatNumber(step.result.singleScanDays) },
+                )}
+              </div>
+            )}
             {step.result.unmapped.length > 0 && (
               <div className="alert alert--info" role="note">
                 {t(
@@ -311,6 +323,18 @@ export default function ScannerImportPage() {
                       </span>
                     ))}
                   </div>
+                  {preview.singleScanDays > 0 && (
+                    <div className="alert alert--info" role="note">
+                      {t(
+                        plural(
+                          preview.singleScanDays,
+                          '{count} day was scanned only once; check it before running payroll',
+                          '{count} days were scanned only once; check them before running payroll',
+                        ),
+                        { count: formatNumber(preview.singleScanDays) },
+                      )}
+                    </div>
+                  )}
                   {preview.lockedDays > 0 && (
                     <div className="alert alert--info" role="note">
                       {t(

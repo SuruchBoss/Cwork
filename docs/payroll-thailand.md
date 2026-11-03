@@ -310,6 +310,32 @@ and `YYYY-MM-H2`); a monthly month has one. The database allows at most one
 monthly period per month and one of each half. A half's run pays only the
 daily-wage employees; a monthly run pays everyone else.
 
+### Daily wages paid every 14 days (CW-101)
+
+A daily wage can instead be paid every 14 days: the pay frequency `BIWEEKLY`,
+with the same rules as above (salary 0, a daily rate required). A 14-day period
+(`POST /payroll/periods` with `payFrequency: "BIWEEKLY"`, a start date and a pay
+date) ends thirteen days after it starts. The first sets the rhythm; each next
+one must start the day after the last ended, so every day is in exactly one
+period. Cwork gives it the year and month it counts toward and its place in that
+month (code `YYYY-MM-B1`, `-B2`, `-B3`; the `half` column holds the place).
+
+Social security and withholding stay monthly figures. The first period of a
+month takes what a first half takes (5% of its own wage, no floor; half of the
+withholding on twice the wage); each later one takes the month so far less what
+the periods before it took, so the periods add up to what one monthly run on the
+same total would have taken, rounded once. A later period is worked out only
+once the earlier ones of the month are paid. Standing allowances, deductions and
+benefit premiums are charged once a month, on the second period.
+
+**Which month a period that spans two months counts toward is not decided**
+(issue #36). `monthCountedFor` in `domain/pay-period.ts` is the one place that
+says, and for now it is the month the period is paid in. A month is listed (the
+register, the accountant export) and filed (สปส.1-10) only when none of its
+periods is missing and the next one, fourteen days after the last, would be paid
+in the following month. Whether the employee's share may be taken once a month,
+at the last payday, is also open; nothing is built for it.
+
 ### Days paid
 
 For each day of the half the employee was employed:
@@ -415,9 +441,14 @@ before Cwork (the opening balance) and a previous employer's pay, exactly as a
 monthly run does. The first half is added to the month, not to the year so far.
 
 The second half is worked out from the first, so it cannot be calculated until
-the first half's run is **paid** (`FIRST_HALF_NOT_PAID`). Paid, not just
-approved, also because marking a run paid is what marks the expense claims it
-paid; a second half calculated earlier would pay them again.
+the first half's run is **approved** (`FIRST_HALF_NOT_APPROVED`); paid is not
+required (CW-104). An approved run's figures cannot change, so the second half
+can build on them, and the expense claims the first half pays are *held* for it
+the moment it is approved (`payrollRunId` on the claim), so the second half does
+not pay them again before the first is marked paid. Cancelling the approved run
+releases them. Cash advances are not paid twice either: what is owed is the
+amount less what any run that still stands has taken back. During the parallel
+run HR need not record any payment in Cwork.
 
 ### Monthly items
 

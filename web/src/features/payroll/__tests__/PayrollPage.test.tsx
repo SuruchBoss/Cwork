@@ -92,6 +92,43 @@ describe('Half-month pay periods (CW-069)', () => {
     );
   });
 
+  it('creates a 14-day period from its start and pay date alone', async () => {
+    render();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /สร้างงวดใหม่/ }));
+    await user.selectOptions(screen.getByLabelText('งวดการจ่าย'), 'B14');
+    // The server numbers it and says which month it counts toward.
+    expect(screen.queryByLabelText('เดือน')).toBeNull();
+    expect(screen.getByLabelText('เริ่มงวด')).toHaveValue('30 ต.ค. 2569');
+    expect(screen.getByLabelText('สิ้นงวด')).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'สร้างงวด' }));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/payroll/periods', {
+        payFrequency: 'BIWEEKLY',
+        periodStart: '2026-10-30',
+        payDate: '2026-11-12',
+      }),
+    );
+  });
+
+  it('says when the next 14-day period must start, in Thai', async () => {
+    post.mockRejectedValueOnce(
+      new ApiError(422, 'PAYROLL_PERIOD_NOT_NEXT', 'not next', { expectedStart: '2026-11-13' }),
+    );
+    render();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /สร้างงวดใหม่/ }));
+    await user.selectOptions(screen.getByLabelText('งวดการจ่าย'), 'B14');
+    await user.click(screen.getByRole('button', { name: 'สร้างงวด' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'งวด 14 วันถัดไปต้องเริ่ม 13 พ.ย. 2569 คือวันถัดจากวันที่งวดก่อนจบ',
+    );
+  });
+
   it('names the period that already exists, in Thai', async () => {
     post.mockRejectedValueOnce(
       new ApiError(409, 'PAYROLL_PERIOD_EXISTS', 'exists', {
