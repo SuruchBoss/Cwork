@@ -195,6 +195,52 @@ describe("An employee's scanner numbers over time (CW-109)", () => {
     expect(post).not.toHaveBeenCalled();
   });
 
+  async function askToEndEarlier() {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <ScannerNumberCard
+        person={{ id: 'e1', scannerId: '012', scannerNumbers: periods }}
+        canEdit
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'สิ้นสุดเลข 007 ให้เร็วขึ้น' }));
+    await user.type(screen.getByLabelText('วันสุดท้ายที่เลขนี้นับ'), '15/05/2569');
+    await user.click(screen.getByRole('button', { name: 'สิ้นสุดเลขนี้' }));
+    return user;
+  }
+
+  it('makes a period that has ended shorter: asks first, then ends that period on the earlier day (CW-115)', async () => {
+    get.mockResolvedValue(preview({ scannerNumber: '007', daysReleased: 4, daysKept: 0 }));
+    const user = await askToEndEarlier();
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(get).toHaveBeenCalledWith('/attendance/scanner/numbers/p1/end-preview', {
+      query: { endDate: '2026-05-15' },
+    });
+    expect(dialog).toHaveTextContent('สิ้นสุดเลขสแกน 007');
+    expect(dialog).toHaveTextContent('4 วันหลังจากนั้นที่ยังไม่มีใครตัดสิน จะกลับเป็นไม่มีเจ้าของ');
+    expect(post).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: 'สิ้นสุดเลขนี้' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/attendance/scanner/numbers/p1/end', {
+        endDate: '2026-05-15',
+      }),
+    );
+  });
+
+  it('names the payroll run that stops making an ended period shorter, as it does for the one in use (CW-115)', async () => {
+    get.mockResolvedValue(
+      preview({ scannerNumber: '007', blocked: { date: '2026-05-20', runNo: 'PR-2026-05-001' } }),
+    );
+    await askToEndEarlier();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'สิ้นสุดเลขสแกน 007 ก่อนวันที่ 20 พ.ค. 2569 ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน PR-2026-05-001',
+    );
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('offers the end only to someone who manages attendance', () => {
     useAuthStore.setState({ canAny: () => false } as never);
     renderWithProviders(
@@ -204,5 +250,6 @@ describe("An employee's scanner numbers over time (CW-109)", () => {
       />,
     );
     expect(screen.queryByRole('button', { name: 'สิ้นสุดเลขนี้ในวันที่…' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'สิ้นสุดเลข 007 ให้เร็วขึ้น' })).toBeNull();
   });
 });

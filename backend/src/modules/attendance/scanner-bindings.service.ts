@@ -282,10 +282,11 @@ export class ScannerBindingsService {
       include: { employee: { select: { employeeCode: true } } },
     });
     if (!row) throw new NotFoundError('ScannerNumber', bindingId);
-    if (row.validTo !== null) {
+    // A period that has ended can be made shorter, never longer: the end moves earlier only.
+    if (row.validTo !== null && endDate >= formatDateOnly(row.validTo)) {
       throw new BusinessRuleError(
         'SCANNER_NUMBER_ALREADY_ENDED',
-        `เลขสแกน ${row.scannerNumber} ของพนักงาน ${row.employee.employeeCode} สิ้นสุดไปแล้ว`,
+        `เลขสแกน ${row.scannerNumber} ของพนักงาน ${row.employee.employeeCode} สิ้นสุดไปแล้วเมื่อ ${formatDateOnly(row.validTo)} เลือกวันสิ้นสุดที่เร็วกว่านั้นได้เท่านั้น`,
         { endedOn: formatDateOnly(row.validTo) },
       );
     }
@@ -319,10 +320,10 @@ export class ScannerBindingsService {
       action: AuditAction.UPDATE,
       entityType: 'Employee',
       entityId: row.employeeId,
-      summary: `Ended scanner number ${row.scannerNumber} of employee ${row.employee.employeeCode} on ${endDate}`,
+      summary: `${row.validTo ? 'Shortened' : 'Ended'} scanner number ${row.scannerNumber} of employee ${row.employee.employeeCode} on ${endDate}`,
       changes: {
         scannerNumber: row.scannerNumber,
-        validTo: { from: null, to: endDate },
+        validTo: { from: row.validTo ? formatDateOnly(row.validTo) : null, to: endDate },
         ...(options.released !== undefined ? { daysReleased: options.released } : {}),
       },
     });

@@ -6,29 +6,31 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #153 (CW-101 to CW-110, CW-109 included) and the QA/PO notes after it.
-- CW-111 (the nightly close-out closes the day that just ended) is on branch
-  `claude/new-session-syszvt`, in review with the PO. Its tests: a unit spec with the clock fixed,
-  and `test/scheduler-quiet` and `test/attendance-close-out` (a day closed absent is put right
-  by a scanner file imported afterwards).
-- **CW-112, in the working tree, not pushed (waits for CW-111 to merge):** ending a scanner number
-  takes the per-number lock; Approve/Record payment shown closed with the reason; Thai wording for
-  the three answers; own-leave preview refused as the submit is; waiting runs marked and the
-  dashboard card opens them (`?waiting=me`); the pre-approval box no longer repeats its heading;
-  the installer wording. Not done: "the parallel-run notice can be dismissed for the session"
-  (the only such notice is a box inside the payment question, which is not shown on every visit:
-  asked the PO which notice is meant).
+- On `main`: everything up to #153 (CW-101 to CW-110) and, when #154 merges, CW-111.
+- **CW-115 (local, pushed after #154 merges):** "these days only" takes a first and last day inside
+  the waiting stretch (`from`/`to` on `POST /attendance/scanner/unmapped/bind`),
+  `GET /attendance/scanner/unmapped/bind-preview` counts the days and how many the person already
+  has scans for under another number (the page warns), and a period that has ended can be made
+  shorter through the same end/preview/confirm/payroll-run refusal (`planEnd` limits itself to the
+  days between the new and the old end). Left open: whether a day with scans from two numbers of
+  one person should wait for HR instead of counting both; it is only warned about at binding time.
+- **CW-112 (local, pushed after CW-115 merges):** ending a scanner number takes the per-number lock;
+  Approve/Record payment shown closed with the reason; Thai wording for three answers; own-leave
+  preview refused as the submit is; waiting runs marked and the dashboard card opens them
+  (`?waiting=me`); the pre-approval box no longer repeats its heading; the installer wording. Cut by
+  the PO: the dismissible parallel-run notice. Still to do, the four UX items the PO added: the
+  message after ending a number (counted through which day, how many days went back to no one),
+  an employee with no number in use shown as a plain status, the review page asking before "Register
+  this number" moves days, and `FULL_TIME` shown as a Thai label.
 - Known, outside CW-112: a shift that crosses midnight is not supported by punches or scanner days
-  (a punch belongs to the calendar day it is made; the scan out in the morning is a lone scan of
-  the next day). Reported to the PO, not changed.
-- Counts: web 379; backend unit 903, domain 558; e2e 589.
+  (CW-114 is the ticket).
+- Counts: web 382; backend unit 903, domain 558; e2e 593.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
 
-1. When the PO says CW-111 is merged: merge main into the working branch, push CW-112 (one PR), tell
-   the PO. Then ask which "parallel-run notice" CW-112 means, and whether the pilot has shifts that
-   cross midnight.
+1. When the PO says #154 (CW-111) is merged: merge main into `cw115`, push it (one PR), tell the PO.
+   Then CW-112 (four UX items still to do), pushed after CW-115 merges.
 2. CW-101 asks the PO for one decision from the owner: issue #36, which month a 14-day period that
    spans two months counts toward. `monthCountedFor` in `domain/pay-period.ts` is the only place to
    change, and the one e2e case that pins the month of the spanning period

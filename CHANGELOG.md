@@ -21,6 +21,14 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **A card borrowed for some days can be bound for only those days, and shortened afterwards**
+  (CW-115). Binding a waiting scanner number "for these days" lets HR pick the first and last
+  day inside the waiting stretch (the whole stretch to begin with); the page says how many
+  days that counts and warns when the person already has scans under another number on some
+  of them, since both numbers would count for the same day. A period that has already ended
+  can be made shorter from the employee's scanner card, with the same question beforehand, the
+  same count of days that go back to no one, and the same refusal when a payroll run has used
+  one of them; the days it gives back are counted for whoever holds the number then.
 - **Daily wages paid every 14 days** (CW-101). A daily wage can be set to
   `BIWEEKLY`, and a 14-day period opened from a start date and a pay date: it ends
   thirteen days later and must follow the last one without a gap, so every day is

@@ -1059,6 +1059,14 @@ export const thMessages: Record<string, string> = {
   'from {date}': 'ตั้งแต่ {date}',
   'from the beginning': 'ตั้งแต่ต้น',
   'in use': 'ใช้อยู่',
+  'End earlier': 'สิ้นสุดให้เร็วขึ้น',
+  'End number {number} on an earlier day': 'สิ้นสุดเลข {number} ให้เร็วขึ้น',
+  'First day of number {number}': 'วันแรกของเลข {number}',
+  'Last day of number {number}': 'วันสุดท้ายของเลข {number}',
+  '{count} waiting days from {from} to {to} would be counted for this person.':
+    'จะนับ {count} วันที่รออยู่ ตั้งแต่ {from} ถึง {to} ให้พนักงานคนนี้',
+  'This person already has scans under another number on {count} of these days. Both numbers would count for the same day. Choose fewer days if this card was not theirs on all of them.':
+    'พนักงานคนนี้มีสแกนจากเลขอื่นอยู่แล้ว {count} วันในช่วงนี้ ถ้าผูกแล้วสแกนของทั้งสองเลขจะนับรวมเป็นวันเดียวกัน ถ้าบัตรนี้ไม่ได้เป็นของเขาทุกวัน ให้เลือกช่วงวันให้สั้นลง',
   'End this number on a date': 'สิ้นสุดเลขนี้ในวันที่…',
   'Last day this number counts': 'วันสุดท้ายที่เลขนี้นับ',
   'End this number': 'สิ้นสุดเลขนี้',
