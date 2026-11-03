@@ -13,14 +13,12 @@ Overwritten at the end of each unit of work. Git history keeps the past.
   added the HR guide's four tasks (CW-066), the demo's second boot (#104), the
   approvals switch (#109), the sidebar, empty states, overdue badge and dark
   theme (#110). One failure then: dark-theme contrast, #113 (fixed since).
-- **Re-tests (main `d08c985`, 2026-10-18):** #112–#115 pass and so does #119 (the range error is Thai in the Thai console, English unchanged). CW-097 passes: danger button and sidebar count 6.74:1 in the dark theme, 0 low-contrast nodes on seven pages. Results in the plan under "Pass 2 re-test" and "Pass 2 re-test of #119 and CW-097". The payroll warning wording ("การ์ดค่าจ้าง" / "Pay card") was checked from source, not rendered.
-- **Open issues for the dev room:** none from this room. #94–#97 and #112–#115, #119 are fixed and verified.
-- **PR:** the #119 / CW-097 re-test is on branch `claude/qa-119-retest`, for the PO to review and merge.
+- **Install gate (2026-11-03, main `147829f`):** asked by the PO room. Regression S1–S17 and P1–P13 pass on a rebuilt database; N, G and D cases not re-run (reasons in the plan). New cases: daily wage 372 × 23 → social security 428 passes; the monthly parallel run with both kinds of staff fails (#127); CW-099 (PR #126) passes on main `2c47dac` (API); CW-100 is Blocked until merged. Security review done: results and method in the plan under "Install gate"; the findings themselves went to the PO room as advisory drafts, not into the repository.
+- **Open issues for the dev room:** #127 (parallel run with daily staff), #129 (three 500s), #130 (Google Fonts), #131 (`zod` advisory). Earlier ones (#94–#97, #112–#115, #119) are fixed and verified.
+- **PR:** the gate results are on branch `claude/qa-pilot-a-gate`, for the PO to review and merge.
 - **Not covered:** #111 (CW-095) landed after pass 2 began; the demo's wake-up
   time on Render (the owner times it); DSM and the real NAS.
-- **Next:** nothing is waiting on this room. When the owner approves the real NAS,
-  someone with DSM access repeats N1–N3 and N11 there; the real Dockerfile builds
-  still need a machine with internet.
+- **Next:** CW-100 when it lands, the CW-099 button in the console, and each private finding as the PO says its fix is in. A real-NAS pass (N1–N3, N11, DSM) needs someone with DSM access and the owner's approval.
 
 ## How to start
 
@@ -44,5 +42,6 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 
 ## Waiting on
 
-- The PO, to review and merge the #119 / CW-097 re-test PR.
-- The owner (real NAS).
+- The PO: review and merge of the gate PR; which reported items are ready to re-test.
+- CW-100 to be merged.
+- The owner: the real NAS.
