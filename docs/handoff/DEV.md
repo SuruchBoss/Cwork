@@ -6,37 +6,19 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #147 (CW-101 to CW-108, the performance measurement, the
-  dependency updates, the access-check work, the sign-in and session changes, the response
-  cache header and the installer's secret handling), and the UX room's guide (#138).
-- **On branch `claude/new-session-syszvt` (the PO opens the PR):** the round of fixes after the
-  blind test of 09fc821 that is public in wording:
-  1. a scanner day that belongs to the person deciding it is left to another holder of the
-     attendance permission (API answer in Thai, buttons closed on that row); where nobody else
-     holds it the person may decide, and the decision is marked, listed on the payslip and
-     audited;
-  2. approving a run that includes the approver's own payslip asks first and is audit-logged;
-  3. approving a run and recording its payment each ask one question first (a shared
-     `ConfirmDialog`); the payment one says it cannot be undone.
-  Recording leave as approved for oneself was already refused (`CANNOT_RECORD_OWN_LEAVE`).
-  4. the e2e leave test takes today from the organization's calendar (Asia/Bangkok), not UTC;
-     it failed between midnight and seven in the morning there (`test/utils/dates.ts`);
-  5. the app under an e2e spec no longer leaves its cron jobs running: the attendance close-out
-     (01:00 Bangkok, 18:00 UTC) fired inside the payroll test once a day and cost a day's pay;
-  6. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
-     dashboard lists runs waiting for an approver and shows the latest run with figures, a
-     period with a run offers "open", and the two period refusals are in Thai.
-- **In the working tree, not pushed (waits for #150 to merge):** CW-109, a scanner number bound
-  for a period. A new table `employee_scanner_numbers` (migration `20261104140000`, with a
-  hand-run `down.sql`) replaces `employees.scannerId`; the database keeps "no overlap" (an
-  exclusion constraint, needs `btree_gist`) and "one number in use per employee". Days are
-  matched by (number, date) on import and when waiting days are matched later. `scannerId` in
-  the employee API and files is the number in use now. The scanner days page asks "these days
-  only or from now on"; the employee page lists the numbers and ends one on a date.
-  After #151 and #150 merge: merge main, recount the docs, push, tell the PO.
+- On `main` (482d405): everything up to #153: CW-101 to CW-110, including the blind-test
+  fixes, CW-110's scan prefill and dashboard, and CW-109 (a scanner number bound for a period,
+  with its race fixes).
+- **On branch `claude/new-session-syszvt` (the PO opens the PR):** CW-111. The nightly
+  attendance close-out now closes the day before `organizationToday()` (Asia/Bangkok), not
+  the day before the UTC date. A unit spec pins the clock (01:00 Bangkok, just before midnight
+  UTC, a UTC-timezone org, month and year ends) and an e2e case runs the job on a fixed date.
+- Next: CW-112, one PR at a time, starting with ending a scanner number taking the same
+  per-number lock as binding one, then payroll actions the user cannot take shown closed with
+  a reason.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 371; backend unit 898, domain 558; e2e 584.
+- Counts: web 371; backend unit 903, domain 558; e2e 585.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

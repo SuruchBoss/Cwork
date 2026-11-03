@@ -14,6 +14,7 @@ import { EmployeeRetentionService } from '../employees/retention.service';
 import { FilesService } from '../files/files.service';
 import { MalwareScannerService } from '../files/malware-scanner.service';
 import { LeaveBalanceService } from '../leave/leave-balance.service';
+import { organizationToday } from '../organization/organization-today';
 import { ApplicationsService } from '../recruitment/applications.service';
 import { JobLockService } from './job-lock.service';
 
@@ -106,16 +107,30 @@ export class ScheduledTasksService {
     });
   }
 
-  /** 18:00 UTC = 01:00 Asia/Bangkok — closes out the day that just ended. */
+  /**
+   * Closes out the day that has just ended, in each organisation's own calendar.
+   *
+   * It runs at 18:00 UTC, which is 01:00 in Asia/Bangkok: an hour into the next
+   * day there. The day it closes is the one before the organisation's today, so
+   * a day is closed about an hour after it ends, early enough for a payroll run
+   * calculated the next morning to see its absences. The UTC date minus one is
+   * not that day: at this hour Bangkok is already a day ahead of UTC, and using
+   * it closed each day about 25 hours after it ended (CW-111).
+   *
+   * `now` is the clock; a schedule never passes it, a test does.
+   */
   @Cron('0 18 * * *', { name: 'attendance-close-out' })
-  async closeOutAttendance(): Promise<void> {
+  async closeOutAttendance(now: Date = new Date()): Promise<void> {
     await this.locks.runExclusively('attendance-close-out', async () => {
       const organizations = await this.activeOrganizations();
-      const yesterday = subDays(new Date(), 1);
 
       for (const org of organizations) {
         try {
-          const result = await this.attendance.closeOutDay(org.id, yesterday);
+          // A calendar day held as midnight UTC: a day back is a day of milliseconds.
+          const ended = new Date(
+            (await organizationToday(this.prisma, org.id, now)).getTime() - 86_400_000,
+          );
+          const result = await this.attendance.closeOutDay(org.id, ended);
           this.logger.log(
             `[${org.code}] attendance close-out: ${result.absent} absent, ${result.incomplete} incomplete`,
           );

@@ -910,6 +910,11 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The nightly attendance close-out closes the day that just ended** (CW-111). The job runs at
+  01:00 in Bangkok (18:00 UTC), but it took "yesterday" from the UTC date, so it closed the
+  day before the one that had just finished, about a day late. It now closes the day before
+  the organisation's own today, an hour after that day ends. Tests pin the clock at 01:00
+  Bangkok and just before midnight UTC.
 - **A lone evening scan is offered as a clock-out.** On the page where HR settles days the
   scanner could not, a day with one scan at 17:32 was pre-filled as a clock-in at half past
   five. A lone scan before noon is still offered as the clock-in, one from 15:00 as the
