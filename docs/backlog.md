@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-101 before paying real wages · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-101 before paying real wages · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -477,10 +477,12 @@ Cwork cannot do this today. `PayrollPeriod` is keyed by year, month and half
 (MONTHLY or SEMI_MONTHLY, CW-069). `PayFrequency.BIWEEKLY` exists in the enum,
 but nothing uses it.
 
-**Decided by the owner (17:19, relayed by the Asuna Bot room):** the parallel
-run does not wait for this. Daily staff are set up on monthly periods, and
-Cwork is compared with HR at the month: register, social security, tax. This
-ticket comes after CW-099, and must be done before Cwork pays real wages.
+**Decided by the owner (18:38, relayed by the Asuna Bot room, replacing the
+17:19 choice):** the parallel run does not wait for this. Daily staff stay
+on half-month periods, as Cwork allows today, and the compare page adds up the
+calendar month (CW-104). The 17:19 choice, daily staff on monthly periods,
+was cancelled: Cwork refuses a daily rate on a monthly period (#127). This
+ticket must be done before Cwork pays real wages.
 
 **Scope**
 - A 14-day period: anchored on a first start date, each next one 14 days on,
@@ -586,6 +588,36 @@ smaller items.
 **Files** `docs/guide/hr-daily-tasks.th.md`,
 `backend/src/modules/payroll/domain/period-check.ts`,
 `web/src/lib/i18n/messages.th.ts`
+
+### CW-104 · The compare page reads one period, so daily staff look missing
+`P1` · payroll · **S** · Pilot A · #127
+
+QA's install-gate regression (#127): `/payroll/compare` reads only the period
+it is opened from. A daily worker is paid in the two half-month periods, so in
+a month with both kinds of staff, the daily workers show as "only in the
+file", and the month's social security has no correct figure to compare.
+
+**Decided by the owner (18:38, relayed by the Asuna Bot room):** option B.
+Daily staff stay on half-month periods, the pay rules are unchanged, and the
+compare page works on the calendar month the way CW-099's register does.
+
+**Scope**
+- The compare page and its upload use the whole calendar month: the monthly
+  period and both halves, added together per person, from the same
+  `ReconciledPeriod` month logic as CW-099, not a second calculation.
+- Opened from any period of the month, it compares the same month. It refuses
+  while the month is incomplete, saying which period or run is missing.
+- The filed tax and social security totals on the same page are the month's.
+- No change to `assertPayBasis` or to how anyone is paid.
+
+**Acceptance**
+- In a synthetic month with monthly and daily staff, HR's per-person sheet that
+  matches Cwork marks no difference, and each person's figures equal the
+  CW-099 register row (test).
+- The month's social security equals the สปส.1-10 total for that month.
+
+**Files** `backend/src/modules/payroll/domain/period-check.ts`,
+`backend/src/modules/payroll/reconciled-period.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued

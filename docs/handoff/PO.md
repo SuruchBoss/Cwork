@@ -9,16 +9,15 @@ this file only says where the PO room stands.
 - **Done today:** CW-099 and the dependency advisories, #126 at `2c47dac`.
   QA re-test of CW-099 passes over the API.
 - **Gates (owner 17:51):** regression passes except #127 (the monthly parallel
-  run cannot hold daily staff, the PO's option was wrong; the owner chooses
-  again: the PO recommends keeping daily staff half-monthly and making
-  `/payroll/compare` cover the calendar month). Security review done; the
+  run could not hold daily staff; the owner chose option B, CW-104). Security review done; the
   findings went to the owner privately, and the fixes are in the dev queue
   ahead of everything else. Performance: everything under 2 s at 200 people
   except the scanner import (41.5 s), CW-102 (#133). Blind test running.
 - **Dev queue:** #128 (Web console timeout), the private security fixes,
-  CW-102, CW-101 (#125), CW-100 (#124, waits on the law text).
-- **Owner's choice (17:19):** the parallel run puts daily staff on monthly
-  periods and compares at the month. The owner books the date with HR.
+  CW-103 compare page, CW-104, CW-102, CW-101 (#125), CW-100 (#124, waits on the law text).
+- **Owner's choice (18:38, replacing 17:19):** daily staff stay half-monthly,
+  and the compare page adds up the calendar month (CW-104, #127). The owner
+  books the install date with HR.
 - **Pilot A, all ten HR answers in (2026-11-03).** HR keys social security on
   the web (no upload file, CW-085 updated). It sends the accounting firm a
   one-sheet payroll register, which CW-089 is not, hence CW-099. The firm sets
