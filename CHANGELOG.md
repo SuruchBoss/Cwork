@@ -678,6 +678,18 @@ entry, tags it and publishes the notes.
   `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and
   print a warning.
 
+- **The HR guide covers what the blind test found missing** (CW-103).
+  `docs/guide/hr-daily-tasks.th.md` now walks the sign-in with the six-digit code
+  and the first-time 2FA setup; says how to find whose an unregistered scanner
+  number is, that it can wait, and that a daily worker's days go unpaid until it
+  is matched; says what deciding a single-scan day does to pay; adds the step
+  that compares the month with HR's own register (add a `รหัสพนักงาน` column
+  first); and warns at the top of the payroll job never to record payment during
+  the parallel run. `docs/guide/capture-hr-tasks.mjs` now also calculates and
+  approves the second half and captures the month compared with a register that
+  differs by one person's tax (`hr-15-compare.png`); every picture was taken
+  again on the current screens.
+
 - **The everyday HR tasks, walked as a first-time user would** (CW-066). Four jobs
   at 1366×768 in Thai, from the scanner file to the printed payslips, and what
   people would stop at: the scanner review page says what a decision did ("… 5

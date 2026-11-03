@@ -22,16 +22,25 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
 - CW-091 (sidebar horizontal scrollbar) is on `main` via #109. Verified: at 1366 px the
   sidebar's `scrollWidth` equals its `clientWidth` for both Thai and English.
 
-- **Blind test of the four HR jobs (CW-066 guide), 3 Nov, for the PO before the Pilot A
-  install date.** Report: [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md).
-  No blocker on clean data; 5 heavy items (no compare step in the guide, the compare
-  page's net-pay header, no on-screen warning before recording payment in a parallel
-  run, single-scan days, unknown scanner numbers). Same file has the CW-099 register
-  check: a month with a 1-15 period cannot be exported during a parallel run, an English
-  error, a summary sheet that does not add up. The PO opens the tickets.
+- **Blind test of the four HR jobs (CW-066 guide), 3 Nov.** Report:
+  [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md), with the CW-099
+  register check. On `main` via #135. The PO opened CW-103 (#134), CW-105 (#136) and
+  CW-106 (#137, single-scan days and clock-out-only days) from it.
+- **CW-103 guide part, in review (#138).** `docs/guide/hr-daily-tasks.th.md` covers the
+  sign-in and first 2FA setup, unregistered scanner numbers, single-scan days as CW-106
+  made them (INCOMPLETE, counted in the import summary, a payslip warning for daily
+  staff), the month compare step with a `รหัสพนักงาน` column (picture `hr-15`), and the
+  no-payment warning. All guide pictures were taken again on `main` at `9a99475`.
+- **CW-105 register printing, checked on #141 (`a1e460c`).** LibreOffice prints it
+  landscape, one page wide, borders, centred group headings, rows 1-4 repeated on every
+  page; the summary sheet adds up to the net. The register code has not changed since.
 
 ## Next
 
+- Final blind test after the security fixes, CW-103 and CW-104: install with
+  `deploy/nas/install.sh` in docker at 2 CPU and 2 GB (method in
+  `docs/qa/performance-pilot-a.md`), with a new tester, noting every hesitation.
+  Wait for the PO to say it is ready.
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
   questions about the two APIs it needs. `GET /approvals/pending` (organisation-wide,
   with the approver) does not exist yet. The leave balance after approval already
