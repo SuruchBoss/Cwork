@@ -702,7 +702,14 @@ describe('A scanner number bound for a period (e2e)', () => {
 
       const whole = await previewBind(ann);
       expect(whole.status).toBe(200);
-      expect(whole.body).toMatchObject({ from: iso(1), to: iso(10), days: 10 });
+      expect(whole.body).toMatchObject({
+        from: iso(1),
+        to: iso(10),
+        days: 10,
+        numberInUse: OWN,
+      });
+      // Someone with no number in use is not told they have one.
+      expect((await previewBind(cat)).body.numberInUse).toBeNull();
       expect(whole.body.daysAlsoScannedOnAnotherNumber).toBe(await elsewhere(1, 10));
       // Her own number's scans on the 5th and the 6th are among them.
       expect(whole.body.daysAlsoScannedOnAnotherNumber).toBeGreaterThanOrEqual(2);

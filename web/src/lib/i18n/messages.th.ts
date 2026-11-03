@@ -1048,6 +1048,17 @@ export const thMessages: Record<string, string> = {
   'Employee for number {number}': 'พนักงานของเลข {number}',
   'Choose…': 'เลือก…',
   'Register this number': 'บันทึกเลขนี้',
+  'You can only choose days from {first} to {last}: the days of this number that wait for an owner':
+    'เลือกได้เฉพาะวันที่ {first} ถึง {last} ซึ่งเป็นวันของเลขนี้ที่รอเจ้าของ',
+  'The last day must not be before the first day': 'วันสุดท้ายต้องไม่ก่อนวันแรก',
+  'The first and last day can only be chosen when the number is bound for these days only':
+    'เลือกวันแรกและวันสุดท้ายได้เฉพาะตอนผูกเลขเฉพาะวันเหล่านี้',
+  'No days of scanner number {scannerNumber} wait for an owner':
+    'ไม่มีวันของเลขสแกน {scannerNumber} ที่รอเจ้าของ',
+  'Scanner number ended on {endedOn}; choose an earlier day to make it shorter':
+    'เลขสแกนนี้สิ้นสุดไปแล้วเมื่อ {endedOn} เลือกวันที่เร็วกว่านั้นถ้าจะย่นให้สั้นลง',
+  'From now on: not possible, {name} already uses number {number}':
+    'ตั้งแต่นี้ไป: ทำไม่ได้ เพราะ {name} ใช้เลข {number} อยู่แล้ว',
   'Register number {number} for {name}?': 'บันทึกเลข {number} ให้ {name}?',
   'End scanner number {number}?': 'สิ้นสุดเลขสแกน {number} ใช่ไหม',
   'The number counts to this employee through {date}.': 'เลขนี้นับให้พนักงานคนนี้ถึงวันที่ {date}',

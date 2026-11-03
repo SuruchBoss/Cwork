@@ -898,9 +898,15 @@ export class ScannerImportService {
       select: { workDate: true },
     });
     const scannedElsewhere = new Set(otherDays.map((d) => formatDateOnly(d.workDate)));
+    // "From now on" is only for someone with no number in use: said before it is chosen.
+    const inUse = await this.prisma.employeeScannerNumber.findFirst({
+      where: { organizationId: user.organizationId, employeeId: employee.id, validTo: null },
+      select: { scannerNumber: true },
+    });
     return {
       from: range.from,
       to: range.to,
+      numberInUse: inUse?.scannerNumber ?? null,
       days: range.days.length,
       daysWithTimes: range.daysWithTimes.length,
       daysAlsoScannedOnAnotherNumber: range.daysWithTimes.filter((d) => scannedElsewhere.has(d))

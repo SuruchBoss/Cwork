@@ -672,6 +672,12 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **The row for a waiting scanner number starts over after it is saved, and says what it will do**
+  (CW-112). After "Register this number" the person, the how-long answer and the dates in that
+  row are cleared, so an old range cannot be refused against the days that are left. "From now
+  on" is closed at once, with the reason, for someone who already uses a number. The two date
+  fields carry the words "from" and "to", and dates inside the page's refusals are written as Thai
+  dates, not as 2026-10-12.
 - **Registering a scanner number asks first, and ending one says what it did** (CW-112). "Register
   this number" on the scanner days page asks a question that says how many waiting days it will
   count for the person, and from which day to which; nothing is saved on "Cancel". After a number

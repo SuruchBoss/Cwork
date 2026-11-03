@@ -19,10 +19,10 @@ this file only says where the dev room stands.
   own-leave preview refused as the submit is; waiting runs marked and the dashboard card opens
   them (`?waiting=me`); the pre-approval box no longer repeats its heading; the installer wording;
   and the four UX items (what an end did, a plain no-number state, "Register this number" asking
-  first, a Thai employment-type label). The dismissible parallel-run notice was cut by the PO.
+  first, a Thai employment-type label), plus UXUI's three after #155's test (the row starts over after saving and dates in refusals read as Thai dates, "from now on" closed with a reason for someone who has a number, labels on the two date fields). The dismissible parallel-run notice was cut by the PO.
 - Known, outside CW-112: a shift that crosses midnight is not supported by punches or scanner days
   (CW-114 is the ticket).
-- Counts: web 386; backend unit 903, domain 558; e2e 593.
+- Counts: web 390; backend unit 903, domain 558; e2e 593.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

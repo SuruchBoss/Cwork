@@ -88,6 +88,7 @@ function bindPreviewOf(over: Record<string, unknown> = {}) {
   return {
     from: '2026-09-03',
     to: '2026-09-04',
+    numberInUse: null,
     days: 2,
     daysWithTimes: 2,
     daysAlsoScannedOnAnotherNumber: 0,
@@ -484,6 +485,74 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       from: '2026-10-01',
       to: '2026-10-11',
     });
+  });
+
+  const waitingNumber = {
+    scannerNumber: '999',
+    name: 'บัตรชั่วคราว',
+    days: 15,
+    daysWithTimes: 15,
+    firstDay: '2026-10-12',
+    lastDay: '2026-10-21',
+    foreverPossible: true,
+    foreverFrom: null,
+    foreverDays: 15,
+  };
+
+  it('starts the row over once a number is registered, so no old person, answer or dates are left (CW-112)', async () => {
+    serve([], [waitingNumber]);
+    post.mockResolvedValue({ daysMatched: 4, punchesAdded: 8 });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 999'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 999'), 'e9');
+    await userEvent.selectOptions(
+      screen.getByLabelText('เลข 999 เป็นของคนนี้นานแค่ไหน'),
+      'THESE_DAYS',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'บันทึกเลขนี้' }),
+    );
+
+    expect(await screen.findByText(/บันทึกเลข 999 แล้ว/)).toBeInTheDocument();
+    expect(screen.getByLabelText('ค้นหาพนักงานของเลข 999')).toHaveValue('');
+    expect(screen.queryByLabelText('พนักงานของเลข 999')).toBeNull();
+    expect(screen.getByLabelText('เลข 999 เป็นของคนนี้นานแค่ไหน')).toHaveValue('');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('closes "from now on" at once for someone who already uses a number, and says why (CW-112)', async () => {
+    serve([], [waitingNumber], { numberInUse: '105' });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 999'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 999'), 'e9');
+
+    const how = screen.getByLabelText('เลข 999 เป็นของคนนี้นานแค่ไหน');
+    await waitFor(() =>
+      expect(
+        within(how).getByRole('option', {
+          name: 'ตั้งแต่นี้ไป: ทำไม่ได้ เพราะ มานี มีตา ใช้เลข 105 อยู่แล้ว',
+        }),
+      ).toBeDisabled(),
+    );
+  });
+
+  it('names the two date fields on screen, first day and last day (CW-112)', async () => {
+    serve([], [waitingNumber]);
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 999'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 999'), 'e9');
+    await userEvent.selectOptions(
+      screen.getByLabelText('เลข 999 เป็นของคนนี้นานแค่ไหน'),
+      'THESE_DAYS',
+    );
+
+    const row = screen.getByLabelText('ค้นหาพนักงานของเลข 999').closest('tr')!;
+    expect(within(row).getByText('ตั้งแต่วันที่')).toBeInTheDocument();
+    expect(within(row).getByText('ถึงวันที่')).toBeInTheDocument();
   });
 
   it('asks first, saying how many days it counts, and registers nothing when the answer is no (CW-112)', async () => {
