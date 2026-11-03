@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -464,6 +464,32 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
+
+### CW-109 · A scanner number can be bound for a period
+`P1` · attendance · **M** · Pilot A · before the install
+
+A scanner number is bound to one employee with no dates, so a number later
+carried by someone else keeps counting to the first person. Bind it for a
+period instead.
+
+**Scope**
+- A new table holds (employee, number, from, to); an empty `to` means still
+  in use. The migration moves every current number across with no start date
+  (counted from the beginning), and the old single column goes. Two periods
+  of the same number never overlap.
+- The scanner import, the later matching of unowned days and binding from the
+  unowned-numbers page all match (number, date). A date outside every period
+  counts as an unowned number.
+- Binding from the decision page asks whether it is for these days only or
+  from now on. A binding can be ended with an end date.
+- The employee API and the employee import/export keep `scanner_id`, read as
+  the number in use now, so existing files still work.
+
+**Acceptance**
+- Tests: bind, end, overlapping periods refused (also two requests at once),
+  an import outside the period, later matching; the migration upgrades and
+  rolls back and `db:verify` passes.
+- The HR guide's binding step matches.
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
