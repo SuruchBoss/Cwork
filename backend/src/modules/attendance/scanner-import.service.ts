@@ -27,6 +27,8 @@ import { judgeOwnRecord } from '../auth/domain/duty-separation';
 import { DutySeparationService } from '../auth/duty-separation.service';
 import { OrganizationService } from '../organization/organization.service';
 import { AttendanceService } from './attendance.service';
+import { ownerOn } from './domain/scanner-binding';
+import { ScannerBindingsService } from './scanner-bindings.service';
 import {
   checkDecision,
   classifyDay,
@@ -224,6 +226,7 @@ export class ScannerImportService {
     private readonly attendance: AttendanceService,
     private readonly organization: OrganizationService,
     private readonly duty: DutySeparationService,
+    private readonly bindings: ScannerBindingsService,
   ) {}
 
   // ------------------------------------------------------------------ import
@@ -682,36 +685,55 @@ export class ScannerImportService {
       .sort((a, b) => Number(a.scannerNumber) - Number(b.scannerNumber));
   }
 
-  /** Registers a scanner number on an employee, and counts the days that were waiting on it. */
+  /**
+   * Registers a scanner number on an employee, and counts the days that were waiting on it.
+   *
+   * `ALWAYS` binds it from now on (from the beginning, or the day after an earlier
+   * end of the number) and the number is then the employee's number in use.
+   * `THESE_DAYS` binds it only for the days no one owns today, from the first to the
+   * last, so the same number can belong to someone else outside them (CW-109).
+   */
   async bind(user: AuthenticatedUser, dto: BindScannerNumberDto) {
     this.assertWholeCompany(user);
     const employee = await this.prisma.employee.findFirst({
       where: { id: dto.employeeId, organizationId: user.organizationId, deletedAt: null },
-      select: { id: true, employeeCode: true, scannerId: true },
+      select: { id: true, employeeCode: true },
     });
     if (!employee) throw new NotFoundError('Employee', dto.employeeId);
-    if (employee.scannerId) {
-      throw new BusinessRuleError(
-        'EMPLOYEE_HAS_SCANNER_NUMBER',
-        `Employee ${employee.employeeCode} already has scanner number ${employee.scannerId}`,
-        { employeeCode: employee.employeeCode, scannerNumber: employee.scannerId },
-      );
-    }
-    const holder = await this.prisma.employee.findFirst({
-      where: { organizationId: user.organizationId, scannerId: dto.scannerNumber },
-      select: { employeeCode: true },
-    });
-    if (holder) {
-      throw new BusinessRuleError(
-        'DUPLICATE_SCANNER_ID',
-        `Scanner number ${dto.scannerNumber} already belongs to employee ${holder.employeeCode}`,
-        { employeeCode: holder.employeeCode, scannerNumber: dto.scannerNumber },
-      );
+
+    const scope = dto.scope ?? 'ALWAYS';
+    let from: string | null;
+    let to: string | null = null;
+    if (scope === 'THESE_DAYS') {
+      const span = await this.prisma.scannerDay.aggregate({
+        where: {
+          organizationId: user.organizationId,
+          employeeId: null,
+          scannerNumber: dto.scannerNumber,
+        },
+        _min: { workDate: true },
+        _max: { workDate: true },
+      });
+      if (!span._min.workDate || !span._max.workDate) {
+        throw new BusinessRuleError(
+          'NO_UNOWNED_DAYS',
+          `ไม่มีวันของเลขสแกน ${dto.scannerNumber} ที่รอเจ้าของ`,
+          { scannerNumber: dto.scannerNumber },
+        );
+      }
+      from = formatDateOnly(span._min.workDate);
+      to = formatDateOnly(span._max.workDate);
+    } else {
+      from = await this.bindings.firstFreeStart(user.organizationId, dto.scannerNumber);
     }
 
-    await this.prisma.employee.update({
-      where: { id: employee.id },
-      data: { scannerId: dto.scannerNumber },
+    await this.bindings.bind({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      employeeId: employee.id,
+      scannerNumber: dto.scannerNumber,
+      from,
+      to,
     });
     const organization = await this.organization.getOrganization(user.organizationId);
     const result = await this.rematchUnmapped(
@@ -726,13 +748,24 @@ export class ScannerImportService {
       action: AuditAction.UPDATE,
       entityType: 'Employee',
       entityId: employee.id,
-      summary: `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode}`,
+      summary:
+        scope === 'THESE_DAYS'
+          ? `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode} for ${from} to ${to}`
+          : `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode}`,
       changes: {
         scannerId: { from: null, to: dto.scannerNumber },
+        validFrom: from,
+        validTo: to,
         daysMatched: result.daysMatched,
       },
     });
     return result;
+  }
+
+  /** Ends a scanner number that is in use: it counts to the employee through the day given. */
+  async endNumber(user: AuthenticatedUser, bindingId: string, endDate: string) {
+    this.assertWholeCompany(user);
+    return this.bindings.end(user, bindingId, endDate);
   }
 
   /**
@@ -969,14 +1002,10 @@ export class ScannerImportService {
     lines: ScannerLine[],
   ): Promise<{ entries: PlanEntry[] }> {
     const numbers = [...new Set(lines.map((l) => l.scannerNumber))];
-    const [employees, existing] = await Promise.all([
-      this.prisma.employee.findMany({
-        where: { organizationId, scannerId: { in: numbers }, deletedAt: null },
-        select: { id: true, scannerId: true },
-      }),
+    const [bound, existing] = await Promise.all([
+      this.bindings.forNumbers(organizationId, numbers),
       this.loadDays(organizationId, lines),
     ]);
-    const employeeOf = new Map(employees.map((e) => [e.scannerId!, e.id]));
     const known = new Map(
       existing.map((d) => [dayKey(d.scannerNumber, formatDateOnly(d.workDate)), d]),
     );
@@ -985,7 +1014,10 @@ export class ScannerImportService {
       const found = known.get(dayKey(line.scannerNumber, line.workDate)) ?? null;
       // A later export of a day can only add times, never take one away.
       const times = found ? [...new Set([...found.times, ...line.times])].sort() : line.times;
-      const employeeId = employeeOf.get(line.scannerNumber) ?? found?.employeeId ?? null;
+      // A day outside every period of its number is no one's; a day already counted
+      // stays with whom it was counted for.
+      const employeeId =
+        ownerOn(bound, line.scannerNumber, line.workDate) ?? found?.employeeId ?? null;
       const decision = found ? inForce(found, times) : null;
       return {
         line,
@@ -1254,31 +1286,28 @@ export class ScannerImportService {
         employeeId: null,
         ...(onlyNumber ? { scannerNumber: onlyNumber } : {}),
       },
-      select: { scannerNumber: true },
-      distinct: ['scannerNumber'],
+      select: { id: true, scannerNumber: true, workDate: true },
     });
     if (orphans.length === 0) return { daysMatched: 0, punchesAdded: 0 };
-    const owners = await this.prisma.employee.findMany({
-      where: {
-        organizationId,
-        deletedAt: null,
-        scannerId: { in: orphans.map((o) => o.scannerNumber) },
-      },
-      select: { id: true, scannerId: true },
-    });
+    // Each day goes to whoever holds its number on that day (CW-109); a day
+    // outside every period stays unowned.
+    const bound = await this.bindings.forNumbers(organizationId, [
+      ...new Set(orphans.map((o) => o.scannerNumber)),
+    ]);
+    const byOwner = new Map<string, string[]>();
+    for (const day of orphans) {
+      const owner = ownerOn(bound, day.scannerNumber, formatDateOnly(day.workDate));
+      if (owner) byOwner.set(owner, [...(byOwner.get(owner) ?? []), day.id]);
+    }
     let daysMatched = 0;
     const ids: string[] = [];
-    for (const owner of owners) {
-      const matched = await this.prisma.scannerDay.findMany({
-        where: { organizationId, employeeId: null, scannerNumber: owner.scannerId! },
-        select: { id: true },
-      });
+    for (const [employeeId, dayIds] of byOwner) {
       await this.prisma.scannerDay.updateMany({
-        where: { id: { in: matched.map((m) => m.id) } },
-        data: { employeeId: owner.id },
+        where: { id: { in: dayIds } },
+        data: { employeeId },
       });
-      daysMatched += matched.length;
-      ids.push(...matched.map((m) => m.id));
+      daysMatched += dayIds.length;
+      ids.push(...dayIds);
     }
     if (ids.length === 0) return { daysMatched: 0, punchesAdded: 0 };
     const days = await this.loadDaysByIds(organizationId, ids);

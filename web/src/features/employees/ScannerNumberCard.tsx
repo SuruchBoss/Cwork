@@ -5,10 +5,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { qk } from '@/app/query-client';
-import { Button, Card, Field, Input } from '@/components/ui';
+import { Button, Card, DateInput, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { useT } from '@/lib/i18n/useT';
+import { formatDate } from '@/lib/format';
+import { P } from '@/lib/permissions';
+import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail } from '@/types/api';
 
 /**
@@ -21,11 +24,16 @@ export function ScannerNumberCard({
   person,
   canEdit,
 }: {
-  person: Pick<EmployeeDetail, 'id' | 'scannerId'>;
+  person: Pick<EmployeeDetail, 'id' | 'scannerId' | 'scannerNumbers'>;
   canEdit: boolean;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
+  const canEnd = useAuthStore((s) => s.canAny)(P.ATTENDANCE_MANAGE);
+  const [ending, setEnding] = useState(false);
+  const [endDate, setEndDate] = useState('');
+  const periods = person.scannerNumbers ?? [];
+  const inUse = periods.find((period) => period.validTo === null);
   const current = person.scannerId ?? '';
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(current);
@@ -48,6 +56,16 @@ export function ScannerNumberCard({
             : t('Could not save'),
       );
     },
+  });
+
+  const end = useMutation({
+    mutationFn: () => api.post(`/attendance/scanner/numbers/${inUse!.id}/end`, { endDate }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: qk.employee(person.id) });
+      setEnding(false);
+      setSaved('cleared');
+    },
+    onError: (error) => setProblem(error instanceof Error ? error.message : t('Could not save')),
   });
 
   const open = () => {
@@ -141,6 +159,60 @@ export function ScannerNumberCard({
             <p className="muted" role="status" style={{ margin: 0 }}>
               {t('Saved. The days already counted for this employee stay as they are.')}
             </p>
+          )}
+          {periods.length > 0 && (
+            <ul
+              className="stack stack--sm"
+              aria-label={t('Numbers this employee has had')}
+              style={{ margin: 0, paddingLeft: 18 }}
+            >
+              {periods.map((period) => (
+                <li key={period.id}>
+                  <span className="mono">{period.scannerNumber}</span>{' '}
+                  <span className="muted">
+                    {period.validFrom
+                      ? t('from {date}', { date: formatDate(period.validFrom) })
+                      : t('from the beginning')}
+                    {', '}
+                    {period.validTo
+                      ? t('until {date}', { date: formatDate(period.validTo) })
+                      : t('in use')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {canEdit && canEnd && inUse && !ending && (
+            <div>
+              <Button size="sm" variant="ghost" onClick={() => setEnding(true)}>
+                {t('End this number on a date')}
+              </Button>
+            </div>
+          )}
+          {ending && inUse && (
+            <form
+              className="row"
+              style={{ flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}
+              onSubmit={(event) => {
+                event.preventDefault();
+                end.mutate();
+              }}
+            >
+              <Field label={t('Last day this number counts')}>
+                <DateInput value={endDate} onChange={setEndDate} />
+              </Field>
+              <Button type="submit" variant="primary" disabled={!endDate} loading={end.isPending}>
+                {t('End this number')}
+              </Button>
+              <Button variant="ghost" onClick={() => setEnding(false)}>
+                {t('Cancel')}
+              </Button>
+            </form>
+          )}
+          {problem && !editing && (
+            <div className="alert alert--danger" role="alert">
+              {problem}
+            </div>
           )}
         </div>
       )}

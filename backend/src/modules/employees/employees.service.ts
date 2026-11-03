@@ -21,6 +21,7 @@ import { organizationToday } from '../organization/organization-today';
 import { SequenceService } from '../../core/utils/sequence.service';
 import { AuditService } from '../audit/audit.service';
 import { ScannerImportService } from '../attendance/scanner-import.service';
+import { ScannerBindingsService } from '../attendance/scanner-bindings.service';
 import { employeeVisibilityFilter } from '../../core/security/employee-access';
 import type {
   CreateEmployeeDto,
@@ -58,6 +59,7 @@ export class EmployeesService {
     private readonly sequences: SequenceService,
     private readonly audit: AuditService,
     private readonly scannerImport: ScannerImportService,
+    private readonly scannerBindings: ScannerBindingsService,
   ) {}
 
   async list(user: AuthenticatedUser, query: EmployeeQueryDto) {
@@ -95,6 +97,17 @@ export class EmployeesService {
    * `employee:read:sensitive`, and that read is written to the audit log.
    */
   async findOne(user: AuthenticatedUser, id: string) {
+    const person = await this.findRecord(user, id);
+    // The scanner numbers the person has had, and the one in use now (CW-109).
+    const scannerNumbers = await this.scannerBindings.history(user.organizationId, id);
+    return {
+      ...person,
+      scannerId: scannerNumbers.find((n) => n.validTo === null)?.scannerNumber ?? null,
+      scannerNumbers,
+    };
+  }
+
+  private async findRecord(user: AuthenticatedUser, id: string) {
     const employee = await this.prisma.employee.findFirst({
       where: { AND: [employeeVisibilityFilter(user), { id, deletedAt: null }] },
       include: {
@@ -170,8 +183,6 @@ export class EmployeesService {
       );
     }
     if (dto.managerId) await this.assertEmployeeInOrg(user.organizationId, dto.managerId);
-    await this.assertScannerIdFree(user.organizationId, dto.scannerId);
-
     const employee = await this.prisma.$transaction(async (tx) => {
       const created = await this.createInTransaction(tx, user, employeeCode, dto);
 
@@ -270,10 +281,22 @@ export class EmployeesService {
         employmentType: dto.employmentType,
         hireDate: toDateOnly(dto.hireDate),
         probationEndDate: dto.probationEndDate ? toDateOnly(dto.probationEndDate) : null,
-        scannerId: dto.scannerId,
         status,
       },
     });
+
+    // The scanner number the employee starts with (CW-109): in use from the beginning.
+    if (dto.scannerId) {
+      await this.scannerBindings.setInUse(
+        {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          employeeId: created.id,
+          scannerNumber: dto.scannerId,
+        },
+        tx,
+      );
+    }
 
     await tx.employmentEvent.create({
       data: {
@@ -301,8 +324,6 @@ export class EmployeesService {
       await this.assertEmployeeInOrg(user.organizationId, dto.managerId);
       await this.assertNoReportingCycle(id, dto.managerId);
     }
-    await this.assertScannerIdFree(user.organizationId, dto.scannerId, id);
-
     const {
       nationalId,
       passportNo,
@@ -314,38 +335,58 @@ export class EmployeesService {
       hireDate,
       dateOfBirth,
       probationEndDate,
+      scannerId,
       ...rest
     } = dto;
 
-    const updated = await this.prisma.employee.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...(hireDate ? { hireDate: toDateOnly(hireDate) } : {}),
-        ...(dateOfBirth ? { dateOfBirth: toDateOnly(dateOfBirth) } : {}),
-        ...(probationEndDate ? { probationEndDate: toDateOnly(probationEndDate) } : {}),
-        ...(nationalId !== undefined
-          ? {
-              nationalIdEnc: this.crypto.encrypt(nationalId),
-              nationalIdLast4: nationalId ? CryptoService.lastChars(nationalId) : null,
-            }
-          : {}),
-        // A foreign worker's documents (CW-068); null clears a number or a date.
-        ...(passportNo !== undefined ? { passportNoEnc: this.crypto.encrypt(passportNo) } : {}),
-        ...(workPermitNo !== undefined
-          ? { workPermitNoEnc: this.crypto.encrypt(workPermitNo) }
-          : {}),
-        ...(passportExpiresOn !== undefined
-          ? { passportExpiresOn: passportExpiresOn ? toDateOnly(passportExpiresOn) : null }
-          : {}),
-        ...(workPermitExpiresOn !== undefined
-          ? { workPermitExpiresOn: workPermitExpiresOn ? toDateOnly(workPermitExpiresOn) : null }
-          : {}),
-        ...(taxId !== undefined ? { taxIdEnc: this.crypto.encrypt(taxId) } : {}),
-        ...(socialSecurityNo !== undefined
-          ? { socialSecurityNoEnc: this.crypto.encrypt(socialSecurityNo) }
-          : {}),
-      },
+    let numberChange: { changed: boolean; previous: string | null } = {
+      changed: false,
+      previous: null,
+    };
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.employee.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(hireDate ? { hireDate: toDateOnly(hireDate) } : {}),
+          ...(dateOfBirth ? { dateOfBirth: toDateOnly(dateOfBirth) } : {}),
+          ...(probationEndDate ? { probationEndDate: toDateOnly(probationEndDate) } : {}),
+          ...(nationalId !== undefined
+            ? {
+                nationalIdEnc: this.crypto.encrypt(nationalId),
+                nationalIdLast4: nationalId ? CryptoService.lastChars(nationalId) : null,
+              }
+            : {}),
+          // A foreign worker's documents (CW-068); null clears a number or a date.
+          ...(passportNo !== undefined ? { passportNoEnc: this.crypto.encrypt(passportNo) } : {}),
+          ...(workPermitNo !== undefined
+            ? { workPermitNoEnc: this.crypto.encrypt(workPermitNo) }
+            : {}),
+          ...(passportExpiresOn !== undefined
+            ? { passportExpiresOn: passportExpiresOn ? toDateOnly(passportExpiresOn) : null }
+            : {}),
+          ...(workPermitExpiresOn !== undefined
+            ? { workPermitExpiresOn: workPermitExpiresOn ? toDateOnly(workPermitExpiresOn) : null }
+            : {}),
+          ...(taxId !== undefined ? { taxIdEnc: this.crypto.encrypt(taxId) } : {}),
+          ...(socialSecurityNo !== undefined
+            ? { socialSecurityNoEnc: this.crypto.encrypt(socialSecurityNo) }
+            : {}),
+        },
+      });
+      // The scanner number in use is kept as periods, not a column (CW-109).
+      if (scannerId !== undefined) {
+        numberChange = await this.scannerBindings.setInUse(
+          {
+            organizationId: user.organizationId,
+            actorUserId: user.userId,
+            employeeId: id,
+            scannerNumber: scannerId || null,
+          },
+          tx,
+        );
+      }
+      return row;
     });
 
     await this.recordStructuralChanges(user, before, updated);
@@ -363,23 +404,37 @@ export class EmployeesService {
     );
 
     // A number given to this employee picks up the days that were waiting on it (CW-090).
-    if (updated.scannerId && updated.scannerId !== before.scannerId) {
+    if (numberChange.changed && scannerId) {
       const result = await this.scannerImport.rematchNumber(
         user.organizationId,
         user.userId,
-        updated.scannerId,
+        scannerId,
       );
-      if (result.daysMatched > 0) {
-        await this.audit.record({
-          organizationId: user.organizationId,
-          actorUserId: user.userId,
-          action: AuditAction.UPDATE,
-          entityType: 'Employee',
-          entityId: id,
-          summary: `Counted ${result.daysMatched} waiting scanner day(s) of number ${updated.scannerId} for employee ${updated.employeeCode}`,
-          changes: { daysMatched: result.daysMatched },
-        });
-      }
+      await this.audit.record({
+        organizationId: user.organizationId,
+        actorUserId: user.userId,
+        action: AuditAction.UPDATE,
+        entityType: 'Employee',
+        entityId: id,
+        summary:
+          result.daysMatched > 0
+            ? `Set scanner number ${scannerId} on employee ${updated.employeeCode} and counted ${result.daysMatched} waiting day(s)`
+            : `Set scanner number ${scannerId} on employee ${updated.employeeCode}`,
+        changes: {
+          scannerId: { from: numberChange.previous, to: scannerId },
+          daysMatched: result.daysMatched,
+        },
+      });
+    } else if (numberChange.changed) {
+      await this.audit.record({
+        organizationId: user.organizationId,
+        actorUserId: user.userId,
+        action: AuditAction.UPDATE,
+        entityType: 'Employee',
+        entityId: id,
+        summary: `Ended the scanner number of employee ${updated.employeeCode}`,
+        changes: { scannerId: { from: numberChange.previous, to: null } },
+      });
     }
 
     return this.findOne(user, id);
@@ -434,32 +489,6 @@ export class EmployeesService {
   }
 
   // ------------------------------------------------------------------ helpers
-
-  /**
-   * One scanner number, one person: two employees behind the same number would
-   * put one's punches on the other's record (CW-061).
-   */
-  private async assertScannerIdFree(
-    organizationId: string,
-    scannerId: string | null | undefined,
-    exceptEmployeeId?: string,
-  ): Promise<void> {
-    if (!scannerId) return;
-    const holder = await this.prisma.employee.findFirst({
-      where: {
-        organizationId,
-        scannerId,
-        ...(exceptEmployeeId ? { id: { not: exceptEmployeeId } } : {}),
-      },
-      select: { employeeCode: true },
-    });
-    if (holder) {
-      throw new ConflictError(
-        'DUPLICATE_SCANNER_ID',
-        `Scanner ID ${scannerId} already belongs to employee ${holder.employeeCode}`,
-      );
-    }
-  }
 
   private async assertEmployeeInOrg(organizationId: string, employeeId: string): Promise<void> {
     const found = await this.prisma.employee.findFirst({

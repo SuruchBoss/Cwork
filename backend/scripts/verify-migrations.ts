@@ -44,6 +44,8 @@ const EXPECTED_DRIFT = new Set([
   'DROP INDEX "knowledge_chunks_content_trgm_idx"',
   'DROP INDEX "knowledge_chunks_embedding_hnsw"',
   'DROP INDEX "knowledge_chunks_embedding_ivfflat"',
+  // CW-109: at most one number in use per employee, a partial unique index.
+  'DROP INDEX "employee_scanner_numbers_one_in_use_idx"',
 ]);
 
 /**

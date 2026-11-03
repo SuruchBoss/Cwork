@@ -664,6 +664,17 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **A scanner number is bound to an employee for a period** (CW-109). A number carried by
+  someone else later no longer keeps counting to the first person. Each number has a start
+  and an end (an empty start is from the beginning, an empty end is still in use), two
+  periods of one number never overlap, and the database refuses an overlap even when two
+  requests arrive at once. A scanner day that falls outside every period of its number is
+  a number nobody owns. Binding from the scanner days page asks whether the number is
+  theirs for these days only or from now on, and the employee's page lists the numbers
+  they have had and can end the one in use on a date. The employee API and the employee
+  file keep `scannerId`, read as the number in use now. A new migration moves every
+  current number across with no dates and drops the old column; `down.sql` beside it
+  reverses it by hand.
 - **Someone else decides your own attendance.** A scanner day that belongs to the person
   deciding it is left to another holder of the attendance permission: the buttons on that row
   are closed with the reason, and the API answers in Thai. Where nobody else holds the

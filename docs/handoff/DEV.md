@@ -24,9 +24,17 @@ this file only says where the dev room stands.
   5. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
      dashboard lists runs waiting for an approver and shows the latest run with figures, a
      period with a run offers "open", and the two period refusals are in Thai.
+- **In the working tree, not pushed (waits for #150 to merge):** CW-109, a scanner number bound
+  for a period. A new table `employee_scanner_numbers` (migration `20261104140000`, with a
+  hand-run `down.sql`) replaces `employees.scannerId`; the database keeps "no overlap" (an
+  exclusion constraint, needs `btree_gist`) and "one number in use per employee". Days are
+  matched by (number, date) on import and when waiting days are matched later. `scannerId` in
+  the employee API and files is the number in use now. The scanner days page asks "these days
+  only or from now on"; the employee page lists the numbers and ends one on a date.
+  After #151 and #150 merge: merge main, recount the docs, push, tell the PO.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 362; backend unit 881, domain 548; e2e 563.
+- Counts: web 365; backend unit 891, domain 558; e2e 574.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

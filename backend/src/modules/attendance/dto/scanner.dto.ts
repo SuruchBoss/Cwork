@@ -121,4 +121,21 @@ export class BindScannerNumberDto {
   @ApiProperty()
   @IsUUID()
   employeeId!: string;
+
+  @ApiPropertyOptional({
+    enum: ['ALWAYS', 'THESE_DAYS'],
+    description:
+      "ALWAYS (the default) binds the number from now on, as the employee's number in use. " +
+      'THESE_DAYS binds it only for the days no one owns, from the first to the last, so the ' +
+      'number can belong to someone else outside them.',
+  })
+  @IsOptional()
+  @IsIn(['ALWAYS', 'THESE_DAYS'])
+  scope?: 'ALWAYS' | 'THESE_DAYS';
+}
+
+export class EndScannerNumberDto {
+  @ApiProperty({ description: 'The last day the number counts to this employee (yyyy-MM-dd)' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'endDate must be yyyy-MM-dd' })
+  endDate!: string;
 }

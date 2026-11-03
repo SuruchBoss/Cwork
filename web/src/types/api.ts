@@ -145,6 +145,8 @@ export interface EmployeeDetail extends EmployeeSummary {
   workPermitExpiresOn: string | null;
   /** The user number on the fingerprint scanner, exactly as the scanner writes it (CW-061). */
   scannerId?: string | null;
+  /** Every number the person has had on the scanner, each for a period (CW-109). */
+  scannerNumbers?: ScannerNumberPeriod[];
   directReports: Array<{
     id: string;
     firstNameTh: string;
@@ -554,6 +556,14 @@ export type PayrollRunStatus =
   | 'PAID'
   | 'FAILED'
   | 'CANCELLED';
+
+/** A scanner number bound to an employee: from the beginning when `validFrom` is empty, in use when `validTo` is. */
+export interface ScannerNumberPeriod {
+  id: string;
+  scannerNumber: string;
+  validFrom: string | null;
+  validTo: string | null;
+}
 
 export interface PayrollRun {
   id: string;

@@ -13,6 +13,7 @@ import { AttendanceStatus, PrismaClient, PunchMethod, PunchType } from '@prisma/
 import { AttendanceService } from 'src/modules/attendance/attendance.service';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { giveNumber, takeNumbers } from './utils/scanner-numbers';
 
 const HR = 'hr.officer@cwork.example';
 const TIMEZONE = 'Asia/Bangkok';
@@ -61,11 +62,11 @@ describe('A day with one scan (e2e)', () => {
         select: { id: true },
       })
     ).id;
-    await prisma.employee.update({ where: { id: employeeId }, data: { scannerId: SCANNER } });
+    await giveNumber(prisma, employeeId, SCANNER);
   });
 
   afterAll(async () => {
-    await prisma?.employee.update({ where: { id: employeeId }, data: { scannerId: null } });
+    if (prisma) await takeNumbers(prisma, [employeeId]);
     await prisma?.$disconnect();
     await ctx?.close();
   });

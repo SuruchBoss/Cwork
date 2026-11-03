@@ -98,10 +98,18 @@ Decrypted national ID and bank details require `employee:read:sensitive`, and
 that read is audited. Without it you get `nationalIdMasked`.
 
 `scannerId` is the employee's user number on the fingerprint scanner, as the
-scanner writes it (so `"007"` and `"7"` differ). It is unique in the organisation:
-setting one that another employee holds is `409 DUPLICATE_SCANNER_ID`.
-Setting or changing it counts the scanner days that were waiting on that number
-(CW-090); `null` clears it. The console's employee page has a card for it.
+scanner writes it (so `"007"` and `"7"` differ), read as the number in use now (the
+period with no end). A number is bound to an employee for a period (CW-109): the
+employee's `scannerNumbers` lists each with `validFrom` and `validTo` (empty `validFrom`
+is from the beginning, empty `validTo` is still in use). Two periods of one number never
+overlap, so setting a number that another employee holds on those days is
+`409 DUPLICATE_SCANNER_ID`. Setting or changing `scannerId` counts the scanner days that
+were waiting on that number (CW-090); `null` ends it today. The files and the create and
+update bodies keep `scannerId` as before. `POST /attendance/scanner/unmapped/bind` takes
+`scope`: `ALWAYS` (default, from now on, as the number in use) or `THESE_DAYS` (only the
+days no one owns), and `POST /attendance/scanner/numbers/{id}/end` ends a number in use
+on a date. A day outside every period of its number belongs to no one. The console's
+employee page has a card for it.
 
 ### Importing employees (CW-059)
 

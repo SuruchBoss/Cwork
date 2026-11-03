@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -346,15 +346,50 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
 
     await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 77'), 'มานี');
     await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 77'), 'e9');
+    // It asks how long the number is theirs, and does not save until it is answered.
+    expect(screen.getByRole('button', { name: 'บันทึกเลขนี้' })).toBeDisabled();
+    await userEvent.selectOptions(screen.getByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน'), 'ALWAYS');
     await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
 
     expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
       scannerNumber: '77',
       employeeId: 'e9',
+      scope: 'ALWAYS',
     });
     expect(
       await screen.findByText('บันทึกเลข 77 แล้ว จับคู่ได้ 2 วัน เพิ่มรายการลงเวลา 4 รายการ'),
     ).toBeInTheDocument();
+  });
+
+  it('binds a number for only the days that wait, when HR says so, and names those days', async () => {
+    serve(
+      [],
+      [
+        {
+          scannerNumber: '77',
+          name: 'ชั่วคราว หนึ่ง',
+          days: 2,
+          daysWithTimes: 2,
+          firstDay: '2026-09-03',
+          lastDay: '2026-09-04',
+        },
+      ],
+    );
+    post.mockResolvedValue({ daysMatched: 2, punchesAdded: 4 });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 77'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 77'), 'e9');
+    const how = screen.getByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน');
+    expect(within(how).getByRole('option', { name: /เฉพาะวันเหล่านี้ \(.*ถึง.*\)/ })).toBeTruthy();
+    await userEvent.selectOptions(how, 'THESE_DAYS');
+    await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+
+    expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
+      scannerNumber: '77',
+      employeeId: 'e9',
+      scope: 'THESE_DAYS',
+    });
   });
 
   describe('a refusal from the server, in the language of the screen (CW-096)', () => {
@@ -376,19 +411,22 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
         { employeeCode: 'EMP-0009', scannerNumber: '999' },
       );
 
-    async function bindNumber(label: { find: string; pick: string; save: string }) {
+    async function bindNumber(label: { find: string; pick: string; how: string; save: string }) {
       await userEvent.type(await screen.findByLabelText(label.find), 'มานี');
       await userEvent.selectOptions(await screen.findByLabelText(label.pick), 'e9');
+      await userEvent.selectOptions(screen.getByLabelText(label.how), 'ALWAYS');
       await userEvent.click(screen.getByRole('button', { name: label.save }));
     }
     const thai = {
       find: 'ค้นหาพนักงานของเลข 999',
       pick: 'พนักงานของเลข 999',
+      how: 'เลข 999 เป็นของคนนี้นานแค่ไหน',
       save: 'บันทึกเลขนี้',
     };
     const english = {
       find: 'Find an employee for number 999',
       pick: 'Employee for number 999',
+      how: 'How long number 999 is theirs',
       save: 'Register this number',
     };
 

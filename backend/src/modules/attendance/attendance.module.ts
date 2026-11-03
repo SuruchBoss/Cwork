@@ -8,6 +8,7 @@ import { AttendanceController, OvertimeController } from './attendance.controlle
 import { AttendanceService } from './attendance.service';
 import { LatePunchConfirmationService } from './late-punch.service';
 import { ScannerController } from './scanner.controller';
+import { ScannerBindingsService } from './scanner-bindings.service';
 import { ScannerImportService } from './scanner-import.service';
 import { OvertimeService } from './overtime.service';
 import { ShiftController } from './shift.controller';
@@ -20,10 +21,17 @@ import { ShiftService } from './shift.service';
     AttendanceService,
     LatePunchConfirmationService,
     OvertimeService,
+    ScannerBindingsService,
     ScannerImportService,
     ShiftService,
     SequenceService,
   ],
-  exports: [AttendanceService, OvertimeService, ScannerImportService, ShiftService],
+  exports: [
+    AttendanceService,
+    OvertimeService,
+    ScannerBindingsService,
+    ScannerImportService,
+    ShiftService,
+  ],
 })
 export class AttendanceModule {}

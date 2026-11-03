@@ -20,7 +20,12 @@ import { CurrentUser, type AuthenticatedUser } from '../../core/security/current
 import { RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
 import { IMPORT_BODY, IMPORT_LIMITS, requireUpload } from '../../core/spreadsheet/upload';
-import { BindScannerNumberDto, DecideScannerDayDto, ScannerDaysQueryDto } from './dto/scanner.dto';
+import {
+  BindScannerNumberDto,
+  DecideScannerDayDto,
+  EndScannerNumberDto,
+  ScannerDaysQueryDto,
+} from './dto/scanner.dto';
 import { ScannerImportService } from './scanner-import.service';
 
 /**
@@ -123,10 +128,29 @@ export class ScannerController {
   @ApiOperation({
     summary: 'Register a scanner number on an employee',
     description:
-      "Sets the employee's scanner ID and counts the days that were waiting on the number.",
+      'Binds the number to the employee, from now on or only for the days no one owns, and ' +
+      'counts the days that were waiting on it. A day outside every period of a number ' +
+      'belongs to no one.',
   })
   bind(@CurrentUser() user: AuthenticatedUser, @Body() dto: BindScannerNumberDto) {
     return this.scanner.bind(user, dto);
+  }
+
+  @Post('numbers/:id/end')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @ApiOperation({
+    summary: 'End a scanner number that is in use',
+    description:
+      'The number counts to the employee through the end date; later days of it belong to no ' +
+      'one until it is bound again. Days already counted stay.',
+  })
+  endNumber(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: EndScannerNumberDto,
+  ) {
+    return this.scanner.endNumber(user, id, dto.endDate);
   }
 
   @Post('rematch')
