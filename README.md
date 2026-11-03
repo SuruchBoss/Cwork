@@ -692,8 +692,8 @@ means a new rule set and that translation pass, not a rewrite.
 
 ## Status
 
-Working and verified end to end — sign-in through payroll. 856 backend unit
-tests, 330 web, 101 mobile, plus a 542-check end-to-end suite that drives the real
+Working and verified end to end — sign-in through payroll. 859 backend unit
+tests, 331 web, 101 mobile, plus a 543-check end-to-end suite that drives the real
 API over HTTP in CI, and the console exercised in a real browser against the live
 API.
 
@@ -752,8 +752,8 @@ that record is the point.
 
 What it implies about review:
 
-- Every suite passes, in CI, on every push — 856 backend unit tests, 330 web,
-  101 mobile, 542 end-to-end checks against the real API over HTTP.
+- Every suite passes, in CI, on every push — 859 backend unit tests, 331 web,
+  101 mobile, 543 end-to-end checks against the real API over HTTP.
 - The decisions are documented and the reasoning is recoverable.
 - **No independent human has read every line.** Tests passing and a design
   being defensible are not the same thing as a review, and this has had the

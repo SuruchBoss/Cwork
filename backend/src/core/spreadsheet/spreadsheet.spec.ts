@@ -294,6 +294,45 @@ describe('A sheet made to print (CW-105)', () => {
     expect(sheet).toContain('<c r="C1" s="5"/>');
   });
 
+  describe('a column of numbers that are not money', () => {
+    /** The alignment the sheet gives a column, read the way a spreadsheet program does. */
+    const alignmentOf = (files: ReturnType<typeof parts>, column: number): string | undefined => {
+      const sheet = strFromU8(files['xl/worksheets/sheet1.xml']!);
+      const styles = strFromU8(files['xl/styles.xml']!);
+      const style = Number(
+        new RegExp(`<col min="${column}" max="${column}"[^>]* style="(\\d+)"`).exec(sheet)?.[1],
+      );
+      const cellXfs = /<cellXfs[^>]*>(.*)<\/cellXfs>/s.exec(styles)![1]!;
+      const xfs = cellXfs.match(/<xf [^>]*?(?:\/>|>.*?<\/xf>)/gs)!;
+      return /horizontal="(\w+)"/.exec(xfs[style]!)?.[1];
+    };
+
+    it('is aligned right, with or without borders', () => {
+      for (const grid of [false, true]) {
+        const files = parts({ grid, numberColumns: [0, 2] });
+
+        expect({ grid, first: alignmentOf(files, 1) }).toEqual({ grid, first: 'right' });
+        expect({ grid, third: alignmentOf(files, 3) }).toEqual({ grid, third: 'right' });
+      }
+    });
+
+    it('leaves the other columns as they were', () => {
+      const files = parts({ grid: true, numberColumns: [0, 2] });
+
+      expect(alignmentOf(files, 2)).toBeUndefined();
+    });
+
+    it('keeps the number as a number, shown as written', () => {
+      const files = parts({ grid: true, numberColumns: [0] });
+      const styles = strFromU8(files['xl/styles.xml']!);
+
+      expect(strFromU8(files['xl/worksheets/sheet1.xml']!)).toContain(
+        '<c r="A3" s="8"><v>1</v></c>',
+      );
+      expect(styles).toContain('<xf numFmtId="0" fontId="0" fillId="0" borderId="1"');
+    });
+  });
+
   it('is still read back as the same table', () => {
     const table = readXlsx(
       writeXlsx([{ name: 'Register', rows, headerRows: 2, print: true, grid: true }]),

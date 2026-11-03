@@ -870,6 +870,11 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **The compare page names its picker as the month** (CW-108). The box that chooses
+  what to compare was headed "งวด" although the page reads the whole calendar month; it
+  now reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (in English, "Month (any period of the month
+  will do)"). In the exported payroll register the row number and the days worked are
+  aligned right like the other numbers.
 - **A month with monthly staff and no monthly period is no longer listed as if it were whole**
   (CW-107). The register export and the comparison with HR's register now stop, in Thai,
   when the month has staff on a monthly salary but no monthly period yet, and name the next

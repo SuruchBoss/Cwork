@@ -883,6 +883,7 @@ export const thMessages: Record<string, string> = {
   'Export for the accountant': 'ส่งออกสำหรับนักบัญชี',
   'Export payroll register': 'ส่งออกทะเบียนเงินเดือน',
   'Check against filings': 'เทียบกับที่ยื่นไปแล้ว',
+  'Month (any period of the month will do)': 'เดือน (เลือกงวดไหนของเดือนก็ได้)',
   Same: 'ตรงกัน',
   Different: 'ไม่ตรง',
   'Gross pay': 'รายได้รวม',

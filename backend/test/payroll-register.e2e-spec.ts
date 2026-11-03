@@ -321,6 +321,30 @@ describe('Payroll register (e2e)', () => {
     expect(cents(totals[10])).toBe(total(await slips(), (s) => s.ssoEmployee));
   });
 
+  it('aligns the row number and the days worked to the right, as every other number, and the name to the left', () => {
+    const parts = unzipSync(new Uint8Array(file));
+    const sheet = strFromU8(parts['xl/worksheets/sheet1.xml']!);
+    const styles = strFromU8(parts['xl/styles.xml']!);
+    const xfs = /<cellXfs[^>]*>(.*)<\/cellXfs>/s
+      .exec(styles)![1]!
+      .match(/<xf [^>]*?(?:\/>|>.*?<\/xf>)/gs)!;
+    const alignmentOfColumn = (column: number) => {
+      const style = Number(
+        new RegExp(`<col min="${column}" max="${column}"[^>]* style="(\\d+)"`).exec(sheet)![1],
+      );
+      return /horizontal="(\w+)"/.exec(xfs[style]!)?.[1];
+    };
+
+    // A: ลำดับที่, B: ชื่อ-สกุล, C: เงินเดือน, E: จำนวนวันทำงาน.
+    expect(alignmentOfColumn(1)).toBe('right');
+    expect(alignmentOfColumn(5)).toBe('right');
+    expect(alignmentOfColumn(2)).toBeUndefined();
+    // The amounts are right-aligned by their number format, as they were.
+    expect(xfs[Number(/<col min="3" max="3"[^>]* style="(\d+)"/.exec(sheet)![1])]).toContain(
+      'numFmtId="4"',
+    );
+  });
+
   it('prints no ID number and no employer share on the register, which is on the summary sheet', async () => {
     const parts = unzipSync(new Uint8Array(file));
     const first = strFromU8(parts['xl/worksheets/sheet1.xml']!);
