@@ -684,7 +684,8 @@ entry, tags it and publishes the notes.
 - **The NAS installer takes the database password and the saved key from a file, the
   environment or a hidden prompt** (`--db-password-file`, `--field-key-file`,
   `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and
-  print a warning.
+  print a warning. The full install now uses the database password it is given instead of
+  making a new one, and says in one line where each secret came from (never its value).
 
 - **The HR guide covers what the blind test found missing** (CW-103).
   `docs/guide/hr-daily-tasks.th.md` now walks the sign-in with the six-digit code

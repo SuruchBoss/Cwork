@@ -20,7 +20,7 @@ this file only says where the dev room stands.
   4. the web console shows a note on the sign-in page when a session has ended, the mobile
      app's note names the same reasons (the Flutter side is untested here), and the
      password-change endpoint says it ends every session.
-- Counts: web 337; backend unit 866, domain 544; e2e 550.
+- Counts: web 337; backend unit 875, domain 544; e2e 550.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
