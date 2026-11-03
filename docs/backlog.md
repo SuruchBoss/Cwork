@@ -572,6 +572,12 @@ under "Compare page").
 - The pilot's register has no employee code; it has a row number and a name.
   The guide must say to add a "รหัสพนักงาน" column before uploading, and the
   page must say so when the column is missing, instead of only naming it.
+- The pilot's register, like CW-099's own file, has a title row and headers
+  stacked over three rows (the groups, then "ภาษี" or "รวมเงินได้", then
+  "วันละ"). The checker reads only the first row as the header. Find the
+  header in the first few rows: the row with "รหัสพนักงาน", taking each
+  column's name from the nearest header cell above it. HR then uploads the
+  register as it is, plus the code column, without deleting rows by hand.
 - The self-approval refusal is still shown in English.
 
 **Not before the install** (in the report, for later): a warning on screen
