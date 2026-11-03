@@ -375,6 +375,12 @@ describe('Daily wages paid every 14 days (e2e)', () => {
         halves.push(created.body.id);
       }
 
+      // He left at the end of that month, so no later period in the shared database pays him.
+      await prisma.employee.update({
+        where: { id: solo },
+        data: { lastWorkingDate: utc('2020-01-31') },
+      });
+
       const res = await api.getRaw(`/payroll/periods/${halves[0]}/export?format=register`, payroll);
       expect(res.status).toBe(200);
       const rows = readXlsx(res.body).rows;
