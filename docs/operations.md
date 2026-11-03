@@ -709,9 +709,13 @@ folder is its own btrfs subvolume but all of them fail with the same volume. On 
 one-volume NAS the backup therefore goes to a USB drive, a second volume or
 another machine's share. `--allow-same-disk` exists for tests only.
 
-It never writes `FIELD_ENCRYPTION_KEY`. The backup alone must not be enough to
-read staff IDs and bank accounts, and the key alone is useless without the data:
-keep the key in a password manager, the backup on the drive. **Losing the key
+It never writes `FIELD_ENCRYPTION_KEY`, so the backup alone does not reveal the
+encrypted columns (staff ID numbers and bank accounts), and the key alone is
+useless without the data: keep the key in a password manager, the backup on the
+drive. Salaries, names and the other staff data are **not** encrypted in the dump,
+so whoever can read the backup file can read them. The script writes each file
+readable by its owner only (mode 600); keep the backup folder somewhere only the
+administrator can open. **Losing the key
 makes those columns unreadable for good; `./show-key.sh` prints it on request.**
 
 A nightly run, in DSM: *Control Panel → Task Scheduler → Create → Scheduled Task

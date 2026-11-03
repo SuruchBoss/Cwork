@@ -178,6 +178,7 @@ model PayrollRun {
   totalEmployerCost Decimal @default(0) @db.Decimal(18, 4)
   currency       String   @default("THB")
   calculatedAt   DateTime?
+  calculatedById String?  @db.Uuid
   approvedAt     DateTime?
   approvedById   String?  @db.Uuid
   paidAt         DateTime?

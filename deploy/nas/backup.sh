@@ -17,8 +17,12 @@
 # Path C: on the NAS (mode db) it saves the database; on the office PC (mode app)
 # it saves only the uploaded files, which live on the PC. Run it on both.
 #
-# It never writes the encryption key: the backup alone must not be enough to
-# read the staff data. Keep the key apart (./show-key.sh, password manager).
+# It never writes the encryption key, so the backup alone does not reveal the
+# columns that are encrypted (ID numbers, bank accounts). Salaries, names and the
+# rest of the staff data are NOT encrypted in the dump: whoever can read the
+# backup file can read them. The files are therefore made readable by their
+# owner only, and the folder should be one only the administrator can open.
+# Keep the key apart (./show-key.sh, password manager).
 # It refuses to write to the same disk as Docker's data: a backup that dies with
 # the disk it protects is not a backup.
 
@@ -37,6 +41,8 @@ done
 need_root
 need_docker
 load_env
+# Everything written from here on is for its owner alone.
+umask 077
 DIR=${DIR:-${CWORK_BACKUP_DIR:-}}
 [ -n "$DIR" ] || die "no backup folder. Pass --dir, or set CWORK_BACKUP_DIR in .env."
 case $TAG in ""|*[!A-Za-z0-9-]*) [ -z "$TAG" ] || die "--tag may only contain letters, digits and dashes" ;; esac
@@ -99,6 +105,7 @@ made=""
 # shellcheck disable=SC2086
 ( cd "$DIR" && sha256sum $made > "$name.sha256" ) || die "could not write checksums"
 trap - EXIT INT TERM
+chmod 600 "$base".* 2>/dev/null
 
 keep=${CWORK_BACKUP_KEEP_DAYS:-14}
 find "$DIR" -maxdepth 1 -type f -name 'cwork-*' -mtime +"$keep" -exec rm -f {} + 2>/dev/null

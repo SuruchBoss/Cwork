@@ -607,7 +607,7 @@ export class LeaveService implements OnModuleInit {
 
   /** Team calendar: who is away, for a date range. */
   async calendar(user: AuthenticatedUser, from: string, to: string, departmentId?: string) {
-    return this.prisma.leaveRequest.findMany({
+    const rows = await this.prisma.leaveRequest.findMany({
       where: {
         organizationId: user.organizationId,
         employee: { AND: [employeeVisibilityFilter(user), departmentId ? { departmentId } : {}] },
@@ -634,6 +634,23 @@ export class LeaveService implements OnModuleInit {
       },
       orderBy: { startDate: 'asc' },
     });
+
+    // Who is away is shared; why is not. Without the right to read leave, the
+    // calendar says "away" and nothing about the kind of leave (a sick day tells
+    // more than the person chose to share) or the person's photo.
+    const mayReadLeave =
+      user.permissions.includes(Permission.LEAVE_READ) ||
+      user.permissions.includes(Permission.LEAVE_READ_TEAM);
+    if (mayReadLeave) return rows;
+    return rows.map((row) =>
+      row.employee.id === user.employeeId
+        ? row
+        : {
+            ...row,
+            leaveType: { code: 'LEAVE', name: 'ลา', colorHex: '#94A3B8' },
+            employee: { ...row.employee, photoFileId: null },
+          },
+    );
   }
 
   // ------------------------------------------------------------------ internals

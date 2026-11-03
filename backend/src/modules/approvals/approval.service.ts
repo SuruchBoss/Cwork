@@ -11,6 +11,9 @@ import {
 } from '@prisma/client';
 import { BusinessRuleError, ErrorCode, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import type { AuthenticatedUser } from '../../core/security/current-user';
+import { employeeVisibilityFilter } from '../../core/security/employee-access';
+import { Permission } from '../../core/security/permissions';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalOutcomeRegistry } from './approval-outcome.registry';
 import { matchesConditions, type PolicyConditions } from './domain/policy-matcher';
@@ -187,6 +190,70 @@ export class ApprovalService {
         },
       },
     });
+  }
+
+  /**
+   * The approval trail of one request, for a caller who has a reason to see it:
+   * the person who submitted it, the person it is about, anyone who was asked to
+   * decide it (or was handed the decision), the person's manager, and those who
+   * manage approvals. Anyone else is told it does not exist, as for an id that
+   * was never issued.
+   */
+  async getInstanceFor(user: AuthenticatedUser, entityType: ApprovalEntityType, entityId: string) {
+    const instance = await this.getInstanceForEntity(entityType, entityId);
+    if (!instance || instance.organizationId !== user.organizationId) {
+      throw new NotFoundError('ApprovalInstance', entityId);
+    }
+    if (await this.mayView(user, instance)) return instance;
+    throw new NotFoundError('ApprovalInstance', entityId);
+  }
+
+  private async mayView(
+    user: AuthenticatedUser,
+    instance: {
+      id: string;
+      submittedById: string;
+      tasks: Array<{ approverUserId: string; delegatedToId: string | null }>;
+    },
+  ): Promise<boolean> {
+    if (instance.submittedById === user.userId) return true;
+    if (user.permissions.includes(Permission.APPROVAL_POLICY_MANAGE)) return true;
+    if (
+      instance.tasks.some(
+        (task) => task.approverUserId === user.userId || task.delegatedToId === user.userId,
+      )
+    ) {
+      return true;
+    }
+
+    // The person the request is about, found through whichever record it is for.
+    const about = await this.prisma.approvalInstance.findUnique({
+      where: { id: instance.id },
+      select: {
+        leaveRequest: { select: { employeeId: true } },
+        overtimeRequest: { select: { employeeId: true } },
+        expenseClaim: { select: { employeeId: true } },
+        attendanceCorrection: { select: { employeeId: true } },
+        resignation: { select: { employeeId: true } },
+        documentRequest: { select: { employeeId: true } },
+      },
+    });
+    const subject =
+      about?.leaveRequest?.employeeId ??
+      about?.overtimeRequest?.employeeId ??
+      about?.expenseClaim?.employeeId ??
+      about?.attendanceCorrection?.employeeId ??
+      about?.resignation?.employeeId ??
+      about?.documentRequest?.employeeId;
+    if (!subject) return false;
+    if (subject === user.employeeId) return true;
+
+    // Whoever may see the person (their manager, or HR) may see what was asked of them.
+    const visible = await this.prisma.employee.findFirst({
+      where: { id: subject, AND: [employeeVisibilityFilter(user)] },
+      select: { id: true },
+    });
+    return visible !== null;
   }
 
   async getInstanceForEntity(entityType: ApprovalEntityType, entityId: string) {
