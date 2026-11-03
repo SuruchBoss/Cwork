@@ -530,6 +530,7 @@ blind test. None blocks the install; each confuses a first-time HR user.
   on every visit.
 - The installer's wording "from made new by this installer" is corrected.
 - The pre-approval check box does not repeat its own heading in each line.
+- Ending a scanner number takes the same per-number lock as binding one, so two ends sent at once cannot both succeed.
 
 **Acceptance**
 - A test for each item; the HR guide matches where it shows the screen.
