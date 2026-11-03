@@ -995,6 +995,38 @@ table.table {
 }
 
 /* While the demo puts its data back: one message over everything. */
+.confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+.confirm__card {
+  width: min(480px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+.confirm__title {
+  margin: 0;
+  font-size: 17px;
+}
+.confirm__body p {
+  margin: 0;
+}
+.confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .demo-reset {
   position: fixed;
   inset: 0;

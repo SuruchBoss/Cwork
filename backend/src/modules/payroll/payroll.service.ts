@@ -604,8 +604,8 @@ export class PayrollService {
     }
     await this.advances.assertUnchangedSince(runId, run.calculatedAt);
 
-    return this.prisma.$transaction(async (tx) => {
-      const approved = await tx.payrollRun.update({
+    const approved = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.payrollRun.update({
         where: { id: runId },
         data: {
           status: PayrollRunStatus.APPROVED,
@@ -614,8 +614,30 @@ export class PayrollService {
         },
       });
       await this.holdClaims(tx, user.organizationId, runId);
-      return approved;
+      return result;
     });
+
+    // The approver may be one of the people the run pays. That is not refused,
+    // since a small company may have no one else to approve, but it is written
+    // down, and the console says so before the button is pressed.
+    if (user.employeeId) {
+      const own = await this.prisma.payslip.findFirst({
+        where: { runId, employeeId: user.employeeId },
+        select: { id: true },
+      });
+      if (own) {
+        await this.audit.record({
+          organizationId: user.organizationId,
+          actorUserId: user.userId,
+          action: AuditAction.APPROVE,
+          entityType: 'PayrollRun',
+          entityId: runId,
+          summary: `Approved run ${run.runNo}, which includes the approver's own payslip`,
+          changes: { ownPayslip: true, runNo: run.runNo },
+        });
+      }
+    }
+    return approved;
   }
 
   /**
@@ -1086,6 +1108,7 @@ export class PayrollService {
       employee,
     );
     const warnings: PayslipWarning[] = [];
+    warnings.push(...(await this.ownDayWarnings(employeeId, period)));
     const daysPaid =
       dailyRate === null
         ? null
@@ -1351,6 +1374,31 @@ export class PayrollService {
   }
 
   /** The minimum wage check, again at calculation: the location's rate may have changed. */
+  /**
+   * Days of the period that the employee decided for themselves, because nobody
+   * else could: said on the payslip so the one who approves the run looks at them.
+   */
+  private async ownDayWarnings(
+    employeeId: string,
+    period: { periodStart: Date; periodEnd: Date },
+  ): Promise<PayslipWarning[]> {
+    const days = await this.prisma.scannerDay.findMany({
+      where: { employeeId, workDate: { gte: period.periodStart, lte: period.periodEnd } },
+      orderBy: { workDate: 'asc' },
+      select: {
+        workDate: true,
+        decisions: { orderBy: { createdAt: 'desc' }, take: 1, select: { ownDay: true } },
+      },
+    });
+    const own = days
+      .filter((day) => day.decisions[0]?.ownDay)
+      .map((day) => formatDateOnly(day.workDate));
+    if (own.length === 0) return [];
+    return [
+      { code: 'OWN_SCANNER_DAY_DECIDED', params: { days: own.length, dates: own.join(', ') } },
+    ];
+  }
+
   private async minimumWageWarningsFor(employeeId: string, dailyRate: number) {
     const { workLocation } = await this.prisma.employee.findUniqueOrThrow({
       where: { id: employeeId },

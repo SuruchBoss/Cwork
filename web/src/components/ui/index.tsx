@@ -186,7 +186,13 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...props} className={clsx('textarea', props.className)} />;
 }
 
-export function Avatar({ name, size = 'md' }: { name: string | null | undefined; size?: 'md' | 'lg' }) {
+export function Avatar({
+  name,
+  size = 'md',
+}: {
+  name: string | null | undefined;
+  size?: 'md' | 'lg';
+}) {
   const label = (name ?? '?').trim();
   const parts = label.split(/\s+/);
   const text =
@@ -198,13 +204,7 @@ export function Avatar({ name, size = 'md' }: { name: string | null | undefined;
   );
 }
 
-export function Person({
-  name,
-  meta,
-}: {
-  name: string;
-  meta?: ReactNode;
-}) {
+export function Person({ name, meta }: { name: string; meta?: ReactNode }) {
   return (
     <div className="person">
       <Avatar name={name} />
@@ -319,5 +319,6 @@ export function PageHeader({
   );
 }
 
+export { ConfirmDialog } from './ConfirmDialog';
 export { DateInput } from './DateInput';
 export type { DateInputProps } from './DateInput';

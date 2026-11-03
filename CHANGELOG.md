@@ -664,6 +664,17 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Someone else decides your own attendance.** A scanner day that belongs to the person
+  deciding it is left to another holder of the attendance permission: the buttons on that row
+  are closed with the reason, and the API answers in Thai. Where nobody else holds the
+  permission, the person may decide it; the decision is marked, the payslip of the run that
+  pays the day lists it under the things to check, and the audit log says so. Recording leave
+  as approved for oneself was already refused and still is.
+- **Approving a run that pays the approver is written down.** The console says so in the
+  question it now asks before approving, and the audit log records that the run included the
+  approver's own payslip. It is not refused, because a small company may have no one else.
+- **Approving a run and recording its payment each ask one question first.** The payment one
+  says it cannot be undone and tells a parallel run not to press it.
 - **Sign-in answers the same for every address.** A refused sign-in is worded and timed
   the same whether or not the address has an account, and asks the caller to wait after
   the same number of tries. A refused sign-in is also answered no sooner than a fixed

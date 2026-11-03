@@ -40,6 +40,7 @@ function day(partial: Partial<ScannerDay> & Pick<ScannerDay, 'id' | 'times'>): S
     decisionOutdated: false,
     punchesCounted: 0,
     locked: false,
+    ownDay: null,
     ...partial,
   };
 }
@@ -212,6 +213,47 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(post).toHaveBeenCalledWith('/attendance/scanner/days/d-one/decision', {
       action: 'IGNORE',
     });
+  });
+
+  it('closes the buttons on the signed-in person’s own day while someone else may decide it, and says why', async () => {
+    serve([
+      day({ id: 'd-mine', times: ['08:15'], reason: 'ONE_TIME', ownDay: { canDecide: false } }),
+    ]);
+    renderPage();
+    await screen.findByRole('cell', { name: '08:15' });
+
+    expect(screen.getByRole('button', { name: 'ใช้เวลาเหล่านี้' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'ไม่นับวันนี้' })).toBeDisabled();
+    expect(screen.getByLabelText(/เวลาเข้างานของ 7/)).toBeDisabled();
+    expect(screen.getByRole('note')).toHaveTextContent(
+      'ต้องให้ผู้มีสิทธิ์จัดการเวลาทำงานคนอื่นเป็นผู้ตัดสิน',
+    );
+  });
+
+  it('lets the only person who may decide decide their own day, and says it will be noted', async () => {
+    serve([
+      day({ id: 'd-mine', times: ['08:15'], reason: 'ONE_TIME', ownDay: { canDecide: true } }),
+    ]);
+    renderPage();
+    await screen.findByRole('cell', { name: '08:15' });
+
+    expect(screen.getByRole('button', { name: 'ใช้เวลาเหล่านี้' })).toBeEnabled();
+    expect(screen.getByRole('note')).toHaveTextContent('ไม่มีผู้อื่นที่ตัดสินแทนได้');
+    expect(screen.getByRole('note')).toHaveTextContent('รอบเงินเดือน');
+
+    await userEvent.click(screen.getByRole('button', { name: 'ไม่นับวันนี้' }));
+
+    expect(post).toHaveBeenCalledWith('/attendance/scanner/days/d-mine/decision', {
+      action: 'IGNORE',
+    });
+  });
+
+  it('shows no note on someone else’s day', async () => {
+    serve([one]);
+    renderPage();
+    await screen.findByRole('cell', { name: '08:15' });
+
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
 
   it('will not send a clock-out that is not after the clock-in', async () => {

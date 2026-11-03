@@ -88,6 +88,8 @@ export interface ScannerDay {
   decisionOutdated: boolean;
   punchesCounted: number;
   locked: boolean;
+  /** Set when the day is the signed-in person's own; `canDecide` is false while someone else may. */
+  ownDay: { canDecide: boolean } | null;
 }
 
 export interface ScannerDaysPage {
