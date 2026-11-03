@@ -51,6 +51,15 @@ this file only says where the PO room stands.
   runs), the install date.
 - CW-062: approval to run the read-only `./check.sh` on the pilot's NAS, a
   backup drive, a password store for the key, the HR import file.
+- Social security timing (2026-11-03): the pilot takes a daily worker's social
+  security once a month, on the month's total wage. Cwork's sum is right
+  (rounded to the baht, 50 satang up, verified in CW-084: 372 × 23 = 8,556
+  gives 427.80, so 428). But a daily wage is paid SEMI_MONTHLY, and the first
+  half already deducts 5% of its own wage. If the pilot pays daily staff twice
+  a month, Cwork deducts in both halves where the pilot deducts once. Not
+  changed: the owner decides, and the #36 reviewer should confirm the law
+  allows deducting only at month end. Dev asked for unit tests of the
+  8,556 example.
 - Still to ask HR: whether it rounds the 5% or the net pay (it says its figures
   have no satang), and the field order of the social security web form.
 - #36: a qualified reviewer for the payroll rules.
