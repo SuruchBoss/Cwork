@@ -20,6 +20,26 @@ export function addDays(date: Date, days: number): Date {
   return next;
 }
 
+/**
+ * Today's calendar date in the organization's time zone, as a UTC-midnight
+ * `Date` (the shape the helpers below work in).
+ *
+ * The API decides what "today" is, and so how much notice a leave request has
+ * given, in the organization's zone (Asia/Bangkok by default), seven hours
+ * ahead of UTC. A test that takes today from `new Date()` in UTC is one day
+ * behind the server between midnight and seven in the morning there, and asks
+ * for a request with a day less notice than it believes.
+ */
+export function calendarToday(now: Date = new Date(), timeZone = 'Asia/Bangkok'): Date {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  return new Date(`${parts}T00:00:00.000Z`);
+}
+
 /** 1 = Monday … 7 = Sunday, matching the API's working-weekday numbering. */
 export function isoWeekday(date: Date): number {
   const day = date.getUTCDay();
