@@ -5,7 +5,7 @@
  * Who sees what, on the endpoints that answer for one person.
  *
  * Each case is a colleague with no part in the matter, asking about someone
- * else: they get their own answer, or "not found", never the other person's.
+ * else: they are told it is not found, or see less, never the other person's.
  * The people who do have a part (the person, their manager, the one asked to
  * decide, HR) still get what they need.
  */
@@ -84,12 +84,21 @@ describe('Access boundaries (e2e)', () => {
       expect(res.body.childrenCount).toBe(2);
     });
 
-    it("is not shown to a colleague who asks for someone else's", async () => {
+    it("is not found by a colleague who asks for someone else's", async () => {
       const res = await api.get(`/payroll/tax-profile/${personEmployeeId}?year=${year}`, colleague);
 
-      // They are answered about themselves, and they filed nothing.
-      expect(res.body?.employeeId ?? null).not.toBe(personEmployeeId);
-      expect(res.body?.childrenCount ?? null).toBeNull();
+      expect(res.status).toBe(404);
+    });
+
+    it('answers a colleague the same for a person who filed nothing and for an id that does not exist', async () => {
+      const unknown = '00000000-0000-4000-8000-000000000000';
+      const missing = await api.get(`/payroll/tax-profile/${unknown}?year=${year}`, colleague);
+      const other = await api.get(
+        `/payroll/tax-profile/${personEmployeeId}?year=${year}`,
+        colleague,
+      );
+
+      expect(other.status).toBe(missing.status);
     });
 
     it('is shown to payroll, who manage compensation', async () => {

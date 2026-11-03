@@ -488,11 +488,13 @@ export class PayrollController {
     @Param('employeeId', ParseUUIDPipe) employeeId: string,
     @Query('year', ParseIntPipe) year: number,
   ) {
-    // Whoever may not read pay in general sees their own declaration, whatever id
-    // they ask for.
+    // Whoever may not read pay in general sees their own declaration and no one
+    // else's: another person's id is answered as if it did not exist.
     const mayReadAll = user.permissions.includes(Permission.COMPENSATION_READ);
-    const subject = mayReadAll ? employeeId : user.employeeId;
-    if (!subject) throw new NotFoundError('Employee', employeeId);
+    if (!mayReadAll && employeeId !== user.employeeId) {
+      throw new NotFoundError('Employee', employeeId);
+    }
+    const subject = employeeId;
     return this.compensation.getTaxProfile(user.organizationId, subject, year);
   }
 
