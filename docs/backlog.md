@@ -228,7 +228,7 @@ install, update, rollback and a byte-exact restore passed, sign-in with 2FA
 survived, and only the HTTPS port was open. Not tried: DSM itself, installing
 the authority's certificate on Windows, a scan from outside the office, path C
 on a real office PC. **Left:** the acceptance below on the pilot's NAS, which
-waits on the owner's approval and starts with the read-only `./check.sh`.
+waits on the owner's approval and starts with the read-only `./check.sh`. **Approved 2026-11-03 17:18**, typed by the owner in the PO room: "อนุมัติ ./check.sh". This covers the read-only `./check.sh` on the pilot's NAS, run on-site by whoever installs (the owner's earlier word was on-site, not remotely). It does not cover `install.sh` or any other script that changes the NAS.
 `npm run db:verify` now runs from the tools image (`368c303`, CI job "Tools
 image runs db:verify").
 

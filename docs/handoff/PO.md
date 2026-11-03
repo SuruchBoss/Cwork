@@ -19,8 +19,7 @@ this file only says where the PO room stands.
   propose: PO estimate, ready to book from Mon 9 Nov. Real personal data never
   goes into a cloud session.
 - **Social security, daily wages:** the sum and rounding are right (CW-084;
-  372 × 23 = 8,556 gives 428). But a daily wage is paid SEMI_MONTHLY, and the
-  first half already deducts. The pilot deducts once a month. Not changed
+  372 × 23 = 8,556 gives 428). The pilot deducts once a month. Nothing changes
   until the owner decides (and #36 confirms the law).
 - **Parked:** the petty-cash certificate (backlog § Parked ideas).
 - **Storytelling draft:** `docs/drafts/storytelling-2026-10-18.th.md` on
@@ -32,9 +31,15 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- `./check.sh` on the pilot's NAS: the owner's own words in this room; also a
-  backup drive, a password store for the key, the HR file (filled on-site).
-- Social security timing for a daily worker's first half, before that payday.
+- `./check.sh` on the pilot's NAS: **approved 2026-11-03 17:18** in this room
+  (read-only, run on-site). Still needed: a backup drive, a password store for
+  the key, the HR file (filled on-site).
+- Daily wages are paid every 14 days, which Cwork cannot do yet (periods are
+  monthly or half-monthly). The PO proposes monthly periods for daily staff
+  during the parallel run (install 9 Nov), with a 14-day cycle built before
+  Cwork pays for real; or the cycle first (install around 20 Nov). Owner to
+  choose. Two law questions are on #36: which month a cross-month period counts
+  toward, and whether the contribution may be deducted once a month.
 - The landing cash-sheet picture and its alt text (public wording).
 - Still to ask HR: whether it rounds the net, and the field order of the
   social security web form.
