@@ -529,6 +529,7 @@ blind test. None blocks the install; each confuses a first-time HR user.
 - The parallel-run notice can be dismissed for the session instead of showing
   on every visit.
 - The installer's wording "from made new by this installer" is corrected.
+- The pre-approval check box does not repeat its own heading in each line.
 
 **Acceptance**
 - A test for each item; the HR guide matches where it shows the screen.
@@ -1177,8 +1178,9 @@ not because there is a date.
 
 Every entry's details on the audit log page are English sentences built by
 the API, so a Thai HR user cannot read what happened. Show them in the
-console's language from the entry's action and fields; the stored entries do
-not change. Found by the UX room on the installed stack.
+console's language from the entry's action and fields, and name the record
+type in words ("ScannerDay" and "ScannerImport" show as code names); the
+stored entries do not change. Found by the UX room on the installed stack.
 
 **Acceptance**
 - Each action type has a Thai and an English line; a test fails on an action
