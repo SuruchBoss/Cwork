@@ -792,6 +792,15 @@ entry, tags it and publishes the notes.
   organisation's time zone; it had shown the Thai interface under English
   captions, ending on a line that the English locale was still on the backlog.
 
+- **Tighter access checks.** Stored files, tax declarations, approval trails and
+  the leave calendar now answer according to the caller's standing: the person,
+  their manager, those who handle the matter, and HR. Anyone else is told the
+  item does not exist, or sees less detail. More permissions now ask for a second
+  factor at sign-in (payroll read and export, audit read). The person who
+  calculated a payroll run cannot approve it. The backup script writes files that
+  only their owner can read. A new migration adds the column that records who
+  calculated a run.
+
 ### Fixed
 
 - **A manager no longer fills the browser console with 403s** (CW-095). The

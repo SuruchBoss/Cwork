@@ -8,6 +8,7 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { FileAccessService } from './file-access.service';
 import { MalwareScannerService, type ScanOutcome } from './malware-scanner.service';
 import { StorageService } from './storage.service';
 
@@ -66,6 +67,7 @@ export class FilesService {
     private readonly scanner: MalwareScannerService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly access: FileAccessService,
   ) {}
 
   /**
@@ -228,6 +230,7 @@ export class FilesService {
     });
   }
 
+  /** Trusted, organisation-level lookup for server code that has already decided who may see the file. */
   async getMetadata(organizationId: string, id: string) {
     const file = await this.prisma.fileObject.findFirst({
       where: { id, organizationId, deletedAt: null },
@@ -236,12 +239,28 @@ export class FilesService {
     return file;
   }
 
+  /** What the caller asked for by id: found only if they have standing over it. */
+  getMetadataFor(user: AuthenticatedUser, id: string) {
+    return this.access.require(user, id, 'read');
+  }
+
   async download(
     organizationId: string,
     id: string,
   ): Promise<{ file: Awaited<ReturnType<FilesService['getMetadata']>>; content: Buffer }> {
-    const file = await this.getMetadata(organizationId, id);
+    return this.serve(await this.getMetadata(organizationId, id));
+  }
 
+  async downloadFor(
+    user: AuthenticatedUser,
+    id: string,
+  ): Promise<{ file: Awaited<ReturnType<FilesService['getMetadata']>>; content: Buffer }> {
+    return this.serve(await this.access.require(user, id, 'read'));
+  }
+
+  private async serve(
+    file: Awaited<ReturnType<FilesService['getMetadata']>>,
+  ): Promise<{ file: Awaited<ReturnType<FilesService['getMetadata']>>; content: Buffer }> {
     // Deny-by-default: only a file that has been cleared, or one from a
     // deployment that never scans, is served. PENDING means the scanner has
     // not had its say yet, and "not yet checked" is not "safe".
@@ -262,8 +281,9 @@ export class FilesService {
     return { file, content };
   }
 
-  async softDelete(organizationId: string, id: string): Promise<void> {
-    const file = await this.getMetadata(organizationId, id);
+  /** Removes a file the caller uploaded, or one attached to something they manage. */
+  async softDeleteFor(user: AuthenticatedUser, id: string): Promise<void> {
+    const file = await this.access.require(user, id, 'delete');
     await this.prisma.fileObject.update({
       where: { id: file.id },
       data: { deletedAt: new Date() },

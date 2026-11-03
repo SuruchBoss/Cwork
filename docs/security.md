@@ -358,7 +358,8 @@ national ID in full; it gives the last four digits.
   one exception is path C, where PostgreSQL is offered on the LAN, only on the
   NAS's address, unencrypted, to be firewalled to the one PC that runs the app.
   `.env` (secrets made by the installer) is mode 600; backups never contain
-  `FIELD_ENCRYPTION_KEY`, and `backup.sh` refuses a folder on the disk it protects.
+  `FIELD_ENCRYPTION_KEY` and are written mode 600, and `backup.sh` refuses a folder on
+  the disk it protects. A backup still holds salaries and other unencrypted data.
 
 ## Fail-fast configuration
 

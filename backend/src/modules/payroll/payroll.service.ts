@@ -260,6 +260,7 @@ export class PayrollService {
           totalEmployerCost: toPrismaDecimal(totals.employer),
           currency: organization.currency,
           calculatedAt: new Date(),
+          calculatedById: user.userId,
         },
       });
 
@@ -453,8 +454,12 @@ export class PayrollService {
     ) {
       throw new BusinessRuleError('RUN_NOT_CALCULATED', 'Only a calculated run can be approved');
     }
-    // Separation of duties: whoever calculated the run cannot approve it.
-    if (run.createdById && run.createdById === user.userId) {
+    // Separation of duties: neither whoever created the run nor whoever last
+    // calculated it can approve it.
+    if (
+      (run.createdById && run.createdById === user.userId) ||
+      (run.calculatedById && run.calculatedById === user.userId)
+    ) {
       throw new BusinessRuleError(
         'SELF_APPROVAL_NOT_ALLOWED',
         'A payroll run must be approved by someone other than the person who prepared it',

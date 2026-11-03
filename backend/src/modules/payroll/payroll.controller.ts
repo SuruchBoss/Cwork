@@ -31,6 +31,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuditAction, ExpenseClaimStatus } from '@prisma/client';
+import { NotFoundError } from '../../core/errors/domain.errors';
 import { Audited } from '../../core/http/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../../core/security/current-user';
 import { RequireAnyPermission, RequirePermissions } from '../../core/security/decorators';
@@ -487,7 +488,12 @@ export class PayrollController {
     @Param('employeeId', ParseUUIDPipe) employeeId: string,
     @Query('year', ParseIntPipe) year: number,
   ) {
-    return this.compensation.getTaxProfile(user.organizationId, employeeId, year);
+    // Whoever may not read pay in general sees their own declaration, whatever id
+    // they ask for.
+    const mayReadAll = user.permissions.includes(Permission.COMPENSATION_READ);
+    const subject = mayReadAll ? employeeId : user.employeeId;
+    if (!subject) throw new NotFoundError('Employee', employeeId);
+    return this.compensation.getTaxProfile(user.organizationId, subject, year);
   }
 
   @Post('tax-profile')
