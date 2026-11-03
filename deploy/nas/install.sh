@@ -5,23 +5,35 @@
 # Installs Cwork on this machine (CW-062). Run it once, as root, in this folder.
 #
 #   ./install.sh [--mode full|db|app] [--host ADDRESS] [--port 8443]
-#                [--backup-dir DIR] [--db-host NAS_ADDRESS --db-password PASSWORD]
-#                [--field-key KEY]
+#                [--backup-dir DIR] [--db-host NAS_ADDRESS]
+#                [--db-password-file FILE] [--field-key-file FILE] [--field-key-prompt]
 #
 # full  everything on this machine (paths A and B). The usual choice.
 # db    only PostgreSQL, for path C: run this on the NAS.
 # app   the API and the console, for path C: run this on the office PC, with
-#       --db-host and --db-password from the `db` install.
+#       --db-host and the database password from the `db` install.
 #
-# --field-key is for rebuilding a machine from a backup: pass the encryption key
+# The database password and the encryption key are secrets, so they are not put
+# on the command line, where the process list and the shell history would keep
+# them. Give each in one of these ways (the first that is set wins):
+#
+#   a file     --db-password-file FILE      --field-key-file FILE   (first line)
+#   the environment    CWORK_DB_PASSWORD    CWORK_FIELD_KEY
+#   typed, not shown   asked for when nothing else was given (the password in
+#                      --mode app); --field-key-prompt asks for the key
+#
+# The encryption key is for rebuilding a machine from a backup: give the key
 # saved from the old one, so the restored data can be read (see restore.sh).
+# The old --db-password and --field-key options still work, with a warning.
 #
 # It refuses to run over an installation that holds data: that is changed with
 # update.sh (or erased on purpose with uninstall.sh).
 
 . "$(dirname "$0")/lib.sh"
 
-MODE=full HOST="" PORT=8443 BACKUP_DIR="" DB_HOST="" DB_PASSWORD="" FIELD_KEY="" ASSUME_YES=0
+MODE=full HOST="" PORT=8443 BACKUP_DIR="" DB_HOST="" ASSUME_YES=0
+DB_PASSWORD=${CWORK_DB_PASSWORD:-} FIELD_KEY=${CWORK_FIELD_KEY:-} ASK_FIELD_KEY=0
+DB_PASSWORD_FILE="" FIELD_KEY_FILE="" SECRET_ON_COMMAND_LINE=0
 while [ $# -gt 0 ]; do
   case $1 in
     --mode) MODE=$2; shift 2 ;;
@@ -29,14 +41,30 @@ while [ $# -gt 0 ]; do
     --port) PORT=$2; shift 2 ;;
     --backup-dir) BACKUP_DIR=$2; shift 2 ;;
     --db-host) DB_HOST=$2; shift 2 ;;
-    --db-password) DB_PASSWORD=$2; shift 2 ;;
-    --field-key) FIELD_KEY=$2; shift 2 ;;
+    --db-password-file) DB_PASSWORD_FILE=$2; shift 2 ;;
+    --field-key-file) FIELD_KEY_FILE=$2; shift 2 ;;
+    --field-key-prompt) ASK_FIELD_KEY=1; shift ;;
+    --db-password) DB_PASSWORD=$2; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
+    --field-key) FIELD_KEY=$2; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
     --yes) ASSUME_YES=1; shift ;;
     *) die "unknown option $1" ;;
   esac
 done
 case $MODE in full|db|app) ;; *) die "--mode must be full, db or app" ;; esac
-[ "$MODE" = app ] && { [ -n "$DB_HOST" ] && [ -n "$DB_PASSWORD" ] || die "--mode app needs --db-host and --db-password (from the NAS install)"; }
+
+if [ "$SECRET_ON_COMMAND_LINE" = 1 ]; then
+  warn "a password or key was given on the command line: the process list and the shell history keep it."
+  warn "next time use --db-password-file / --field-key-file, CWORK_DB_PASSWORD / CWORK_FIELD_KEY, or type it when asked."
+fi
+[ -z "$DB_PASSWORD_FILE" ] || DB_PASSWORD=$(secret_from_file "$DB_PASSWORD_FILE") || exit 1
+[ -z "$FIELD_KEY_FILE" ] || FIELD_KEY=$(secret_from_file "$FIELD_KEY_FILE") || exit 1
+if [ "$MODE" = app ] && [ -z "$DB_PASSWORD" ]; then
+  DB_PASSWORD=$(ask_secret "The database password (POSTGRES_PASSWORD in .env on the NAS): ") || true
+fi
+if [ "$ASK_FIELD_KEY" = 1 ] && [ -z "$FIELD_KEY" ]; then
+  FIELD_KEY=$(ask_secret "The saved encryption key: ") || die "--field-key-prompt needs a terminal to type in"
+fi
+[ "$MODE" = app ] && { [ -n "$DB_HOST" ] && [ -n "$DB_PASSWORD" ] || die "--mode app needs --db-host and the database password from the NAS install (--db-password-file, CWORK_DB_PASSWORD, or typed when asked)"; }
 
 need_root
 need_docker
@@ -142,8 +170,8 @@ ok "Cwork is running"
 say ""
 say "== Done. What happens next"
 if [ "$MODE" = db ]; then
-  say "  1. On the office PC, run:  ./install.sh --mode app --host <PC address> --db-host $HOST --db-password <see below>"
-  say "  2. The database password is in .env on this machine (POSTGRES_PASSWORD). Give it to the PC's installer, not to anyone else."
+  say "  1. On the office PC, run:  ./install.sh --mode app --host <PC address> --db-host $HOST   (it asks for the password)"
+  say "  2. The database password is in .env on this machine (POSTGRES_PASSWORD). Give it to the PC's installer (typed when asked, or in a file passed with --db-password-file), not to anyone else."
   say "  3. In the NAS firewall allow port 5432 from the PC's address only, and from nothing else."
   say "  4. Choose where backups go (a USB drive, not the NAS's own disk): CWORK_BACKUP_DIR=... in .env here."
 else

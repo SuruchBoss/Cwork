@@ -24,13 +24,13 @@
  * than the second the invalidation happened in.
  *
  * What that gives up: a token issued earlier in the *same second* as a real
- * invalidation is accepted. That window is at most 999ms wide and cannot be
- * closed while the decision rests on `iat` — the claim simply does not record
- * which millisecond it was minted in. It is also immaterial next to a choice
- * this system has already made deliberately: `sid` is not checked against the
- * `sessions` row, so revoking a session leaves its access token working until
- * it expires anyway. Closing the sub-second window means checking the session,
- * not sharpening this.
+ * invalidation is accepted by this comparison. That window is at most 999ms wide
+ * and cannot be closed while the decision rests on `iat` — the claim simply does
+ * not record which millisecond it was minted in. It is narrow because this is
+ * not the only check: a request is also refused when the `sessions` row its `sid`
+ * names has been ended (signed out, revoked from another device, ended by a
+ * password change), see `UserContextService.sessionIsLive`. This comparison covers
+ * the invalidations that end every session at once.
  */
 export function tokenPredatesInvalidation(iat: number, sessionsValidFrom: Date): boolean {
   return iat < Math.floor(sessionsValidFrom.getTime() / 1000);
