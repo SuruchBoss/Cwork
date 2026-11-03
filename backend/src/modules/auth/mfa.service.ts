@@ -24,12 +24,16 @@ import { UserContextService } from './user-context.service';
 /**
  * Permissions that make an account worth stealing. Anyone holding one of these
  * must carry a second factor: between them they read every national ID in the
- * organisation, move money, and hand out permissions.
+ * organisation, read and export everyone's pay, read the audit trail, move
+ * money, and hand out permissions.
  */
 export const MFA_REQUIRED_PERMISSIONS: PermissionKey[] = [
   Permission.EMPLOYEE_READ_SENSITIVE,
+  Permission.PAYROLL_READ,
   Permission.PAYROLL_RUN,
   Permission.PAYROLL_APPROVE,
+  Permission.PAYROLL_EXPORT,
+  Permission.AUDIT_READ,
   Permission.ROLE_MANAGE,
 ];
 
@@ -342,6 +346,9 @@ export class MfaService {
     if (!user) throw new UnauthorizedException('Account no longer exists');
     if (tokenPredatesInvalidation(payload.iat, user.sessionsValidFrom)) {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
+    }
+    if (!(await this.userContext.sessionIsLive(payload.sid, payload.sub))) {
+      throw new UnauthorizedException('Session has ended, please sign in again');
     }
     return payload.sub;
   }

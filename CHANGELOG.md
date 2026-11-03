@@ -21,6 +21,39 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **Daily wages paid every 14 days** (CW-101). A daily wage can be set to
+  `BIWEEKLY`, and a 14-day period opened from a start date and a pay date: it ends
+  thirteen days later and must follow the last one without a gap, so every day is
+  in exactly one period. A period counts toward a month (provisionally the month
+  it is paid in, decided in one function until issue #36 is answered) and is
+  numbered within it, `2040-01-B1` to `B3`; some months have three. Social
+  security and withholding stay monthly: the first period takes what a first half
+  takes, each later one the month so far less what came before, so a month's
+  periods add up to one monthly run on the same total, rounded once. The
+  register, the accountant export and the สปส.1-10 file add a month's periods, and
+  wait until none is missing. Monthly and half-month periods are unchanged. A new
+  migration lets `half` hold the order of a 14-day period. A later period is
+  calculated once the ones before it are approved, the same rule as a second
+  half (CW-104).
+
+- **The compare page reads the calendar month, and HR's own register** (CW-103,
+  CW-104). `/payroll/compare` and its upload used the one period they were opened
+  from, so a daily worker, paid in two half-month periods, looked missing. They now
+  read the whole month the way the payroll register does, adding each person's
+  periods up, from whichever period they are opened from, and refuse a month that
+  is not all there, in Thai, naming what is missing. The uploaded sheet may be HR's
+  register as it is kept: the headings are found under a title and stacked group
+  rows, "รวมเงินได้", "ภาษี", "ประกันสังคม", "รวมเงินสุทธิ" and "เงินสุทธิ" are
+  accepted, the total row is skipped, and a register with no employee-code column
+  is told to add one called "รหัสพนักงาน". The self-approval refusal is in Thai.
+- **A second half can be calculated once the first half is approved** (CW-104).
+  It used to wait for the first half to be marked paid, which HR must not do during
+  the parallel run, so a month with daily staff never became complete. An approved
+  run's figures cannot change, and the expense claims it pays are held for it from
+  approval, so the second half cannot take them again; cancelling the run releases
+  them. Paying the first half is unchanged. The refusal is now
+  `FIRST_HALF_NOT_APPROVED`.
+
 - **The payroll register HR sends the accountant** (CW-099). `GET
   /payroll/periods/:id/export?format=register` is an Excel workbook in the order
   of the form HR already fills in: row number, name, salary, daily wage in three
@@ -631,6 +664,20 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Sign-in answers the same for every address.** A refused sign-in is worded and timed
+  the same whether or not the address has an account, and asks the caller to wait after
+  the same number of tries.
+- **Signing out ends the session at once.** An access token stops working as soon as its
+  session is signed out, ended from another device, or ended by a password change. A
+  session that only moved on to a new refresh token keeps working. The check is cached
+  with the signed-in user, so a request does not add a query.
+- **Responses are not kept by browsers or caches.** Every API response carries
+  `Cache-Control: private, no-store` unless it sets its own (downloads already did).
+- **The NAS installer takes the database password and the saved key from a file, the
+  environment or a hidden prompt** (`--db-password-file`, `--field-key-file`,
+  `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and
+  print a warning.
+
 - **The HR guide covers what the blind test found missing** (CW-103).
   `docs/guide/hr-daily-tasks.th.md` now walks the sign-in with the six-digit code
   and the first-time 2FA setup; says how to find whose an unregistered scanner
@@ -801,7 +848,45 @@ entry, tags it and publishes the notes.
   organisation's time zone; it had shown the Thai interface under English
   captions, ending on a line that the English locale was still on the backlog.
 
+- **Tighter access checks.** Stored files, tax declarations, approval trails and
+  the leave calendar now answer according to the caller's standing: the person,
+  their manager, those who handle the matter, and HR. Anyone else is told the
+  item does not exist, or sees less detail. More permissions now ask for a second
+  factor at sign-in (payroll read and export, audit read). The person who
+  calculated a payroll run cannot approve it. The backup script writes files that
+  only their owner can read. A new migration adds the column that records who
+  calculated a run.
+
+- **The fingerprint scanner import is about ten times faster** (CW-102). It
+  handled each person-day on its own, with about sixteen round trips to the
+  database for each; a month of 200 people took 41 s. It now reads what a group
+  of people needs once, derives the days in memory with the same rule as the
+  one-day recalculation, and writes the punches and daily rows together: a month
+  of 200 people takes about 4 s in the 2 CPU / 2 GB test stack. The rules and the results
+  are unchanged, and a new test compares the two ways of rebuilding days.
+
 ### Fixed
+
+- **A month with monthly staff and no monthly period is no longer listed as if it were whole**
+  (CW-107). The register export and the comparison with HR's register now stop, in Thai,
+  when the month has staff on a monthly salary but no monthly period yet, and name the next
+  step: create the monthly period, calculate and approve it. A company with no one on a
+  monthly salary is not warned, and a month that has both kinds of period is unchanged.
+- **A request for another person's tax declaration answers "not found"** instead of
+  returning the caller's own, so it reads the same as an id that does not exist.
+
+- **A day with one scan is no longer paid as a full day with no warning**
+  (CW-106). A past day with a clock-in and no clock-out was stored as present with
+  no minutes; it is now incomplete, as the nightly close-out makes it, so the payslip
+  warning appears. A day with only a clock-out is incomplete with no minutes instead
+  of reaching a calculation with no start. The scanner import's summary counts the
+  days scanned once. How a counted day is paid is unchanged.
+- **The payroll register's fixes from the UX review** (CW-105). The summary sheet
+  has a row for other deductions, so earnings less tax, social security and other
+  deductions is the net pay. The refusal for an incomplete month is in Thai, names
+  the month and the period, and says what to do next. The register prints on A4
+  landscape, one page wide, with its headings on every page, with cell borders and
+  centred group headings.
 
 - **A manager no longer fills the browser console with 403s** (CW-095). The
   employee register and the shifts and roster page asked `/departments` for the

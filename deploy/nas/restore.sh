@@ -11,7 +11,7 @@
 # the backup's. Unless told not to, it first takes a backup of what is there now,
 # tagged "before-restore", so a wrong choice can be undone.
 #
-# Rebuilding from nothing: install.sh --field-key <the saved key> on the new
+# Rebuilding from nothing: install.sh --field-key-file <a file holding the saved key> on the new
 # machine, then this. The key must be the one the data was written with: staff
 # ID numbers and bank accounts are encrypted with it, and no other key opens them.
 

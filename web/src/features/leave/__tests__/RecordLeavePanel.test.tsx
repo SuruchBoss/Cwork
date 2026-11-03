@@ -154,7 +154,7 @@ afterEach(() => vi.clearAllMocks());
 describe('Recording leave for an employee (CW-067)', () => {
   it('records a sick day as approved and starts again at the employee', async () => {
     allow(true);
-    const { container } = renderPage();
+    renderPage();
     const { user, panel } = await openAndChoose();
 
     // The employee is told apart by department, and the balance shows as soon as both are chosen.
@@ -164,12 +164,11 @@ describe('Recording leave for an employee (CW-067)', () => {
     const summary = await within(panel).findByRole('region', { name: 'สรุปก่อนบันทึก' });
     expect(within(summary).getByText('1 วัน')).toBeInTheDocument();
     expect(within(summary).getByText('26 วัน')).toBeInTheDocument();
-    await expectNoAxeViolations(container);
 
-    await user.type(
-      within(panel).getByLabelText('หมายเหตุ (ไม่บังคับ)'),
-      'โทรแจ้งป่วยเช้านี้{Enter}',
-    );
+    // Pasting keeps the test short; the keystroke that matters is the Enter after it.
+    await user.click(within(panel).getByLabelText('หมายเหตุ (ไม่บังคับ)'));
+    await user.paste('โทรแจ้งป่วยเช้านี้');
+    await user.keyboard('{Enter}');
     expect(post).not.toHaveBeenCalledWith('/leave/requests/record', expect.anything());
 
     await user.click(within(panel).getByRole('button', { name: 'บันทึก และบันทึกคนต่อไป' }));
@@ -214,6 +213,15 @@ describe('Recording leave for an employee (CW-067)', () => {
       'มีการลาในบางวันของช่วงนี้อยู่แล้ว',
     );
     expect(within(panel).queryByRole('region', { name: 'สรุปก่อนบันทึก' })).toBeNull();
+  });
+
+  it('has nothing an accessibility check would flag once an employee and a type are chosen', async () => {
+    allow(true);
+    const { container } = renderPage();
+    const { panel } = await openAndChoose();
+    await within(panel).findByRole('region', { name: 'สรุปก่อนบันทึก' });
+
+    await expectNoAxeViolations(container);
   });
 
   it('says why it was refused, with the employee named, above the buttons', async () => {

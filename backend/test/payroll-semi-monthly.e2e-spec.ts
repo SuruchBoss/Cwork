@@ -380,7 +380,7 @@ describe('Daily wages paid twice a month (e2e)', () => {
       expect(slips.map((s) => s.employeeId).sort()).toEqual([factoryWorker, movedOver].sort());
 
       const early = await calculatedRun(second.id);
-      expect(early.calculated.body.code).toBe('FIRST_HALF_NOT_PAID');
+      expect(early.calculated.body.code).toBe('FIRST_HALF_NOT_APPROVED');
       secondHalfRun = early.runId;
 
       // The run page can say why: the first half is calculated, not paid.

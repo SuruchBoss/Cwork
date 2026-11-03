@@ -65,6 +65,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
     }
 
+    // A session that has been signed out or revoked is no longer in force. The
+    // answer is cached with the principal below.
+    if (!(await this.userContext.sessionIsLive(payload.sid, payload.sub))) {
+      throw new UnauthorizedException('Session has ended, please sign in again');
+    }
+
     const context = await this.userContext.resolve(payload.sub);
     if (context.organizationId !== payload.org) {
       throw new UnauthorizedException('Token organisation mismatch');

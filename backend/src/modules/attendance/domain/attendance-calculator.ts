@@ -39,6 +39,13 @@ export interface DeriveAttendanceInput {
   isHoliday: boolean;
   /** Fraction of the day covered by approved leave (0, 0.5 or 1). */
   leaveDayValue?: number;
+  /**
+   * The day is over: it is before today in the organisation's time zone. A day
+   * that is over with a clock-in and no clock-out will not get its clock-out, so
+   * it is INCOMPLETE (CW-106), as the nightly close-out would make it; today's is
+   * still on the clock.
+   */
+  dayIsOver?: boolean;
 }
 
 export interface DerivedAttendance {
@@ -82,6 +89,24 @@ export function deriveAttendance(input: DeriveAttendanceInput): DerivedAttendanc
     };
   }
 
+  // A clock-out with no clock-in is a day nobody can measure: INCOMPLETE with no
+  // minutes, whatever the day (CW-106). Measuring from a missing start would give
+  // no number at all.
+  if (!firstClockInAt) {
+    return {
+      firstClockInAt: null,
+      lastClockOutAt,
+      breakMinutes: 0,
+      workedMinutes: 0,
+      lateMinutes: 0,
+      earlyLeaveMinutes: 0,
+      overtimeMinutes: 0,
+      status: AttendanceStatus.INCOMPLETE,
+      isOutsideGeofence,
+      anomalyFlags: [...anomalyFlags],
+    };
+  }
+
   if (!lastClockOutAt) {
     return {
       firstClockInAt,
@@ -91,15 +116,16 @@ export function deriveAttendance(input: DeriveAttendanceInput): DerivedAttendanc
       lateMinutes: computeLateMinutes(input, firstClockInAt),
       earlyLeaveMinutes: 0,
       overtimeMinutes: 0,
-      // Still on the clock, or they forgot to clock out — either way the day is
-      // not scoreable yet. The nightly job flips stale rows to INCOMPLETE.
-      status: AttendanceStatus.PRESENT,
+      // Still on the clock today, or they forgot to clock out. Once the day is
+      // over there is no clock-out to wait for; the nightly job does the same for
+      // yesterday, and this does it for a day entered or imported afterwards.
+      status: input.dayIsOver ? AttendanceStatus.INCOMPLETE : AttendanceStatus.PRESENT,
       isOutsideGeofence,
       anomalyFlags: [...anomalyFlags],
     };
   }
 
-  const grossMinutes = Math.max(0, minutesBetween(firstClockInAt!, lastClockOutAt));
+  const grossMinutes = Math.max(0, minutesBetween(firstClockInAt, lastClockOutAt));
   const deductedBreak = breakMinutes > 0 ? breakMinutes : (input.shift?.breakMinutes ?? 0);
   const workedMinutes = Math.max(0, grossMinutes - deductedBreak);
 

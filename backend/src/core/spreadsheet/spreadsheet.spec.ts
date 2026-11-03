@@ -254,3 +254,51 @@ describe('columnLetter', () => {
     ]);
   });
 });
+
+describe('A sheet made to print (CW-105)', () => {
+  const rows = [
+    ['Title', '', ''],
+    ['A', 'B', 'C'],
+    [1, 2, 3],
+  ];
+  const parts = (extra: Record<string, unknown>) =>
+    unzipSync(writeXlsx([{ name: 'Register', rows, headerRows: 2, ...extra }]));
+
+  it('prints landscape, one page wide, with its headings repeated on each page', () => {
+    const files = parts({ print: true });
+    const sheet = strFromU8(files['xl/worksheets/sheet1.xml']!);
+    const workbook = strFromU8(files['xl/workbook.xml']!);
+
+    expect(sheet).toContain('<pageSetUpPr fitToPage="1"/>');
+    expect(sheet).toContain('orientation="landscape"');
+    expect(sheet).toContain('fitToWidth="1" fitToHeight="0"');
+    expect(workbook).toContain('name="_xlnm.Print_Titles" localSheetId="0"');
+    expect(workbook).toContain("'Register'!$1:$2");
+  });
+
+  it('prints as it always did when not asked to', () => {
+    const files = parts({});
+
+    expect(strFromU8(files['xl/worksheets/sheet1.xml']!)).not.toContain('pageSetup');
+    expect(strFromU8(files['xl/workbook.xml']!)).not.toContain('definedName');
+  });
+
+  it('draws a border on every cell and centres the headings, writing the cells under a merge', () => {
+    const files = parts({ grid: true, merges: ['A1:C1'] });
+    const sheet = strFromU8(files['xl/worksheets/sheet1.xml']!);
+    const styles = strFromU8(files['xl/styles.xml']!);
+
+    expect(styles).toContain('horizontal="center"');
+    // B1 and C1 are empty under the merge, and still carry the heading's border.
+    expect(sheet).toContain('<c r="B1" s="5"/>');
+    expect(sheet).toContain('<c r="C1" s="5"/>');
+  });
+
+  it('is still read back as the same table', () => {
+    const table = readXlsx(
+      writeXlsx([{ name: 'Register', rows, headerRows: 2, print: true, grid: true }]),
+    );
+
+    expect(table.rows[2]).toEqual([1, 2, 3]);
+  });
+});

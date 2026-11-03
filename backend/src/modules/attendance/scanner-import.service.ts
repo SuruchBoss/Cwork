@@ -10,7 +10,7 @@ import {
   PunchType,
   ScannerDayDecisionAction,
 } from '@prisma/client';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   AccessDeniedError,
   BusinessRuleError,
@@ -44,6 +44,9 @@ import type {
 } from './dto/scanner.dto';
 
 /** The review list covers at most this many days at a time. */
+/** How many days' punches are written in one transaction. */
+const PUNCH_WRITE_DAYS_AT_A_TIME = 250;
+
 const MAX_REVIEW_DAYS = 93;
 
 const dayInclude = {
@@ -72,6 +75,8 @@ export interface ScannerPreview {
   days: { added: number; changed: number; unchanged: number };
   /** What each day of the file is, counting every line. */
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR has decided about them (CW-106). */
+  singleScanDays: number;
   /** Punches this file would add to attendance. */
   punchesToAdd: number;
   /** Days of the file payroll has already used (same rule as the review page): left as they are. */
@@ -87,6 +92,8 @@ export interface ScannerCommitResult {
   lines: number;
   days: { added: number; changed: number; unchanged: number };
   byStatus: Record<ScannerDayStatus, number>;
+  /** Days scanned only once, whatever HR has decided about them (CW-106). */
+  singleScanDays: number;
   punchesAdded: number;
   /** Days of the file payroll has already used (same rule as the review page): left as they were. */
   lockedDays: number;
@@ -224,6 +231,7 @@ export class ScannerImportService {
         lines: lines.length,
         days: { added: 0, changed: 0, unchanged: 0 },
         byStatus: EMPTY_BY_STATUS(),
+        singleScanDays: 0,
         punchesToAdd: 0,
         lockedDays: 0,
         unmapped: [],
@@ -354,6 +362,7 @@ export class ScannerImportService {
       lines: lines.length,
       days: summary.days,
       byStatus: summary.byStatus,
+      singleScanDays: summary.singleScanDays,
       punchesAdded: added + late.punchesAdded,
       lockedDays: await this.countLockedDays(organizationId, plan.entries),
       unmapped: this.unmappedOf(plan.entries),
@@ -919,8 +928,10 @@ export class ScannerImportService {
     const byStatus = EMPTY_BY_STATUS();
     let added = 0;
     let changed = 0;
+    let singleScanDays = 0;
     for (const e of plan.entries) {
       byStatus[e.verdict.status] += 1;
+      if (e.times.length === 1) singleScanDays += 1;
       if (e.isNew) added += 1;
       else if (e.changed) changed += 1;
     }
@@ -931,6 +942,7 @@ export class ScannerImportService {
       lines: lines.length,
       days: { added, changed, unchanged: plan.entries.length - added - changed },
       byStatus,
+      singleScanDays,
     };
   }
 
@@ -1038,7 +1050,13 @@ export class ScannerImportService {
         )
       : new LockedDays(new Set(), new Map());
 
-    let added = 0;
+    // What each day needs written, worked out before anything is.
+    const work: Array<{
+      day: LoadedDay;
+      employeeId: string;
+      wanted: Map<string, { time: string; type: 'CLOCK_IN' | 'CLOCK_OUT' }>;
+      decisionId: string | null;
+    }> = [];
     for (const day of mapped) {
       const employeeId = day.employeeId!;
       const date = formatDateOnly(day.workDate);
@@ -1058,57 +1076,91 @@ export class ScannerImportService {
       const right = wanted.size === active.size && [...wanted.keys()].every((k) => active.has(k));
       if (right) continue;
       if (locked.has(`${employeeId}|${date}`)) continue;
+      work.push({
+        day,
+        employeeId,
+        wanted,
+        decisionId: inForce(day, day.times) ? (day.decisions[0]?.id ?? null) : null,
+      });
+    }
 
-      const decisionId = inForce(day, day.times) ? (day.decisions[0]?.id ?? null) : null;
-      const created = await this.prisma.$transaction(async (tx) => {
-        let made = 0;
-        // Set aside what the day no longer should have.
-        const links = await tx.scannerPunchLink.findMany({
-          where: { scannerDayId: day.id },
-          select: { punchId: true, supersededAt: true, punch: { select: { clientPunchId: true } } },
-        });
-        const stale = links.filter(
-          (l) => l.supersededAt === null && !wanted.has(l.punch.clientPunchId ?? ''),
-        );
-        if (stale.length > 0) {
-          await tx.scannerPunchLink.updateMany({
-            where: { punchId: { in: stale.map((l) => l.punchId) } },
-            data: { supersededAt: new Date() },
-          });
-        }
-        for (const [key, punch] of wanted) {
-          const link = links.find((l) => l.punch.clientPunchId === key);
-          if (link) {
-            if (link.supersededAt !== null) {
-              await tx.scannerPunchLink.update({
-                where: { punchId: link.punchId },
-                data: { supersededAt: null, decisionId },
-              });
-            }
-            continue;
-          }
-          const row = await tx.attendancePunch.create({
-            data: {
-              organizationId,
-              employeeId,
-              type: punch.type === 'CLOCK_IN' ? PunchType.CLOCK_IN : PunchType.CLOCK_OUT,
-              method: PunchMethod.BIOMETRIC,
-              punchedAt: zonedInstant(day.workDate, punch.time, timezone),
-              workDate: day.workDate,
-              clientPunchId: key,
-              note: 'Fingerprint scanner export',
+    // The writes go in groups of days, a group in one transaction, so a failure
+    // leaves whole days as they were rather than half-written ones.
+    let added = 0;
+    for (let i = 0; i < work.length; i += PUNCH_WRITE_DAYS_AT_A_TIME) {
+      const group = work.slice(i, i + PUNCH_WRITE_DAYS_AT_A_TIME);
+      added += await this.prisma.$transaction(
+        async (tx) => {
+          const links = await tx.scannerPunchLink.findMany({
+            where: { scannerDayId: { in: group.map((w) => w.day.id) } },
+            select: {
+              scannerDayId: true,
+              punchId: true,
+              supersededAt: true,
+              punch: { select: { clientPunchId: true } },
             },
           });
-          await tx.scannerPunchLink.create({
-            data: { punchId: row.id, scannerDayId: day.id, decisionId },
-          });
-          made += 1;
-        }
-        return made;
-      });
-      added += created;
-      await this.attendance.recalculateDay(organizationId, employeeId, day.workDate, timezone);
+          const linksOf = new Map<string, typeof links>();
+          for (const link of links) {
+            linksOf.set(link.scannerDayId, [...(linksOf.get(link.scannerDayId) ?? []), link]);
+          }
+
+          const setAside: string[] = [];
+          const punchRows: Prisma.AttendancePunchCreateManyInput[] = [];
+          const linkRows: Prisma.ScannerPunchLinkCreateManyInput[] = [];
+          for (const { day, employeeId, wanted, decisionId } of group) {
+            const own = linksOf.get(day.id) ?? [];
+            // Set aside what the day no longer should have.
+            for (const l of own) {
+              if (l.supersededAt === null && !wanted.has(l.punch.clientPunchId ?? '')) {
+                setAside.push(l.punchId);
+              }
+            }
+            for (const [key, punch] of wanted) {
+              const link = own.find((l) => l.punch.clientPunchId === key);
+              if (link) {
+                if (link.supersededAt !== null) {
+                  await tx.scannerPunchLink.update({
+                    where: { punchId: link.punchId },
+                    data: { supersededAt: null, decisionId },
+                  });
+                }
+                continue;
+              }
+              const id = randomUUID();
+              punchRows.push({
+                id,
+                organizationId,
+                employeeId,
+                type: punch.type === 'CLOCK_IN' ? PunchType.CLOCK_IN : PunchType.CLOCK_OUT,
+                method: PunchMethod.BIOMETRIC,
+                punchedAt: zonedInstant(day.workDate, punch.time, timezone),
+                workDate: day.workDate,
+                clientPunchId: key,
+                note: 'Fingerprint scanner export',
+              });
+              linkRows.push({ punchId: id, scannerDayId: day.id, decisionId });
+            }
+          }
+          if (setAside.length > 0) {
+            await tx.scannerPunchLink.updateMany({
+              where: { punchId: { in: setAside } },
+              data: { supersededAt: new Date() },
+            });
+          }
+          if (punchRows.length > 0) await tx.attendancePunch.createMany({ data: punchRows });
+          if (linkRows.length > 0) await tx.scannerPunchLink.createMany({ data: linkRows });
+          return punchRows.length;
+        },
+        { timeout: 120_000 },
+      );
     }
+
+    await this.attendance.recalculateDays(
+      organizationId,
+      work.map((w) => ({ employeeId: w.employeeId, workDate: w.day.workDate })),
+      timezone,
+    );
     void userId;
     return added;
   }

@@ -42,10 +42,11 @@ export class ApprovalController {
   @Get('instances/:entityType/:entityId')
   @ApiOperation({ summary: 'Approval trail for one entity' })
   getInstance(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('entityType') entityType: ApprovalEntityType,
     @Param('entityId', ParseUUIDPipe) entityId: string,
   ) {
-    return this.approvals.getInstanceForEntity(entityType, entityId);
+    return this.approvals.getInstanceFor(user, entityType, entityId);
   }
 
   @Get('policies')

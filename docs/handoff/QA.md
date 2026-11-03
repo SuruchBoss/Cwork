@@ -18,7 +18,9 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 - **PR:** the gate results are on branch `claude/qa-pilot-a-gate`, for the PO to review and merge.
 - **Not covered:** #111 (CW-095) landed after pass 2 began; the demo's wake-up
   time on Render (the owner times it); DSM and the real NAS.
-- **Next:** CW-100 when it lands, the CW-099 button in the console, and each private finding as the PO says its fix is in. A real-NAS pass (N1–N3, N11, DSM) needs someone with DSM access and the owner's approval.
+- **Re-test of the items fixed in PR #139 (2026-11-03):** done on the branch, closed; items outside that PR remain.
+- **Final regression (2026-11-03, main `14fb65d`):** passed; details in the plan under "Final regression before install". The document-issue path was included.
+- **Next:** CW-100 when it lands, the CW-099 button in the console, the G1–G4 browser tasks in the blind test on the installed stack, and each private finding as the PO says its fix is in. A real-NAS pass (N1–N3, N11, DSM) needs someone with DSM access and the owner's approval.
 
 ## How to start
 

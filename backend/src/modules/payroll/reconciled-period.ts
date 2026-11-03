@@ -3,12 +3,14 @@
 
 import { BusinessRuleError, NotFoundError } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
+import { anotherPeriodExpected, missingOrdinals } from './domain/pay-period';
 import {
   PayrollReconciliationError,
   reconcilePeriod,
   type ExportItem,
   type ReconciledPeriod,
 } from './domain/payroll-export';
+import { thaiMonthYear } from './domain/thai-month';
 
 export interface LoadedPeriod {
   period: { id: string; code: string; year: number; month: number };
@@ -27,6 +29,12 @@ export interface LoadOptions {
    * paid that month has to read all of them.
    */
   wholeMonth?: boolean;
+  /**
+   * What the caller was doing, in Thai, for the refusal of a month that is not
+   * all there: "ยัง{action}{month} ไม่ได้". The register says
+   * "ส่งออกทะเบียนของเดือน", the comparison "เทียบยอดของเดือน".
+   */
+  action?: string;
 }
 
 /**
@@ -84,7 +92,12 @@ export async function loadReconciledPeriod(
   });
 
   try {
-    if (options.wholeMonth) assertMonthIsComplete(periods, anchor);
+    if (options.wholeMonth) {
+      const monthlyPeriodExists = periods.some((period) => period.payFrequency === 'MONTHLY');
+      const monthlyStaffExpected =
+        !monthlyPeriodExists && (await hasMonthlyStaff(prisma, organizationId, anchor));
+      assertMonthIsComplete(periods, anchor, options.action, monthlyStaffExpected);
+    }
     const reconciled = reconcilePeriod(
       options.wholeMonth
         ? { code: monthCode(anchor), year: anchor.year, month: anchor.month }
@@ -147,22 +160,95 @@ export async function loadReconciledPeriod(
   }
 }
 
+/**
+ * Whether anyone on a monthly salary is employed in the calendar month. The
+ * test is the one the run itself applies (`employeesInPeriod`) plus a monthly
+ * pay basis in force at some point in the month, so a month that has staff on a
+ * monthly salary is expected to have a monthly period (CW-107).
+ */
+async function hasMonthlyStaff(
+  prisma: PrismaService,
+  organizationId: string,
+  month: { year: number; month: number },
+): Promise<boolean> {
+  const start = new Date(Date.UTC(month.year, month.month - 1, 1));
+  const end = new Date(Date.UTC(month.year, month.month, 0));
+  const found = await prisma.employee.findFirst({
+    where: {
+      organizationId,
+      deletedAt: null,
+      hireDate: { lte: end },
+      OR: [{ lastWorkingDate: null }, { lastWorkingDate: { gte: start } }],
+      status: { notIn: ['PRE_BOARDING'] },
+      compensations: {
+        some: {
+          payFrequency: 'MONTHLY',
+          effectiveFrom: { lte: end },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: start } }],
+        },
+      },
+    },
+    select: { id: true },
+  });
+  return found !== null;
+}
+
 const monthCode = (month: { year: number; month: number }) =>
   `${month.year}-${String(month.month).padStart(2, '0')}`;
+
+/** What a run's status says to HR, in the words the run page uses. */
+const RUN_STATUS_TH: Record<string, string> = {
+  DRAFT: 'ร่าง',
+  CALCULATING: 'กำลังคำนวณ',
+  CALCULATED: 'คำนวณแล้ว รออนุมัติ',
+  PENDING_APPROVAL: 'รออนุมัติ',
+  FAILED: 'คำนวณไม่สำเร็จ',
+  CANCELLED: 'ยกเลิกแล้ว',
+};
+
+/** Which period of the month, as a person says it: the whole month, a half, or the nth 14 days. */
+function periodName(period: { code: string; payFrequency: string; half: number }): string {
+  if (period.payFrequency === 'SEMI_MONTHLY') {
+    return `${period.half === 1 ? 'ครึ่งแรก' : 'ครึ่งหลัง'} (${period.code})`;
+  }
+  if (period.payFrequency === 'BIWEEKLY') return `งวด 14 วันที่ ${period.half} (${period.code})`;
+  return `งวดรายเดือน (${period.code})`;
+}
 
 /**
  * A month is only listed when all of it is there. A register missing the second
  * half of the daily wages would look finished and be short, so a period without
- * a run, or a semi-monthly month without both halves, is refused by name.
+ * a run, a run not yet approved, or a month missing a half is refused by name,
+ * in Thai, with what to do next (CW-105).
  */
 function assertMonthIsComplete(
-  periods: Array<{ code: string; payFrequency: string; half: number; runs: unknown[] }>,
+  periods: Array<{
+    code: string;
+    payFrequency: string;
+    half: number;
+    payDate: Date;
+    runs: Array<{ runNo: string; status: string }>;
+  }>,
   month: { year: number; month: number },
+  action = 'ส่งออกทะเบียนของเดือน',
+  monthlyStaffExpected = false,
 ): void {
+  const monthName = thaiMonthYear(month.year, month.month);
+  const refuse = (what: string, next: string) =>
+    new PayrollReconciliationError(`ยัง${action}${monthName} ไม่ได้ เพราะ${what} ${next}`);
+
   for (const period of periods) {
     if (period.runs.length === 0) {
-      throw new PayrollReconciliationError(
-        `Period ${period.code} has no payroll runs, so ${monthCode(month)} cannot be listed yet.`,
+      throw refuse(
+        `${periodName(period)} ยังไม่มีรอบเงินเดือน`,
+        'สร้างรอบ คำนวณ และอนุมัติให้ครบทุกงวดของเดือน แล้วลองอีกครั้ง',
+      );
+    }
+    const open = period.runs.find((run) => !['APPROVED', 'PAID'].includes(run.status));
+    if (open) {
+      throw refuse(
+        `${periodName(period)} มีรอบ ${open.runNo} ที่ยัง${RUN_STATUS_TH[open.status] ?? open.status}`,
+        'อนุมัติรอบนี้ (โดยคนที่ไม่ได้เป็นคนเตรียมรอบ) แล้วลองอีกครั้ง',
       );
     }
   }
@@ -171,10 +257,33 @@ function assertMonthIsComplete(
   );
   for (const half of [1, 2]) {
     if (halves.size > 0 && !halves.has(half)) {
-      throw new PayrollReconciliationError(
-        `The ${half === 1 ? 'first' : 'second'} half of ${monthCode(month)} has no period yet, ` +
-          'so the daily wages of the month are not all there.',
+      throw refuse(
+        `ยังไม่มีงวด${half === 1 ? 'ครึ่งแรก' : 'ครึ่งหลัง'}ของค่าจ้างรายวัน`,
+        'สร้างงวดนั้น สร้างรอบ คำนวณ และอนุมัติ แล้วลองอีกครั้ง',
       );
     }
+  }
+
+  // A month paid every 14 days is complete when no period is missing in it and
+  // the next one, fourteen days on, would belong to the following month.
+  const fortnights = periods.filter((period) => period.payFrequency === 'BIWEEKLY');
+  if (fortnights.length > 0) {
+    const missing = missingOrdinals(fortnights.map((period) => period.half));
+    const last = fortnights.reduce((a, b) => (a.half >= b.half ? a : b));
+    if (missing.length > 0 || anotherPeriodExpected(last.payDate, month)) {
+      throw refuse(
+        'ยังมีงวด 14 วันของเดือนนี้ที่ยังไม่ได้สร้าง',
+        'สร้างงวดที่เหลือ คำนวณ และอนุมัติ แล้วส่งออกอีกครั้ง',
+      );
+    }
+  }
+
+  // Staff on a monthly salary are paid in a monthly period. A month of daily
+  // wages alone would look finished and leave them out without a word.
+  if (monthlyStaffExpected) {
+    throw refuse(
+      'เดือนนี้มีพนักงานรายเดือน แต่ยังไม่มีงวดรายเดือน',
+      'สร้างงวดรายเดือนของเดือนนี้ สร้างรอบ คำนวณ และอนุมัติ แล้วลองอีกครั้ง',
+    );
   }
 }

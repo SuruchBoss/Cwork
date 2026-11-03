@@ -20,15 +20,25 @@ import {
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
-import { formatDate, formatMoney, formatPeriod, formatYear } from '@/lib/format';
+import { formatDate, formatMoney, formatPeriod, formatYear, toIsoDate } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
 import { payrollPeriodStatusLabels, payrollStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { PayrollPeriod, PayrollRun } from '@/types/api';
 
-/** Which part of the month a new period pays (CW-069): all of it, or one half. */
-type Cycle = 'MONTH' | 'H1' | 'H2';
+/**
+ * What a new period pays (CW-069, CW-101): the whole month, one half of it, or
+ * fourteen days that follow on from the last such period.
+ */
+type Cycle = 'MONTH' | 'H1' | 'H2' | 'B14';
+
+/** A date-only string moved by some days, in UTC so a time zone cannot shift it. */
+function plusDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 /**
  * A half's dates are fixed, the 1st to the 15th and the 16th to the month's
@@ -41,6 +51,7 @@ function cycleDates(year: number, month: number, cycle: Cycle) {
   const last = new Date(year, month, 0).getDate();
   if (cycle === 'H1') return { periodStart: day(1), periodEnd: day(15) };
   if (cycle === 'H2') return { periodStart: day(16), periodEnd: day(last) };
+  if (cycle === 'B14') return { periodStart: day(1), periodEnd: plusDays(day(1), 13) };
   return { periodStart: day(1), periodEnd: day(last) };
 }
 
@@ -69,7 +80,9 @@ export default function PayrollPage() {
     const month = next.month ?? form.month;
     const nextCycle = next.cycle ?? cycle;
     setCycle(nextCycle);
-    const dates = cycleDates(year, month, nextCycle);
+    // Fourteen days start the day after the last such period ended (the server
+    // refuses any other start); with none yet, today sets the rhythm.
+    const dates = nextCycle === 'B14' ? startOfNextFortnight() : cycleDates(year, month, nextCycle);
     setForm({
       ...form,
       year,
@@ -84,6 +97,16 @@ export default function PayrollPage() {
     queryFn: () => api.get<PayrollPeriod[]>('/payroll/periods'),
   });
 
+  const startOfNextFortnight = () => {
+    const ends = (periods.data ?? [])
+      .filter((period) => period.payFrequency === 'BIWEEKLY')
+      .map((period) => period.periodEnd.slice(0, 10))
+      .sort();
+    const periodStart =
+      ends.length > 0 ? plusDays(ends[ends.length - 1]!, 1) : toIsoDate(new Date());
+    return { periodStart, periodEnd: plusDays(periodStart, 13) };
+  };
+
   const runs = useQuery({
     queryKey: qk.payrollRuns(),
     queryFn: () => api.get<PayrollRun[]>('/payroll/runs'),
@@ -91,12 +114,18 @@ export default function PayrollPage() {
 
   const createPeriod = useMutation({
     mutationFn: () =>
-      api.post<PayrollPeriod>('/payroll/periods', {
-        ...form,
-        ...(cycle === 'MONTH'
-          ? {}
-          : { payFrequency: 'SEMI_MONTHLY', half: cycle === 'H1' ? 1 : 2 }),
-      }),
+      api.post<PayrollPeriod>(
+        '/payroll/periods',
+        cycle === 'B14'
+          ? // The server ends it, numbers it and says which month it counts toward.
+            { payFrequency: 'BIWEEKLY', periodStart: form.periodStart, payDate: form.payDate }
+          : {
+              ...form,
+              ...(cycle === 'MONTH'
+                ? {}
+                : { payFrequency: 'SEMI_MONTHLY', half: cycle === 'H1' ? 1 : 2 }),
+            },
+      ),
     onSuccess: () => {
       setCreating(false);
       void queryClient.invalidateQueries({ queryKey: ['payroll'] });
@@ -190,44 +219,71 @@ export default function PayrollPage() {
         <Card title={t('Create a pay period')}>
           <div className="toolbar">
             {/* Chosen from lists, so the year reads in the reader's era (CW-058). */}
-            <Field label={t('Year')}>
-              <Select value={form.year} onChange={(e) => choose({ year: Number(e.target.value) })}>
-                {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((year) => (
-                  <option key={year} value={year}>
-                    {formatYear(year)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={t('Month')}>
-              <Select
-                value={form.month}
-                onChange={(e) => choose({ month: Number(e.target.value) })}
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                  <option key={month} value={month}>
-                    {formatDate(new Date(2000, month - 1, 1), 'LLLL')}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            {cycle !== 'B14' && (
+              <>
+                <Field label={t('Year')}>
+                  <Select
+                    value={form.year}
+                    onChange={(e) => choose({ year: Number(e.target.value) })}
+                  >
+                    {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(
+                      (year) => (
+                        <option key={year} value={year}>
+                          {formatYear(year)}
+                        </option>
+                      ),
+                    )}
+                  </Select>
+                </Field>
+                <Field label={t('Month')}>
+                  <Select
+                    value={form.month}
+                    onChange={(e) => choose({ month: Number(e.target.value) })}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                      <option key={month} value={month}>
+                        {formatDate(new Date(2000, month - 1, 1), 'LLLL')}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </>
+            )}
             <Field
               label={t('Pays')}
               hint={
-                cycle === 'MONTH' ? undefined : t('Half-month periods pay daily-wage employees')
+                cycle === 'MONTH'
+                  ? undefined
+                  : cycle === 'B14'
+                    ? t(
+                        '14-day periods pay daily-wage employees set to be paid every 14 days, and count toward the month they are paid in',
+                      )
+                    : t('Half-month periods pay daily-wage employees')
               }
             >
               <Select value={cycle} onChange={(e) => choose({ cycle: e.target.value as Cycle })}>
                 <option value="MONTH">{t('The whole month')}</option>
                 <option value="H1">{t('First half (1st–15th)')}</option>
                 <option value="H2">{t('Second half (16th–month end)')}</option>
+                <option value="B14">{t('Every 14 days')}</option>
               </Select>
             </Field>
             <Field label={t('Period start')}>
               <DateInput
                 value={form.periodStart}
-                disabled={cycle !== 'MONTH'}
-                onChange={(value) => setForm({ ...form, periodStart: value })}
+                disabled={cycle === 'H1' || cycle === 'H2'}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    periodStart: value,
+                    ...(cycle === 'B14' && value
+                      ? {
+                          periodEnd: plusDays(value, 13),
+                          ...(payDateChosen ? {} : { payDate: plusDays(value, 13) }),
+                        }
+                      : {}),
+                  })
+                }
               />
             </Field>
             <Field label={t('Period end')}>
@@ -441,6 +497,14 @@ function periodError(
       return t('That month already has this period: {period}', {
         period: formatPeriod(details.code),
       });
+    }
+    if (error.code === 'PAYROLL_PERIOD_NOT_NEXT') {
+      return t('The next 14-day period starts {date}, the day after the last one ends', {
+        date: formatDate(details.expectedStart),
+      });
+    }
+    if (error.code === 'PAYROLL_PERIOD_OVERLAPS') {
+      return t('That would overlap a 14-day period already made');
     }
     if (error.code === 'INVALID_PERIOD_DATES') {
       return t('A half runs from {from} to {to}', {

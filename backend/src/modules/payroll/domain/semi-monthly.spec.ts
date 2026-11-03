@@ -158,6 +158,64 @@ describe('Social security across two halves (PO decision Q5)', () => {
   });
 });
 
+describe('Social security of a daily wage, on the example a pilot company gave', () => {
+  // 372 a day for 23 days is 8,556 for the month. 5% of it is 427.80, which the
+  // form rounds to 428, for the employee and for the employer alike. The rate,
+  // the rounding and the whole-baht rule are the ones CW-084 confirmed from the
+  // Social Security Office's notice; these tests only pin the example.
+
+  it('takes 428 each from 8,556 by the rule itself', () => {
+    const result = computeSocialSecurity(8_556);
+
+    expect(result.contributoryWage.toNumber()).toBe(8_556);
+    expect(result.employeeContribution.toNumber()).toBe(428);
+    expect(result.employerContribution.toNumber()).toBe(428);
+  });
+
+  it('takes the same 428 on a monthly payslip whose pay is a daily wage line', () => {
+    const slip = buildPayslip(daily(372, 23));
+
+    const base = slip.lines.find((l) => l.code === 'BASE')!;
+    expect(base.quantity?.toNumber()).toBe(23);
+    expect(base.rate?.toNumber()).toBe(372);
+    expect(base.amount.toNumber()).toBe(8_556);
+    expect(slip.ssoWage.toNumber()).toBe(8_556);
+    expect(slip.ssoEmployee.toNumber()).toBe(428);
+    expect(slip.ssoEmployer.toNumber()).toBe(428);
+    // The line on the payslip is the figure on the summary.
+    expect(slip.lines.find((l) => l.code === 'SSO')?.amount.toNumber()).toBe(428);
+  });
+
+  it('takes 428 over two halves of 11 and 12 days, as one monthly run would', () => {
+    // H1 372 × 11 = 4,092: 5% is 204.60, 205. The month, 8,556, gives 427.80,
+    // 428, so H2 (372 × 12 = 4,464) takes the 223 that is left.
+    const { h1, h2 } = month(daily(372, 11), daily(372, 12));
+
+    expect(h1.lines.find((l) => l.code === 'BASE')?.amount.toNumber()).toBe(4_092);
+    expect(h2.lines.find((l) => l.code === 'BASE')?.amount.toNumber()).toBe(4_464);
+    expect(h1.ssoEmployee.toNumber()).toBe(205);
+    expect(h2.ssoEmployee.toNumber()).toBe(223);
+    expect(h1.ssoEmployee.plus(h2.ssoEmployee).toNumber()).toBe(428);
+    expect(h1.ssoEmployer.plus(h2.ssoEmployer).toNumber()).toBe(428);
+    expect(h1.ssoEmployee.plus(h2.ssoEmployee).toNumber()).toBe(
+      buildPayslip(daily(372, 23)).ssoEmployee.toNumber(),
+    );
+    expect(h2.warnings).toEqual([]);
+  });
+
+  it('takes 428 whichever way the 23 days fall between the halves', () => {
+    for (let first = 0; first <= 23; first++) {
+      const { h1, h2 } = month(daily(372, first), daily(372, 23 - first));
+
+      expect({ first, total: h1.ssoEmployee.plus(h2.ssoEmployee).toNumber() }).toEqual({
+        first,
+        total: 428,
+      });
+      expect(h1.ssoEmployer.plus(h2.ssoEmployer).toNumber()).toBe(428);
+    }
+  });
+});
+
 describe('Withholding across two halves (PO decision Q4)', () => {
   // 2,000 a day × 13 days = 26,000 a half, 52,000 a month, 624,000 a year.
   // Expenses 100,000 (capped), personal 60,000, social security 875 × 12 =

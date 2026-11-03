@@ -227,7 +227,7 @@ export default function PeriodCheckPage() {
         <div className="stack">
           <p className="muted" style={{ margin: 0 }}>
             {t(
-              'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. Cwork marks every person and column that differs.',
+              'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. You can upload your own payroll register as it is, with its title and headings, once you add a column headed รหัสพนักงาน with each person’s employee code. Cwork marks every person and column that differs.',
             )}
           </p>
           <label className="btn btn--secondary file-button">

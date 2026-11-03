@@ -709,9 +709,13 @@ folder is its own btrfs subvolume but all of them fail with the same volume. On 
 one-volume NAS the backup therefore goes to a USB drive, a second volume or
 another machine's share. `--allow-same-disk` exists for tests only.
 
-It never writes `FIELD_ENCRYPTION_KEY`. The backup alone must not be enough to
-read staff IDs and bank accounts, and the key alone is useless without the data:
-keep the key in a password manager, the backup on the drive. **Losing the key
+It never writes `FIELD_ENCRYPTION_KEY`, so the backup alone does not reveal the
+encrypted columns (staff ID numbers and bank accounts), and the key alone is
+useless without the data: keep the key in a password manager, the backup on the
+drive. Salaries, names and the other staff data are **not** encrypted in the dump,
+so whoever can read the backup file can read them. The script writes each file
+readable by its owner only (mode 600); keep the backup folder somewhere only the
+administrator can open. **Losing the key
 makes those columns unreadable for good; `./show-key.sh` prints it on request.**
 
 A nightly run, in DSM: *Control Panel → Task Scheduler → Create → Scheduled Task
@@ -737,10 +741,17 @@ restarts. It asks for the word `RESTORE`.
 Rebuilding a machine after a loss:
 
 ```bash
-./install.sh --mode full --field-key '<the saved key>' --backup-dir /path
+./install.sh --mode full --field-key-file /path/to/the/saved-key.txt --backup-dir /path
 ./restore.sh /path/to/the/last/backup.sql.gz
 ./export-ca.sh        # a new authority was made: office PCs trust the new file
 ```
+
+The installer takes the saved key, and the database password in path C, from a
+file (`--field-key-file`, `--db-password-file`, first line), from the environment
+(`CWORK_FIELD_KEY`, `CWORK_DB_PASSWORD`), or typed when asked (`--field-key-prompt`
+for the key; the password is asked for by itself). They are kept off the command
+line so that the process list and the shell history do not hold them. The older
+`--field-key` and `--db-password` options still work and print a warning.
 
 ### Update and rollback
 
@@ -783,7 +794,8 @@ Manager on the NAS, because PostgreSQL runs as a container there.
 # on the NAS
 ./install.sh --mode db --backup-dir /volumeUSB1/usbshare/cwork-backup
 # on the office PC (Docker installed there too)
-./install.sh --mode app --host <the PC's address> --db-host <the NAS address> --db-password '<POSTGRES_PASSWORD from the NAS .env>'
+./install.sh --mode app --host <the PC's address> --db-host <the NAS address>
+# it asks for the database password (POSTGRES_PASSWORD in the NAS .env) and does not show it
 ```
 
 Know what you are choosing:

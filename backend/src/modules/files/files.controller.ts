@@ -80,7 +80,7 @@ export class FilesController {
   @Get(':id')
   @ApiOperation({ summary: 'File metadata' })
   metadata(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
-    return this.files.getMetadata(user.organizationId, id);
+    return this.files.getMetadataFor(user, id);
   }
 
   @Get(':id/content')
@@ -90,7 +90,7 @@ export class FilesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Res() res: Response,
   ): Promise<void> {
-    const { file, content } = await this.files.download(user.organizationId, id);
+    const { file, content } = await this.files.downloadFor(user, id);
     res.setHeader('Content-Type', file.mimeType);
     // `attachment` + nosniff prevents an uploaded SVG/HTML from executing in
     // the context of the app's origin.
@@ -108,6 +108,6 @@ export class FilesController {
   @Audited({ action: AuditAction.DELETE, entityType: 'FileObject' })
   @ApiOperation({ summary: 'Soft-delete a file' })
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
-    return this.files.softDelete(user.organizationId, id);
+    return this.files.softDeleteFor(user, id);
   }
 }

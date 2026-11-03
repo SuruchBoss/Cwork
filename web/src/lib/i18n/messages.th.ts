@@ -447,8 +447,16 @@ export const thMessages: Record<string, string> = {
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page, in the Pay card, then calculate again.':
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงานแต่ละคน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
+  'A payroll run has to be approved by someone other than the person who prepared it. Ask the second approver to approve it.':
+    'รอบเงินเดือนต้องอนุมัติโดยคนอื่นที่ไม่ใช่คนเตรียมรอบ ให้ผู้อนุมัติคนที่สองเป็นคนกดอนุมัติ',
+  'The second half is worked out from the first half. Approve the first half’s run first, then calculate this one.':
+    'ครึ่งหลังคำนวณจากครึ่งแรก อนุมัติรอบของครึ่งแรกก่อน แล้วค่อยคำนวณรอบนี้',
+  'The file has no "รหัสพนักงาน" (employee code) column. HR\'s own register has none: add a column with that heading and put each person\'s Cwork employee code in it, then upload the file again':
+    'ไฟล์ไม่มีคอลัมน์ "รหัสพนักงาน" ทะเบียนของ HR ไม่มีคอลัมน์นี้ ให้เพิ่มคอลัมน์ที่หัวตารางว่า รหัสพนักงาน แล้วใส่รหัสพนักงานใน Cwork ของแต่ละคน จากนั้นอัปโหลดอีกครั้ง',
   'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ไม่มีใครได้รับค่าจ้างรายวัน งวดครึ่งเดือนจ่ายเฉพาะพนักงานที่ตั้งค่าจ้างรายวันไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
+  'Nobody is paid by the day every 14 days for this period. A 14-day period pays only employees whose daily wage is paid every 14 days; set it on the employee’s page, in the Pay card, then calculate again.':
+    'ไม่มีใครได้ค่าจ้างรายวันแบบทุก 14 วันในงวดนี้ งวด 14 วันจ่ายเฉพาะลูกจ้างที่ตั้งค่าจ้างรายวันให้จ่ายทุก 14 วัน ตั้งได้ที่การ์ดค่าจ้างในหน้าของพนักงาน แล้วคำนวณอีกครั้ง',
   'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.':
     'งวดนี้ยังไม่มีใครตั้งเงินเดือนไว้ ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   'Total deductions': 'รายการหักรวม',
@@ -895,8 +903,8 @@ export const thMessages: Record<string, string> = {
   'Withholding tax': 'ภาษีหัก ณ ที่จ่าย',
   'Employee {employee} + employer {employer}': 'ลูกจ้าง {employee} + นายจ้าง {employer}',
   '2. HR’s own figures, person by person': '2. ตัวเลขของ HR เอง ทีละคน',
-  'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. Cwork marks every person and column that differs.':
-    'ไฟล์ Excel หรือ CSV หนึ่งแถวต่อคน มีรหัสพนักงาน รายได้รวม ภาษี ประกันสังคม (ส่วนของลูกจ้าง) และเงินสุทธิ กรอกครบทุกช่องและปัดเศษเป็นสตางค์แล้ว คอลัมน์อื่นจะถูกข้าม Cwork จะทำเครื่องหมายทุกคนและทุกคอลัมน์ที่ต่างกัน',
+  'A spreadsheet or CSV with one row for each person: employee code, gross pay, tax, social security (the employee’s share) and net pay, all filled in and rounded to the satang. Other columns are ignored. You can upload your own payroll register as it is, with its title and headings, once you add a column headed รหัสพนักงาน with each person’s employee code. Cwork marks every person and column that differs.':
+    'ไฟล์ Excel หรือ CSV หนึ่งแถวต่อคน มีรหัสพนักงาน รายได้รวม ภาษี ประกันสังคม (ส่วนของลูกจ้าง) และเงินสุทธิ กรอกครบทุกช่องและปัดเศษเป็นสตางค์แล้ว คอลัมน์อื่นจะถูกข้าม อัปโหลดทะเบียนเงินเดือนของ HR ได้ตามที่มี พร้อมแถวชื่อเรื่องและหัวตาราง ขอแค่เพิ่มคอลัมน์ที่หัวตารางว่า รหัสพนักงาน ใส่รหัสพนักงานของแต่ละคน Cwork จะทำเครื่องหมายทุกคนและทุกคอลัมน์ที่ต่างกัน',
   'Fix these in the file': 'แก้ไขรายการเหล่านี้ในไฟล์',
   'People compared': 'คนที่เทียบได้',
   'People who differ': 'คนที่ตัวเลขต่างกัน',
@@ -945,6 +953,10 @@ export const thMessages: Record<string, string> = {
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
   '{count} day is waiting for HR to decide, and is not counted until then':
     '{count} วันรอ HR ตัดสิน และยังไม่นับจนกว่าจะตัดสิน',
+  '{count} day was scanned only once; check it before running payroll':
+    '{count} วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน',
+  '{count} days were scanned only once; check them before running payroll':
+    '{count} วันสแกนครั้งเดียว ตรวจก่อนคำนวณเงินเดือน',
   '{count} scanner numbers belong to nobody yet; match them on the review page':
     'เลขสแกน {count} เลขยังไม่มีเจ้าของ ไปจับคู่ได้ที่หน้าตรวจ',
   '{count} scanner number belongs to nobody yet; match it on the review page':
@@ -1359,6 +1371,7 @@ export const thMessages: Record<string, string> = {
   'From {date}': 'ตั้งแต่ {date}',
   Upcoming: 'รอมีผล',
   '{amount} a day, paid twice a month': 'วันละ {amount} จ่ายเดือนละ 2 ครั้ง',
+  '{amount} a day, paid every 14 days': 'วันละ {amount} จ่ายทุก 14 วัน',
   '{amount} a month': 'เดือนละ {amount}',
   'Choose the date the pay starts.': 'เลือกวันที่ค่าจ้างนี้เริ่มมีผล',
   'Enter the amount in baht, with at most two decimal places.':
@@ -1367,6 +1380,7 @@ export const thMessages: Record<string, string> = {
   'Paid as': 'จ่ายแบบ',
   'Monthly salary': 'เงินเดือน (รายเดือน)',
   'Daily wage, paid twice a month': 'ค่าจ้างรายวัน จ่ายเดือนละ 2 ครั้ง',
+  'Daily wage, paid every 14 days': 'ค่าจ้างรายวัน จ่ายทุก 14 วัน',
   'Baht a day': 'บาทต่อวัน',
   'Baht a month': 'บาทต่อเดือน',
   'Checked against the minimum wage set on the work location.':
@@ -1398,10 +1412,10 @@ export const thMessages: Record<string, string> = {
     'ครึ่งแรกหักภาษีเกินยอดทั้งเดือนไป {amount} ครึ่งนี้จึงไม่หักภาษี',
   'Work on a day off or a holiday ({hours} h at {rates}): check the rate owed to a daily-wage employee':
     'มีการทำงานในวันหยุด ({hours} ชม. ที่ {rates}) ตรวจอัตราที่ต้องจ่ายลูกจ้างรายวันด้วย',
-  'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be paid before this half can be calculated.':
-    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก รอบครึ่งแรกเลขที่ {no} ตอนนี้สถานะ“{status}” ต้องจ่ายครึ่งแรกก่อนจึงจะคำนวณครึ่งนี้ได้',
-  'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate, approve and pay it before this half.':
-    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก แต่ครึ่งแรกยังไม่มีรอบคำนวณ ให้สร้างรอบครึ่งแรก คำนวณ อนุมัติ และจ่ายก่อน',
+  'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be approved before this half can be calculated.':
+    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก รอบครึ่งแรกเลขที่ {no} ตอนนี้สถานะ“{status}” ต้องอนุมัติครึ่งแรกก่อนจึงจะคำนวณครึ่งนี้ได้',
+  'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate and approve it before this half.':
+    'รอบนี้เป็นครึ่งหลังของเดือน ซึ่งคำนวณต่อจากครึ่งแรก แต่ครึ่งแรกยังไม่มีรอบคำนวณ ให้สร้างรอบครึ่งแรก คำนวณ และอนุมัติก่อน',
   'Open the first half’s run {no}': 'เปิดรอบครึ่งแรกเลขที่ {no}',
   'Check before approving ({count})': 'ตรวจก่อนอนุมัติ ({count})',
   'To check': 'ต้องตรวจ',
@@ -1409,10 +1423,16 @@ export const thMessages: Record<string, string> = {
   Pays: 'งวดการจ่าย',
   'Half-month periods pay daily-wage employees': 'งวดครึ่งเดือนใช้จ่ายลูกจ้างรายวัน',
   'The whole month': 'ทั้งเดือน',
+  'Every 14 days': 'ทุก 14 วัน',
+  '14-day periods pay daily-wage employees set to be paid every 14 days, and count toward the month they are paid in':
+    'งวด 14 วันใช้จ่ายลูกจ้างรายวันที่ตั้งให้จ่ายทุก 14 วัน และนับเป็นของเดือนที่จ่าย',
   'First half (1st–15th)': 'ครึ่งแรก (วันที่ 1–15)',
   'Second half (16th–month end)': 'ครึ่งหลัง (วันที่ 16–สิ้นเดือน)',
   'That month already has this period: {period}': 'เดือนนั้นมีงวดนี้อยู่แล้ว: {period}',
   'A half runs from {from} to {to}': 'งวดครึ่งเดือนต้องเริ่ม {from} ถึง {to}',
+  'The next 14-day period starts {date}, the day after the last one ends':
+    'งวด 14 วันถัดไปต้องเริ่ม {date} คือวันถัดจากวันที่งวดก่อนจบ',
+  'That would overlap a 14-day period already made': 'ซ้อนกับงวด 14 วันที่สร้างไว้แล้ว',
   'Enter the minimum daily wage as an amount in baht.': 'ใส่ค่าแรงขั้นต่ำต่อวันเป็นจำนวนเงินบาท',
   'Say which Wage Committee announcement the minimum wage comes from.':
     'ระบุว่าค่าแรงขั้นต่ำนี้มาจากประกาศคณะกรรมการค่าจ้างฉบับไหน',

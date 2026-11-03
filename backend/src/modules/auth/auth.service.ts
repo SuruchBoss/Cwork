@@ -26,6 +26,7 @@ import type {
 } from './dto/auth.dto';
 import { MfaService } from './mfa.service';
 import { assertPasswordPolicy } from './password.policy';
+import { UnknownAccountAttempts } from './domain/sign-in-attempts';
 import { UserContextService } from './user-context.service';
 
 export interface RequestMeta {
@@ -43,6 +44,8 @@ type SignInStep = 'password' | 'second factor' | 'enrolment';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly unknownAttempts: UnknownAccountAttempts;
+  private dummyHash?: Promise<string>;
 
   constructor(
     @Inject(APP_CONFIG) private readonly config: RootConfig,
@@ -54,13 +57,27 @@ export class AuthService {
     private readonly mfa: MfaService,
     private readonly telemetry: TelemetryLogger,
     private readonly metrics: MetricsService,
-  ) {}
+  ) {
+    this.unknownAttempts = new UnknownAccountAttempts(
+      config.auth.maxFailedAttempts,
+      config.auth.lockoutMinutes,
+    );
+  }
 
   async login(
     dto: LoginDto,
     meta: RequestMeta,
   ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
     return this.recordingRefusal('password', meta, this.attemptLogin(dto, meta));
+  }
+
+  /**
+   * Checks the password against a hash that belongs to nobody, so a sign-in
+   * that has no hash of its own to check costs about what one that has does.
+   */
+  private async spendPasswordCheck(password: string): Promise<void> {
+    this.dummyHash ??= this.crypto.hashPassword(randomUUID());
+    await this.crypto.verifyPassword(await this.dummyHash, password);
   }
 
   private async attemptLogin(
@@ -74,13 +91,20 @@ export class AuthService {
       },
     });
 
-    // Always burn roughly the same time whether or not the account exists, so
-    // response timing does not reveal which emails are registered.
+    // Every refusal at this step reads the same to the caller, whether or not
+    // the address has an account: the same work is done, and an address with no
+    // account is counted and locked like one with an account.
     if (!user || !user.passwordHash) {
-      await this.crypto.hashPassword(dto.password);
+      await this.spendPasswordCheck(dto.password);
+      const lockedUntil = this.unknownAttempts.lockedUntil(dto.email, new Date());
+      if (lockedUntil) throwLocked(lockedUntil);
+      this.unknownAttempts.registerFailure(dto.email, new Date());
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      await this.spendPasswordCheck(dto.password);
+    }
     assertNotLocked(user.lockedUntil);
 
     const valid = await this.crypto.verifyPassword(user.passwordHash, dto.password);
@@ -328,6 +352,7 @@ export class AuthService {
         where: { familyId: session.familyId, revokedAt: null },
         data: { revokedAt: new Date(), revokedReason: 'TOKEN_REUSE_DETECTED' },
       });
+      this.userContext.invalidate(session.userId);
       throw new UnauthorizedException('Session revoked, please sign in again');
     }
 
@@ -378,6 +403,7 @@ export class AuthService {
         data: { revokedAt: new Date(), revokedReason: 'LOGOUT_ALL' },
       });
     }
+    this.userContext.invalidate(user.userId);
 
     await this.audit.record({
       organizationId: user.organizationId,
@@ -471,6 +497,7 @@ export class AuthService {
       data: { revokedAt: new Date(), revokedReason: 'REVOKED_BY_USER' },
     });
     if (result.count === 0) throw new NotFoundError('Session', sessionId);
+    this.userContext.invalidate(user.userId);
   }
 
   async buildSessionUser(userId: string): Promise<SessionUserDto> {
@@ -633,9 +660,11 @@ export class AuthService {
 
 /** Refuses every step of a sign-in while the account is locked out. */
 function assertNotLocked(lockedUntil: Date | null): void {
-  if (lockedUntil && lockedUntil > new Date()) {
-    throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
-      lockedUntil: lockedUntil.toISOString(),
-    });
-  }
+  if (lockedUntil && lockedUntil > new Date()) throwLocked(lockedUntil);
+}
+
+function throwLocked(lockedUntil: Date): never {
+  throw new BusinessRuleError('ACCOUNT_LOCKED', 'Too many failed attempts. Try again later.', {
+    lockedUntil: lockedUntil.toISOString(),
+  });
 }

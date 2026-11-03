@@ -19,6 +19,7 @@ import {
   TableSkeleton,
 } from '@/components/ui';
 import { api, saveBlob } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 import { formatDate, formatDateTime, formatMoney, formatPeriod } from '@/lib/format';
 import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
@@ -45,8 +46,28 @@ interface RunDetail extends PayrollRun {
 }
 
 /**
+ * What went wrong with a step of the run, in the reader's language. The two
+ * refusals HR meets most are worded here; any other shows the server's words.
+ */
+function actionError(error: unknown, t: ReturnType<typeof useT>): string {
+  if (error instanceof ApiError) {
+    if (error.code === 'SELF_APPROVAL_NOT_ALLOWED') {
+      return t(
+        'A payroll run has to be approved by someone other than the person who prepared it. Ask the second approver to approve it.',
+      );
+    }
+    if (error.code === 'FIRST_HALF_NOT_APPROVED') {
+      return t(
+        'The second half is worked out from the first half. Approve the first half’s run first, then calculate this one.',
+      );
+    }
+  }
+  return error instanceof Error ? error.message : t('Could not complete the action');
+}
+
+/**
  * Why a second half cannot be calculated yet (CW-069): it is worked out from
- * the first half, which has to be paid first. Said in words, with the way to
+ * the first half, which has to be approved first. Said in words, with the way to
  * the first half, because a button that merely does nothing explains nothing.
  */
 function FirstHalfNotice({
@@ -60,14 +81,14 @@ function FirstHalfNotice({
       <p id="first-half-notice" style={{ margin: 0 }}>
         {firstHalf
           ? t(
-              'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be paid before this half can be calculated.',
+              'This is the second half of the month, and it is worked out from the first half. The first half’s run {no} is {status}: it has to be approved before this half can be calculated.',
               {
                 no: firstHalf.runNo,
                 status: t(payrollStatusLabels[firstHalf.status] ?? firstHalf.status),
               },
             )
           : t(
-              'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate, approve and pay it before this half.',
+              'This is the second half of the month, and it is worked out from the first half, which has no run yet. Create the first half’s run, then calculate and approve it before this half.',
             )}
       </p>
       {firstHalf && (
@@ -313,7 +334,11 @@ export default function PayrollRunPage() {
   const data = run.data;
   const canRun = can(P.PAYROLL_RUN);
   const canApprove = can(P.PAYROLL_APPROVE);
-  const waitsForFirstHalf = data.firstHalf !== undefined && data.firstHalf?.status !== 'PAID';
+  // Approved is enough: its figures are fixed and the claims it pays are held (CW-104).
+  const waitsForFirstHalf =
+    data.firstHalf !== undefined &&
+    data.firstHalf?.status !== 'APPROVED' &&
+    data.firstHalf?.status !== 'PAID';
 
   return (
     <div className="page">
@@ -379,7 +404,7 @@ export default function PayrollRunPage() {
 
       {act.isError && (
         <div className="alert alert--danger" role="alert">
-          {act.error instanceof Error ? act.error.message : t('Could not complete the action')}
+          {actionError(act.error, t)}
         </div>
       )}
       {data.failureReason && (
@@ -491,13 +516,17 @@ export default function PayrollRunPage() {
             description={
               data.status === 'DRAFT'
                 ? t('Press “Calculate payroll” to create a payslip for every employee')
-                : data.period.payFrequency === 'SEMI_MONTHLY'
+                : data.period.payFrequency === 'BIWEEKLY'
                   ? t(
-                      'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.',
+                      'Nobody is paid by the day every 14 days for this period. A 14-day period pays only employees whose daily wage is paid every 14 days; set it on the employee’s page, in the Pay card, then calculate again.',
                     )
-                  : t(
-                      'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.',
-                    )
+                  : data.period.payFrequency === 'SEMI_MONTHLY'
+                    ? t(
+                        'Nobody is paid by the day for this period. A half-month period pays only employees with a daily wage; set it on the employee’s page, in the Pay card, then calculate again.',
+                      )
+                    : t(
+                        'Nobody has a monthly salary set for this period. Set it on the employee’s page, in the Pay card, then calculate again.',
+                      )
             }
           />
         )}
