@@ -13,7 +13,7 @@ Overwritten at the end of each unit of work. Git history keeps the past.
   added the HR guide's four tasks (CW-066), the demo's second boot (#104), the
   approvals switch (#109), the sidebar, empty states, overdue badge and dark
   theme (#110). One failure then: dark-theme contrast, #113 (fixed since).
-- **Install gate (2026-11-03, main `147829f`):** asked by the PO room. Regression S1–S17 and P1–P13 pass on a rebuilt database; N, G and D cases not re-run (reasons in the plan). New cases: daily wage 372 × 23 → social security 428 passes; the monthly parallel run with both kinds of staff fails (#127); CW-099 (PR #126) and CW-100 are Blocked until merged. Security review done: results and method in the plan under "Install gate"; the findings themselves went to the PO room as advisory drafts, not into the repository.
+- **Install gate (2026-11-03, main `147829f`):** asked by the PO room. Regression S1–S17 and P1–P13 pass on a rebuilt database; N, G and D cases not re-run (reasons in the plan). New cases: daily wage 372 × 23 → social security 428 passes; the monthly parallel run with both kinds of staff fails (#127); CW-099 (PR #126) and CW-100 were Blocked at the time (CW-099 has since merged). Security review done: results and method in the plan under "Install gate"; the findings themselves went to the PO room as advisory drafts, not into the repository.
 - **Open issues for the dev room:** #127 (parallel run with daily staff), #129 (three 500s), #130 (Google Fonts), #131 (`zod` advisory). Earlier ones (#94–#97, #112–#115, #119) are fixed and verified.
 - **PR:** the gate results are on branch `claude/qa-pilot-a-gate`, for the PO to review and merge.
 - **Not covered:** #111 (CW-095) landed after pass 2 began; the demo's wake-up
