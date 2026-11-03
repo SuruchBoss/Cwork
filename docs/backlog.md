@@ -510,6 +510,30 @@ approved, overpay. Found by the Dev room while tracing a CI failure on #150.
   gives the same day.
 - The comment on the job states when a day is closed.
 
+### CW-112 · Small things the re-check on the installed stack left
+`P1` · web · api · i18n · **S** · Pilot A · before the install if time allows
+
+From the UX room's re-check of #150 on an installed stack and the earlier
+blind test. None blocks the install; each confuses a first-time HR user.
+
+**Scope**
+- A payroll action the signed-in user cannot take is shown closed with the
+  reason, not as an active button that is refused after its confirmation.
+- The owner's dashboard card for runs waiting for approval opens the runs
+  that are waiting (one run: that run; several: the list filtered to them),
+  and the runs table marks which ones wait for approval.
+- Thai wording for the API answers still in English:
+  `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE`, and the two-step
+  sign-in's "That code is not right".
+- Previewing one's own leave warns as the submit does.
+- The parallel-run notice can be dismissed for the session instead of showing
+  on every visit.
+- The installer's wording "from made new by this installer" is corrected.
+- The pre-approval check box does not repeat its own heading in each line.
+
+**Acceptance**
+- A test for each item; the HR guide matches where it shows the screen.
+
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
@@ -1148,6 +1172,19 @@ not because there is a date.
 
 ## P2 — worth doing
 
+
+### CW-113 · The audit log reads in English
+`P2` · web · i18n · **M** · after Pilot A
+
+Every entry's details on the audit log page are English sentences built by
+the API, so a Thai HR user cannot read what happened. Show them in the
+console's language from the entry's action and fields, and name the record
+type in words ("ScannerDay" and "ScannerImport" show as code names); the
+stored entries do not change. Found by the UX room on the installed stack.
+
+**Acceptance**
+- Each action type has a Thai and an English line; a test fails on an action
+  type with neither.
 
 ### CW-094 · A top-menu console in earth tones (direction B)
 `P2` · UX · web · **L** · after the Pilot A install
