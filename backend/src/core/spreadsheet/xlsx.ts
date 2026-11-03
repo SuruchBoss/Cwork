@@ -230,6 +230,14 @@ export interface SheetSpec {
    */
   header?: boolean;
   /**
+   * How many rows at the top are headings: bold, and frozen so they stay in
+   * view. `header: true` is one. A title line above the column headings, or a
+   * heading that spans several columns, needs more.
+   */
+  headerRows?: number;
+  /** Ranges to merge into one cell, such as "C2:H2". */
+  merges?: string[];
+  /**
    * Columns (from 0) that hold amounts: formatted as #,##0.00 rather than as
    * text, so a figure typed or pasted into them stays a number.
    */
@@ -290,12 +298,14 @@ export function writeXlsx(sheets: SheetSpec[]): Uint8Array {
 
 function sheetXml(sheet: SheetSpec, selected: boolean): string {
   const columns = Math.max(sheet.widths?.length ?? 0, ...sheet.rows.map((row) => row.length), 1);
-  const pane = sheet.header
-    ? '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'
-    : '';
+  const headerRows = sheet.headerRows ?? (sheet.header ? 1 : 0);
+  const pane =
+    headerRows > 0
+      ? `<pane ySplit="${headerRows}" topLeftCell="A${headerRows + 1}" activePane="bottomLeft" state="frozen"/>`
+      : '';
   const amounts = new Set(sheet.amountColumns ?? []);
   const columnStyle = (c: number) =>
-    amounts.has(c) ? STYLE_AMOUNT : sheet.header ? STYLE_TEXT : undefined;
+    amounts.has(c) ? STYLE_AMOUNT : headerRows > 0 ? STYLE_TEXT : undefined;
   const cols = Array.from({ length: columns }, (_, i) => {
     const width = sheet.widths?.[i] ?? 16;
     const style = columnStyle(i) === undefined ? '' : ` style="${columnStyle(i)}"`;
@@ -306,7 +316,7 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
       const cells = row
         .map((value, c) => {
           const ref = `${columnLetter(c)}${r + 1}`;
-          const styleIndex = sheet.header && r === 0 ? STYLE_HEADER : columnStyle(c);
+          const styleIndex = r < headerRows ? STYLE_HEADER : columnStyle(c);
           const style = styleIndex === undefined ? '' : ` s="${styleIndex}"`;
           // Left out rather than written empty: the column's format still applies.
           if (value === '') return '';
@@ -319,7 +329,12 @@ function sheetXml(sheet: SheetSpec, selected: boolean): string {
       return `<row r="${r + 1}">${cells}</row>`;
     })
     .join('');
-  return `${XML_HEAD}<worksheet xmlns="${NS_MAIN}" xmlns:r="${NS_REL}"><sheetViews><sheetView workbookViewId="0"${selected ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${rows}</sheetData></worksheet>`;
+  const merges = sheet.merges?.length
+    ? `<mergeCells count="${sheet.merges.length}">${sheet.merges
+        .map((range) => `<mergeCell ref="${escapeXml(range)}"/>`)
+        .join('')}</mergeCells>`
+    : '';
+  return `${XML_HEAD}<worksheet xmlns="${NS_MAIN}" xmlns:r="${NS_REL}"><sheetViews><sheetView workbookViewId="0"${selected ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${rows}</sheetData>${merges}</worksheet>`;
 }
 
 function escapeXml(value: string): string {

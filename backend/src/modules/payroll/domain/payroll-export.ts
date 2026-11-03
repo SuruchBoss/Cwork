@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Decimal, formatMoney, money, round2 } from '../../../core/utils/money.util';
+import { buildPayrollRegister } from './payroll-register';
 
 /**
  * The payroll export seam (CW-044).
@@ -25,6 +26,17 @@ const EXPORTABLE_STATUSES = ['APPROVED', 'PAID'];
 
 type MoneyInput = Parameters<typeof money>[0];
 
+/** One line of a payslip, for a format that splits the totals into their parts (CW-099). */
+export interface ExportItem {
+  code: string;
+  name: string;
+  /** EARNING or DEDUCTION count toward the totals; the other types never do. */
+  type: string;
+  quantity: MoneyInput | null;
+  rate: MoneyInput | null;
+  amount: MoneyInput;
+}
+
 export interface ExportPayslip {
   employeeCode: string;
   firstNameTh: string | null;
@@ -43,6 +55,11 @@ export interface ExportPayslip {
    * personal numbers are decrypted for the formats that print them and no others.
    */
   taxId?: string | null;
+  /**
+   * The payslip's lines, only for a format that asks for them (CW-099). Left
+   * out, the lines are not read and not checked.
+   */
+  items?: ExportItem[];
 }
 
 export interface ExportRun {
@@ -61,6 +78,16 @@ export interface ExportPeriod {
   month: number;
 }
 
+/** A payslip line, coerced to exact decimals. */
+export interface ReconciledItem {
+  code: string;
+  name: string;
+  type: string;
+  quantity: Decimal | null;
+  rate: Decimal | null;
+  amount: Decimal;
+}
+
 /** One payslip's checked figures. A format reads these, never the raw rows. */
 export interface ReconciledRow {
   runNo: string;
@@ -77,6 +104,8 @@ export interface ReconciledRow {
   netPay: Decimal;
   /** Empty unless the format asked for it and the employee has one. */
   taxId: string;
+  /** The payslip's lines, empty unless the format asked for them. They add up to the totals above. */
+  items: ReconciledItem[];
 }
 
 export interface ReconciledPeriod {
@@ -132,6 +161,7 @@ export function reconcilePeriod(period: ExportPeriod, runs: ExportRun[]): Reconc
     reconcileTotal(run, 'gross earnings', run.totalGross, (p) => p.grossEarnings);
     reconcileTotal(run, 'deductions', run.totalDeduction, (p) => p.totalDeductions);
     reconcileTotal(run, 'net pay', run.totalNet, (p) => p.netPay);
+    for (const slip of run.payslips) reconcileLines(run, slip);
   }
 
   const rows = runs.flatMap((run) => run.payslips.map((slip) => toRow(run, slip)));
@@ -168,6 +198,48 @@ function reconcileTotal(
   }
 }
 
+/**
+ * A format that splits a payslip into its lines is only as good as the lines:
+ * earnings have to add up to the payslip's gross and deductions to its total, or
+ * the parts of the register would not add up to the whole (CW-099).
+ */
+function reconcileLines(run: ExportRun, slip: ExportPayslip): void {
+  if (!slip.items) return;
+  const sumOf = (type: string, code?: string) =>
+    round2(
+      slip.items!.reduce(
+        (acc, item) =>
+          item.type === type && (code === undefined || item.code === code)
+            ? acc.plus(money(item.amount))
+            : acc,
+        new Decimal(0),
+      ),
+    );
+  const checks = [
+    ['earnings', sumOf('EARNING'), slip.grossEarnings],
+    ['deductions', sumOf('DEDUCTION'), slip.totalDeductions],
+    ['withholding tax', sumOf('DEDUCTION', 'WHT'), slip.withholdingTax],
+    ['social security', sumOf('DEDUCTION', 'SSO'), slip.ssoEmployee],
+  ] as const;
+  for (const [label, lines, recorded] of checks) {
+    const expected = round2(money(recorded));
+    if (!lines.equals(expected)) {
+      throw new PayrollReconciliationError(
+        `Payslip of ${slip.employeeCode} in run ${run.runNo} does not reconcile: its ${label} lines ` +
+          `total ${formatMoney(lines)} but the payslip records ${formatMoney(expected)} ` +
+          `(difference ${formatMoney(lines.minus(expected))}).`,
+      );
+    }
+  }
+  const net = round2(money(slip.grossEarnings).minus(money(slip.totalDeductions)));
+  if (!net.equals(round2(money(slip.netPay)))) {
+    throw new PayrollReconciliationError(
+      `Payslip of ${slip.employeeCode} in run ${run.runNo} does not reconcile: gross less deductions ` +
+        `is ${formatMoney(net)} but its net pay is ${formatMoney(round2(money(slip.netPay)))}.`,
+    );
+  }
+}
+
 function toRow(run: ExportRun, slip: ExportPayslip): ReconciledRow {
   return {
     runNo: run.runNo,
@@ -183,6 +255,14 @@ function toRow(run: ExportRun, slip: ExportPayslip): ReconciledRow {
     ssoEmployer: round2(money(slip.ssoEmployer)),
     netPay: round2(money(slip.netPay)),
     taxId: slip.taxId ?? '',
+    items: (slip.items ?? []).map((item) => ({
+      code: item.code,
+      name: item.name,
+      type: item.type,
+      quantity: item.quantity == null ? null : money(item.quantity),
+      rate: item.rate == null ? null : money(item.rate),
+      amount: round2(money(item.amount)),
+    })),
   };
 }
 
@@ -192,7 +272,7 @@ function sumRows(rows: ReconciledRow[], field: keyof ReconciledRow): Decimal {
 
 // ---------------------------------------------------------------- formats ----
 
-export interface ExportFormat {
+interface ExportFormatBase {
   id: string;
   /** Human label, for the audit summary and the console. */
   label: string;
@@ -200,8 +280,26 @@ export interface ExportFormat {
   contentType: string;
   /** The format prints the employee's tax ID, so the service decrypts it for this format only. */
   needsTaxIds?: boolean;
+  /** The format splits payslips into their lines, so the service reads them for this format only (CW-099). */
+  needsItems?: boolean;
+  /**
+   * The file lists everyone paid in the month, so the service reads the month's
+   * periods, not only the one asked for (CW-099).
+   */
+  wholeMonth?: boolean;
+}
+
+/** A file made of text, such as a CSV. */
+export interface TextExportFormat extends ExportFormatBase {
   build(reconciled: ReconciledPeriod): string;
 }
+
+/** A file made of bytes, such as a workbook. */
+export interface BinaryExportFormat extends ExportFormatBase {
+  build(reconciled: ReconciledPeriod): Uint8Array;
+}
+
+export type ExportFormat = TextExportFormat | BinaryExportFormat;
 
 /** RFC 4180 field: quote when it holds a comma, quote or newline. */
 function csvField(value: string): string {
@@ -236,7 +334,7 @@ function buildCsv(columns: typeof CSV_COLUMNS): (reconciled: ReconciledPeriod) =
   };
 }
 
-export const CSV_FORMAT: ExportFormat = {
+export const CSV_FORMAT: TextExportFormat = {
   id: 'csv',
   label: 'Payslip totals (CSV)',
   extension: 'csv',
@@ -259,7 +357,7 @@ const ACCOUNTANT_COLUMNS: typeof CSV_COLUMNS = [
   { header: 'Income type', value: () => INCOME_TYPE_EMPLOYMENT },
 ];
 
-export const ACCOUNTANT_FORMAT: ExportFormat = {
+export const ACCOUNTANT_FORMAT: TextExportFormat = {
   id: 'accountant',
   label: 'For the accountant (CSV)',
   extension: 'csv',
@@ -269,12 +367,28 @@ export const ACCOUNTANT_FORMAT: ExportFormat = {
 };
 
 /**
+ * The payroll register HR sends the accountant each month (CW-099): one sheet,
+ * a row per person, salary, daily wage, overtime and the rest split out.
+ */
+export const REGISTER_FORMAT: BinaryExportFormat = {
+  id: 'register',
+  label: 'Payroll register (Excel)',
+  extension: 'xlsx',
+  contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  needsItems: true,
+  wholeMonth: true,
+  build: buildPayrollRegister,
+};
+
+/**
  * The formats this period-export supports. CW-044 ships `csv`, CW-089 adds the
- * accountant's; the tickets after it add entries here — each a formatter over ReconciledPeriod.
+ * accountant's, CW-099 the register; the tickets after it add entries here —
+ * each a formatter over ReconciledPeriod.
  */
 export const EXPORT_FORMATS: Record<string, ExportFormat> = {
   [CSV_FORMAT.id]: CSV_FORMAT,
   [ACCOUNTANT_FORMAT.id]: ACCOUNTANT_FORMAT,
+  [REGISTER_FORMAT.id]: REGISTER_FORMAT,
 };
 
 export const DEFAULT_EXPORT_FORMAT = CSV_FORMAT.id;

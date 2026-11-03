@@ -115,7 +115,13 @@ export default function PayrollPage() {
   // The server reconciles before it sends anything; a period that does not
   // reconcile is refused with the reason, which surfaces as the error below.
   const exportPeriod = useMutation({
-    mutationFn: async ({ periodId, format }: { periodId: string; format?: 'accountant' }) => {
+    mutationFn: async ({
+      periodId,
+      format,
+    }: {
+      periodId: string;
+      format?: 'accountant' | 'register';
+    }) => {
       const path = `/payroll/periods/${periodId}/export`;
       const { blob, filename } = await (format
         ? api.download(path, { query: { format } })
@@ -343,6 +349,20 @@ export default function PayrollPage() {
                               }
                             >
                               {t('Export for the accountant')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              loading={
+                                exportPeriod.isPending &&
+                                exportPeriod.variables?.periodId === period.id &&
+                                exportPeriod.variables.format === 'register'
+                              }
+                              onClick={() =>
+                                exportPeriod.mutate({ periodId: period.id, format: 'register' })
+                              }
+                            >
+                              {t('Export payroll register')}
                             </Button>
                           </>
                         )}
