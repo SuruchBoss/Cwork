@@ -10,13 +10,15 @@ this file only says where the PO room stands.
   (CW-101 to CW-106), #144 (QA final regression, passed), #143 (CW-107),
   #145, #138 (HR guide for CW-103 to CW-107), #147 (CW-108, sign-in and
   installer hardening), `main` at `09fc821`.
-- **Running:** the UX room's final blind test on a stack installed with
-  `install.sh` from `09fc821`; the QA room's private re-test of #147.
-  Dev has no open ticket.
+- **Blind test on the installed stack (`09fc821`):** findings went to the
+  owner privately; the fixes are in the dev queue (one PR, then CW-110,
+  then CW-109). The UX report #148 merges by squash once reworded.
+  QA re-test of #147 passed. The UX room re-checks the affected paths on the
+  installed stack once the fixes merge; its UX report follows as a PR.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
-  Running now: the final blind test on a stack installed with
-  `deploy/nas/install.sh` (2 CPU / 2 GB). Report the gates to the Asuna Bot
+  Blind test ran on a stack installed with `deploy/nas/install.sh`
+  (2 CPU / 2 GB); it passes once its fixes merge and are re-checked. Report the gates to the Asuna Bot
   room before the install date is booked (target Saturday 14 Nov).
 - **Owner's choices today:** daily staff stay half-monthly and the compare
   page adds up the calendar month (18:38, CW-104); the second half may run
@@ -33,7 +35,8 @@ this file only says where the PO room stands.
   or the domains to fetch them.
 - HR: which month a cross-month period counts toward, whether it rounds the
   net, and the field order of the social security web form.
-- #36: the law questions and a qualified reviewer for the payroll rules.
+- #36: the law questions and a qualified reviewer for the payroll rules;
+  how HR pays a daily-wage employee who works on a public holiday.
 - `./check.sh` on the pilot's NAS: approved 2026-11-03 17:18 (read-only,
   on-site). Still needed on the day: a backup drive, a password store, the HR
   file.
