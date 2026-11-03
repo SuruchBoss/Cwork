@@ -522,8 +522,6 @@ blind test. None blocks the install; each confuses a first-time HR user.
   `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE`, and the two-step
   sign-in's "That code is not right".
 - Previewing one's own leave warns as the submit does.
-- The parallel-run notice can be dismissed for the session instead of showing
-  on every visit.
 - The installer's wording "from made new by this installer" is corrected.
 - The pre-approval check box does not repeat its own heading in each line.
 - Ending a scanner number takes the same per-number lock as binding one, so two ends sent at once cannot both succeed.
