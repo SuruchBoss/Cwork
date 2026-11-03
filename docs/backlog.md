@@ -1195,6 +1195,19 @@ not because there is a date.
 ## P2 — worth doing
 
 
+### CW-116 · A day with scans from two numbers waits for HR
+`P2` · attendance · **M** · after Pilot A
+
+When one employee has scans from two numbers on the same day (their own and
+a borrowed card), the scans count together. CW-115 warns before the binding is
+saved; a scan of the other number imported later still counts together with
+no prompt. Hold such a day for HR to decide which scans count, like a
+single-scan day. Found by the Dev room while doing CW-115.
+
+**Acceptance**
+- Tests: a later import that brings a second number's scans to a day already
+  counted holds that day for HR; deciding it counts only the chosen scans.
+
 ### CW-113 · The audit log reads in English
 `P2` · web · i18n · **M** · after Pilot A
 
