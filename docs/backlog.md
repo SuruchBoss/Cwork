@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · CW-111 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-111 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -464,32 +464,6 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
-
-### CW-109 · A scanner number can be bound for a period
-`P1` · attendance · **M** · Pilot A · before the install
-
-A scanner number is bound to one employee with no dates, so a number later
-carried by someone else keeps counting to the first person. Bind it for a
-period instead.
-
-**Scope**
-- A new table holds (employee, number, from, to); an empty `to` means still
-  in use. The migration moves every current number across with no start date
-  (counted from the beginning), and the old single column goes. Two periods
-  of the same number never overlap.
-- The scanner import, the later matching of unowned days and binding from the
-  unowned-numbers page all match (number, date). A date outside every period
-  counts as an unowned number.
-- Binding from the decision page asks whether it is for these days only or
-  from now on. A binding can be ended with an end date.
-- The employee API and the employee import/export keep `scanner_id`, read as
-  the number in use now, so existing files still work.
-
-**Acceptance**
-- Tests: bind, end, overlapping periods refused (also two requests at once),
-  an import outside the period, later matching; the migration upgrades and
-  rolls back and `db:verify` passes.
-- The HR guide's binding step matches.
 
 ### CW-111 · The nightly close-out closes the day that just ended
 `P1` · attendance · **S** · Pilot A · before the install
@@ -1714,3 +1688,4 @@ Kept so the reasoning survives.
 | **CW-107** · The register exported a month with no monthly period, leaving monthly staff out without a word | When active staff on a monthly salary exist for the month and no monthly period covers it, the register export and the compare page refuse in Thai and name the next step (create the monthly period, calculate and approve it), checked after the missing half-month and 14-day periods. A company with no monthly staff is not warned; a month with both kinds of period is unchanged (tested). Found by the QA room. The same PR: another person's tax declaration answers "not found" for someone who may not read pay, and the record-leave panel test pastes its long note instead of typing it, with no timeout changed. #142, in #143 at 82e5009, 2026-11-03. |
 | **CW-108** · The compare page still labelled its picker "period", and two register columns aligned left | The picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" / "Month (any period of the month will do)"; the register's row-number and days-worked columns align right (a test reads the cell styles of the exported file); the HR guide and the period-check guide use the new label. Found by the UX room. #146, in #147 at 09fc821, 2026-11-03. |
 | **CW-110** · Three faults the final blind test found | From the UX room's blind test on the installed stack (#148): an evening-only scan is no longer pre-filled as a clock-in, the owner's dashboard shows the run waiting for approval instead of a ฿0.00 draft, and a period that already has a run no longer offers "create run" and answers in Thai. Open for the owner: how a daily-wage employee who works on a public holiday is paid (#36). #149, in #150 at a93751d, 2026-11-04. |
+| **CW-109** · A scanner number can be bound for a period | A number is bound to an employee from a date to a date (`employee_scanner_numbers`); an empty start counts from the beginning and an empty end means still in use. The migration moved every number across with no dates; `down.sql` is the hand-run way back. The database refuses overlapping periods of one number and a second number in use for one employee; writes for one number take a per-number advisory lock of their own family. The import, later matching and binding match (number, date). Binding from the review page asks "these days only" or "from now on" and says the first day and how many waiting days it counts; ending a number on the employee page asks first, gives later undecided days back to no one, and is refused in Thai when a later day is in a calculated, approved or paid run. `scannerId` on the API and the employee file still reads as the number in use now. QA re-test in `docs/qa/pilot-a-2026-10.md`. #153 at 482d405, 2026-11-04. |
