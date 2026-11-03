@@ -8,9 +8,11 @@ this file only says where the PO room stands.
 
 - **Merged today:** #126 (CW-099), #128, #132, #135, #139 (access checks and
   the performance note), #140, #141 (CW-101 to CW-106, `14fb65d`), #144 (QA
-  final regression, passed), #143 (CW-107 and two small follow-ups, `82e5009`).
+  final regression, passed), #143 (CW-107 and two small follow-ups, `82e5009`),
+  #145 (sign-in, session end and installer hardening, `9a99475`; QA re-test
+  requested privately).
 - **Next:** UX guide #138 (CW-103 part) after a merge of `main`, then the
-  final blind test. Dev's next branch is being prepared from `main`.
+  final blind test. Dev has no open ticket; waiting on QA and the blind test.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Still to run: the final blind test on a stack installed with
@@ -25,7 +27,7 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- File the private advisory (fixes are in #139), and two design choices
+- File the private advisory (fixes are in #139 and #145), and two design choices
   sent privately. The pilot NAS's RAM, for the install checklist.
 - The law texts for CW-100 (sections 33, 34, 46, 47 and the สปส.6-09 page),
   or the domains to fetch them.
