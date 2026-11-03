@@ -465,6 +465,18 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
+### CW-108 · The compare page still labels its picker "period", and two register columns align left
+`P2` · payroll · web · **XS** · found by the UX room · #146
+
+Found while updating the HR guide (#138), 2026-11-03. The compare page reads
+the whole calendar month (CW-104) but its picker is still headed "งวด". In the
+register export (CW-099), the row-number and days-worked columns align left
+while every other number aligns right.
+
+**Acceptance**
+- The picker names the month in Thai and English; the guide still matches.
+- Both columns align right in the exported file.
+
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
