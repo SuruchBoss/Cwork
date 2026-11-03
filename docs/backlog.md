@@ -615,24 +615,27 @@ compare page works on the calendar month the way CW-099's register does.
   while the month is incomplete, saying which period or run is missing.
 - The filed tax and social security totals on the same page are the month's.
 - No change to `assertPayBasis` or to how anyone is paid.
-- **Open, needs the owner (found by the UX room, 2026-11-03):** the second
-  half cannot be calculated until the first half is *paid*
-  (`FIRST_HALF_NOT_PAID` in `payroll.service.ts`, `firstHalfFor`). The reason
-  is that the first half's payment marks the expense claims it paid, and
-  without that rule the second half would pay them again. In the parallel
-  run HR must not record payment, so no month with daily staff ever becomes
-  complete, and neither the register nor this page can be used. The PO's
-  recommendation: allow the second half once the first half is *approved*.
-  The approved first half's figures are fixed, and the claims it includes
-  are held from that moment, so the second half cannot take them again.
-  The alternative is that HR records the first half's payment in Cwork during
-  the parallel run; no code changes, but Cwork's history then says it paid.
+- **The second half after an approved first half** (owner, 19:21, relayed by
+  the Asuna Bot room: option 1). Today the second half cannot be calculated
+  until the first half is *paid* (`FIRST_HALF_NOT_PAID`, `firstHalfFor` in
+  `payroll.service.ts`). The rule exists because paying the first half marks
+  the expense claims it paid. In the parallel run HR must not record payment,
+  so no month with daily staff would ever be complete. Allow the second half
+  once the first half is APPROVED. The approved first half's figures are fixed;
+  the claims and advances it includes are held from approval, so the second
+  half never takes them again. The guide's "do not record payment" stays.
 
 **Acceptance**
 - In a synthetic month with monthly and daily staff, HR's per-person sheet that
   matches Cwork marks no difference, and each person's figures equal the
   CW-099 register row (test).
 - The month's social security equals the สปส.1-10 total for that month.
+- The second half calculates when the first half is approved but not paid.
+  An expense claim or advance in that approved first half is not taken
+  again by the second half, before or after the first half is later marked
+  paid (test, asked for by the Asuna Bot room).
+- A first half that is still DRAFT or CALCULATED still refuses the second
+  half (test).
 
 **Files** `backend/src/modules/payroll/domain/period-check.ts`,
 `backend/src/modules/payroll/reconciled-period.ts`
