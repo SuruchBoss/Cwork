@@ -14,7 +14,7 @@ guess; they are listed first below.
 | Job | Finished | Attempts | Worst friction |
 |---|---|---|---|
 | 0. Sign in with the 6-digit code | Yes | 1 (and 4 account switches later) | None |
-| 1. Import the scanner file and settle the days | Yes | 1 | Heavy: the temporary card |
+| 1. Import the scanner file and settle the days | Yes | 1 | Medium: see the guide follow-up |
 | 2. Record a leave | Yes | 1 | Light |
 | 3. Parallel run: both halves and the month, approval, month compare | Yes | 1, plus one wrong click | Heavy: a second run on the wrong row; the owner's dashboard |
 | 4. Print payslips, receipt sheet and cash sheet | Yes | 1 | Light |
@@ -97,26 +97,21 @@ These are changes to the test environment, not to the installer:
    - The red box says "A regular run (PAY-2026-00010) already exists for this
      period" ([03](blind-test-2026-11-04/03-second-run-english.png)).
    - The row has no "เปิดดู" for the run it already has.
-4. **The guide has no case for a temporary scanner card.**
-   - Registering 777 for the person who carried it on 1–2 Oct makes 777 her number
-     for good ([07](blind-test-2026-11-04/07-temporary-card.png)).
-   - The guide does not say what to do when she gets her own card, or when someone
-     else carries 777 next month.
 
 ### Medium
 
-5. **HR sees an enabled, dark-blue "อนุมัติรอบ" on a run it calculated**, under a
+4. **HR sees an enabled, dark-blue "อนุมัติรอบ" on a run it calculated**, under a
    note saying it cannot approve it ([04](blind-test-2026-11-04/04-hr-approve-button.png)).
    The three print buttons look enabled before approval too; only small text below
    says they wait for it.
-6. **The order of the parallel run is only in a bracket in step 5.** The first half
+5. **The order of the parallel run is only in a bracket in step 5.** The first half
    must be approved before the second half can be calculated, so the owner is needed
    twice and the tester switched accounts four times. The screen explains it well when
    it happens (an orange note with a link to the first half); the guide's steps 1–4 do
    not plan for it.
-7. **"Create period" defaults to the current month.** The form opened on November;
+6. **"Create period" defaults to the current month.** The form opened on November;
    the October periods had to be changed by hand.
-8. **Payslip numbers HR is likely to question, with nothing to explain them:**
+7. **Payslip numbers HR is likely to question, with nothing to explain them:**
    - A person on sick leave and holiday in October still shows "วันทำงาน 21".
    - Social security is ฿248 in the first half and ฿247 in the second on the same
      wage (the month adds up to ฿495).
@@ -124,20 +119,20 @@ These are changes to the test environment, not to the installer:
      synthetic file has scans that day; monthly staff show 21 days with it left out.
      Whether a scan on a public holiday should pay a holiday rate is a question for the
      PO and Dev rooms, not a UX finding.
-9. **The month compare result appears below the fold**, with nothing saying which
+8. **The month compare result appears below the fold**, with nothing saying which
    file it compared. The tester thought nothing had happened at first.
 
 ### Light
 
-10. **Printed PDFs have random names** (for example `654f33f0-….pdf`); the slips,
+9. **Printed PDFs have random names** (for example `654f33f0-….pdf`); the slips,
     receipt sheet and cash sheet of a period cannot be told apart in Downloads.
-11. **"เลขสแกนยังไม่มีเจ้าของ 2" counts days, not numbers.** There was one number on
+10. **"เลขสแกนยังไม่มีเจ้าของ 2" counts days, not numbers.** There was one number on
     two days; the page after import says "1 เลข".
-12. **Registering 777 needs a second picker.** Typing a name shows a new "เลือก…" box
+11. **Registering 777 needs a second picker.** Typing a name shows a new "เลือก…" box
     underneath instead of a list under the field; the leave form does show a list.
-13. **The receipt sheet says "ตามจำนวนที่ระบุไว้ข้างต้น"** above the table, where
+12. **The receipt sheet says "ตามจำนวนที่ระบุไว้ข้างต้น"** above the table, where
     nothing is above it. The guide already asks the accountant to confirm the wording.
-14. **Small wording:** "ประเภทการจ้าง FULL_TIME" on the employee page; the
+13. **Small wording:** "ประเภทการจ้าง FULL_TIME" on the employee page; the
     verification code field's grey placeholder "123456" looks filled in at a glance.
 
 ### What worked
@@ -168,8 +163,5 @@ These are changes to the test environment, not to the installer:
   "ช่องว่างไม่ถือเป็น 0") is about using Cwork's file in that role. One point does carry
   over: the guide's "every cell filled, a blank is not 0" made the tester wonder
   whether to fill blank columns, and the upload accepted them.
-- **The owner approving a run with his own payslip** comes from the test data (the
-  owner's employee record was made a daily-paid worker for the test). Observations
-  about who may decide or approve what were sent to the PO room separately.
 - **Pending leave requests in October** (two from the seed) were not cleared before
   the run; the guide does not ask for it, and the run did not warn.

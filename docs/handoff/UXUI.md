@@ -27,16 +27,15 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   `09fc821` with `install.sh --mode full` and both secret files at 2 CPU / 2 GB; all five
   parts finished, nothing blocks. Heaviest: an evening-only scan pre-filled as a
   clock-in, pay runs missing from the owner's dashboard, a second "สร้างรอบคำนวณ" with an
-  English error, no guide case for a temporary card. Separation-of-duties observations
-  went to the PO room as a private message, not into the repo.
+  English error. Reviewed; findings, if any, went to the owner privately.
 - **CW-105 register printing, checked on #141 (`a1e460c`).** LibreOffice prints it
   landscape, one page wide, borders, centred group headings, rows 1-4 repeated on every
   page; the summary sheet adds up to the net. The register code has not changed since.
 
 ## Next
 
-- Wait for the PO room to triage the final blind test. If it opens tickets for the
-  guide (temporary card, the order of the parallel run), the UX room writes them.
+- Wait for the PO room to triage the final blind test. Guide follow-up comes as one
+  ticket after CW-109; then re-test only the affected paths on the installed stack.
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
   questions about the two APIs it needs. `GET /approvals/pending` (organisation-wide,
   with the approver) does not exist yet. The leave balance after approval already
