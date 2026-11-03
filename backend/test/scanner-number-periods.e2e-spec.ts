@@ -343,6 +343,44 @@ describe('A scanner number bound for a period (e2e)', () => {
       expect(await activeLinksOf(12, X)).toBeGreaterThan(0);
     });
 
+    it('gives every round of two ends of one number at once one winner and a refusal in words (CW-112)', async () => {
+      // Ending checked the number and then wrote, without the lock a bind takes, so
+      // two ends of one period could both pass the check and both write.
+      const seen = new Set<string>();
+      for (let round = 0; round < 40; round += 1) {
+        const number = `95${String(round).padStart(3, '0')}`;
+        await takeNumbers(prisma, [cat]);
+        expect((await bind(number, cat, 'ALWAYS')).status).toBe(200);
+        const open = await bindingOf(number, cat);
+        const ends = [iso(10), iso(11)];
+        const answers = await Promise.all(
+          ends.map((endDate) =>
+            api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, { endDate }),
+          ),
+        );
+        seen.add(
+          answers
+            .map((a) => `${a.status}${a.body.code ? `:${a.body.code}` : ''}`)
+            .sort()
+            .join(' + '),
+        );
+        const winner = answers.findIndex((a) => a.status === 200);
+        const row = await prisma.employeeScannerNumber.findUniqueOrThrow({
+          where: { id: open.id },
+        });
+        expect(row.validTo?.toISOString().slice(0, 10)).toBe(ends[winner]);
+        expect(
+          await prisma.auditLog.count({
+            where: {
+              entityId: cat,
+              summary: { startsWith: `Ended scanner number ${number} ` },
+            },
+          }),
+        ).toBe(1);
+      }
+      expect([...seen]).toEqual(['200 + 422:SCANNER_NUMBER_ALREADY_ENDED']);
+    });
+
     it('keeps a later day somebody decided with whom it was decided for', async () => {
       expect((await bind(Y, cat, 'ALWAYS')).status).toBe(200);
       await importDays(Y, [10, 12, 14]);

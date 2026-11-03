@@ -910,6 +910,11 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Ending a scanner number takes the same lock as binding one** (CW-112). Two ends of one
+  period at the same moment could both pass the check and both write, the later date
+  overwriting the earlier and the change logged twice. The end now checks, plans and writes
+  while holding the number's lock, so the second request waits, finds the period ended and is
+  told so.
 - **The nightly attendance close-out closes the day that just ended** (CW-111). The job runs at
   01:00 in Bangkok (18:00 UTC), but it took "yesterday" from the UTC date, so it closed the
   day before the one that had just finished, about a day late. It now closes the day before
