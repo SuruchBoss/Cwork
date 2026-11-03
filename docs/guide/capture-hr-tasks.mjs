@@ -5,8 +5,8 @@
  * Takes the screenshots in docs/guide/hr-daily-tasks.th.md, the HR guide to the
  * four everyday jobs of the pilot (CW-066): import the fingerprint scanner's
  * file and settle a day, record leave for an employee, run the shadow payroll
- * for a 15-day period and for a month, and print the payslips and the receipt
- * sheet.
+ * for a 15-day period and for a month, print the payslips and the receipt
+ * sheet, and compare the month with HR's own register (CW-103).
  *
  * It is the walk a first-time HR does, in Thai, on the screen those users have:
  * 1366×768 at 1×. Every screen comes from the seeded demo company and files
@@ -175,6 +175,45 @@ function scannerFile(people) {
   ]);
 }
 
+/**
+ * HR's own register for the month, as the guide tells HR to prepare it: a title
+ * line, the register's headings, and a รหัสพนักงาน column added. The figures are
+ * Cwork's own, added up over the month's runs, except one person's tax, which is
+ * 35 baht lower so the page has a difference to show.
+ */
+async function registerFile(access, runUrls) {
+  const people = new Map();
+  for (const url of runUrls) {
+    const run = await call(access, 'GET', `/payroll/runs/${url.split('/').pop()}`);
+    for (const slip of run.payslips) {
+      const code = slip.employee.employeeCode;
+      const person = people.get(code) ?? {
+        name: `${slip.employee.firstNameTh} ${slip.employee.lastNameTh}`,
+        gross: 0,
+        tax: 0,
+        sso: 0,
+        net: 0,
+      };
+      person.gross += Number(slip.grossEarnings);
+      person.tax += Number(slip.withholdingTax);
+      person.sso += Number(slip.ssoEmployee);
+      person.net += Number(slip.netPay);
+      people.set(code, person);
+    }
+  }
+  const taxed = [...people.values()].find((person) => person.tax >= 35);
+  if (taxed) taxed.tax -= 35;
+  const money = (n) => n.toFixed(2);
+  const lines = [
+    `ทะเบียนเงินเดือนประจำเดือน ${MONTH_NAMES[month - 1]} ปี ${thaiYear},,,,,,`,
+    'ลำดับที่,ชื่อ-สกุล,รหัสพนักงาน,รวมเงินได้,ภาษี,ประกันสังคม,รวมเงินได้สุทธิ',
+    ...[...people.entries()].map(([code, p], index) =>
+      [index + 1, p.name, code, money(p.gross), money(p.tax), money(p.sso), money(p.net)].join(','),
+    ),
+  ];
+  return Buffer.from('\ufeff' + lines.join('\r\n') + '\r\n', 'utf8');
+}
+
 // ---- the browser ------------------------------------------------------------
 
 const UA =
@@ -267,6 +306,7 @@ async function typeDate(page, field, text) {
 }
 
 const thaiYear = year + 543;
+const MONTH_NAMES = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 const MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 /** The row of the pay period that spans the whole month, whatever order the list is in. */
 const spanRow = (page, from, to) =>
@@ -275,6 +315,7 @@ const spanRow = (page, from, to) =>
   });
 const monthRow = (page) => spanRow(page, 1, lastDay);
 const halfRow = (page) => spanRow(page, 1, 15);
+const secondHalfRow = (page) => spanRow(page, 16, lastDay);
 const dmy = (d) => `${d}/${month}/${thaiYear}`;
 
 // ---- the walk ---------------------------------------------------------------
@@ -365,4 +406,40 @@ await owner.page.getByRole('button', { name: 'อนุมัติรอบ' })
 await owner.page.getByText('อนุมัติแล้ว').first().waitFor();
 await shot(owner.page, 'hr-14-approved');
 await owner.context.close();
+
+// 5. The second half, which can be calculated once the first is approved, then
+// the whole month compared with HR's own register.
+const hrAgain = await signIn(HR);
+const p5 = hrAgain.page;
+await p5.goto(BASE + '/payroll');
+await p5.getByRole('button', { name: /สร้างงวดใหม่/ }).click();
+await p5.locator('select').nth(2).selectOption({ label: 'ครึ่งหลัง (วันที่ 16–สิ้นเดือน)' });
+await p5.getByRole('button', { name: 'สร้างงวด', exact: true }).click();
+await secondHalfRow(p5).waitFor();
+await secondHalfRow(p5).getByRole('button', { name: 'สร้างรอบคำนวณ' }).click();
+await p5.getByRole('button', { name: 'คำนวณเงินเดือน' }).click();
+await p5.getByText(/สลิปเงินเดือน \([1-9]/).waitFor();
+const secondRun = p5.url();
+await hrAgain.context.close();
+
+const ownerAgain = await signIn(OWNER);
+await ownerAgain.page.goto(secondRun);
+await ownerAgain.page.getByRole('button', { name: 'อนุมัติรอบ' }).click();
+await ownerAgain.page.getByText('อนุมัติแล้ว', { exact: true }).first().waitFor();
+await ownerAgain.context.close();
+
+const hrRegister = await registerFile(await token(OWNER), [halfRun, monthRun, secondRun]);
+const hrLast = await signIn(HR);
+await hrLast.page.goto(BASE + '/payroll/compare');
+await settle(hrLast.page);
+await hrLast.page.locator('input[type=file]').setInputFiles({
+  name: 'register.csv',
+  mimeType: 'text/csv',
+  buffer: hrRegister,
+});
+await hrLast.page.getByText('คนที่เทียบได้').waitFor();
+await shot(hrLast.page, 'hr-15-compare', {
+  at: hrLast.page.getByText('2. ตัวเลขของ HR เอง ทีละคน'),
+});
+await hrLast.context.close();
 await browser.close();
