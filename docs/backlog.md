@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · CW-110 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · CW-111 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -491,17 +491,24 @@ period instead.
   rolls back and `db:verify` passes.
 - The HR guide's binding step matches.
 
-### CW-110 · Three faults the final blind test found
-`P1` · attendance · payroll · web · **S** · Pilot A · before the install · #149
+### CW-111 · The nightly close-out closes the day that just ended
+`P1` · attendance · **S** · Pilot A · before the install
 
-From the UX room's blind test on the installed stack (#148): an evening-only
-scan is pre-filled as a clock-in; the owner's dashboard shows no run waiting
-for approval and a ฿0.00 draft as the latest run; a period that already has a
-run still offers "create run" and answers in English. Acceptance in #149.
+The attendance close-out runs at 01:00 in Bangkok and takes "yesterday" from
+the UTC date, so it closes the day before the one that just ended: each day
+is closed about 25 hours after it ends, not about one. A run calculated the
+morning after a period ends can then miss the last day's absences and, once
+approved, overpay. Found by the Dev room while tracing a CI failure on #150.
 
-Open question for the owner (not in scope): a daily-wage employee scanned in
-on a public holiday (23 Oct) is paid as an ordinary day, with no holiday-work
-pay. Needs the owner's answer on how HR pays it today and the law check (#36).
+**Scope**
+- Close the day before `organization.today()` (Asia/Bangkok), not the UTC
+  date minus one.
+
+**Acceptance**
+- Tests with a fixed clock, never the real one: at 01:00 Bangkok the job
+  closes the Bangkok day that just ended; a time just before midnight UTC
+  gives the same day.
+- The comment on the job states when a day is closed.
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
@@ -1668,3 +1675,4 @@ Kept so the reasoning survives.
 | **CW-106** · A day with one scan was paid as a full day, with no warning | A past day with only a clock-in, or only a clock-out, is INCOMPLETE with 0 minutes, never an error; the payslip shows `INCOMPLETE_PUNCH_COUNTED` with the date, today's open day stays PRESENT, and the import summary counts the single-scan days. How a counted day is paid is unchanged. #137, in #141 at 14fb65d, 2026-11-03. |
 | **CW-107** · The register exported a month with no monthly period, leaving monthly staff out without a word | When active staff on a monthly salary exist for the month and no monthly period covers it, the register export and the compare page refuse in Thai and name the next step (create the monthly period, calculate and approve it), checked after the missing half-month and 14-day periods. A company with no monthly staff is not warned; a month with both kinds of period is unchanged (tested). Found by the QA room. The same PR: another person's tax declaration answers "not found" for someone who may not read pay, and the record-leave panel test pastes its long note instead of typing it, with no timeout changed. #142, in #143 at 82e5009, 2026-11-03. |
 | **CW-108** · The compare page still labelled its picker "period", and two register columns aligned left | The picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" / "Month (any period of the month will do)"; the register's row-number and days-worked columns align right (a test reads the cell styles of the exported file); the HR guide and the period-check guide use the new label. Found by the UX room. #146, in #147 at 09fc821, 2026-11-03. |
+| **CW-110** · Three faults the final blind test found | From the UX room's blind test on the installed stack (#148): an evening-only scan is no longer pre-filled as a clock-in, the owner's dashboard shows the run waiting for approval instead of a ฿0.00 draft, and a period that already has a run no longer offers "create run" and answers in Thai. Open for the owner: how a daily-wage employee who works on a public holiday is paid (#36). #149, in #150 at a93751d, 2026-11-04. |

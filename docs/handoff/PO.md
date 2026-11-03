@@ -4,17 +4,17 @@ Overwritten at the end of each unit of work. Git history keeps the past.
 Every ticket, its scope and acceptance live in [`docs/backlog.md`](../backlog.md);
 this file only says where the PO room stands.
 
-## Where things are (2026-11-03, evening)
+## Where things are (2026-11-04, early morning)
 
-- **Merged today:** #126 (CW-099), #128, #132, #135, #139, #140, #141
-  (CW-101 to CW-106), #144 (QA final regression, passed), #143 (CW-107),
-  #145, #138 (HR guide for CW-103 to CW-107), #147 (CW-108, sign-in and
-  installer hardening), `main` at `09fc821`.
-- **Blind test on the installed stack (`09fc821`):** findings went to the
-  owner privately; the fixes are in the dev queue (one PR, then CW-110,
-  then CW-109). The UX report #148 merges by squash once reworded.
-  QA re-test of #147 passed. The UX room re-checks the affected paths on the
-  installed stack once the fixes merge; its UX report follows as a PR.
+- **Merged:** #126 to #147 on 2026-11-03 (see the backlog's Done), #151
+  (e2e leave window takes Bangkok's today), #148 (UX blind test report,
+  squashed), #150 (blind test fixes and CW-110; the test app now stops its
+  cron jobs), `main` at `a93751d`.
+- **Dev queue:** CW-109 (scanner number bound for a period) is ready in the
+  Dev room and opens as a PR on `claude/new-session-syszvt` once `main` is
+  green; then CW-111 (close-out closes the day that just ended).
+- **Next:** QA runs its regression on `main`; the UX room re-checks the paths
+  #150 changed on the installed stack, then CW-109 once it merges.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`
