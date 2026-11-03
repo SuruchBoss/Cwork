@@ -30,10 +30,15 @@ this file only says where the PO room stands.
   when that passes.
 - **CW-094:** direction B, top menu, earth tones, olive main colour, after the
   Pilot A install. Not started.
-- **Pilot A (by 31 October):** HR files social security itself; an outside
-  accounting firm files ภ.ง.ด.1. Real personal data never goes into a cloud
-  session. CW-062 (#62) stays open for the pilot's real NAS, untouched until
-  the owner approves.
+- **Pilot A HR answers (2026-11-03), questions 1-6:** HR keys social security
+  on the web person by person (no upload file, CW-085 updated); it sends the
+  accounting firm a one-sheet payroll register, which the CW-089 export is not
+  (CW-099, #123, sent to Dev); the firm sets the ภ.ง.ด.1 income code; everyone
+  signs a book, so the receipt sheet is optional; a cash payday is proved by a
+  cash bill and certificate, no company form. Questions 7-10 (parallel run, HR
+  trying the four tasks, second approver, install date) not answered: nothing
+  that depends on them is started. Real personal data never goes into a cloud
+  session; CW-062 (#62) waits for the real NAS.
 
 ## Waiting on the owner
 
@@ -41,14 +46,13 @@ this file only says where the PO room stands.
   and its Thai and English alt text still show and describe the red note that
   named the pilot company. A new picture is ready (CW-097); landing wording needs
   the owner's own words in this room.
-- #69: the pilot's HR doing the four tasks in `docs/guide/hr-daily-tasks.th.md`
-  unaided before 31 October, and a second person to approve payroll runs.
+- HR answers 7-10: the parallel run, #69 (HR doing the four tasks in
+  `docs/guide/hr-daily-tasks.th.md` unaided, a second person to approve payroll
+  runs), the install date.
 - CW-062: approval to run the read-only `./check.sh` on the pilot's NAS, a
   backup drive, a password store for the key, the HR import file.
-- CW-085: the e-Services upload template HR uses, blanked.
-- After CW-088 and CW-089: remainders under 25 satang, the blank paper form,
-  proof of a cash payday, what HR sends the accountant, the e-Filing income
-  code, whether the first payroll runs beside HR's method.
+- Still to ask HR: whether it rounds the 5% or the net pay (it says its figures
+  have no satang), and the field order of the social security web form.
 - #36: a qualified reviewer for the payroll rules.
 - CW-087: the support channel and response time (hours 18:00–24:00, temporary).
 - Prices and timing for the CW-077 items.
