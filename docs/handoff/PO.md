@@ -9,13 +9,12 @@ this file only says where the PO room stands.
 - **Merged:** #126 to #147 on 2026-11-03 (see the backlog's Done), #151,
   #148 (squashed), #150 (blind test fixes, CW-110), #152 (QA regression on
   `a93751d`, squashed), #153 (CW-109, scanner numbers for a period), #154
-  (CW-111, close-out), `main` at `fadc709`.
+  (CW-111, close-out), #155 (CW-115, choosing the days), `main` at `8ef8cda`.
 - **QA:** regression on `a93751d` passed; CW-109 re-test passed on #153.
   **UX:** re-check of #150 on an installed stack passed; it now tries the
   temporary-badge path on `482d405` and writes the badge and parallel-run
   guide (its branch waits on the owner, so the PO room commits its text).
-- **Dev queue:** CW-115 (choose the days of a stretch), then CW-112 (small items,
-  partly ready in the Dev room), one PR each.
+- **Dev queue:** CW-112 (small items), ready in the Dev room, one PR.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`

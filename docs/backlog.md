@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-115 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -464,28 +464,6 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
-
-### CW-115 · Choose the days when binding a scanner number for a stretch
-`P1` · attendance · web · **S** · Pilot A · before the install
-
-"Only these days" on the scanner days page binds the whole waiting range of a
-number, first day to last, and a closed period cannot be changed afterwards
-from the employee page. A temporary card used by more than one person in the
-same file, by someone who already has a number of their own, needs the
-stretch to be chosen. Found by the UX room on an installed stack.
-
-**Scope**
-- "Only these days" lets HR choose the first and last day inside the waiting
-  range; the default stays the whole range.
-- A closed period of a number can be shortened (or ended earlier) from the
-  employee card, with the same preview, confirmation and payroll-run refusal
-  as ending the number in use.
-
-**Acceptance**
-- Tests: a sub-range binds only its days and leaves the rest waiting; a
-  closed period shortened gives its later days back; a day inside a
-  calculated run refuses the change.
-- The HR guide's temporary-card example covers it.
 
 ### CW-112 · Small things the re-check on the installed stack left
 `P1` · web · api · i18n · **S** · Pilot A · before the install if time allows
@@ -1508,6 +1486,15 @@ and so does the same for web and mobile.
 ## P3 — nice to have
 
 
+### CW-117 · The scanner days page, small aids
+`P3` · web · **S** · after Pilot A
+
+From the UX room on an installed stack: the "scanner days" table cannot be
+filtered by scanner number, so checking one card means scrolling the month;
+and "from now on" can start on a day before the first waiting day (it starts
+the day after the number's last end), which made a tester hesitate. Show why
+it starts there.
+
 ### CW-063 · UX follow-ups from the 30 September pass
 `P3` · web · mobile · **M** · after the pilot items
 
@@ -1731,3 +1718,4 @@ Kept so the reasoning survives.
 | **CW-110** · Three faults the final blind test found | From the UX room's blind test on the installed stack (#148): an evening-only scan is no longer pre-filled as a clock-in, the owner's dashboard shows the run waiting for approval instead of a ฿0.00 draft, and a period that already has a run no longer offers "create run" and answers in Thai. Open for the owner: how a daily-wage employee who works on a public holiday is paid (#36). #149, in #150 at a93751d, 2026-11-04. |
 | **CW-109** · A scanner number can be bound for a period | A number is bound to an employee from a date to a date (`employee_scanner_numbers`); an empty start counts from the beginning and an empty end means still in use. The migration moved every number across with no dates; `down.sql` is the hand-run way back. The database refuses overlapping periods of one number and a second number in use for one employee; writes for one number take a per-number advisory lock of their own family. The import, later matching and binding match (number, date). Binding from the review page asks "these days only" or "from now on" and says the first day and how many waiting days it counts; ending a number on the employee page asks first, gives later undecided days back to no one, and is refused in Thai when a later day is in a calculated, approved or paid run. `scannerId` on the API and the employee file still reads as the number in use now. QA re-test in `docs/qa/pilot-a-2026-10.md`. #153 at 482d405, 2026-11-04. |
 | **CW-111** · The nightly close-out closes the day that just ended | The 01:00 Bangkok job closes the day before `organization.today()` instead of the UTC date minus one, so a day is closed about an hour after it ends, not about 25. Tested with a fixed clock (unit and e2e); a day closed as absent and then filled by a scanner file imported afterwards comes back with its worked time and leaves nothing absent for payroll. A shift that crosses midnight is CW-114. #154 at fadc709, 2026-11-04. |
+| **CW-115** · Choose the days when binding a scanner number for a stretch | "Only these days" takes a first and last day inside the waiting stretch (the default is the whole stretch); a preview counts the days and warns when the person already has scans under another number there. An ended period can be ended earlier from the employee card, with the same preview, confirmation and refusal when a later day is in a calculated, approved or paid run; only undecided days between the new and old end go back to no one. QA and the UX room re-tested on an installed stack; a first-time tester bound a borrowed card correctly from the guide. #155 at 8ef8cda, 2026-11-04. |
