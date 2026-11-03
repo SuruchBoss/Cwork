@@ -22,20 +22,19 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
 - **CW-103 guide part, on `main` via #138.** `docs/guide/hr-daily-tasks.th.md` covers
   sign-in with 2FA, unregistered numbers, single-scan days (CW-106), the month compare
   with a `รหัสพนักงาน` column (picture `hr-15`) and the no-payment warning.
-- **Final blind test on the installed stack, 3–4 Nov, in review.** Report:
-  [`docs/qa/blind-test-2026-11-04.md`](../qa/blind-test-2026-11-04.md). Installed from
-  `09fc821` with `install.sh --mode full` and both secret files at 2 CPU / 2 GB; all five
-  parts finished, nothing blocks. Heaviest: an evening-only scan pre-filled as a
-  clock-in, pay runs missing from the owner's dashboard, a second "สร้างรอบคำนวณ" with an
-  English error. Reviewed; findings, if any, went to the owner privately.
+- **Final blind test on the installed stack, 3–4 Nov, done** ([report](../qa/blind-test-2026-11-04.md),
+  re-test appendix on `a93751d`): every fix of CW-110 passed. Findings, if any, went to the owner privately.
+- **CW-109 temporary scanner card, 4 Nov, on `482d405`**, installed the same way: a first-time tester gave one
+  card to two people in turn and every day landed with the right person. Guide draft (temporary-card example,
+  parallel-run order) sent to the PO room to commit. Findings, if any, went to the PO room privately.
 - **CW-105 register printing, checked on #141 (`a1e460c`).** LibreOffice prints it
   landscape, one page wide, borders, centred group headings, rows 1-4 repeated on every
   page; the summary sheet adds up to the net. The register code has not changed since.
 
 ## Next
 
-- Wait for the PO room to triage the final blind test. Guide follow-up comes as one
-  ticket after CW-109; then re-test only the affected paths on the installed stack.
+- Wait for the PO room to commit the guide draft and triage the CW-109 notes; re-test only the affected
+  paths on the installed stack when asked.
 - Before UX-20 starts, re-read the backlog entries for CW-094 and answer the dev room's
   questions about the two APIs it needs. `GET /approvals/pending` (organisation-wide,
   with the approver) does not exist yet. The leave balance after approval already
