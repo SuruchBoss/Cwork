@@ -12,7 +12,7 @@ this file only says where the PO room stands.
   CW-101 one to two weeks after, before Cwork pays real wages.
 - **Owner's choice (17:19):** the parallel run puts daily staff on monthly
   periods and compares at the month. Install from Mon 9 Nov; propose Wed or
-  Thu to HR (not Tue 10 Nov evening). The owner books it with HR himself.
+  Thu to HR (not Tue 10 Nov evening). The owner books it with HR.
 - **Pilot A, all ten HR answers in (2026-11-03).** HR keys social security on
   the web (no upload file, CW-085 updated). It sends the accounting firm a
   one-sheet payroll register, which CW-089 is not, hence CW-099. The firm sets
