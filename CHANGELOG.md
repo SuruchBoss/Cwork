@@ -844,6 +844,14 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A month with monthly staff and no monthly period is no longer listed as if it were whole**
+  (CW-107). The register export and the comparison with HR's register now stop, in Thai,
+  when the month has staff on a monthly salary but no monthly period yet, and name the next
+  step: create the monthly period, calculate and approve it. A company with no one on a
+  monthly salary is not warned, and a month that has both kinds of period is unchanged.
+- **A request for another person's tax declaration answers "not found"** instead of
+  returning the caller's own, so it reads the same as an id that does not exist.
+
 - **A day with one scan is no longer paid as a full day with no warning**
   (CW-106). A past day with a clock-in and no clock-out was stored as present with
   no minutes; it is now incomplete, as the nightly close-out makes it, so the payslip

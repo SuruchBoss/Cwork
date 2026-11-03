@@ -475,5 +475,28 @@ describe('A month compared with HR’s register (e2e)', () => {
       expect(res.body.message).toContain('ยังเทียบยอดของเดือนพฤษภาคม 2586 ไม่ได้');
       expect(res.body.message).toContain('ครึ่งหลัง');
     });
+
+    it('is refused, in Thai, when both halves are there but the monthly salaries have no period', async () => {
+      const second = await api.post('/payroll/periods', payroll, {
+        year: YEAR,
+        month: 5,
+        payFrequency: 'SEMI_MONTHLY',
+        half: 2,
+        periodStart: `${YEAR}-05-16`,
+        periodEnd: `${YEAR}-05-31`,
+        payDate: `${YEAR}-05-31`,
+      });
+      const secondRun = await run(second.body.id);
+      expect((await calculate(secondRun)).status).toBe(201);
+      await approve(secondRun);
+
+      const res = await api.post(`/payroll/periods/${second.body.id}/compare`, payroll, {
+        taxFiled: '0.00',
+      });
+
+      expect(res.status).toBe(422);
+      expect(res.body.message).toContain('ยังเทียบยอดของเดือนพฤษภาคม 2586 ไม่ได้');
+      expect(res.body.message).toContain('มีพนักงานรายเดือน แต่ยังไม่มีงวดรายเดือน');
+    });
   });
 });

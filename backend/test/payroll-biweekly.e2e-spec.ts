@@ -299,7 +299,27 @@ describe('Daily wages paid every 14 days (e2e)', () => {
   });
 
   describe('the month’s outputs', () => {
+    it('does not list a month that has monthly staff and no monthly period, and says what to do', async () => {
+      const res = await api.get(`/payroll/periods/${periodIds[0]}/export?format=register`, payroll);
+
+      expect(res.status).toBe(422);
+      expect(res.body.message).toContain('มีพนักงานรายเดือน แต่ยังไม่มีงวดรายเดือน');
+      expect(res.body.message).toContain('สร้างงวดรายเดือน');
+    });
+
     it('list the month from any of its periods, as the sum of them', async () => {
+      const monthly = await api.post('/payroll/periods', payroll, {
+        year: 2040,
+        month: 1,
+        periodStart: '2040-01-01',
+        periodEnd: '2040-01-31',
+        payDate: '2040-01-31',
+      });
+      expect(monthly.status).toBe(201);
+      const run = await api.post('/payroll/runs', payroll, { periodId: monthly.body.id });
+      expect((await api.post(`/payroll/runs/${run.body.id}/calculate`, payroll)).status).toBe(201);
+      expect((await api.post(`/payroll/runs/${run.body.id}/approve`, ceo)).status).toBe(201);
+
       const res = await api.getRaw(
         `/payroll/periods/${periodIds[0]}/export?format=register`,
         payroll,
@@ -313,6 +333,52 @@ describe('Daily wages paid every 14 days (e2e)', () => {
       );
 
       expect(Number(person?.[8])).toBe(wages);
+    });
+
+    it('lists a month of daily wages alone, without a warning, when nobody is on a monthly salary', async () => {
+      // January 2020 is before any monthly employee of the organisation was hired.
+      const solo = await newEmployee('BW-2020-1');
+      await prisma.employee.update({ where: { id: solo }, data: { hireDate: utc('2019-06-03') } });
+      await attend(solo, ['2020-01-06', '2020-01-20']);
+      const pay = await api.post('/payroll/compensation', payroll, {
+        employeeId: solo,
+        effectiveFrom: '2019-06-03',
+        baseSalary: 0,
+        payFrequency: 'SEMI_MONTHLY',
+        dailyRate: RATE,
+      });
+      expect(pay.status).toBe(201);
+
+      const halves: string[] = [];
+      for (const [half, from, to] of [
+        [1, '2020-01-01', '2020-01-15'],
+        [2, '2020-01-16', '2020-01-31'],
+      ] as const) {
+        const created = await api.post('/payroll/periods', payroll, {
+          year: 2020,
+          month: 1,
+          payFrequency: 'SEMI_MONTHLY',
+          half,
+          periodStart: from,
+          periodEnd: to,
+          payDate: to,
+        });
+        expect(created.status).toBe(201);
+        const run = await api.post('/payroll/runs', payroll, { periodId: created.body.id });
+        expect((await api.post(`/payroll/runs/${run.body.id}/calculate`, payroll)).status).toBe(
+          201,
+        );
+        expect((await api.post(`/payroll/runs/${run.body.id}/approve`, ceo)).status).toBe(201);
+        if (half === 1) {
+          expect((await api.post(`/payroll/runs/${run.body.id}/pay`, ceo)).status).toBe(201);
+        }
+        halves.push(created.body.id);
+      }
+
+      const res = await api.getRaw(`/payroll/periods/${halves[0]}/export?format=register`, payroll);
+      expect(res.status).toBe(200);
+      const rows = readXlsx(res.body).rows;
+      expect(rows.some((row) => String(row[1] ?? '').includes('BW-2020-1'))).toBe(true);
     });
 
     it('does not list a month with a period still to come, and lists it when the next belongs elsewhere', async () => {
