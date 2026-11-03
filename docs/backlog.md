@@ -509,6 +509,29 @@ blind test. None blocks the install; each confuses a first-time HR user.
 **Acceptance**
 - A test for each item; the HR guide matches where it shows the screen.
 
+### CW-114 · A shift that crosses midnight
+`P1` · attendance · **M** · owner decides; Pilot A only if it has night shifts
+
+A punch or scan takes the calendar date of the moment it was made; a shift's
+`crossesMidnight` is used only for leaving early. Someone who clocks in at
+22:00 and out at 06:00 leaves day D incomplete: the 06:00 clock-out lands on
+D+1, where the app refuses it (no clock-in that day) and a lone morning scan
+is suggested as a clock-in (CW-110). HR fixes D by hand. Found by the Dev room
+while checking CW-111; it predates that change.
+
+**Open question for the owner:** does the pilot company run shifts that cross
+midnight? If not, this waits until after Pilot A.
+
+**Scope (if yes)**
+- A clock-out or scan in the morning counts toward the previous day's shift
+  when that shift crosses midnight and is still open.
+- The single-scan suggestion knows the person's shift before suggesting a
+  clock-in.
+
+**Acceptance**
+- Tests with a fixed clock for an app punch and for a scanner file: 22:00 in,
+  06:00 out gives one complete day D; a day shift is unchanged.
+
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
