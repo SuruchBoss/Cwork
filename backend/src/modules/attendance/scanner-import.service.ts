@@ -56,7 +56,9 @@ const MAX_REVIEW_DAYS = 93;
 
 const dayInclude = {
   decisions: { orderBy: { createdAt: 'desc' }, take: 1 },
-  punches: { select: { supersededAt: true, punch: { select: { clientPunchId: true } } } },
+  punches: {
+    select: { supersededAt: true, punch: { select: { clientPunchId: true, employeeId: true } } },
+  },
 } satisfies Prisma.ScannerDayInclude;
 
 type LoadedDay = Prisma.ScannerDayGetPayload<{ include: typeof dayInclude }>;
@@ -1372,12 +1374,18 @@ export class ScannerImportService {
       const wanted = new Map(
         verdict.punches.map((p) => [scannerPunchKey(day.scannerNumber, date, p.time, p.type), p]),
       );
+      // Only the punches of the day's own employee count as the day's: a punch of
+      // someone the day once belonged to is history, not part of what it needs.
+      const activeLinks = day.punches.filter((l) => l.supersededAt === null);
       const active = new Set(
-        day.punches
-          .filter((l) => l.supersededAt === null && l.punch.clientPunchId)
+        activeLinks
+          .filter((l) => l.punch.clientPunchId && l.punch.employeeId === employeeId)
           .map((l) => l.punch.clientPunchId!),
       );
-      const right = wanted.size === active.size && [...wanted.keys()].every((k) => active.has(k));
+      const right =
+        wanted.size === active.size &&
+        activeLinks.every((l) => l.punch.employeeId === employeeId) &&
+        [...wanted.keys()].every((k) => active.has(k));
       if (right) continue;
       if (locked.has(`${employeeId}|${date}`)) continue;
       work.push({
@@ -1401,7 +1409,7 @@ export class ScannerImportService {
               scannerDayId: true,
               punchId: true,
               supersededAt: true,
-              punch: { select: { clientPunchId: true } },
+              punch: { select: { clientPunchId: true, employeeId: true } },
             },
           });
           const linksOf = new Map<string, typeof links>();
@@ -1413,13 +1421,20 @@ export class ScannerImportService {
           const punchRows: Prisma.AttendancePunchCreateManyInput[] = [];
           const linkRows: Prisma.ScannerPunchLinkCreateManyInput[] = [];
           for (const { day, employeeId, wanted, decisionId } of group) {
-            const own = linksOf.get(day.id) ?? [];
-            // Set aside what the day no longer should have.
-            for (const l of own) {
-              if (l.supersededAt === null && !wanted.has(l.punch.clientPunchId ?? '')) {
+            const all = linksOf.get(day.id) ?? [];
+            // Set aside what the day no longer should have, and any punch of someone
+            // else that is still in force on it.
+            for (const l of all) {
+              if (
+                l.supersededAt === null &&
+                (l.punch.employeeId !== employeeId || !wanted.has(l.punch.clientPunchId ?? ''))
+              ) {
                 setAside.push(l.punchId);
               }
             }
+            // A set-aside link is taken up again only for the punch of the same
+            // employee; the day's new holder gets punches of their own.
+            const own = all.filter((l) => l.punch.employeeId === employeeId);
             for (const [key, punch] of wanted) {
               const link = own.find((l) => l.punch.clientPunchId === key);
               if (link) {

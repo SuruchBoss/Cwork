@@ -36,7 +36,7 @@ this file only says where the dev room stands.
   After #151 and #150 merge: merge main, recount the docs, push, tell the PO.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 371; backend unit 897, domain 558; e2e 582.
+- Counts: web 371; backend unit 897, domain 558; e2e 584.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

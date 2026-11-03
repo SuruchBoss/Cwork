@@ -413,6 +413,120 @@ describe('A scanner number bound for a period (e2e)', () => {
     });
   });
 
+  describe('a day that changes hands is counted for its new holder (CW-109)', () => {
+    const K1 = '9340';
+    const K2 = '9341';
+    const atDay = (day: number) => new Date(`${iso(day)}T00:00:00Z`);
+    /** Every punch link of a day, with whose punch it is and whether it is in force. */
+    const linksOfDay = async (number: string, day: number) =>
+      (
+        await prisma.scannerPunchLink.findMany({
+          where: { scannerDay: { scannerNumber: number, workDate: atDay(day) } },
+          select: { supersededAt: true, punch: { select: { employeeId: true, type: true } } },
+        })
+      ).map((l) => ({
+        holder: l.punch.employeeId,
+        type: l.punch.type,
+        inForce: l.supersededAt === null,
+      }));
+    const inForceOf = async (number: string, day: number) =>
+      (await linksOfDay(number, day)).filter((l) => l.inForce);
+    const minutesOf = async (employeeId: string, day: number) =>
+      (
+        await prisma.attendanceRecord.findUnique({
+          where: { employeeId_workDate: { employeeId, workDate: atDay(day) } },
+        })
+      )?.workedMinutes ?? 0;
+    const endAt = async (number: string, employeeId: string, day: number) => {
+      const open = await prisma.employeeScannerNumber.findFirstOrThrow({
+        where: { scannerNumber: number, employeeId, validTo: null },
+      });
+      return api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, { endDate: iso(day) });
+    };
+
+    beforeAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+    afterAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+
+    it('gives the next holder punches of their own and their worked time, and leaves the first holder’s punches set aside', async () => {
+      expect((await bind(K1, cat, 'ALWAYS')).status).toBe(200);
+      const file = scannerFile([
+        line(K1, 10),
+        line(K1, 12),
+        // The 14th is a single scan: it waits for HR and has no punches.
+        `ทดสอบ ,\t${K1} ,\t${date(14)} ,\t08:00 ,\t`,
+      ]);
+      expect((await api.upload('/attendance/scanner/import', hr, file)).status).toBeLessThan(300);
+      expect(await minutesOf(cat, 12)).toBeGreaterThan(0);
+      const catPunches = await linksOfDay(K1, 12);
+      expect(catPunches).toHaveLength(2);
+
+      const ended = await endAt(K1, cat, 11);
+      expect(ended.body).toMatchObject({ daysReleased: 2 });
+      expect(await ownerOfDay(K1, 12)).toBeNull();
+      expect((await linksOfDay(K1, 12)).every((l) => !l.inForce)).toBe(true);
+      expect(await minutesOf(cat, 12)).toBe(0);
+
+      const next = await bind(K1, ben, 'ALWAYS');
+      expect(next.status).toBe(200);
+      expect(next.body).toMatchObject({ daysMatched: 2, punchesAdded: 2 });
+
+      expect(await ownerOfDay(K1, 12)).toBe(ben);
+      const links = await linksOfDay(K1, 12);
+      // The first holder's two punches stay set aside; the new holder has two of their own.
+      expect(links.filter((l) => l.holder === cat)).toHaveLength(2);
+      expect(links.filter((l) => l.holder === cat).every((l) => !l.inForce)).toBe(true);
+      expect(links.filter((l) => l.holder === ben)).toHaveLength(2);
+      expect(links.filter((l) => l.holder === ben).every((l) => l.inForce)).toBe(true);
+      expect((await inForceOf(K1, 12)).map((l) => l.type).sort()).toEqual([
+        'CLOCK_IN',
+        'CLOCK_OUT',
+      ]);
+      expect(await minutesOf(ben, 12)).toBeGreaterThan(0);
+      expect(await minutesOf(cat, 12)).toBe(0);
+      // The day before the end is still the first holder's, with its worked time.
+      expect(await ownerOfDay(K1, 10)).toBe(cat);
+      expect(await minutesOf(cat, 10)).toBeGreaterThan(0);
+      expect((await inForceOf(K1, 10)).every((l) => l.holder === cat)).toBe(true);
+    });
+
+    it('does the same through three holders in a row, each with punches and time of their own', async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+      expect((await bind(K2, cat, 'ALWAYS')).status).toBe(200);
+      const file = scannerFile([20, 22, 23, 24].map((day) => line(K2, day)));
+      expect((await api.upload('/attendance/scanner/import', hr, file)).status).toBeLessThan(300);
+
+      expect((await endAt(K2, cat, 21)).body).toMatchObject({ daysReleased: 3 });
+      const second = await bind(K2, ben, 'ALWAYS');
+      expect(second.body).toMatchObject({ daysMatched: 3, punchesAdded: 6 });
+
+      expect((await endAt(K2, ben, 22)).body).toMatchObject({ daysReleased: 2 });
+      const third = await bind(K2, ann, 'ALWAYS');
+      expect(third.body).toMatchObject({ daysMatched: 2, punchesAdded: 4 });
+
+      const owners: Record<number, string> = { 20: cat, 22: ben, 23: ann, 24: ann };
+      for (const [day, owner] of Object.entries(owners)) {
+        const d = Number(day);
+        expect(await ownerOfDay(K2, d)).toBe(owner);
+        const inForce = await inForceOf(K2, d);
+        expect(inForce).toHaveLength(2);
+        expect(inForce.every((l) => l.holder === owner)).toBe(true);
+        expect(await minutesOf(owner, d)).toBeGreaterThan(0);
+        for (const other of [cat, ben, ann].filter((e) => e !== owner)) {
+          expect(await minutesOf(other, d)).toBe(0);
+        }
+      }
+      // The 23rd passed through two holders: the first two have a set-aside pair each, never in force.
+      const thirteen = await linksOfDay(K2, 23);
+      expect(thirteen.filter((l) => l.holder === cat && !l.inForce)).toHaveLength(2);
+      expect(thirteen.filter((l) => l.holder === ben && !l.inForce)).toHaveLength(2);
+      expect(thirteen.filter((l) => l.holder === ann && l.inForce)).toHaveLength(2);
+    });
+  });
+
   describe('a number asked for again names the period that stands in the way (CW-109)', () => {
     const W = '9320';
 
