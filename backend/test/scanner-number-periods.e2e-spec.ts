@@ -8,7 +8,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './utils/database';
-import { takeNumbers } from './utils/scanner-numbers';
+import { giveNumber, takeNumbers } from './utils/scanner-numbers';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const HR = 'hr.officer@cwork.example';
@@ -291,6 +291,8 @@ describe('A scanner number bound for a period (e2e)', () => {
       prisma.employeeScannerNumber.findFirstOrThrow({
         where: { scannerNumber: number, employeeId, validTo: null },
       });
+    const bindingOf2 = async (id: string) =>
+      prisma.employeeScannerNumber.findUniqueOrThrow({ where: { id } });
 
     beforeAll(async () => {
       await takeNumbers(prisma, [ann, ben, cat]);
@@ -406,6 +408,15 @@ describe('A scanner number bound for a period (e2e)', () => {
           endDate: iso(20),
         });
         expect(later.status).toBe(200);
+        expect(await ownerOfDay(Z, 14)).toBe(cat);
+
+        // The period has ended now; making it shorter is stopped by the same run (CW-115).
+        const shorten = await api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, {
+          endDate: iso(10),
+        });
+        expect(shorten.status).toBe(422);
+        expect(shorten.body.code).toBe('SCANNER_DAY_IN_PAYROLL_RUN');
+        expect((await bindingOf2(open.id)).validTo?.toISOString().slice(0, 10)).toBe(iso(20));
         expect(await ownerOfDay(Z, 14)).toBe(cat);
       } finally {
         await api.post(`/payroll/runs/${run.body.id}/cancel`, admin);
@@ -595,6 +606,188 @@ describe('A scanner number bound for a period (e2e)', () => {
       ).find((n) => n.scannerNumber === U);
       expect(row).toMatchObject({ foreverPossible: false, foreverDays: 0 });
       await takeNumbers(prisma, [ann, ben, cat]);
+    });
+  });
+
+  describe('a card borrowed for some days (CW-115)', () => {
+    const OWN = '9510';
+    const BORROWED = '9511';
+    const waitingCount = async () =>
+      prisma.scannerDay.count({ where: { scannerNumber: BORROWED, employeeId: null } });
+    const bindDays = (employeeId: string, from?: string, to?: string) =>
+      api.post('/attendance/scanner/unmapped/bind', hr, {
+        scannerNumber: BORROWED,
+        employeeId,
+        scope: 'THESE_DAYS',
+        from,
+        to,
+      });
+    const previewBind = (employeeId: string, from?: string, to?: string) =>
+      api.get(
+        `/attendance/scanner/unmapped/bind-preview?scannerNumber=${BORROWED}&employeeId=${employeeId}` +
+          `${from ? `&from=${from}` : ''}${to ? `&to=${to}` : ''}`,
+        hr,
+      );
+
+    beforeAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+      // Ann has a number of her own, in use, and her own scans on two days of the stretch.
+      expect((await bind(OWN, ann, 'ALWAYS')).status).toBe(200);
+      await importDays(OWN, [5, 6]);
+      await importDays(BORROWED, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    });
+
+    afterAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+
+    it('says how many of the days chosen the person already has scans for under another number', async () => {
+      // Earlier cases of this spec left scans of Ann's on other numbers in these weeks: count
+      // them from the database, so the answer is checked against the data and not a guess.
+      const elsewhere = async (from: number, to: number) => {
+        const days = await prisma.scannerDay.findMany({
+          where: {
+            employeeId: ann,
+            scannerNumber: { not: BORROWED },
+            workDate: {
+              gte: new Date(`${iso(from)}T00:00:00Z`),
+              lte: new Date(`${iso(to)}T00:00:00Z`),
+            },
+            NOT: { times: { isEmpty: true } },
+          },
+          select: { workDate: true },
+        });
+        return new Set(days.map((d) => d.workDate.toISOString())).size;
+      };
+
+      const whole = await previewBind(ann);
+      expect(whole.status).toBe(200);
+      expect(whole.body).toMatchObject({ from: iso(1), to: iso(10), days: 10 });
+      expect(whole.body.daysAlsoScannedOnAnotherNumber).toBe(await elsewhere(1, 10));
+      // Her own number's scans on the 5th and the 6th are among them.
+      expect(whole.body.daysAlsoScannedOnAnotherNumber).toBeGreaterThanOrEqual(2);
+
+      const narrowed = await previewBind(ann, iso(1), iso(4));
+      expect(narrowed.body).toMatchObject({ days: 4 });
+      expect(narrowed.body.daysAlsoScannedOnAnotherNumber).toBe(await elsewhere(1, 4));
+    });
+
+    it('binds only the first to the last day chosen, and leaves the rest waiting', async () => {
+      const refusedOrder = await bindDays(ann, iso(6), iso(3));
+      expect(refusedOrder.status).toBe(422);
+      expect(refusedOrder.body.code).toBe('SCANNER_PERIOD_ORDER');
+      const outside = await bindDays(ann, iso(1), iso(20));
+      expect(outside.status).toBe(422);
+      expect(outside.body.code).toBe('SCANNER_RANGE_OUTSIDE_WAITING_DAYS');
+      const wrongScope = await api.post('/attendance/scanner/unmapped/bind', hr, {
+        scannerNumber: BORROWED,
+        employeeId: ann,
+        scope: 'ALWAYS',
+        from: iso(2),
+      });
+      expect(wrongScope.status).toBe(422);
+      expect(wrongScope.body.code).toBe('SCANNER_RANGE_NEEDS_THESE_DAYS');
+      expect(await waitingCount()).toBe(10);
+
+      const bound = await bindDays(ann, iso(1), iso(4));
+      expect(bound.status).toBe(200);
+      expect(bound.body).toMatchObject({ daysMatched: 4 });
+      expect(await ownerOfDay(BORROWED, 4)).toBe(ann);
+      expect(await ownerOfDay(BORROWED, 5)).toBeNull();
+      expect(await waitingCount()).toBe(6);
+      // Her own number is still the one in use.
+      expect(
+        await prisma.employeeScannerNumber.count({ where: { employeeId: ann, validTo: null } }),
+      ).toBe(1);
+    });
+
+    it('gives back only the days of the period that is made shorter, not those of a later period of the same person', async () => {
+      const TWICE = '9512';
+      await giveNumber(prisma, ann, TWICE, { from: iso(1), to: iso(6) });
+      await giveNumber(prisma, ann, TWICE, { from: iso(8), to: iso(10) });
+      await importDays(TWICE, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(await ownerOfDay(TWICE, 5)).toBe(ann);
+      expect(await ownerOfDay(TWICE, 9)).toBe(ann);
+      expect(await ownerOfDay(TWICE, 7)).toBeNull();
+
+      const first = await prisma.employeeScannerNumber.findFirstOrThrow({
+        where: {
+          employeeId: ann,
+          scannerNumber: TWICE,
+          validFrom: new Date(`${iso(1)}T00:00:00Z`),
+        },
+      });
+      const preview = await api.get(
+        `/attendance/scanner/numbers/${first.id}/end-preview?endDate=${iso(3)}`,
+        hr,
+      );
+      expect(preview.body).toMatchObject({ daysReleased: 3, blocked: null });
+
+      const shortened = await api.post(`/attendance/scanner/numbers/${first.id}/end`, hr, {
+        endDate: iso(3),
+      });
+      expect(shortened.status).toBe(200);
+      expect(shortened.body).toMatchObject({ daysReleased: 3 });
+      expect(await ownerOfDay(TWICE, 3)).toBe(ann);
+      expect(await ownerOfDay(TWICE, 4)).toBeNull();
+      expect(await ownerOfDay(TWICE, 6)).toBeNull();
+      // The later period of the same person is not touched.
+      expect(await ownerOfDay(TWICE, 8)).toBe(ann);
+      expect(await ownerOfDay(TWICE, 10)).toBe(ann);
+    });
+
+    it('shortens a period that has ended, gives the later days back, and the next holder takes them', async () => {
+      // A mistaken wider period first: the whole stretch to Ann, then made shorter.
+      const wider = await bindDays(ann);
+      expect(wider.status).toBe(200);
+      expect(await waitingCount()).toBe(0);
+      const period = await prisma.employeeScannerNumber.findFirstOrThrow({
+        where: {
+          employeeId: ann,
+          scannerNumber: BORROWED,
+          validFrom: new Date(`${iso(5)}T00:00:00Z`),
+        },
+      });
+
+      const preview = await api.get(
+        `/attendance/scanner/numbers/${period.id}/end-preview?endDate=${iso(6)}`,
+        hr,
+      );
+      expect(preview.status).toBe(200);
+      expect(preview.body).toMatchObject({ daysReleased: 4, blocked: null });
+
+      // A later or equal end is not "shorter".
+      const notShorter = await api.post(`/attendance/scanner/numbers/${period.id}/end`, hr, {
+        endDate: iso(10),
+      });
+      expect(notShorter.status).toBe(422);
+      expect(notShorter.body.code).toBe('SCANNER_NUMBER_ALREADY_ENDED');
+
+      const shortened = await api.post(`/attendance/scanner/numbers/${period.id}/end`, hr, {
+        endDate: iso(6),
+      });
+      expect(shortened.status).toBe(200);
+      expect(shortened.body).toMatchObject({ validTo: iso(6), daysReleased: 4 });
+      expect(await ownerOfDay(BORROWED, 6)).toBe(ann);
+      expect(await ownerOfDay(BORROWED, 7)).toBeNull();
+      expect(await ownerOfDay(BORROWED, 10)).toBeNull();
+      expect(
+        await prisma.auditLog.count({
+          where: {
+            entityId: ann,
+            summary: { startsWith: `Shortened scanner number ${BORROWED} ` },
+          },
+        }),
+      ).toBe(1);
+
+      // The new person takes the number from the day after, with the days that went back.
+      const next = await bind(BORROWED, ben, 'ALWAYS');
+      expect(next.status).toBe(200);
+      expect(next.body).toMatchObject({ daysMatched: 4 });
+      expect(await ownerOfDay(BORROWED, 7)).toBe(ben);
+      expect(await ownerOfDay(BORROWED, 10)).toBe(ben);
+      // Ann keeps the days up to the new end.
+      expect(await ownerOfDay(BORROWED, 6)).toBe(ann);
     });
   });
 });

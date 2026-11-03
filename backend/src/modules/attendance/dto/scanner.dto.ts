@@ -132,6 +132,44 @@ export class BindScannerNumberDto {
   @IsOptional()
   @IsIn(['ALWAYS', 'THESE_DAYS'])
   scope?: 'ALWAYS' | 'THESE_DAYS';
+
+  @ApiPropertyOptional({
+    description:
+      'With THESE_DAYS: the first day to bind (yyyy-MM-dd), inside the days waiting for an owner. ' +
+      'The first waiting day when left out.',
+  })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'from must be yyyy-MM-dd' })
+  from?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'With THESE_DAYS: the last day to bind (yyyy-MM-dd), inside the days waiting for an owner. ' +
+      'The last waiting day when left out.',
+  })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'to must be yyyy-MM-dd' })
+  to?: string;
+}
+
+export class BindPreviewQueryDto {
+  @ApiProperty()
+  @Matches(/^\d{1,12}$/, { message: 'scannerNumber must be digits' })
+  scannerNumber!: string;
+
+  @ApiProperty()
+  @IsUUID()
+  employeeId!: string;
+
+  @ApiPropertyOptional({ description: 'The first day to bind (yyyy-MM-dd)' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'from must be yyyy-MM-dd' })
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'The last day to bind (yyyy-MM-dd)' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'to must be yyyy-MM-dd' })
+  to?: string;
 }
 
 export class EndScannerNumberDto {

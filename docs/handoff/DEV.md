@@ -6,19 +6,18 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main` (482d405): everything up to #153: CW-101 to CW-110, including the blind-test
-  fixes, CW-110's scan prefill and dashboard, and CW-109 (a scanner number bound for a period,
-  with its race fixes).
-- **On branch `claude/new-session-syszvt` (the PO opens the PR):** CW-111. The nightly
-  attendance close-out now closes the day before `organizationToday()` (Asia/Bangkok), not
-  the day before the UTC date. A unit spec pins the clock (01:00 Bangkok, just before midnight
-  UTC, a UTC-timezone org, month and year ends) and an e2e case runs the job on a fixed date.
-- Next: CW-112, one PR at a time, starting with ending a scanner number taking the same
-  per-number lock as binding one, then payroll actions the user cannot take shown closed with
-  a reason.
-- One small wording nit, not urgent: the installer's source line reads "database password:
-  from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 371; backend unit 903, domain 558; e2e 587.
+- On `main`: everything up to #153 (CW-101 to CW-110) and, when #154 merges, CW-111.
+- **CW-115, in the working tree, not pushed (waits for #154 to merge):** "these days only" takes a
+  first and last day inside the waiting stretch (`from`/`to` on `POST /attendance/scanner/unmapped/bind`),
+  `GET /attendance/scanner/unmapped/bind-preview` counts the days and how many the person already has
+  scans for under another number (the page warns), and a period that has ended can be made shorter
+  through the same end/preview/confirm/payroll-run refusal (`planEnd` limits itself to the days between
+  the new and the old end). Left open: whether a day with scans from two numbers of one person should
+  wait for HR instead of counting both; it is only warned about at binding time (a bigger change to
+  the day statuses, to be a ticket of its own if the PO wants it).
+- CW-112 waits behind CW-115 on a local branch (`blind-round`): see its commits. Counts there differ
+  and are reconciled on merge.
+- Counts: web 374; backend unit 903, domain 558; e2e 591.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

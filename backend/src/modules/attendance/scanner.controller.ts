@@ -21,6 +21,7 @@ import { RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
 import { IMPORT_BODY, IMPORT_LIMITS, requireUpload } from '../../core/spreadsheet/upload';
 import {
+  BindPreviewQueryDto,
   BindScannerNumberDto,
   DecideScannerDayDto,
   EndScannerNumberDto,
@@ -136,6 +137,18 @@ export class ScannerController {
     return this.scanner.bind(user, dto);
   }
 
+  @Get('unmapped/bind-preview')
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @ApiOperation({
+    summary: 'What registering a waiting number for some days would count, without doing it',
+    description:
+      'The waiting days between the first and last day asked for, and how many of them the ' +
+      'employee already has scans for under another number.',
+  })
+  bindPreview(@CurrentUser() user: AuthenticatedUser, @Query() query: BindPreviewQueryDto) {
+    return this.scanner.previewBind(user, query);
+  }
+
   @Get('numbers/:id/end-preview')
   @RequirePermissions(Permission.ATTENDANCE_MANAGE)
   @ApiOperation({
@@ -156,7 +169,7 @@ export class ScannerController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(Permission.ATTENDANCE_MANAGE)
   @ApiOperation({
-    summary: 'End a scanner number that is in use',
+    summary: 'End a scanner number, or end a period that has ended on an earlier day',
     description:
       'The number counts to the employee through the end date. Later days of it that no one ' +
       'has decided go back to no one and are matched again to any other period that holds ' +

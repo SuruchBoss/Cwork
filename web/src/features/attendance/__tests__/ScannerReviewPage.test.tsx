@@ -83,10 +83,35 @@ function page(items: ScannerDay[]): ScannerDaysPage {
   };
 }
 
-function serve(items: ScannerDay[], unmapped: unknown[] = []) {
-  get.mockImplementation((path: string) => {
+/** What the server says registering a waiting number for the days chosen would count (CW-115). */
+function bindPreviewOf(over: Record<string, unknown> = {}) {
+  return {
+    from: '2026-09-03',
+    to: '2026-09-04',
+    days: 2,
+    daysWithTimes: 2,
+    daysAlsoScannedOnAnotherNumber: 0,
+    ...over,
+  };
+}
+
+function serve(
+  items: ScannerDay[],
+  unmapped: unknown[] = [],
+  bindPreview: Record<string, unknown> = {},
+) {
+  get.mockImplementation((path: string, options?: { query?: Record<string, unknown> }) => {
     if (path === '/attendance/scanner/days') return Promise.resolve(page(items));
     if (path === '/attendance/scanner/unmapped') return Promise.resolve(unmapped);
+    if (path === '/attendance/scanner/unmapped/bind-preview') {
+      return Promise.resolve(
+        bindPreviewOf({
+          from: options?.query?.from,
+          to: options?.query?.to,
+          ...bindPreview,
+        }),
+      );
+    }
     if (path === '/employees') {
       return Promise.resolve({
         data: [
@@ -389,6 +414,66 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       scannerNumber: '77',
       employeeId: 'e9',
       scope: 'THESE_DAYS',
+      from: '2026-09-03',
+      to: '2026-09-04',
+    });
+  });
+
+  it('binds only the first to the last day HR picks out of the waiting stretch, and warns when the person is already scanned on another number (CW-115)', async () => {
+    serve(
+      [],
+      [
+        {
+          scannerNumber: '999',
+          name: 'บัตรชั่วคราว',
+          days: 15,
+          daysWithTimes: 15,
+          firstDay: '2026-10-01',
+          lastDay: '2026-10-21',
+        },
+      ],
+      { days: 9, daysAlsoScannedOnAnotherNumber: 4 },
+    );
+    post.mockResolvedValue({ daysMatched: 9, punchesAdded: 18 });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 999'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 999'), 'e9');
+    await userEvent.selectOptions(
+      screen.getByLabelText('เลข 999 เป็นของคนนี้นานแค่ไหน'),
+      'THESE_DAYS',
+    );
+
+    // The whole waiting stretch is the start; the last day is narrowed.
+    const last = screen.getByLabelText('วันสุดท้ายของเลข 999');
+    await userEvent.clear(last);
+    await userEvent.type(last, '11/10/2569');
+    await userEvent.tab();
+
+    expect(
+      await screen.findByText(/จะนับ 9 วันที่รออยู่ ตั้งแต่ 1 ต\.ค\. 2569 ถึง 11 ต\.ค\. 2569/),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'พนักงานคนนี้มีสแกนจากเลขอื่นอยู่แล้ว 4 วันในช่วงนี้',
+    );
+    await waitFor(() =>
+      expect(get).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind-preview', {
+        query: {
+          scannerNumber: '999',
+          employeeId: 'e9',
+          from: '2026-10-01',
+          to: '2026-10-11',
+        },
+      }),
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+    expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
+      scannerNumber: '999',
+      employeeId: 'e9',
+      scope: 'THESE_DAYS',
+      from: '2026-10-01',
+      to: '2026-10-11',
     });
   });
 
