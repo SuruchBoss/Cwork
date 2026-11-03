@@ -638,7 +638,7 @@ export class PayrollService {
       );
     }
 
-    const { period, reconciled } = await loadReconciledPeriod(
+    const { period, periodCodes, reconciled } = await loadReconciledPeriod(
       this.prisma,
       user.organizationId,
       periodId,
@@ -646,9 +646,11 @@ export class PayrollService {
         ? (employee) =>
             this.crypto.decrypt(employee.taxIdEnc) ?? this.crypto.decrypt(employee.nationalIdEnc)
         : undefined,
+      { withItems: format.needsItems === true, wholeMonth: format.wholeMonth === true },
     );
 
-    const content = format.build(reconciled);
+    const built = format.build(reconciled);
+    const content = typeof built === 'string' ? built : Buffer.from(built);
     const rowCount = reconciled.rows.length;
     // A format that prints tax IDs says so in the audit trail, with how many
     // people had none to print, so a blank is never found by surprise.
@@ -662,17 +664,23 @@ export class PayrollService {
       action: AuditAction.EXPORT,
       entityType: 'PayrollPeriod',
       entityId: period.id,
-      summary: `Exported payroll period ${period.code} as ${format.label}`,
+      summary: format.wholeMonth
+        ? `Exported payroll month ${reconciled.period.code} as ${format.label}`
+        : `Exported payroll period ${period.code} as ${format.label}`,
       changes: {
         format: format.id,
         rowCount,
         period: period.code,
+        // A format that lists the month says which periods it read.
+        ...(format.wholeMonth ? { periods: periodCodes } : {}),
         ...(missingTaxId === undefined ? {} : { missingTaxId }),
       },
     });
 
     return {
-      filename: `payroll-${period.code}.${format.extension}`,
+      filename: format.wholeMonth
+        ? `payroll-register-${reconciled.period.code}.${format.extension}`
+        : `payroll-${period.code}.${format.extension}`,
       contentType: format.contentType,
       content,
       rowCount,

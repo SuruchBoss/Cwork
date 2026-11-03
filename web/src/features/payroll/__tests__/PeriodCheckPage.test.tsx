@@ -235,8 +235,8 @@ describe('Checking a period against what was filed (CW-089)', () => {
   });
 });
 
-describe('The accountant’s file on the payroll page (CW-089)', () => {
-  it('downloads the accountant’s format, and the plain one as before', async () => {
+describe('The accountant’s file and the payroll register on the payroll page (CW-089, CW-099)', () => {
+  it('downloads the accountant’s format, the register, and the plain one as before', async () => {
     useAuthStore.setState({ can: (...wanted: string[]) => wanted.includes(P.PAYROLL_EXPORT) });
     download.mockResolvedValue({ blob: new Blob(['x']), filename: 'payroll-2026-09.csv' });
     renderWithProviders(
@@ -254,10 +254,19 @@ describe('The accountant’s file on the payroll page (CW-089)', () => {
       }),
     );
 
+    // The register lists the whole month, which the server works out from any period of it.
+    const register = await screen.findAllByRole('button', { name: 'ส่งออกทะเบียนเงินเดือน' });
+    await user.click(register[0]!);
+    await waitFor(() =>
+      expect(download).toHaveBeenLastCalledWith('/payroll/periods/p-sep/export', {
+        query: { format: 'register' },
+      }),
+    );
+
     const plain = await screen.findAllByRole('button', { name: 'ส่งออก CSV' });
     await user.click(plain[0]!);
     await waitFor(() => expect(download).toHaveBeenLastCalledWith('/payroll/periods/p-sep/export'));
-    expect(saveBlob).toHaveBeenCalledTimes(2);
+    expect(saveBlob).toHaveBeenCalledTimes(3);
     expect(screen.getByRole('link', { name: 'เทียบกับที่ยื่นไปแล้ว' })).toHaveAttribute(
       'href',
       '/payroll/compare',

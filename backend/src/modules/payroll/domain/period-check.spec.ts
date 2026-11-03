@@ -23,6 +23,7 @@ function row(overrides: Partial<ReconciledRow> = {}): ReconciledRow {
     ssoEmployer: d('750.00'),
     netPay: d('27500.00'),
     taxId: '',
+    items: [],
     ...overrides,
   };
 }

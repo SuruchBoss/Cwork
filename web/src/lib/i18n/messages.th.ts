@@ -873,6 +873,7 @@ export const thMessages: Record<string, string> = {
   File: 'ทั้งไฟล์',
   // Payroll period check (CW-089)
   'Export for the accountant': 'ส่งออกสำหรับนักบัญชี',
+  'Export payroll register': 'ส่งออกทะเบียนเงินเดือน',
   'Check against filings': 'เทียบกับที่ยื่นไปแล้ว',
   Same: 'ตรงกัน',
   Different: 'ไม่ตรง',
@@ -984,8 +985,10 @@ export const thMessages: Record<string, string> = {
   'Out {time}': 'ออก {time}',
   '{who}, {day}: left out, not counted': '{who} วันที่ {day}: ไม่นับวันนี้แล้ว',
   '{who}, {day}: counted {from} to {to}': '{who} วันที่ {day}: นับเวลา {from} ถึง {to} แล้ว',
-  '{who}, {day}: counted with clock-in {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาเข้า {time} แล้ว',
-  '{who}, {day}: counted with clock-out {time} only': '{who} วันที่ {day}: นับเฉพาะเวลาออก {time} แล้ว',
+  '{who}, {day}: counted with clock-in {time} only':
+    '{who} วันที่ {day}: นับเฉพาะเวลาเข้า {time} แล้ว',
+  '{who}, {day}: counted with clock-out {time} only':
+    '{who} วันที่ {day}: นับเฉพาะเวลาออก {time} แล้ว',
   'Not counted until you say whose they are': 'ยังไม่นับจนกว่าจะบอกว่าเป็นของใคร',
   '{count} day has no punch at all. Choose “No punch” under Show to see it.':
     'มี {count} วันที่ไม่มีการสแกนเลย ดูได้โดยเลือก “ไม่มีการสแกน” ในช่อง “แสดง”',

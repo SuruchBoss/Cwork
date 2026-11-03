@@ -21,6 +21,29 @@ entry, tags it and publishes the notes.
 
 ### Added
 
+- **The payroll register HR sends the accountant** (CW-099). `GET
+  /payroll/periods/:id/export?format=register` is an Excel workbook in the order
+  of the form HR already fills in: row number, name, salary, daily wage in three
+  columns (rate, days, amount), overtime, other earnings, total income, tax,
+  social security, other deductions, total deductions and net pay, under a title
+  line for the Buddhist-calendar month, with a total row. One sheet lists
+  everyone paid in the month: Cwork pays a monthly salary in a monthly period
+  and a daily wage in the two halves of a semi-monthly one, so the register reads
+  all of the month's periods from whichever one it is asked for, and adds a
+  person's halves into one row. A month with a period that has no run, a run not
+  approved, or a semi-monthly month missing a half is refused by name. The two
+  "other" columns are sums, and a last column says what they are made of (the
+  names and amounts of the lines). Split from the payslip lines, which are
+  checked against the payslip's gross, deductions, tax, social security and net
+  first, so the parts always add up to the whole; nothing is calculated again.
+  Tax and the employee's social security only: no ID number, bank account or
+  employer share on the register sheet, which sits on a second sheet of period
+  totals. Figures are kept to the satang. `payroll:export`, audited as an export
+  with the format and the periods read, never the figures; the CSV and the
+  accountant's formats are unchanged. The payroll page has an **Export payroll
+  register** button, and `docs/guide/period-check.th.md` says which file to send.
+  Free, tied to no key; synthetic test data only.
+
 - **Run Cwork on a NAS, beside what it already runs** (CW-062). `deploy/nas/`
   is one compose file and a handful of scripts for a small office's NAS (a
   Synology, for the pilot) that keeps Odoo and other containers on it. `check.sh`
