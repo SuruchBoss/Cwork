@@ -900,7 +900,8 @@ entry, tags it and publishes the notes.
   and the latest-run card shows the latest run that has figures instead of a draft at ฿0.00.
 - **A period that has a run opens it.** The pay-periods table offers "open" instead of
   "create run" for a period with a regular run, and the refusals for a second run and for a
-  closed period are now worded in Thai.
+  closed period, and the two leave refusals for too little notice or too little service,
+  are now worded in Thai.
 - **The compare page names its picker as the month** (CW-108). The box that chooses
   what to compare was headed "งวด" although the page reads the whole calendar month; it
   now reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (in English, "Month (any period of the month

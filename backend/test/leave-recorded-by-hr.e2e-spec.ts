@@ -316,6 +316,9 @@ describe('Leave recorded by HR (e2e)', () => {
       const forApproval = await record({ ...body, recordAsApproved: false });
       expect(forApproval.status).toBe(422);
       expect(forApproval.body.code).toBe('LEAVE_NOTICE_TOO_SHORT');
+      // Said in Thai, with no English sentence around the leave type's name.
+      expect(forApproval.body.message).toContain('ต้องแจ้งล่วงหน้าอย่างน้อย');
+      expect(forApproval.body.message).not.toMatch(/requires/i);
 
       const approved = await record(body);
       expect(approved.status).toBe(201);
