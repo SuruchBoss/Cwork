@@ -484,9 +484,11 @@ everything else is an earning or a deduction with its own name.
 - The console offers it beside "For the accountant", and the guide
   `docs/guide/period-check.th.md` says which file to send.
 
-**Not decided, do not build:** the satang. HR says "ยอดสตางค์ของเราจะไม่มี"; the
-register keeps Cwork's figures to the satang until it is known whether the pilot
-rounds the 5% or the net (not yet asked).
+**The satang.** HR says "ยอดสตางค์ของเราจะไม่มี". Social security is already a
+whole baht (CW-084, the office's own rule; the owner said 2026-11-03 to follow
+the rule, not HR). Whether the pilot rounds the net pay is not decided: the
+register keeps Cwork's figures to the satang. Do not round them in this
+ticket.
 
 **Files** `backend/src/modules/payroll/domain/payroll-export.ts`,
 `backend/src/core/spreadsheet/xlsx.ts`
