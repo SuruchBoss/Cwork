@@ -4,7 +4,7 @@
 import clsx from 'clsx';
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type {
-  ButtonHTMLAttributes,
+  ComponentPropsWithRef,
   InputHTMLAttributes,
   ReactElement,
   ReactNode,
@@ -25,7 +25,8 @@ export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: R
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// With a ref: the dialog focuses its safe button when it opens.
+interface ButtonProps extends ComponentPropsWithRef<'button'> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md';
   loading?: boolean;
