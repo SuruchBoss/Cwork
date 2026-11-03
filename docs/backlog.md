@@ -493,7 +493,7 @@ blind test. None blocks the install; each confuses a first-time HR user.
 - A test for each item; the HR guide matches where it shows the screen.
 
 ### CW-114 · A shift that crosses midnight
-`P1` · attendance · **M** · owner decides; Pilot A only if it has night shifts
+`P2` · attendance · **M** · after Pilot A
 
 A punch or scan takes the calendar date of the moment it was made; a shift's
 `crossesMidnight` is used only for leaving early. Someone who clocks in at
@@ -502,8 +502,8 @@ D+1, where the app refuses it (no clock-in that day) and a lone morning scan
 is suggested as a clock-in (CW-110). HR fixes D by hand. Found by the Dev room
 while checking CW-111; it predates that change.
 
-**Open question for the owner:** does the pilot company run shifts that cross
-midnight? If not, this waits until after Pilot A.
+**Owner's answer (2026-11-04 06:45, relayed from the Asuna Bot room):** the
+pilot factory does not work in shifts, so this waits until after Pilot A.
 
 **Scope (if yes)**
 - A clock-out or scan in the morning counts toward the previous day's shift

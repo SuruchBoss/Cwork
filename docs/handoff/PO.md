@@ -41,7 +41,6 @@ this file only says where the PO room stands.
 - `./check.sh` on the pilot's NAS: approved 2026-11-03 17:18 (read-only,
   on-site). Still needed on the day: a backup drive, a password store, the HR
   file.
-- Whether the pilot runs shifts that cross midnight (CW-114).
 - Deleting the merged branches `claude/new-session-ch81xk` (#148) and
   `qa-regress-a93` (#152).
 - Public wording: the landing cash-sheet picture and alt text; CW-087 support
