@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-105 · CW-101 before paying real wages · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-105 · CW-106 · CW-101 before paying real wages · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -670,6 +670,45 @@ goes to the accountant), and a message on screen after the download.
 
 **Files** `backend/src/modules/payroll/domain/payroll-register.ts`,
 `backend/src/core/spreadsheet/xlsx.ts`, `web/src/lib/i18n/messages.th.ts`
+
+### CW-106 · A day with one scan is paid as a full day, with no warning
+`P1` · attendance · payroll · **S** · Pilot A · found by the UX room · #137
+
+The UX room found this while writing the guide's step on single-scan days
+(2026-11-03). The PO confirmed it by reading the code. Two cases:
+
+- **Clock-in only.** HR picks a clock-in and "no clock-out" (or the import
+  has only one scan). `deriveAttendance` (`attendance-calculator.ts`, the
+  `!lastClockOutAt` branch) stores the day as PRESENT with 0 minutes worked.
+  A daily worker is paid the full day (`daily-wage.ts`), a monthly one loses
+  nothing, and no warning appears. `INCOMPLETE_PUNCH_COUNTED` looks only at
+  INCOMPLETE, which only the nightly close-out sets for yesterday; an import
+  of an earlier month never sets it.
+- **Clock-out only.** `firstClockInAt` is null, but the code reaches
+  `minutesBetween(firstClockInAt!, lastClockOutAt)`. Untested; it probably
+  gives NaN or throws.
+
+The existing design (CW-069) is that an incomplete day may be counted, but HR
+is told on the payslip. So this is a bug against that design, not a new rule.
+
+**Scope**
+- A past day with a scan missing, imported or entered by hand, ends up
+  INCOMPLETE as the nightly job would make it. Payroll then shows
+  `INCOMPLETE_PUNCH_COUNTED` as it already does.
+- Clock-out only gives a defined result (INCOMPLETE, 0 minutes), never NaN or
+  an error.
+- The scanner import's summary counts the single-scan days, so HR sees them
+  before running payroll.
+- No change to how a counted day is paid.
+
+**Acceptance**
+- Tests: clock-in only on a past date → INCOMPLETE and the payslip warning;
+  clock-out only → INCOMPLETE, 0 minutes, no error; a complete day unchanged.
+- The UX room updates the guide's single-scan step to match.
+
+**Files** `backend/src/modules/attendance/domain/attendance-calculator.ts`,
+the scanner import service, `backend/src/modules/payroll/domain/daily-wage.ts`
+(read only)
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
