@@ -7,19 +7,14 @@ this file only says where the PO room stands.
 ## Where things are (2026-11-03, evening)
 
 - **Merged today:** #126 (CW-099), #128, #132, #135, #139 (access checks and
-  the performance note), #140 (QA re-test note of #139, all items closed).
-- **Open, in review:** #141 (`claude/new-session-syszvt`, head `a1e460c`)
-  carries CW-101, CW-102, CW-103, CW-104, CW-105 and CW-106. QA passed CW-101
-  and CW-102 on `ba16e36`; it is re-testing CW-103 to 106 on `a1e460c`.
-  Merge only when CI is green on the current head and QA confirms.
-- **After #141 merges:** close #125, #127, #133, #134, #136 and #137, add the
-  Done rows, tell Dev to reset its branch from `main`, then UX guide #138
-  goes in. Dev's next ticket (prepared locally, not pushed): a 404 for another
-  employee's tax profile, and a faster RecordLeavePanel test without touching
-  timeouts.
+  the performance note), #140 (QA re-test of #139), #141 (CW-101 to CW-106,
+  QA passed every ticket on `a1e460c`), merged at `14fb65d`.
+- **Next:** UX guide #138 (CW-103 part) after a merge of `main`. Dev's next
+  ticket: a 404 for another employee's tax profile, a faster
+  RecordLeavePanel test without touching timeouts, then CW-107 (#142).
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Still to
-  run after #141: the final regression (including issuing a document with an
+  run: the final regression (including issuing a document with an
   attached file) and the final blind test on a stack installed with
   `deploy/nas/install.sh` (2 CPU / 2 GB). Report the gates to the Asuna Bot
   room before the install date is booked (target Saturday 14 Nov).

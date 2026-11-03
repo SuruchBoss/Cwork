@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-105 · CW-106 · CW-101 before paying real wages · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-107 · final regression and blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -465,253 +465,27 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
-### CW-101 · Daily wages paid every 14 days
-`P1` · payroll · **L** · Pilot A · after CW-099 · before Cwork pays real wages · #125
+### CW-107 · The register exports a month with no monthly period, leaving monthly staff out without a word
+`P1` · payroll · **S** · Pilot A · found by the QA room · #142
 
-The owner confirmed on 2026-11-03 that the pilot pays its daily staff every
-two weeks: 14-day pay periods whose cut-off moves through the calendar. Some
-months have three paydays, and some periods span two months. HR works social
-security once a month, on the month's total.
-
-Cwork cannot do this today. `PayrollPeriod` is keyed by year, month and half
-(MONTHLY or SEMI_MONTHLY, CW-069). `PayFrequency.BIWEEKLY` exists in the enum,
-but nothing uses it.
-
-**Decided by the owner (18:38, relayed by the Asuna Bot room, replacing the
-17:19 choice):** the parallel run does not wait for this. Daily staff stay
-on half-month periods, as Cwork allows today, and the compare page adds up the
-calendar month (CW-104). The 17:19 choice, daily staff on monthly periods,
-was cancelled: Cwork refuses a daily rate on a monthly period (#127). This
-ticket must be done before Cwork pays real wages.
+Found while re-testing #141 (2026-11-03). A month with only approved
+half-month runs for daily staff and no monthly period yet still exports a
+register (200), with no monthly staff in it. The system cannot tell that a
+monthly period should exist.
 
 **Scope**
-- A 14-day period: anchored on a first start date, each next one 14 days on,
-  its own pay date. Monthly and half-monthly periods keep working unchanged.
-- Social security and withholding stay monthly figures, built from every
-  14-day period that counts toward the month. Which month a period that spans
-  two months counts toward is **not decided**: it waits on #36, answered from
-  the Social Security Act or the office's announcements. Build the rule as one
-  function, so the answer changes one place.
-- Whether the contribution may be taken once, at the month's last payday,
-  also waits on #36. Build nothing for it until the owner approves.
-- The monthly outputs (CW-099 register, the สปส.1-10 file, the accountant
-  export) add up the month's 14-day periods by the same rule.
-- Moving a daily worker from the parallel-run monthly setup to 14-day
-  periods, without losing the months already run.
+- When active monthly staff exist for the month and no monthly period covers
+  it, the register export and the compare page say so in Thai and name the
+  step (create the monthly period first), as an incomplete month is reported
+  today.
+- A company with no monthly staff is not warned.
 
 **Acceptance**
-- A year of 14-day periods from a synthetic start date: every day falls in
-  exactly one period; a month with three paydays and a period spanning two
-  months are both tested.
-- A month's social security from two or three periods equals one monthly run
-  on the same total (rounded once, CW-084).
-- The month's register and สปส.1-10 file equal the sum of its periods.
+- Tests: daily-only month with monthly staff present → the warning; a
+  daily-only company → no warning; a month with both periods → unchanged.
 
-**Files** `backend/prisma/schema/payroll.prisma`,
-`backend/src/modules/payroll/payroll.service.ts`,
-`backend/src/modules/payroll/domain/payroll-calculator.ts`,
-`backend/src/modules/payroll/sso-filing.service.ts`
-
-### CW-102 · Importing a month of scanner punches takes about 10 ms a line
-`P1` · attendance · **S–M** · Pilot A · found by the performance run · #133
-
-The Pilot A performance run (`docs/qa/performance-pilot-a.md`, dev room,
-2026-11-03) measured the whole stack under a 2-CPU, 2 GB limit with synthetic
-data. Every task stayed under 2 s except the scanner import:
-
-| People | Lines | Import |
-|---|---|---|
-| 50 | 1,051 | 10.0 s |
-| 200 | 4,017 | 41.5 s |
-
-That grows in a straight line at about 10 ms a line. The test machine's cores
-are faster than a small Synology's, so on the real NAS it will be slower. A
-request that long can also meet a proxy or browser timeout, and HR would see
-the import fail even though it ran.
-
-**Scope**
-- Find where the time goes first (per-line queries, per-line audit writes or
-  locked-day checks) and say so in the PR before changing anything.
-- Keep every rule CW-061 has: locked days refused, decided days kept, the same
-  counts reported, audit unchanged.
-- If it cannot be made fast enough, have the page show progress instead of
-  waiting on one request.
-
-**Acceptance**
-- 200 people's month (about 4,000 lines) imports in under 10 s under the
-  same 2-CPU, 2 GB limit, or the page shows progress and never times out.
-- The CW-061 tests still pass unchanged.
-
-**Files** `backend/src/modules/attendance/` (scanner import)
-
-### CW-103 · What the first parallel run needs from the guide and the compare page
-`P1` · payroll · docs · UX · **S** · Pilot A · from the blind test · #134
-
-The UX room's blind test (2026-11-03, `docs/qa/blind-test-2026-11-03.md`): a
-first-time HR user, working only from `docs/guide/hr-daily-tasks.th.md` at
-1366x768 with synthetic data, finished all four tasks with no blocker. The
-problems below are ones the pilot's HR would hit in the very first parallel
-run. The PO's check of the compare page adds two more (the last two items
-under "Compare page").
-
-**Guide (UX room)**
-- Add the compare step: where it is (Payroll, "เทียบกับที่ยื่นไปแล้ว") and that
-  the same page takes HR's own per-person sheet.
-- Warn that during the parallel run "บันทึกการจ่ายและเผยแพร่สลิป" must not be
-  pressed.
-- Say what to do with a day scanned once (no clock-out), and with a scanner
-  number nobody owns (how to find whose it is, whether it can wait, whether it
-  changes pay).
-- Add the six-digit code step at sign-in.
-
-**Compare page (dev room)**
-- The page asks for a column "เงินสุทธิ", but the checker refuses it and wants
-  "สุทธิ / Net". Accept what the page says.
-- Accept the headers of the pilot's own register (CW-099): "รวมเงินได้" for
-  gross, "ภาษี", "ประกันสังคม", "รวมเงินได้สุทธิ" for net.
-- The pilot's register has no employee code; it has a row number and a name.
-  The guide must say to add a "รหัสพนักงาน" column before uploading, and the
-  page must say so when the column is missing, instead of only naming it.
-- The pilot's register, like CW-099's own file, has a title row and headers
-  stacked over three rows (the groups, then "ภาษี" or "รวมเงินได้", then
-  "วันละ"). The checker reads only the first row as the header. Find the
-  header in the first few rows: the row with "รหัสพนักงาน", taking each
-  column's name from the nearest header cell above it. HR then uploads the
-  register as it is, plus the code column, without deleting rows by hand.
-- The self-approval refusal is still shown in English.
-
-**Not before the install** (in the report, for later): a warning on screen
-during the parallel run, "trial" on printed slips, typing a clock-out time by
-hand, the owner's dashboard showing runs waiting for approval, and the
-smaller items.
-
-**Acceptance**
-- A synthetic HR sheet with the register's headers plus a "รหัสพนักงาน" column
-  uploads on the compare page and marks no difference against matching
-  figures (test).
-- The UX room re-reads the changed guide sections against the screen.
-
-**Files** `docs/guide/hr-daily-tasks.th.md`,
-`backend/src/modules/payroll/domain/period-check.ts`,
-`web/src/lib/i18n/messages.th.ts`
-
-### CW-104 · The compare page reads one period, so daily staff look missing
-`P1` · payroll · **S** · Pilot A · #127
-
-QA's install-gate regression (#127): `/payroll/compare` reads only the period
-it is opened from. A daily worker is paid in the two half-month periods, so in
-a month with both kinds of staff, the daily workers show as "only in the
-file", and the month's social security has no correct figure to compare.
-
-**Decided by the owner (18:38, relayed by the Asuna Bot room):** option B.
-Daily staff stay on half-month periods, the pay rules are unchanged, and the
-compare page works on the calendar month the way CW-099's register does.
-
-**Scope**
-- The compare page and its upload use the whole calendar month: the monthly
-  period and both halves, added together per person, from the same
-  `ReconciledPeriod` month logic as CW-099, not a second calculation.
-- Opened from any period of the month, it compares the same month. It refuses
-  while the month is incomplete, saying which period or run is missing.
-- The filed tax and social security totals on the same page are the month's.
-- No change to `assertPayBasis` or to how anyone is paid.
-- **The second half after an approved first half** (owner, 19:21, relayed by
-  the Asuna Bot room: option 1). Today the second half cannot be calculated
-  until the first half is *paid* (`FIRST_HALF_NOT_PAID`, `firstHalfFor` in
-  `payroll.service.ts`). The rule exists because paying the first half marks
-  the expense claims it paid. In the parallel run HR must not record payment,
-  so no month with daily staff would ever be complete. Allow the second half
-  once the first half is APPROVED. The approved first half's figures are fixed;
-  the claims and advances it includes are held from approval, so the second
-  half never takes them again. The guide's "do not record payment" stays.
-
-**Acceptance**
-- In a synthetic month with monthly and daily staff, HR's per-person sheet that
-  matches Cwork marks no difference, and each person's figures equal the
-  CW-099 register row (test).
-- The month's social security equals the สปส.1-10 total for that month.
-- The second half calculates when the first half is approved but not paid.
-  An expense claim or advance in that approved first half is not taken
-  again by the second half, before or after the first half is later marked
-  paid (test, asked for by the Asuna Bot room).
-- A first half that is still DRAFT or CALCULATED still refuses the second
-  half (test).
-
-**Files** `backend/src/modules/payroll/domain/period-check.ts`,
-`backend/src/modules/payroll/reconciled-period.ts`
-
-### CW-105 · The payroll register's fixes from the UX review
-`P1` · payroll · **S** · Pilot A · follow-up to CW-099 · #136
-
-The UX room checked CW-099 on screen and in LibreOffice 24.2 (2026-11-03,
-items 19 to 25 of `docs/qa/blind-test-2026-11-03.md`, synthetic data). It
-works: the two-row header and its merged cells match the pilot's template,
-monthly and daily staff share one sheet, Thai and number formats are right.
-To fix before the install:
-
-- **The summary sheet does not add up.** It has no row for other deductions,
-  so gross − tax − social security ≠ net. In the October sample, the provident
-  fund (12,210.00) was missing. Add the row, so that an accountant who checks
-  the arithmetic finds it balances.
-- **The refusal for an incomplete month is in English** and gives the month
-  as "2026-10". Say it in Thai, with the month name and Buddhist year, and say
-  what to do next.
-- **Printing** gives six portrait A4 pages, with columns split across pages.
-  Set landscape, fit to one page wide, and repeat the header rows on each
-  page.
-- Centre the group headers over their columns, and draw cell borders.
-
-Later, not before the install: the three export buttons per row (which one
-goes to the accountant), and a message on screen after the download.
-
-**Acceptance**
-- On the summary sheet, total earnings − tax − social security − other
-  deductions = net (test).
-- The incomplete-month message is in Thai and names the next step.
-- The file prints on one page wide, landscape, with repeated headers
-  (checked in LibreOffice by the UX room).
-
-**Files** `backend/src/modules/payroll/domain/payroll-register.ts`,
-`backend/src/core/spreadsheet/xlsx.ts`, `web/src/lib/i18n/messages.th.ts`
-
-### CW-106 · A day with one scan is paid as a full day, with no warning
-`P1` · attendance · payroll · **S** · Pilot A · found by the UX room · #137
-
-The UX room found this while writing the guide's step on single-scan days
-(2026-11-03). The PO confirmed it by reading the code. Two cases:
-
-- **Clock-in only.** HR picks a clock-in and "no clock-out" (or the import
-  has only one scan). `deriveAttendance` (`attendance-calculator.ts`, the
-  `!lastClockOutAt` branch) stores the day as PRESENT with 0 minutes worked.
-  A daily worker is paid the full day (`daily-wage.ts`), a monthly one loses
-  nothing, and no warning appears. `INCOMPLETE_PUNCH_COUNTED` looks only at
-  INCOMPLETE, which only the nightly close-out sets for yesterday; an import
-  of an earlier month never sets it.
-- **Clock-out only.** `firstClockInAt` is null, but the code reaches
-  `minutesBetween(firstClockInAt!, lastClockOutAt)`. Untested; it probably
-  gives NaN or throws.
-
-The existing design (CW-069) is that an incomplete day may be counted, but HR
-is told on the payslip. So this is a bug against that design, not a new rule.
-
-**Scope**
-- A past day with a scan missing, imported or entered by hand, ends up
-  INCOMPLETE as the nightly job would make it. Payroll then shows
-  `INCOMPLETE_PUNCH_COUNTED` as it already does.
-- Clock-out only gives a defined result (INCOMPLETE, 0 minutes), never NaN or
-  an error.
-- The scanner import's summary counts the single-scan days, so HR sees them
-  before running payroll.
-- No change to how a counted day is paid.
-
-**Acceptance**
-- Tests: clock-in only on a past date → INCOMPLETE and the payslip warning;
-  clock-out only → INCOMPLETE, 0 minutes, no error; a complete day unchanged.
-- The UX room updates the guide's single-scan step to match.
-
-**Files** `backend/src/modules/attendance/domain/attendance-calculator.ts`,
-the scanner import service, `backend/src/modules/payroll/domain/daily-wage.ts`
-(read only)
+**Files** `backend/src/modules/payroll/period-check.ts`,
+`backend/src/modules/payroll/payroll-register.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
@@ -1870,3 +1644,9 @@ Kept so the reasoning survives.
 | **CW-096** · QA pass 2 found four small faults before the pilot (#112–#115) | One PR, in the PO's order. **#114:** the cash-preparation sheet printed a red project note under its title that named the pilot company; the note is gone from the code and the page, the "ลำดับ" column is 36 pt so its header fits, and tests measure every header in the real Sarabun font and fail if the note's words come back. **#113:** text on `--brand` uses `--text-inverse` (white in the light theme, `#0f1116` in the dark), 7.2:1 in the dark theme, covering primary buttons, the logo mark, the selected day and the user's chat bubble; the light theme is unchanged. **#112:** `web/src/lib/api-messages.ts` maps the scanner flow's business-rule codes to Thai, with values from new `details` on three backend errors (codes and statuses unchanged); English and unknown codes still show the server sentence. **#115:** `ErrorState` draws an `alert` icon; task 3 of the HR guide names the "ค่าจ้าง" card and its two buttons. The first CI run was red: `payslip-print.e2e-spec.ts` still required the removed note, and the dev room had run only the scanner e2e; fixed in `c107be8`, then the full e2e suite passed locally. PR #117, `481acdb` and `c107be8`, merged at `4b78ff0`, closed 2026-10-18. Left for CW-097: the README picture still shows the note, danger red in the dark theme, "ค่าตอบแทน" in payroll warnings. |
 | **CW-097** · CW-096 left the README's cash-sheet picture showing the removed note, red too faint in the dark theme, and "ค่าตอบแทน" in payroll warnings | `docs/screenshots/28-cash-sheet.png` and its `en/` copy retaken with `capture-office.mjs` on a fresh synthetic seed (checked by eye: no red note, the header on one line), and the red-line sentence removed from both alt texts; no other README wording changed. Danger buttons and the sidebar's red count use `--text-inverse`, 6.7:1 in the dark theme (was about 2.8:1), covered by the contrast test. The four Thai payroll warnings name the "การ์ดค่าจ้าง", with a test that fails if "ค่าตอบแทน" returns. Not done here: the landing page's copy of the picture and its alt text (landing wording waits on the owner). PR #118, `a9b2e0f`, merged at `31bf0a8`, closed 2026-10-18. |
 | **CW-098** · English payroll warnings said "Compensation", and a failed list printed the server's English sentence (#119) | `ErrorState` builds an API error's message with `describeApiError`, as the buttons do, so a list that fails with a translated code reads in Thai (the scanner days page: "เลือกช่วงวันที่ตั้งแต่ 1 ถึง 93 วัน"); English, untranslated codes and non-API errors are unchanged, and the props are the same. The four English payroll warnings say "in the Pay card". A page test and the i18n test fail on the old code. PR #121, `ed2272a`, merged at `d08c985`, closed 2026-10-18. |
+| **CW-101** · Daily-wage staff paid every 14 days had no period to sit in | A `BIWEEKLY` pay frequency with 14-day periods for daily staff. A period counts toward its pay month for now (`monthCountedFor` in `domain/pay-period.ts`, pending #36). A period cannot be calculated while an earlier one of the same frequency is unapproved (`EARLIER_PERIOD_NOT_APPROVED`). The register, the social security file and the accountant export add the month's 14-day periods. QA re-tested three-payday months, cross-month periods, the social security ceiling and the migration upgrade. #125, in #141 at 14fb65d, 2026-11-03. |
+| **CW-102** · Importing a month of scanner punches took about 10 ms a line | The scanner import reads and writes in batches; a month for 200 people now finishes well inside the performance target, and the result is the same line for line (QA's S1–S17 identical). #133, in #141 at 14fb65d, 2026-11-03. |
+| **CW-103** · The compare page could not read HR's own register | The compare page accepts the column names of the pilot's register, including headers stacked over two rows (detected in the first eight rows), and says in Thai what to add when the employee code column is missing. QA compared twelve people from a CW-099 register with no difference. Guide part follows in #138. #134, in #141 at 14fb65d, 2026-11-03. |
+| **CW-104** · The compare page read one period, so daily staff looked missing | The compare page reads the whole calendar month, called from any period of it, with the same `ReconciledPeriod` month logic as CW-099. Owner's choices: daily staff stay half-monthly (18:38) and the second half may run once the first half is approved, unpaid or not (19:21, option 1, `FIRST_HALF_NOT_APPROVED` otherwise). A claim is taken by one run only: locked when the first half is approved, released when an approved run is cancelled (tested). #127, in #141 at 14fb65d, 2026-11-03. |
+| **CW-105** · The payroll register's fixes from the UX review | The totals sheet adds up (gross − tax − social security − other deductions = net, tested), and an incomplete month is explained in Thai with the next step in four cases: run awaiting approval, no run, missing second half, missing 14-day period. Print check in LibreOffice by the UX room. #136, in #141 at 14fb65d, 2026-11-03. |
+| **CW-106** · A day with one scan was paid as a full day, with no warning | A past day with only a clock-in, or only a clock-out, is INCOMPLETE with 0 minutes, never an error; the payslip shows `INCOMPLETE_PUNCH_COUNTED` with the date, today's open day stays PRESENT, and the import summary counts the single-scan days. How a counted day is paid is unchanged. #137, in #141 at 14fb65d, 2026-11-03. |
