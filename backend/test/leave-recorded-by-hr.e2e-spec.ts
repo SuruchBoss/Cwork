@@ -283,6 +283,8 @@ describe('Leave recorded by HR (e2e)', () => {
       expect(recorded.status).toBe(own.status);
       expect(recorded.body.code).toBe('NO_WORKING_DAYS_SELECTED');
       expect(recorded.body.message).toBe(own.body.message);
+      // The words the person reads are Thai (CW-112).
+      expect(recorded.body.message).toContain('ไม่มีวันทำงานเลย');
     });
 
     it('refuses a day the employee already has leave on', async () => {
@@ -415,6 +417,7 @@ describe('Leave recorded by HR (e2e)', () => {
 
       expect(res.status).toBe(422);
       expect(res.body.code).toBe('CANNOT_RECORD_OWN_LEAVE');
+      expect(res.body.message).toContain('ต้องส่งให้หัวหน้าอนุมัติ');
     });
   });
 });

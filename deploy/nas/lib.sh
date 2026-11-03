@@ -154,7 +154,7 @@ resolve_install_secrets() {
   fi
   if [ -z "$DB_PASSWORD" ]; then
     DB_PASSWORD=$(rand_hex 24)
-    DB_PASSWORD_SOURCE="made new by this installer"
+    DB_PASSWORD_SOURCE="a new one made by this installer"
   fi
   if [ "$MODE" = db ]; then
     # The database machine runs no API, so it has no use for the key.
@@ -162,7 +162,7 @@ resolve_install_secrets() {
     FIELD_KEY=""
   elif [ -z "$FIELD_KEY" ]; then
     FIELD_KEY=$(rand_base64 32)
-    FIELD_KEY_SOURCE="made new by this installer"
+    FIELD_KEY_SOURCE="a new one made by this installer"
   fi
 }
 

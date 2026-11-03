@@ -200,6 +200,8 @@ describe('Cwork API (e2e)', () => {
         code: '000000',
       });
       expect(wrong.status).toBe(401);
+      // Said in Thai on the sign-in screen, which shows the server's words (CW-112).
+      expect(wrong.body.message).toBe('รหัสไม่ถูกต้อง ลองใหม่อีกครั้ง');
 
       await waitForNextStep();
       const right = await api.post('/auth/mfa/verify', undefined, {

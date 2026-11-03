@@ -300,7 +300,7 @@ export class LeaveService implements OnModuleInit {
     if (approved && employee.id === user.employeeId) {
       throw new BusinessRuleError(
         ErrorCode.CANNOT_RECORD_OWN_LEAVE,
-        'Your own leave goes to your manager; it cannot be recorded as approved by you',
+        'การลาของตัวเองต้องส่งให้หัวหน้าอนุมัติ บันทึกเป็นอนุมัติแล้วด้วยตัวเองไม่ได้',
       );
     }
 
@@ -801,7 +801,7 @@ export class LeaveService implements OnModuleInit {
     if (totalDays.lessThanOrEqualTo(0)) {
       throw new BusinessRuleError(
         ErrorCode.NO_WORKING_DAYS_SELECTED,
-        'The selected range contains no working days',
+        'ช่วงวันที่เลือกไม่มีวันทำงานเลย เลือกช่วงที่มีวันทำงานอย่างน้อยหนึ่งวัน',
       );
     }
 
