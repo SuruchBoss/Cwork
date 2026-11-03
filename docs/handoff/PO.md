@@ -6,11 +6,17 @@ this file only says where the PO room stands.
 
 ## Where things are (2026-11-03)
 
-- **Done today:** CW-099 and the dependency advisories, #126 at `2c47dac`;
-  `main` green again.
-- **Dev queue:** the repo-wide audit, the 8,556 tests and CW-100 (#124), the
-  performance run, CW-101 (#125) 14-day pay periods. CW-100 expected Fri 6
-  Nov; CW-101 one to two weeks after, before Cwork pays real wages.
+- **Done today:** CW-099 and the dependency advisories, #126 at `2c47dac`.
+  QA re-test of CW-099 passes over the API.
+- **Gates (owner 17:51):** regression passes except #127 (the monthly parallel
+  run cannot hold daily staff, the PO's option was wrong; the owner chooses
+  again: the PO recommends keeping daily staff half-monthly and making
+  `/payroll/compare` cover the calendar month). Security review done; the
+  findings went to the owner privately, and the fixes are in the dev queue
+  ahead of everything else. Performance: everything under 2 s at 200 people
+  except the scanner import (41.5 s), CW-102 (#133). Blind test running.
+- **Dev queue:** #128 (Web console timeout), the private security fixes,
+  CW-102, CW-101 (#125), CW-100 (#124, waits on the law text).
 - **Owner's choice (17:19):** the parallel run puts daily staff on monthly
   periods and compares at the month. The owner books the date with HR.
 - **Pilot A, all ten HR answers in (2026-11-03).** HR keys social security on
@@ -21,13 +27,6 @@ this file only says where the PO room stands.
   old way), and HR tries the four guide tasks then (#69). The second approver
   is called "the approver role" in the repo. Real personal data never goes
   into a cloud session.
-- **Gates before booking the install (owner 17:51, via Asuna Bot):** QA room:
-  the Pilot A regression (41 cases plus CW-099, 8,556 → 428, the monthly
-  parallel run, CW-100) and a security review (high findings block; vulnerabilities go
-  to an advisory, never a public issue). Dev: performance in docker with 2 CPU
-  and 2 GB, at 50 and 200 people, after CW-100. UXUI: a blind test of the four
-  guide tasks at 1366x768 (started 17:57). All synthetic data. Suggested
-  install date: Wed 11 or Thu 12 Nov (not Tue 10 evening).
 - **Social security, daily wages:** the sum and rounding are right (CW-084;
   372 × 23 = 8,556 gives 428). The pilot deducts once a month. Nothing changes
   until the owner decides (and #36 confirms the law).

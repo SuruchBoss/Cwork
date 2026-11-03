@@ -510,6 +510,38 @@ ticket comes after CW-099, and must be done before Cwork pays real wages.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `backend/src/modules/payroll/sso-filing.service.ts`
 
+### CW-102 · Importing a month of scanner punches takes about 10 ms a line
+`P1` · attendance · **S–M** · Pilot A · found by the performance run · #133
+
+The Pilot A performance run (`docs/qa/performance-pilot-a.md`, dev room,
+2026-11-03) measured the whole stack under a 2-CPU, 2 GB limit with synthetic
+data. Every task stayed under 2 s except the scanner import:
+
+| People | Lines | Import |
+|---|---|---|
+| 50 | 1,051 | 10.0 s |
+| 200 | 4,017 | 41.5 s |
+
+That grows in a straight line at about 10 ms a line. The test machine's cores
+are faster than a small Synology's, so on the real NAS it will be slower. A
+request that long can also meet a proxy or browser timeout, and HR would see
+the import fail even though it ran.
+
+**Scope**
+- Find where the time goes first (per-line queries, per-line audit writes or
+  locked-day checks) and say so in the PR before changing anything.
+- Keep every rule CW-061 has: locked days refused, decided days kept, the same
+  counts reported, audit unchanged.
+- If it cannot be made fast enough, have the page show progress instead of
+  waiting on one request.
+
+**Acceptance**
+- 200 people's month (about 4,000 lines) imports in under 10 s under the
+  same 2-CPU, 2 GB limit, or the page shows progress and never times out.
+- The CW-061 tests still pass unchanged.
+
+**Files** `backend/src/modules/attendance/` (scanner import)
+
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
