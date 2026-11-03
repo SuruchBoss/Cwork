@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-101 before paying real wages · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-103 · CW-104 · CW-105 · CW-101 before paying real wages · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -609,6 +609,18 @@ compare page works on the calendar month the way CW-099's register does.
   while the month is incomplete, saying which period or run is missing.
 - The filed tax and social security totals on the same page are the month's.
 - No change to `assertPayBasis` or to how anyone is paid.
+- **Open, needs the owner (found by the UX room, 2026-11-03):** the second
+  half cannot be calculated until the first half is *paid*
+  (`FIRST_HALF_NOT_PAID` in `payroll.service.ts`, `firstHalfFor`). The reason
+  is that the first half's payment marks the expense claims it paid, and
+  without that rule the second half would pay them again. In the parallel
+  run HR must not record payment, so no month with daily staff ever becomes
+  complete, and neither the register nor this page can be used. The PO's
+  recommendation: allow the second half once the first half is *approved*.
+  The approved first half's figures are fixed, and the claims it includes
+  are held from that moment, so the second half cannot take them again.
+  The alternative is that HR records the first half's payment in Cwork during
+  the parallel run; no code changes, but Cwork's history then says it paid.
 
 **Acceptance**
 - In a synthetic month with monthly and daily staff, HR's per-person sheet that
@@ -618,6 +630,40 @@ compare page works on the calendar month the way CW-099's register does.
 
 **Files** `backend/src/modules/payroll/domain/period-check.ts`,
 `backend/src/modules/payroll/reconciled-period.ts`
+
+### CW-105 · The payroll register's fixes from the UX review
+`P1` · payroll · **S** · Pilot A · follow-up to CW-099 · #136
+
+The UX room checked CW-099 on screen and in LibreOffice 24.2 (2026-11-03,
+items 19 to 25 of `docs/qa/blind-test-2026-11-03.md`, synthetic data). It
+works: the two-row header and its merged cells match the pilot's template,
+monthly and daily staff share one sheet, Thai and number formats are right.
+To fix before the install:
+
+- **The summary sheet does not add up.** It has no row for other deductions,
+  so gross − tax − social security ≠ net. In the October sample, the provident
+  fund (12,210.00) was missing. Add the row, so that an accountant who checks
+  the arithmetic finds it balances.
+- **The refusal for an incomplete month is in English** and gives the month
+  as "2026-10". Say it in Thai, with the month name and Buddhist year, and say
+  what to do next.
+- **Printing** gives six portrait A4 pages, with columns split across pages.
+  Set landscape, fit to one page wide, and repeat the header rows on each
+  page.
+- Centre the group headers over their columns, and draw cell borders.
+
+Later, not before the install: the three export buttons per row (which one
+goes to the accountant), and a message on screen after the download.
+
+**Acceptance**
+- On the summary sheet, total earnings − tax − social security − other
+  deductions = net (test).
+- The incomplete-month message is in Thai and names the next step.
+- The file prints on one page wide, landscape, with repeated headers
+  (checked in LibreOffice by the UX room).
+
+**Files** `backend/src/modules/payroll/domain/payroll-register.ts`,
+`backend/src/core/spreadsheet/xlsx.ts`, `web/src/lib/i18n/messages.th.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
