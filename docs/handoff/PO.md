@@ -14,8 +14,9 @@ this file only says where the PO room stands.
   **UX:** re-check of #150 on an installed stack passed; it now tries the
   temporary-badge path on `482d405` and writes the badge and parallel-run
   guide (its branch waits on the owner, so the PO room commits its text).
-- **Dev queue:** CW-111 (close-out closes the day that just ended), then
-  CW-112 (small items), one PR each on `claude/new-session-syszvt`.
+- **Dev queue:** CW-111 in #154 (close-out closes the day that just ended),
+  then CW-115 (choose the days of a stretch), then CW-112 (small items,
+  partly ready in the Dev room), one PR each.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`
@@ -42,6 +43,7 @@ this file only says where the PO room stands.
 - `./check.sh` on the pilot's NAS: approved 2026-11-03 17:18 (read-only,
   on-site). Still needed on the day: a backup drive, a password store, the HR
   file.
+- Whether the pilot runs shifts that cross midnight (CW-114).
 - Deleting the merged branches `claude/new-session-ch81xk` (#148) and
   `qa-regress-a93` (#152).
 - Public wording: the landing cash-sheet picture and alt text; CW-087 support
