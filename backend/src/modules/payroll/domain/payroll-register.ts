@@ -4,6 +4,7 @@
 import { writeXlsx } from '../../../core/spreadsheet/xlsx';
 import { Decimal, round2 } from '../../../core/utils/money.util';
 import type { ReconciledItem, ReconciledPeriod, ReconciledRow } from './payroll-export';
+import { MONTHS_TH } from './thai-month';
 
 /**
  * The payroll register (ทะเบียนเงินเดือน) HR sends the outside accounting firm
@@ -21,21 +22,6 @@ import type { ReconciledItem, ReconciledPeriod, ReconciledRow } from './payroll-
  * totals, so the person who needs it finds it and the register stays the one
  * HR already sends.
  */
-
-const MONTHS_TH = [
-  'มกราคม',
-  'กุมภาพันธ์',
-  'มีนาคม',
-  'เมษายน',
-  'พฤษภาคม',
-  'มิถุนายน',
-  'กรกฎาคม',
-  'สิงหาคม',
-  'กันยายน',
-  'ตุลาคม',
-  'พฤศจิกายน',
-  'ธันวาคม',
-];
 
 /** The columns of the register, in the order of the form. */
 export const REGISTER_COLUMNS = [
@@ -262,9 +248,14 @@ export function buildPayrollRegister(reconciled: ReconciledPeriod): Uint8Array {
     ['รวมเงินได้', n(total.gross)],
     ['ภาษีหัก ณ ที่จ่าย', n(total.tax)],
     ['ประกันสังคม (ส่วนลูกจ้าง)', n(total.sso)],
-    ['ประกันสังคม (ส่วนนายจ้าง)', n(employer)],
-    ['ประกันสังคมรวม', n(total.sso.plus(employer))],
+    // Everything else taken off (a provident fund, a loan, a cash advance), so
+    // that earnings less the three deductions above is the net pay below.
+    ['หักอื่นๆ', n(total.otherDeduction)],
     ['รวมเงินได้สุทธิ', n(total.net)],
+    ['', ''],
+    // The employer's share is not taken from anyone's pay, so it sits apart.
+    ['ประกันสังคม (ส่วนนายจ้าง)', n(employer)],
+    ['ประกันสังคมรวม (ลูกจ้าง + นายจ้าง)', n(total.sso.plus(employer))],
   ];
 
   return writeXlsx([
@@ -272,16 +263,21 @@ export function buildPayrollRegister(reconciled: ReconciledPeriod): Uint8Array {
       name: 'ทะเบียนเงินเดือน',
       rows,
       headerRows: 4,
-      merges: ['C2:I2', 'J2:M2', 'D3:F3'],
+      merges: ['A1:O1', 'C2:I2', 'J2:M2', 'D3:F3'],
       widths: [8, 28, 14, 12, 14, 14, 12, 14, 15, 12, 14, 14, 14, 16, 48],
       amountColumns: [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      print: true,
+      grid: true,
     },
     {
       name: 'สรุปยอด',
       rows: summary,
       headerRows: 2,
+      merges: ['A1:B1'],
       widths: [34, 18],
       amountColumns: [1],
+      print: true,
+      grid: true,
     },
   ]);
 }
