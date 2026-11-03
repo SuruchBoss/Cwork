@@ -242,7 +242,8 @@ const Map<String, String> thMessages = <String, String>{
   // Errors and controllers
   'An unexpected error occurred': 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
   'Could not connect to the network': 'ไม่สามารถเชื่อมต่อเครือข่ายได้',
-  'Your session has expired, please sign in again': 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง',
+  'Your session has expired, please sign in again':
+      'เซสชันนี้สิ้นสุดแล้ว เช่น หลังเปลี่ยนรหัสผ่านหรือออกจากระบบจากอีกเครื่อง กรุณาเข้าสู่ระบบอีกครั้ง',
   'Sorry, {message}': 'ขออภัย {message}',
   'Sorry, the assistant is unavailable right now': 'ขออภัย ไม่สามารถติดต่อผู้ช่วยได้ในขณะนี้',
   'Clocked in successfully': 'บันทึกเวลาเข้างานเรียบร้อย',

@@ -580,6 +580,8 @@ export const thMessages: Record<string, string> = {
   'Invalid email': 'อีเมลไม่ถูกต้อง',
   'The information is not valid': 'ข้อมูลไม่ถูกต้อง',
   'Could not sign in, please try again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่',
+  'Your session has ended, for example after the password was changed or you signed out on another device. Please sign in again.':
+    'เซสชันนี้สิ้นสุดแล้ว เช่น หลังเปลี่ยนรหัสผ่านหรือออกจากระบบจากอีกเครื่อง กรุณาเข้าสู่ระบบอีกครั้ง',
   'Could not sign in, please sign in again': 'ไม่สามารถเข้าสู่ระบบได้ กรุณาเข้าสู่ระบบใหม่',
   'Two-step verification': 'ยืนยันตัวตนสองขั้นตอน',
   'Enter the 6-digit code from your authenticator app': 'กรอกรหัส 6 หลักจากแอป Authenticator',

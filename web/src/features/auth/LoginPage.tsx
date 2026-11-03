@@ -48,6 +48,7 @@ export default function LoginPage() {
   const verifyMfa = useAuthStore((s) => s.verifyMfa);
   const completeMfaEnrolment = useAuthStore((s) => s.completeMfaEnrolment);
   const accessToken = useAuthStore((s) => s.accessToken);
+  const sessionEnded = useAuthStore((s) => s.sessionEnded);
   const navigate = useNavigate();
   const location = useLocation();
   const t = useT();
@@ -116,11 +117,7 @@ export default function LoginPage() {
         goHome();
         return;
       }
-      setStep(
-        challenge.mfaEnrolled
-          ? { name: 'code', challenge }
-          : { name: 'enrol', challenge },
-      );
+      setStep(challenge.mfaEnrolled ? { name: 'code', challenge } : { name: 'enrol', challenge });
     } catch (error) {
       // Show the server's message: it distinguishes a locked account from bad
       // credentials, which matters for someone who is genuinely locked out.
@@ -177,7 +174,9 @@ export default function LoginPage() {
     return (
       <AuthShell
         title={t('Keep your recovery codes safe')}
-        subtitle={t('These codes are shown only once; use one at a time when you do not have your phone.')}
+        subtitle={t(
+          'These codes are shown only once; use one at a time when you do not have your phone.',
+        )}
       >
         <ul className="stack mono" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {step.codes.map((code) => (
@@ -212,7 +211,17 @@ export default function LoginPage() {
         </div>
 
         <div className="stack">
-          <Field label={t('Email')} error={errors.email?.message ? t(errors.email.message) : undefined}>
+          {sessionEnded && (
+            <div className="alert alert--info" role="status">
+              {t(
+                'Your session has ended, for example after the password was changed or you signed out on another device. Please sign in again.',
+              )}
+            </div>
+          )}
+          <Field
+            label={t('Email')}
+            error={errors.email?.message ? t(errors.email.message) : undefined}
+          >
             <Input
               type="email"
               autoComplete="username"
@@ -388,9 +397,7 @@ function EnrolStep({
         if (!cancelled) setQr(dataUrl);
       } catch (caught) {
         if (!cancelled) {
-          setError(
-            caught instanceof ApiError ? caught.message : t('Could not start 2FA setup'),
-          );
+          setError(caught instanceof ApiError ? caught.message : t('Could not start 2FA setup'));
         }
       }
     })();
@@ -446,7 +453,9 @@ function EnrolStep({
               )
               .catch((caught: unknown) => {
                 setError(
-                  caught instanceof ApiError ? caught.message : t('The code is incorrect, please try again'),
+                  caught instanceof ApiError
+                    ? caught.message
+                    : t('The code is incorrect, please try again'),
                 );
                 return null;
               });

@@ -266,6 +266,8 @@ Recorded because they are unanswered, not because they are unimportant.
   once. Password change and forced sign-out both set it.
 - Failed sign-ins lock the account after `AUTH_MAX_FAILED_ATTEMPTS` (default 5)
   for `AUTH_LOCKOUT_MINUTES` (default 15).
+  A refused sign-in is answered no sooner than `AUTH_REFUSED_SIGN_IN_MIN_MS`
+  (default 150) after the request began.
 - Both clients refresh through a **single-flight** guard: concurrent 401s
   collapse into one refresh, never a stampede.
 - The credential endpoints — sign-in, MFA verify and enrolment — carry their own
@@ -763,7 +765,7 @@ organisation sets `settings.security.requireMfa` for everyone. See CW-021 in the
 
 | | |
 |---|---|
-| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 859 backend, 331 web, 101 mobile. A 543-check e2e suite drives the real API over HTTP and runs in CI. |
+| **Correctness** | Business rules are pure functions in `domain/` with no I/O, unit-tested: 866 backend, 337 web, 101 mobile. A 550-check e2e suite drives the real API over HTTP and runs in CI. |
 | **Money** | `Decimal(18,4)` everywhere. Never a float. |
 | **Dates** | `@db.Date` for calendar values, timestamps for instants. Organisation timezone defaults to Asia/Bangkok. |
 | **Configuration** | Validated at boot and the process **refuses to start** on a bad or missing secret. |

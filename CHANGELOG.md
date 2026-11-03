@@ -666,13 +666,21 @@ entry, tags it and publishes the notes.
 
 - **Sign-in answers the same for every address.** A refused sign-in is worded and timed
   the same whether or not the address has an account, and asks the caller to wait after
-  the same number of tries.
+  the same number of tries. A refused sign-in is also answered no sooner than a fixed
+  time after the request began (`AUTH_REFUSED_SIGN_IN_MIN_MS`, default 150 ms, 0 to
+  switch it off); a sign-in that succeeds is not held back.
 - **Signing out ends the session at once.** An access token stops working as soon as its
   session is signed out, ended from another device, or ended by a password change. A
   session that only moved on to a new refresh token keeps working. The check is cached
   with the signed-in user, so a request does not add a query.
-- **Responses are not kept by browsers or caches.** Every API response carries
-  `Cache-Control: private, no-store` unless it sets its own (downloads already did).
+- **Responses are not kept by browsers or caches.** Every response under the API's
+  prefix, a refusal or an unknown route included, carries `Cache-Control: private,
+  no-store` unless it sets its own (downloads already did). The console's own files
+  are not touched.
+- **Changing the password ends every session, this device included.** The API
+  description now says so. The web console and the mobile app, on finding their session
+  ended, go to the sign-in page with a note in Thai that the session has ended, for
+  example after a password change.
 - **The NAS installer takes the database password and the saved key from a file, the
   environment or a hidden prompt** (`--db-password-file`, `--field-key-file`,
   `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and

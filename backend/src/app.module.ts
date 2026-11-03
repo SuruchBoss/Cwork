@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger, Module } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -10,7 +10,7 @@ import { AppConfigModule } from './core/config/config.module';
 import type { RootConfig } from './core/config/configuration';
 import { AllExceptionsFilter } from './core/http/all-exceptions.filter';
 import { AuditInterceptor } from './core/http/audit.interceptor';
-import { NoStoreInterceptor } from './core/http/no-store.interceptor';
+import { NoStoreMiddleware } from './core/http/no-store.middleware';
 import { PrismaModule } from './core/prisma/prisma.module';
 import { PrismaService } from './core/prisma/prisma.service';
 import { OutboxModule } from './core/outbox/outbox.module';
@@ -115,10 +115,14 @@ import { SetupModule } from './modules/setup/setup.module';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_INTERCEPTOR, useClass: NoStoreInterceptor },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
   exports: [SequenceService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // Every route under the API's prefix, matched or not.
+    consumer.apply(NoStoreMiddleware).forRoutes('*');
+  }
+}

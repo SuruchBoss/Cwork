@@ -201,7 +201,9 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: Math.ceil(CREDENTIAL_THROTTLE.default.limit / 2), ttl: 60_000 } })
-  @ApiOperation({ summary: 'Change own password; signs out every other device' })
+  @ApiOperation({
+    summary: 'Change own password; ends every session, this device included, so sign in again',
+  })
   changePassword(
     @Body() dto: ChangePasswordDto,
     @CurrentUser() user: AuthenticatedUser,

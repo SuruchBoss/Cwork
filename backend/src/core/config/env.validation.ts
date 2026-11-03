@@ -114,6 +114,17 @@ export class EnvironmentVariables {
   @Min(1)
   AUTH_LOCKOUT_MINUTES: number = 15;
 
+  /**
+   * The least time, in milliseconds, a refused sign-in takes to be answered,
+   * counted from when the request began. Set above the slowest refusal so that
+   * every refusal takes the same time; 0 switches it off.
+   */
+  @toInt()
+  @IsInt()
+  @Min(0)
+  @Max(5000)
+  AUTH_REFUSED_SIGN_IN_MIN_MS: number = 150;
+
   @toInt()
   @IsInt()
   @Min(8)
