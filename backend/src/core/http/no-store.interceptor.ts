@@ -12,10 +12,10 @@ export const NO_STORE = 'private, no-store';
  * Tells every browser, and every cache on the way, not to keep an answer.
  *
  * What this API returns is pay and personal data about the people of one
- * organisation, to a signed-in caller. A copy kept by a shared computer's
- * browser, or by a proxy in front of the server, would outlive the session that
- * was entitled to read it. So the default is to keep nothing; a response that
- * sets its own `Cache-Control` (a download, say) keeps what it set.
+ * organisation, for a signed-in caller to read. It is meant to be read on the
+ * screen and not left behind in a browser or a proxy. So the default is to keep
+ * nothing; a response that sets its own `Cache-Control` (a download, say) keeps
+ * what it set.
  */
 @Injectable()
 export class NoStoreInterceptor implements NestInterceptor {

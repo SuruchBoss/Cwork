@@ -664,21 +664,19 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
-- **Sign-in answers the same for every address.** An address with no account is now
-  checked against a stand-in password hash, counted, and asked to wait after the same
-  number of tries as an account that exists, with the same wording. A locked account does
-  the same password work before it is refused.
+- **Sign-in answers the same for every address.** A refused sign-in is worded and timed
+  the same whether or not the address has an account, and asks the caller to wait after
+  the same number of tries.
 - **Signing out ends the session at once.** An access token stops working as soon as its
-  session is signed out, ended from another device, or ended by a password change, rather
-  than when it runs out. A session that only moved on to a new refresh token keeps working.
-  The check is cached with the signed-in user, so a request does not add a query.
-- **Responses are not kept by browsers or caches.** Every API response now carries
+  session is signed out, ended from another device, or ended by a password change. A
+  session that only moved on to a new refresh token keeps working. The check is cached
+  with the signed-in user, so a request does not add a query.
+- **Responses are not kept by browsers or caches.** Every API response carries
   `Cache-Control: private, no-store` unless it sets its own (downloads already did).
-- **The NAS installer takes secrets off the command line.** The database password and a
-  saved encryption key can be given in a file (`--db-password-file`, `--field-key-file`),
-  in the environment (`CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`) or typed when asked, so the
-  process list and the shell history do not hold them. `--db-password` and `--field-key`
-  still work and print a warning.
+- **The NAS installer takes the database password and the saved key from a file, the
+  environment or a hidden prompt** (`--db-password-file`, `--field-key-file`,
+  `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and
+  print a warning.
 
 - **The everyday HR tasks, walked as a first-time user would** (CW-066). Four jobs
   at 1366×768 in Thai, from the scanner file to the printed payslips, and what

@@ -6,13 +6,11 @@
  *
  * An account that exists counts its failures in the database and, after too
  * many, refuses every sign-in for a while. An address with no account has
- * nowhere to keep a count, so without this it would be answered "wrong email or
- * password" for ever while a real account would be answered "try again later":
- * the two answers would tell the caller which addresses are registered.
+ * nowhere to keep a count, so this keeps the same count, with the same limit and
+ * the same wait, in memory: every address is answered in the same way.
  *
- * This keeps the same count, with the same limit and the same wait, in memory.
- * It is deliberately small: it only has to make the answer match, and a restart
- * forgets it, as a restart forgets the throttler's in-process counts.
+ * It is deliberately small. A restart forgets it, as a restart forgets the
+ * throttler's in-process counts.
  */
 export class UnknownAccountAttempts {
   private readonly entries = new Map<string, { failures: number; lockedUntil: Date | null }>();

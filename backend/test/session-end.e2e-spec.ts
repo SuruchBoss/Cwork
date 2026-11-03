@@ -4,10 +4,10 @@
 /**
  * Signing out ends the session at once.
  *
- * An access token lives for minutes. Signing out, ending a session from another
- * device or changing the password has to stop it working straight away, not when
- * it runs out, while a session that only moved on to a fresh refresh token keeps
- * working. Each test signs in as an account made here for it alone.
+ * Signing out, ending a session from another device or changing the password
+ * stops the access token of that session straight away, while a session that
+ * only moved on to a fresh refresh token keeps working. Each test signs in as an
+ * account made here for it alone.
  */
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from 'src/core/prisma/prisma.service';

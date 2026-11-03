@@ -65,8 +65,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
     }
 
-    // A session that has been signed out or revoked does not carry on until its
-    // access token runs out. The answer is cached with the principal below.
+    // A session that has been signed out or revoked is no longer in force. The
+    // answer is cached with the principal below.
     if (!(await this.userContext.sessionIsLive(payload.sid, payload.sub))) {
       throw new UnauthorizedException('Session has ended, please sign in again');
     }
