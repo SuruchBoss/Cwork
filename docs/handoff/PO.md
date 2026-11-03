@@ -12,9 +12,11 @@ this file only says where the PO room stands.
   cron jobs), `main` at `a93751d`.
 - **Dev queue:** CW-109 (scanner number bound for a period) is ready in the
   Dev room and opens as a PR on `claude/new-session-syszvt` once `main` is
-  green; then CW-111 (close-out closes the day that just ended).
-- **Next:** QA runs its regression on `main`; the UX room re-checks the paths
-  #150 changed on the installed stack, then CW-109 once it merges.
+  green; then CW-111 (close-out closes the day that just ended), then
+  CW-112 (small items from the re-check).
+- **Next:** QA runs its regression on `main`. The UX room re-checked #150 on
+  an installed stack (`a93751d`): passed; small items are CW-112 and CW-113.
+  It re-checks CW-109 once that merges.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`
