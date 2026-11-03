@@ -4,6 +4,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuditAction, Prisma } from '@prisma/client';
 import { BusinessRuleError, ConflictError, NotFoundError } from '../../core/errors/domain.errors';
+import { ADVISORY_LOCK_FAMILIES } from '../../core/prisma/advisory-lock';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { formatDateOnly, toDateOnly } from '../../core/utils/date.util';
 import { AuditService } from '../audit/audit.service';
@@ -431,7 +432,7 @@ export class ScannerBindingsService {
   ): Promise<T> {
     const locked = async (tx: Prisma.TransactionClient): Promise<T> => {
       if (scannerNumber) {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${organizationId}:${scannerNumber}`}))`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_FAMILIES['scanner-number']}::int, hashtext(${organizationId}::text || ':' || ${scannerNumber}::text))`;
       }
       return work(tx);
     };

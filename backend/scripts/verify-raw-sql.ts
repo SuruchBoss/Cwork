@@ -78,6 +78,15 @@ const REVIEWED: { file: string; marker: string; scoping: Scoping; why: string }[
       'in one organisation run one at a time and never wait on another (CW-079)',
   },
   {
+    file: 'modules/attendance/scanner-bindings.service.ts',
+    marker: 'pg_advisory_xact_lock',
+    scoping: 'tenant-scoped',
+    why:
+      'an advisory lock, not a row or a read: writes for one scanner number of one ' +
+      "organisation take their turn, keyed by a hash that holds the organisation's id " +
+      'under its own lock family, so it cannot meet a job lock (CW-109)',
+  },
+  {
     file: 'modules/setup/setup.service.ts',
     marker: 'pg_try_advisory_xact_lock',
     scoping: 'not-tenant-data',

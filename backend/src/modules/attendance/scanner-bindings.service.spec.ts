@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConflictError, NotFoundError } from '../../core/errors/domain.errors';
+import { ADVISORY_LOCK_FAMILIES, ADVISORY_LOCK_NAMESPACE } from '../../core/prisma/advisory-lock';
 import { ScannerBindingsService } from './scanner-bindings.service';
 
 /**
@@ -12,9 +13,13 @@ import { ScannerBindingsService } from './scanner-bindings.service';
  * take their turn, and a deadlock that still happens is said in words.
  */
 describe('ScannerBindingsService concurrency', () => {
+  const lockArgs: unknown[][] = [];
+
   function service(calls: string[]) {
+    lockArgs.length = 0;
     const tx = {
-      $executeRaw: jest.fn(async () => {
+      $executeRaw: jest.fn(async (...args: unknown[]) => {
+        lockArgs.push(args);
         calls.push('lock');
         return 0;
       }),
@@ -49,6 +54,18 @@ describe('ScannerBindingsService concurrency', () => {
     await expect(service(calls).bind(input)).rejects.toBeInstanceOf(NotFoundError);
 
     expect(calls).toEqual(['begin', 'lock', 'read']);
+  });
+
+  it('locks under its own family, with the organisation and the number in the second key', async () => {
+    await service([])
+      .bind(input)
+      .catch(() => undefined);
+
+    const [, family, organization, number] = lockArgs[0]!;
+    expect(family).toBe(ADVISORY_LOCK_FAMILIES['scanner-number']);
+    expect([organization, number]).toEqual(['org-1', '12']);
+    // Never the namespace the job locks live under, so a hash cannot be taken for a job.
+    expect(family).not.toBe(ADVISORY_LOCK_NAMESPACE);
   });
 
   it('takes the lock inside a transaction that is already open, without opening another', async () => {
