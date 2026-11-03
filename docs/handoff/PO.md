@@ -11,7 +11,8 @@ this file only says where the PO room stands.
   #145, #138 (HR guide for CW-103 to CW-107), #147 (CW-108, sign-in and
   installer hardening), `main` at `09fc821`.
 - **Blind test on the installed stack (`09fc821`):** findings went to the
-  owner privately; the fixes are in the dev queue (one PR, then CW-109).
+  owner privately; the fixes are in the dev queue (one PR, then CW-110,
+  then CW-109). The UX report #148 merges by squash once reworded.
   QA re-test of #147 passed. The UX room re-checks the affected paths on the
   installed stack once the fixes merge; its UX report follows as a PR.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
@@ -34,7 +35,8 @@ this file only says where the PO room stands.
   or the domains to fetch them.
 - HR: which month a cross-month period counts toward, whether it rounds the
   net, and the field order of the social security web form.
-- #36: the law questions and a qualified reviewer for the payroll rules.
+- #36: the law questions and a qualified reviewer for the payroll rules;
+  how HR pays a daily-wage employee who works on a public holiday.
 - `./check.sh` on the pilot's NAS: approved 2026-11-03 17:18 (read-only,
   on-site). Still needed on the day: a backup drive, a password store, the HR
   file.

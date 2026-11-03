@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-109 · CW-110 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -490,6 +490,18 @@ period instead.
   an import outside the period, later matching; the migration upgrades and
   rolls back and `db:verify` passes.
 - The HR guide's binding step matches.
+
+### CW-110 · Three faults the final blind test found
+`P1` · attendance · payroll · web · **S** · Pilot A · before the install · #149
+
+From the UX room's blind test on the installed stack (#148): an evening-only
+scan is pre-filled as a clock-in; the owner's dashboard shows no run waiting
+for approval and a ฿0.00 draft as the latest run; a period that already has a
+run still offers "create run" and answers in English. Acceptance in #149.
+
+Open question for the owner (not in scope): a daily-wage employee scanned in
+on a public holiday (23 Oct) is paid as an ordinary day, with no holiday-work
+pay. Needs the owner's answer on how HR pays it today and the law check (#36).
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
