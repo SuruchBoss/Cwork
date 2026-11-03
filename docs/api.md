@@ -44,7 +44,7 @@ to display; never compute on the client.
 | POST | `/auth/refresh` | **public**, rotates the token |
 | POST | `/auth/logout` | omit the body to revoke every session |
 | GET | `/auth/me` | current user, roles, effective permissions |
-| POST | `/auth/change-password` | signs out every other device |
+| POST | `/auth/change-password` | ends every session, this device included: sign in again with the new password |
 | GET | `/auth/sessions` | active sessions for this user |
 | DELETE | `/auth/sessions/:id` | revoke one |
 

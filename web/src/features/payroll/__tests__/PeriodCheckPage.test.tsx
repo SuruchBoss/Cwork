@@ -132,6 +132,18 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('Checking a period against what was filed (CW-089)', () => {
+  it('names the picker as the month, in Thai and in English', async () => {
+    renderCheck();
+
+    expect(await screen.findByLabelText('เดือน (เลือกงวดไหนของเดือนก็ได้)')).toBeInTheDocument();
+
+    useUiStore.setState({ language: 'en' });
+
+    expect(
+      await screen.findByLabelText('Month (any period of the month will do)'),
+    ).toBeInTheDocument();
+  });
+
   it('sends the totals as typed from e-Filing, commas and all, and shows a satang as different', async () => {
     post.mockResolvedValueOnce(comparison);
     const { container } = renderCheck();

@@ -24,6 +24,8 @@ export interface AuthConfig {
   audience: string;
   maxFailedAttempts: number;
   lockoutMinutes: number;
+  /** The least time a refused sign-in takes to be answered, in milliseconds. */
+  refusedSignInMinMillis: number;
   passwordMinLength: number;
   /** Requests per minute allowed against the credential endpoints. */
   credentialThrottleLimit: number;
@@ -151,6 +153,7 @@ export function buildConfig(env: EnvironmentVariables): RootConfig {
       audience: env.JWT_AUDIENCE,
       maxFailedAttempts: env.AUTH_MAX_FAILED_ATTEMPTS,
       lockoutMinutes: env.AUTH_LOCKOUT_MINUTES,
+      refusedSignInMinMillis: env.AUTH_REFUSED_SIGN_IN_MIN_MS,
       passwordMinLength: env.PASSWORD_MIN_LENGTH,
       credentialThrottleLimit: env.AUTH_THROTTLE_LIMIT,
       mfaChallengeTtlSeconds: env.MFA_CHALLENGE_TTL,

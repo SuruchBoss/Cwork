@@ -5,6 +5,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { queryClient } from '@/app/query-client';
 import { api } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-error';
 import type { DemoRole } from '@/features/demo/demo';
 import type {
   AuthTokens,
@@ -25,6 +26,13 @@ interface AuthState {
    * can mark it, and a reset can sign the visitor straight back in as it.
    */
   demoRole: DemoRole | null;
+  /**
+   * True from the moment a signed-in session was found to have ended (signed out
+   * elsewhere, the password changed) until the next sign-in, so the sign-in page
+   * can say why the person is back there. Not kept across a reload on purpose:
+   * it is set again by the check that finds the session gone.
+   */
+  sessionEnded: boolean;
 
   /**
    * Resolves to a challenge when the account owes a second factor, and to null
@@ -65,6 +73,7 @@ function adoptSession(set: (partial: Partial<AuthState>) => void, session: Login
     user: session.user,
     isBootstrapping: false,
     demoRole: null,
+    sessionEnded: false,
   });
 }
 
@@ -84,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isBootstrapping: true,
       demoRole: null,
+      sessionEnded: false,
 
       async login(email, password) {
         const result = await api.post<LoginResponse>(
@@ -142,6 +152,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isBootstrapping: false,
           demoRole: null,
+          sessionEnded: false,
         });
       },
 
@@ -165,8 +176,13 @@ export const useAuthStore = create<AuthState>()(
         }
         try {
           await get().refreshUser();
-        } catch {
-          set({ accessToken: null, refreshToken: null, user: null });
+        } catch (error) {
+          set({
+            accessToken: null,
+            refreshToken: null,
+            user: null,
+            sessionEnded: error instanceof ApiError && error.status === 401,
+          });
         } finally {
           set({ isBootstrapping: false });
         }
@@ -200,6 +216,11 @@ api.configure({
   getRefreshToken: () => useAuthStore.getState().refreshToken,
   onTokensRefreshed: (tokens) => useAuthStore.getState().setTokens(tokens),
   onSessionExpired: () => {
-    useAuthStore.setState({ accessToken: null, refreshToken: null, user: null });
+    useAuthStore.setState({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      sessionEnded: true,
+    });
   },
 });

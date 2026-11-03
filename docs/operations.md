@@ -752,6 +752,9 @@ file (`--field-key-file`, `--db-password-file`, first line), from the environmen
 for the key; the password is asked for by itself). They are kept off the command
 line so that the process list and the shell history do not hold them. The older
 `--field-key` and `--db-password` options still work and print a warning.
+Whichever way a value is given, the installer uses it as given and says in one line where
+each came from (a file, the environment, typed, or made new when none was given); it never
+prints the value itself.
 
 ### Update and rollback
 

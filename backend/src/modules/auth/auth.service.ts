@@ -25,6 +25,7 @@ import type {
   SessionUserDto,
 } from './dto/auth.dto';
 import { MfaService } from './mfa.service';
+import { RefusalPacer } from './refusal-pacer';
 import { assertPasswordPolicy } from './password.policy';
 import { UnknownAccountAttempts } from './domain/sign-in-attempts';
 import { UserContextService } from './user-context.service';
@@ -57,6 +58,7 @@ export class AuthService {
     private readonly mfa: MfaService,
     private readonly telemetry: TelemetryLogger,
     private readonly metrics: MetricsService,
+    private readonly pacer: RefusalPacer,
   ) {
     this.unknownAttempts = new UnknownAccountAttempts(
       config.auth.maxFailedAttempts,
@@ -68,7 +70,11 @@ export class AuthService {
     dto: LoginDto,
     meta: RequestMeta,
   ): Promise<LoginResponseDto | MfaChallengeResponseDto> {
-    return this.recordingRefusal('password', meta, this.attemptLogin(dto, meta));
+    return this.recordingRefusal(
+      'password',
+      meta,
+      this.pacer.pace(() => this.attemptLogin(dto, meta)),
+    );
   }
 
   /**
@@ -448,7 +454,7 @@ export class AuthService {
 
     const passwordHash = await this.crypto.hashPassword(dto.newPassword);
 
-    // Changing a password signs every other device out.
+    // Changing a password ends every session, this device included.
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: user.userId },

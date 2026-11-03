@@ -43,4 +43,50 @@ describe('Responses are not kept (e2e)', () => {
     expect(status).toBe(200);
     expect(cacheControl).toContain('no-store');
   });
+
+  it('says it of an answer that is a refusal as well: no sign-in, and not allowed', async () => {
+    const anonymous = await request(ctx.app.getHttpServer()).get('/api/v1/employees');
+    const employee = await request(ctx.app.getHttpServer())
+      .get('/api/v1/payroll/runs')
+      .set('Authorization', `Bearer ${await api.token('dev2@cwork.example')}`);
+
+    expect(anonymous.status).toBe(401);
+    expect(anonymous.headers['cache-control']).toContain('no-store');
+    expect(employee.status).toBe(403);
+    expect(employee.headers['cache-control']).toContain('no-store');
+  });
+
+  it('says it of a route that does not exist', async () => {
+    const res = await request(ctx.app.getHttpServer())
+      .get('/api/v1/nothing-here')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  it('leaves a download with the caching it sets for itself', async () => {
+    const pdf = Buffer.from(
+      '%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n',
+    );
+    const uploaded = await api.upload('/files/upload', token, {
+      filename: 'note.pdf',
+      contentType: 'application/pdf',
+      content: pdf,
+    });
+    expect(uploaded.status).toBe(201);
+
+    const res = await request(ctx.app.getHttpServer())
+      .get(`/api/v1/files/${uploaded.body.id}/content`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('private, max-age=0, no-store');
+  });
+
+  it('does not touch an address outside the API, such as the console’s own files', async () => {
+    const res = await request(ctx.app.getHttpServer()).get('/assets/app.js');
+
+    expect(res.headers['cache-control']).toBeUndefined();
+  });
 });

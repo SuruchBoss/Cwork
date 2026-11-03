@@ -130,7 +130,7 @@ export default function PeriodCheckPage() {
       />
 
       <Card>
-        <Field label={t('Period')}>
+        <Field label={t('Month (any period of the month will do)')}>
           <Select value={chosen} onChange={(event) => switchPeriod(event.target.value)}>
             {(periods.data ?? []).map((period) => (
               <option key={period.id} value={period.id}>

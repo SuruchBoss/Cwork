@@ -6,18 +6,21 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #143 (CW-101 to CW-107, the performance measurement, the
-  dependency updates and the access-check work).
-- **On branch `claude/new-session-syszvt` (the PO opens the PR):** the small items left from
-  the review round, each with its own tests:
-  1. sign-in answers the same for an address with no account and one with (a stand-in hash
-     is checked, failures are counted and the same wait applies);
-  2. signing out, ending a session from another device, or changing the password stops its
-     access token at once (`sessionIsLive`, cached with the signed-in user);
-  3. every API response carries `Cache-Control: private, no-store` unless it sets its own;
-  4. `deploy/nas/install.sh` takes the database password and the saved key from a file, the
-     environment or a hidden prompt; the old options still work and warn.
-- Counts: web 330; backend unit 856, domain 544; e2e 542.
+- On `main`: everything up to #145 (CW-101 to CW-107, the performance measurement, the
+  dependency updates, the access-check work, the sign-in and session changes, the response
+  cache header and the installer's secret handling), and the UX room's guide (#138).
+- **On branch `claude/new-session-syszvt` (the PO opens the PR):**
+  1. CW-108 (#146): the compare page's picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (Thai and
+     English), the register's row number and days worked are aligned right, and the two HR
+     guides name the box the same way (the pictures are not retaken);
+  2. a refused sign-in is answered no sooner than `AUTH_REFUSED_SIGN_IN_MIN_MS` (default 150)
+     after the request began (`RefusalPacer`, the clock is injected in tests);
+  3. the no-store header is set by middleware for every route under the API prefix, refusals
+     and unknown routes included;
+  4. the web console shows a note on the sign-in page when a session has ended, the mobile
+     app's note names the same reasons (the Flutter side is untested here), and the
+     password-change endpoint says it ends every session.
+- Counts: web 337; backend unit 875, domain 544; e2e 550.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

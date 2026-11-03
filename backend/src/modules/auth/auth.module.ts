@@ -9,6 +9,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { MfaService } from './mfa.service';
+import { PACING_CLOCK, RefusalPacer, systemClock } from './refusal-pacer';
 import { UserContextService } from './user-context.service';
 
 @Global()
@@ -18,7 +19,15 @@ import { UserContextService } from './user-context.service';
     JwtModule.register({}),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MfaService, JwtStrategy, UserContextService, CryptoService],
+  providers: [
+    AuthService,
+    MfaService,
+    JwtStrategy,
+    UserContextService,
+    CryptoService,
+    RefusalPacer,
+    { provide: PACING_CLOCK, useValue: systemClock },
+  ],
   exports: [AuthService, MfaService, UserContextService, CryptoService, JwtModule],
 })
 export class AuthModule {}

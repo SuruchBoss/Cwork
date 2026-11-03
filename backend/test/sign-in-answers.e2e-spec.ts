@@ -15,6 +15,7 @@ import type { RootConfig } from 'src/core/config/configuration';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { CryptoService } from 'src/core/security/crypto.service';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { RefusalPacer, type PacingClock } from 'src/modules/auth/refusal-pacer';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const PASSWORD = `Sign-${randomUUID()}`;
@@ -132,5 +133,83 @@ describe('Refused sign-ins (e2e)', () => {
     } finally {
       check.mockRestore();
     }
+  });
+
+  describe('how long a refusal takes', () => {
+    /**
+     * A clock for the pacer that moves only when told to: the first reading of a
+     * request is 0 and the second is however long the test says the refusal
+     * itself took. It records the waits asked of it and does not wait.
+     */
+    class ScriptedClock implements PacingClock {
+      readings = 0;
+      tookMs = 0;
+      sleeps: number[] = [];
+      next(tookMs: number) {
+        this.readings = 0;
+        this.tookMs = tookMs;
+        this.sleeps = [];
+      }
+      now() {
+        this.readings += 1;
+        return this.readings === 1 ? 0 : this.tookMs;
+      }
+      async sleep(ms: number) {
+        this.sleeps.push(ms);
+      }
+    }
+
+    let clock: ScriptedClock;
+    let original: PacingClock;
+    let minimum: number;
+
+    beforeAll(() => {
+      const pacer = ctx.app.get(RefusalPacer) as unknown as { clock: PacingClock };
+      original = pacer.clock;
+      clock = new ScriptedClock();
+      pacer.clock = clock;
+      minimum = ctx.app.get<RootConfig>(APP_CONFIG).auth.refusedSignInMinMillis;
+    });
+
+    afterAll(() => {
+      (ctx.app.get(RefusalPacer) as unknown as { clock: PacingClock }).clock = original;
+    });
+
+    it('is the same minimum for an address with no account and one with an account', async () => {
+      clock.next(25);
+      const without = await attempt(unknown('pace'));
+      const withoutWait = clock.sleeps;
+
+      clock.next(34);
+      const withAccount = await attempt(await account('pace'));
+      const withAccountWait = clock.sleeps;
+
+      expect(without.status).toBe(401);
+      expect(withAccount.status).toBe(401);
+      expect(minimum).toBeGreaterThan(34);
+      // What the refusal took plus what it was held for is the minimum, either way.
+      expect([25 + withoutWait[0]!, 34 + withAccountWait[0]!]).toEqual([minimum, minimum]);
+    });
+
+    it('holds the refusal of a locked account the same way', async () => {
+      const email = await account('pace-locked');
+      await tryUntilRefused(email);
+
+      clock.next(30);
+      const refused = await attempt(email);
+
+      expect(refused.body.code).toBe('ACCOUNT_LOCKED');
+      expect(clock.sleeps).toEqual([minimum - 30]);
+    });
+
+    it('does not hold a sign-in that succeeds', async () => {
+      const email = await account('pace-ok');
+
+      clock.next(40);
+      const signedIn = await attempt(email, PASSWORD);
+
+      expect(signedIn.status).toBe(200);
+      expect(clock.sleeps).toEqual([]);
+    });
   });
 });

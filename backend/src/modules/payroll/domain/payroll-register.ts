@@ -266,6 +266,8 @@ export function buildPayrollRegister(reconciled: ReconciledPeriod): Uint8Array {
       merges: ['A1:O1', 'C2:I2', 'J2:M2', 'D3:F3'],
       widths: [8, 28, 14, 12, 14, 14, 12, 14, 15, 12, 14, 14, 14, 16, 48],
       amountColumns: [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      // The row number and the days worked: numbers, but not money.
+      numberColumns: [0, 4],
       print: true,
       grid: true,
     },

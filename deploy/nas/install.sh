@@ -34,6 +34,9 @@
 MODE=full HOST="" PORT=8443 BACKUP_DIR="" DB_HOST="" ASSUME_YES=0
 DB_PASSWORD=${CWORK_DB_PASSWORD:-} FIELD_KEY=${CWORK_FIELD_KEY:-} ASK_FIELD_KEY=0
 DB_PASSWORD_FILE="" FIELD_KEY_FILE="" SECRET_ON_COMMAND_LINE=0
+DB_PASSWORD_SOURCE="" FIELD_KEY_SOURCE=""
+[ -z "$DB_PASSWORD" ] || DB_PASSWORD_SOURCE="the environment (CWORK_DB_PASSWORD)"
+[ -z "$FIELD_KEY" ] || FIELD_KEY_SOURCE="the environment (CWORK_FIELD_KEY)"
 while [ $# -gt 0 ]; do
   case $1 in
     --mode) MODE=$2; shift 2 ;;
@@ -44,27 +47,15 @@ while [ $# -gt 0 ]; do
     --db-password-file) DB_PASSWORD_FILE=$2; shift 2 ;;
     --field-key-file) FIELD_KEY_FILE=$2; shift 2 ;;
     --field-key-prompt) ASK_FIELD_KEY=1; shift ;;
-    --db-password) DB_PASSWORD=$2; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
-    --field-key) FIELD_KEY=$2; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
+    --db-password) DB_PASSWORD=$2; DB_PASSWORD_SOURCE="the --db-password option"; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
+    --field-key) FIELD_KEY=$2; FIELD_KEY_SOURCE="the --field-key option"; SECRET_ON_COMMAND_LINE=1; shift 2 ;;
     --yes) ASSUME_YES=1; shift ;;
     *) die "unknown option $1" ;;
   esac
 done
 case $MODE in full|db|app) ;; *) die "--mode must be full, db or app" ;; esac
 
-if [ "$SECRET_ON_COMMAND_LINE" = 1 ]; then
-  warn "a password or key was given on the command line: the process list and the shell history keep it."
-  warn "next time use --db-password-file / --field-key-file, CWORK_DB_PASSWORD / CWORK_FIELD_KEY, or type it when asked."
-fi
-[ -z "$DB_PASSWORD_FILE" ] || DB_PASSWORD=$(secret_from_file "$DB_PASSWORD_FILE") || exit 1
-[ -z "$FIELD_KEY_FILE" ] || FIELD_KEY=$(secret_from_file "$FIELD_KEY_FILE") || exit 1
-if [ "$MODE" = app ] && [ -z "$DB_PASSWORD" ]; then
-  DB_PASSWORD=$(ask_secret "The database password (POSTGRES_PASSWORD in .env on the NAS): ") || true
-fi
-if [ "$ASK_FIELD_KEY" = 1 ] && [ -z "$FIELD_KEY" ]; then
-  FIELD_KEY=$(ask_secret "The saved encryption key: ") || die "--field-key-prompt needs a terminal to type in"
-fi
-[ "$MODE" = app ] && { [ -n "$DB_HOST" ] && [ -n "$DB_PASSWORD" ] || die "--mode app needs --db-host and the database password from the NAS install (--db-password-file, CWORK_DB_PASSWORD, or typed when asked)"; }
+resolve_install_secrets
 
 need_root
 need_docker
@@ -92,6 +83,7 @@ fi
 
 say ""
 say "== 2. Writing .env (secrets are made here and nowhere else)"
+say_secret_sources
 umask 077
 {
   echo "# Written by install.sh on $(date '+%Y-%m-%d %H:%M'). Holds secrets: never copy it into a backup folder"
@@ -101,12 +93,8 @@ umask 077
   echo "CWORK_HOST=$HOST"
   echo "CWORK_HTTPS_PORT=$PORT"
   echo "PUBLIC_WEB_URL=https://$HOST:$PORT"
-  if [ "$MODE" = app ]; then
-    echo "POSTGRES_PASSWORD=$DB_PASSWORD"
-    echo "DB_HOST=$DB_HOST"
-  else
-    echo "POSTGRES_PASSWORD=$(rand_hex 24)"
-  fi
+  echo "POSTGRES_PASSWORD=$DB_PASSWORD"
+  [ "$MODE" != app ] || echo "DB_HOST=$DB_HOST"
   if [ "$MODE" = db ]; then
     echo "DB_BIND=$HOST"
     echo "# Unused on the database machine (the API is elsewhere); present because the file is shared."
@@ -116,7 +104,7 @@ umask 077
   else
     echo "JWT_ACCESS_SECRET=$(rand_base64 48)"
     echo "JWT_REFRESH_SECRET=$(rand_base64 48)"
-    echo "FIELD_ENCRYPTION_KEY=${FIELD_KEY:-$(rand_base64 32)}"
+    echo "FIELD_ENCRYPTION_KEY=$FIELD_KEY"
   fi
   [ -n "$BACKUP_DIR" ] && echo "CWORK_BACKUP_DIR=$BACKUP_DIR"
   echo "CWORK_BACKUP_KEEP_DAYS=14"

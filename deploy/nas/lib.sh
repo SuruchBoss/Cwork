@@ -122,6 +122,56 @@ ask_secret() {
   printf '%s' "$_typed"
 }
 
+# Settles the database password and the encryption key from what the caller
+# gave, and makes a new one only where none was given. Reads MODE, DB_PASSWORD,
+# FIELD_KEY, DB_PASSWORD_FILE, FIELD_KEY_FILE, ASK_FIELD_KEY,
+# SECRET_ON_COMMAND_LINE and the two *_SOURCE words; sets DB_PASSWORD,
+# FIELD_KEY and the *_SOURCE words (where each came from, never its value).
+# A file beats the environment and the command line; typing is the last resort.
+resolve_install_secrets() {
+  if [ "$SECRET_ON_COMMAND_LINE" = 1 ]; then
+    warn "a password or key was given on the command line: the process list and the shell history keep it."
+    warn "next time use --db-password-file / --field-key-file, CWORK_DB_PASSWORD / CWORK_FIELD_KEY, or type it when asked."
+  fi
+  if [ -n "$DB_PASSWORD_FILE" ]; then
+    DB_PASSWORD=$(secret_from_file "$DB_PASSWORD_FILE") || exit 1
+    DB_PASSWORD_SOURCE="the file $DB_PASSWORD_FILE"
+  fi
+  if [ -n "$FIELD_KEY_FILE" ]; then
+    FIELD_KEY=$(secret_from_file "$FIELD_KEY_FILE") || exit 1
+    FIELD_KEY_SOURCE="the file $FIELD_KEY_FILE"
+  fi
+  if [ "$MODE" = app ] && [ -z "$DB_PASSWORD" ]; then
+    DB_PASSWORD=$(ask_secret "The database password (POSTGRES_PASSWORD in .env on the NAS): ") || true
+    [ -z "$DB_PASSWORD" ] || DB_PASSWORD_SOURCE="what you typed"
+  fi
+  if [ "$ASK_FIELD_KEY" = 1 ] && [ -z "$FIELD_KEY" ]; then
+    FIELD_KEY=$(ask_secret "The saved encryption key: ") || die "--field-key-prompt needs a terminal to type in"
+    FIELD_KEY_SOURCE="what you typed"
+  fi
+  if [ "$MODE" = app ] && { [ -z "$DB_HOST" ] || [ -z "$DB_PASSWORD" ]; }; then
+    die "--mode app needs --db-host and the database password from the NAS install (--db-password-file, CWORK_DB_PASSWORD, or typed when asked)"
+  fi
+  if [ -z "$DB_PASSWORD" ]; then
+    DB_PASSWORD=$(rand_hex 24)
+    DB_PASSWORD_SOURCE="made new by this installer"
+  fi
+  if [ "$MODE" = db ]; then
+    # The database machine runs no API, so it has no use for the key.
+    [ -z "$FIELD_KEY" ] || warn "the encryption key was given, but a database-only install does not use it"
+    FIELD_KEY=""
+  elif [ -z "$FIELD_KEY" ]; then
+    FIELD_KEY=$(rand_base64 32)
+    FIELD_KEY_SOURCE="made new by this installer"
+  fi
+}
+
+# Says where each secret came from, one line each, and never what it is.
+say_secret_sources() {
+  note "database password: from ${DB_PASSWORD_SOURCE:-somewhere unknown}"
+  [ "$MODE" = db ] || note "encryption key: from ${FIELD_KEY_SOURCE:-somewhere unknown}"
+}
+
 rand_hex()    { od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'; }
 rand_base64() { head -c "$1" /dev/urandom | base64 | tr -d '\n'; }
 
