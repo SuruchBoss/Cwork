@@ -223,7 +223,7 @@ export class ApplyDto {
   @Max(365)
   noticePeriodDays?: number;
 
-  @ApiPropertyOptional({ description: 'Uploaded résumé file id' })
+  @ApiPropertyOptional({ description: 'Ignored: an applicant cannot attach a stored file' })
   @IsOptional()
   @IsUUID()
   resumeFileId?: string;

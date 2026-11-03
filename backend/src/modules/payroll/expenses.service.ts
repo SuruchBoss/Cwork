@@ -22,6 +22,7 @@ import {
 } from '../approvals/approval-outcome.registry';
 import { ApprovalService } from '../approvals/approval.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
+import { FileAccessService } from '../files/file-access.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import type { CreateExpenseClaimDto, DecideExpenseClaimDto } from './dto/payroll.dto';
 
@@ -33,6 +34,7 @@ export class ExpensesService implements OnModuleInit {
     private readonly outcomes: ApprovalOutcomeRegistry,
     private readonly notifications: NotificationsService,
     private readonly sequences: SequenceService,
+    private readonly files: FileAccessService,
   ) {}
 
   onModuleInit(): void {
@@ -47,6 +49,10 @@ export class ExpensesService implements OnModuleInit {
     if (dto.items.length === 0) {
       throw new BusinessRuleError('NO_CLAIM_ITEMS', 'A claim must contain at least one line item');
     }
+    await this.files.assertAttachable(
+      user,
+      dto.items.flatMap((item) => (item.receiptFileId ? [item.receiptFileId] : [])),
+    );
 
     const total = round2(dto.items.reduce((acc, item) => acc.plus(item.amount), new Decimal(0)));
     if (total.lessThanOrEqualTo(0)) {

@@ -34,6 +34,7 @@ import { AuditService } from '../audit/audit.service';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
 import { NotificationsService } from '../notifications/notifications.service';
 import { isHoliday } from '../organization/domain/work-calendar';
+import { FileAccessService } from '../files/file-access.service';
 import { OrganizationService } from '../organization/organization.service';
 import { WorkCalendarService } from '../organization/work-calendar.service';
 import { availableBalance, computeLeaveDays, type BalanceInput } from './domain/leave-calculator';
@@ -70,6 +71,7 @@ export class LeaveService implements OnModuleInit {
     private readonly attendance: AttendanceService,
     private readonly audit: AuditService,
     private readonly workCalendar: WorkCalendarService,
+    private readonly files: FileAccessService,
   ) {}
 
   onModuleInit(): void {
@@ -178,6 +180,7 @@ export class LeaveService implements OnModuleInit {
 
   async create(user: AuthenticatedUser, dto: CreateLeaveRequestDto) {
     const employeeId = requireEmployeeId(user);
+    await this.files.assertAttachable(user, dto.attachmentIds ?? []);
     const { leaveType, computed } = await this.resolveRequest(user.organizationId, employeeId, dto);
 
     this.assertRequestAllowed(
@@ -291,6 +294,7 @@ export class LeaveService implements OnModuleInit {
   async record(user: AuthenticatedUser, dto: RecordLeaveRequestDto) {
     const employee = await this.recordableEmployee(user, dto.employeeId);
     const approved = dto.recordAsApproved !== false;
+    await this.files.assertAttachable(user, dto.attachmentIds ?? []);
 
     // Approving one's own leave would skip the only other pair of eyes on it.
     if (approved && employee.id === user.employeeId) {

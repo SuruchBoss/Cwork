@@ -50,6 +50,8 @@ export class ApplicationsService {
     });
     if (!posting) throw new NotFoundError('JobPosting', slug);
 
+    // An applicant is not signed in and cannot upload, so the form never names
+    // a stored file; a file id in the body is not trusted and is not kept.
     const consentAt = new Date();
     const consentExpiresAt = new Date(consentAt);
     consentExpiresAt.setMonth(consentExpiresAt.getMonth() + CANDIDATE_RETENTION_MONTHS);
@@ -67,7 +69,6 @@ export class ApplicationsService {
         expectedSalary:
           dto.expectedSalary !== undefined ? new Prisma.Decimal(dto.expectedSalary) : null,
         noticePeriodDays: dto.noticePeriodDays,
-        resumeFileId: dto.resumeFileId,
         portfolioUrl: dto.portfolioUrl,
         source: 'CAREERS_PAGE',
         consentAt,
@@ -79,7 +80,6 @@ export class ApplicationsService {
         phone: dto.phone ?? undefined,
         currentTitle: dto.currentTitle ?? undefined,
         currentCompany: dto.currentCompany ?? undefined,
-        resumeFileId: dto.resumeFileId ?? undefined,
         // Re-applying renews consent rather than extending the old one silently.
         consentAt,
         consentExpiresAt,
