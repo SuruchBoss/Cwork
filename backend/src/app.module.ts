@@ -10,6 +10,7 @@ import { AppConfigModule } from './core/config/config.module';
 import type { RootConfig } from './core/config/configuration';
 import { AllExceptionsFilter } from './core/http/all-exceptions.filter';
 import { AuditInterceptor } from './core/http/audit.interceptor';
+import { NoStoreInterceptor } from './core/http/no-store.interceptor';
 import { PrismaModule } from './core/prisma/prisma.module';
 import { PrismaService } from './core/prisma/prisma.service';
 import { OutboxModule } from './core/outbox/outbox.module';
@@ -114,6 +115,7 @@ import { SetupModule } from './modules/setup/setup.module';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: NoStoreInterceptor },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],

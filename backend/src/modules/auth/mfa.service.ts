@@ -347,6 +347,9 @@ export class MfaService {
     if (tokenPredatesInvalidation(payload.iat, user.sessionsValidFrom)) {
       throw new UnauthorizedException('Session has been invalidated, please sign in again');
     }
+    if (!(await this.userContext.sessionIsLive(payload.sid, payload.sub))) {
+      throw new UnauthorizedException('Session has ended, please sign in again');
+    }
     return payload.sub;
   }
 

@@ -97,6 +97,31 @@ lan_ip() {
   fi
 }
 
+# Reads a secret from the first line of a file, so it never appears on a command
+# line. Warns when other users on the machine could read the file.
+secret_from_file() {
+  [ -f "$1" ] && [ -r "$1" ] || { printf '\nStopped: cannot read %s\n' "$1" >&2; return 1; }
+  _mode=$(stat -c %a "$1" 2>/dev/null || echo "")
+  case $_mode in ''|?00) ;; *) warn "$1 can be read by other users; run: chmod 600 $1" >&2 ;; esac
+  _value=""
+  IFS= read -r _value < "$1" || true
+  [ -n "$_value" ] || { printf '\nStopped: %s is empty\n' "$1" >&2; return 1; }
+  printf '%s' "$_value"
+}
+
+# Asks for a secret without showing it. Fails when there is no terminal to ask on.
+ask_secret() {
+  [ -t 0 ] || return 1
+  printf '%s' "$1" >&2
+  stty -echo 2>/dev/null || true
+  _typed=""
+  IFS= read -r _typed || true
+  stty echo 2>/dev/null || true
+  printf '\n' >&2
+  [ -n "$_typed" ] || return 1
+  printf '%s' "$_typed"
+}
+
 rand_hex()    { od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'; }
 rand_base64() { head -c "$1" /dev/urandom | base64 | tr -d '\n'; }
 

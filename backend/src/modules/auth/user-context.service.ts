@@ -13,6 +13,12 @@ interface CacheEntry {
   expiresAt: number;
 }
 
+interface SessionEntry {
+  userId: string;
+  live: boolean;
+  expiresAt: number;
+}
+
 /**
  * Resolves the principal for a request.
  *
@@ -24,7 +30,9 @@ interface CacheEntry {
 @Injectable()
 export class UserContextService {
   private static readonly CACHE_TTL_MS = 30_000;
+  private static readonly SESSION_CACHE_LIMIT = 10_000;
   private readonly cache = new Map<string, CacheEntry>();
+  private readonly sessions = new Map<string, SessionEntry>();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -78,12 +86,65 @@ export class UserContextService {
     return value;
   }
 
-  /** Call after any role/permission change so the next request sees it. */
+  /**
+   * Whether the session an access token was issued under is still in force.
+   *
+   * A session signed out, revoked from another device or ended by a password
+   * change is not in force, and its access token stops working with it. A
+   * session that moved on to a fresh refresh token (`ROTATED`) is still the same
+   * sign-in, so the access token it issued keeps working for as long as that
+   * sign-in does: while some session of the same family has not been ended.
+   *
+   * The answer is cached like the principal is, so a request does not add a
+   * query. Whatever ends sessions calls `invalidate` for the user straight after,
+   * so the next request reads the rows again.
+   */
+  async sessionIsLive(sessionId: string, userId: string): Promise<boolean> {
+    const cached = this.sessions.get(sessionId);
+    if (cached && cached.expiresAt > Date.now()) return cached.live;
+
+    const session = await this.prisma.session.findFirst({
+      where: { id: sessionId, userId },
+      select: { familyId: true, revokedAt: true, revokedReason: true },
+    });
+    let live = false;
+    if (session && !session.revokedAt) {
+      live = true;
+    } else if (session?.revokedReason === 'ROTATED') {
+      const current = await this.prisma.session.findFirst({
+        where: { familyId: session.familyId, userId, revokedAt: null },
+        select: { id: true },
+      });
+      live = current !== null;
+    }
+
+    if (this.sessions.size >= UserContextService.SESSION_CACHE_LIMIT) this.dropExpiredSessions();
+    this.sessions.set(sessionId, {
+      userId,
+      live,
+      expiresAt: Date.now() + UserContextService.CACHE_TTL_MS,
+    });
+    return live;
+  }
+
+  /** Call after any role/permission change, or any change to the user's sessions, so the next request sees it. */
   invalidate(userId: string): void {
     this.cache.delete(userId);
+    for (const [sessionId, entry] of this.sessions) {
+      if (entry.userId === userId) this.sessions.delete(sessionId);
+    }
   }
 
   invalidateAll(): void {
     this.cache.clear();
+    this.sessions.clear();
+  }
+
+  private dropExpiredSessions(): void {
+    const now = Date.now();
+    for (const [sessionId, entry] of this.sessions) {
+      if (entry.expiresAt <= now) this.sessions.delete(sessionId);
+    }
+    if (this.sessions.size >= UserContextService.SESSION_CACHE_LIMIT) this.sessions.clear();
   }
 }

@@ -664,6 +664,20 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Sign-in answers the same for every address.** A refused sign-in is worded and timed
+  the same whether or not the address has an account, and asks the caller to wait after
+  the same number of tries.
+- **Signing out ends the session at once.** An access token stops working as soon as its
+  session is signed out, ended from another device, or ended by a password change. A
+  session that only moved on to a new refresh token keeps working. The check is cached
+  with the signed-in user, so a request does not add a query.
+- **Responses are not kept by browsers or caches.** Every API response carries
+  `Cache-Control: private, no-store` unless it sets its own (downloads already did).
+- **The NAS installer takes the database password and the saved key from a file, the
+  environment or a hidden prompt** (`--db-password-file`, `--field-key-file`,
+  `CWORK_DB_PASSWORD`, `CWORK_FIELD_KEY`). `--db-password` and `--field-key` still work and
+  print a warning.
+
 - **The everyday HR tasks, walked as a first-time user would** (CW-066). Four jobs
   at 1366×768 in Thai, from the scanner file to the printed payslips, and what
   people would stop at: the scanner review page says what a decision did ("… 5

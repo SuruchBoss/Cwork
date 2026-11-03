@@ -741,10 +741,17 @@ restarts. It asks for the word `RESTORE`.
 Rebuilding a machine after a loss:
 
 ```bash
-./install.sh --mode full --field-key '<the saved key>' --backup-dir /path
+./install.sh --mode full --field-key-file /path/to/the/saved-key.txt --backup-dir /path
 ./restore.sh /path/to/the/last/backup.sql.gz
 ./export-ca.sh        # a new authority was made: office PCs trust the new file
 ```
+
+The installer takes the saved key, and the database password in path C, from a
+file (`--field-key-file`, `--db-password-file`, first line), from the environment
+(`CWORK_FIELD_KEY`, `CWORK_DB_PASSWORD`), or typed when asked (`--field-key-prompt`
+for the key; the password is asked for by itself). They are kept off the command
+line so that the process list and the shell history do not hold them. The older
+`--field-key` and `--db-password` options still work and print a warning.
 
 ### Update and rollback
 
@@ -787,7 +794,8 @@ Manager on the NAS, because PostgreSQL runs as a container there.
 # on the NAS
 ./install.sh --mode db --backup-dir /volumeUSB1/usbshare/cwork-backup
 # on the office PC (Docker installed there too)
-./install.sh --mode app --host <the PC's address> --db-host <the NAS address> --db-password '<POSTGRES_PASSWORD from the NAS .env>'
+./install.sh --mode app --host <the PC's address> --db-host <the NAS address>
+# it asks for the database password (POSTGRES_PASSWORD in the NAS .env) and does not show it
 ```
 
 Know what you are choosing:
