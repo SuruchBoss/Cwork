@@ -90,3 +90,27 @@ and proxy together about 19 MB. The database is 31 MB.
 
 Not measured: more than 200 people; two people at once; the 14-day cycle (CW-101 is not
 built); a real Synology; the full-year scanner history.
+
+## After CW-102: the scanner import
+
+The import's time went to one loop over the person-days: about 16 round trips to the
+database for each (a transaction for the punches, then a rebuild of the day that read its
+shift, calendar, leave and punches and wrote its row), 0.6 ms each. Measured on a local
+database with the real app, 696 lines took 7.0 s (10.1 ms a line), and 98% of that was the
+loop; reading the file, planning and storing the days took about 40 ms together.
+
+The loop now reads what a group of people needs once, derives their days in memory with the
+same function the one-day rebuild uses, and writes punches and daily rows in bulk. The same
+kind of month, measured the same way (no CPU limit, local database, a single request):
+
+| People | Lines | Before | After |
+|---|---|---|---|
+| 8 | 696 | 7.0 s | not measured again |
+| 50 | 1,100 | about 10 s (measured in the 2 CPU stack) | 0.8 s |
+| 200 | 4,400 | about 41 s (measured in the 2 CPU stack) | 2.6 s |
+
+The "before" for 50 and 200 people is the 2 CPU / 2 GB stack above; the "after" was not run in
+that stack. The two setups agreed on the old code (10.1 ms a line locally, 10.3 ms a line in the
+stack), because the work is waiting on round trips and not on the processor, so the same
+ratio is expected there; this is an expectation and not a measurement. Run it again in the
+stack before quoting a number to the pilot.

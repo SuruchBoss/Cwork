@@ -801,6 +801,14 @@ entry, tags it and publishes the notes.
   only their owner can read. A new migration adds the column that records who
   calculated a run.
 
+- **The fingerprint scanner import is about sixteen times faster** (CW-102). It
+  handled each person-day on its own, with about sixteen round trips to the
+  database for each; a month of 200 people took 41 s. It now reads what a group
+  of people needs once, derives the days in memory with the same rule as the
+  one-day recalculation, and writes the punches and daily rows together: the same
+  month takes about 2.6 s on the same kind of machine. The rules and the results
+  are unchanged, and a new test compares the two ways of rebuilding days.
+
 ### Fixed
 
 - **A manager no longer fills the browser console with 403s** (CW-095). The

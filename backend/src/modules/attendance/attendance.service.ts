@@ -9,6 +9,7 @@ import {
   Prisma,
   PunchMethod,
   PunchType,
+  type AttendancePunch,
   type Shift,
 } from '@prisma/client';
 import { BusinessRuleError, ErrorCode, NotFoundError } from '../../core/errors/domain.errors';
@@ -22,7 +23,7 @@ import {
   workDateFor,
 } from '../../core/utils/date.util';
 import { employeeVisibilityFilter, requireEmployeeId } from '../../core/security/employee-access';
-import { isHoliday } from '../organization/domain/work-calendar';
+import { isHoliday, type WorkDay } from '../organization/domain/work-calendar';
 import { OrganizationService } from '../organization/organization.service';
 import { WorkCalendarService } from '../organization/work-calendar.service';
 import {
@@ -48,6 +49,8 @@ const POOR_ACCURACY_METERS = 500;
  * organisation overrides it in `settings.attendance.latePunchCeilingHours`.
  */
 const DEFAULT_LATE_PUNCH_CEILING_HOURS = 12;
+/** How many people an import rebuilds in one group. */
+const RECALCULATE_PEOPLE_AT_A_TIME = 25;
 
 @Injectable()
 export class AttendanceService {
@@ -477,8 +480,41 @@ export class AttendanceService {
       }),
     ]);
 
+    const { fields, workLocationId } = this.deriveRecord({
+      day,
+      timezone,
+      punchRows,
+      shift,
+      calendarDay,
+      leaveDay,
+      replaceManual: options.replaceManual === true,
+    });
+
+    await this.prisma.attendanceRecord.upsert({
+      where: { employeeId_workDate: { employeeId, workDate: day } },
+      // The identity of the row, which only a create can set.
+      create: { organizationId, employeeId, workDate: day, workLocationId, ...fields },
+      update: fields,
+    });
+  }
+
+  /**
+   * What a day comes to, from the facts about it: its punches, shift, calendar
+   * day and leave. Shared by the one-day and many-day recalculations so they
+   * cannot disagree.
+   */
+  private deriveRecord(input: {
+    day: Date;
+    timezone: string;
+    punchRows: AttendancePunch[];
+    shift: Shift | null;
+    calendarDay: WorkDay;
+    leaveDay: { dayValue: Prisma.Decimal; leaveRequestId: string } | null;
+    replaceManual: boolean;
+  }) {
+    const { day, timezone, punchRows, shift, calendarDay, leaveDay, replaceManual } = input;
     // A correction supersedes the automatic punches of the same type.
-    const effectivePunches = options.replaceManual ? preferManualPunches(punchRows) : punchRows;
+    const effectivePunches = replaceManual ? preferManualPunches(punchRows) : punchRows;
 
     const punches: PunchInput[] = effectivePunches.map((p) => ({
       type: p.type,
@@ -509,7 +545,7 @@ export class AttendanceService {
     // — as `create` and again as `update` — is how a field added to one and
     // forgotten in the other becomes a day that is correct when first derived
     // and stale for ever after.
-    const derivedFields = {
+    const fields = {
       shiftId: shift?.id ?? null,
       firstClockInAt: derived.firstClockInAt,
       lastClockOutAt: derived.lastClockOutAt,
@@ -524,18 +560,185 @@ export class AttendanceService {
       leaveRequestId: leaveDay?.leaveRequestId ?? null,
     };
 
-    await this.prisma.attendanceRecord.upsert({
-      where: { employeeId_workDate: { employeeId, workDate: day } },
-      // The identity of the row, which only a create can set.
-      create: {
+    return { fields, workLocationId: effectivePunches[0]?.workLocationId ?? null };
+  }
+
+  /**
+   * Rebuilds many days at once, for an import: the same result as calling
+   * `recalculateDay` for each, with what each day needs read once for a group of
+   * people instead of once a day, and the rows written together. People are taken
+   * a group at a time so a year of history does not sit in memory whole.
+   */
+  async recalculateDays(
+    organizationId: string,
+    days: Array<{ employeeId: string; workDate: Date }>,
+    timezone: string,
+  ): Promise<void> {
+    const byEmployee = new Map<string, Map<string, Date>>();
+    for (const { employeeId, workDate } of days) {
+      const day = toDateOnly(workDate);
+      const own = byEmployee.get(employeeId) ?? new Map<string, Date>();
+      own.set(formatDateOnly(day), day);
+      byEmployee.set(employeeId, own);
+    }
+    const people = [...byEmployee.entries()];
+    for (let i = 0; i < people.length; i += RECALCULATE_PEOPLE_AT_A_TIME) {
+      await this.recalculateGroup(
         organizationId,
-        employeeId,
-        workDate: day,
-        workLocationId: effectivePunches[0]?.workLocationId ?? null,
-        ...derivedFields,
-      },
-      update: derivedFields,
-    });
+        people.slice(i, i + RECALCULATE_PEOPLE_AT_A_TIME).map(([employeeId, own]) => ({
+          employeeId,
+          days: [...own.values()].sort((a, b) => a.getTime() - b.getTime()),
+        })),
+        timezone,
+      );
+    }
+  }
+
+  private async recalculateGroup(
+    organizationId: string,
+    group: Array<{ employeeId: string; days: Date[] }>,
+    timezone: string,
+  ): Promise<void> {
+    const employeeIds = group.map((g) => g.employeeId);
+    const all = group.flatMap((g) => g.days).sort((a, b) => a.getTime() - b.getTime());
+    const first = all[0]!;
+    const last = all[all.length - 1]!;
+    const key = (employeeId: string, date: Date) => `${employeeId}|${formatDateOnly(date)}`;
+
+    const [punchRows, overrides, assignments, leaveDays, calendars, existing] = await Promise.all([
+      this.prisma.attendancePunch.findMany({
+        where: {
+          employeeId: { in: employeeIds },
+          workDate: { gte: first, lte: last },
+          ...ACTIVE_PUNCH,
+        },
+        orderBy: { punchedAt: 'asc' },
+      }),
+      this.prisma.shiftAssignment.findMany({
+        where: { employeeId: { in: employeeIds }, date: { gte: first, lte: last } },
+        include: { shift: true },
+      }),
+      this.prisma.scheduleAssignment.findMany({
+        where: {
+          employeeId: { in: employeeIds },
+          effectiveFrom: { lte: last },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: first } }],
+        },
+        orderBy: { effectiveFrom: 'desc' },
+        include: { schedule: { include: { defaultShift: true } } },
+      }),
+      this.prisma.leaveRequestDay.findMany({
+        where: {
+          date: { gte: first, lte: last },
+          leaveRequest: { employeeId: { in: employeeIds }, status: LeaveRequestStatus.APPROVED },
+        },
+        select: {
+          date: true,
+          dayValue: true,
+          leaveRequestId: true,
+          leaveRequest: { select: { employeeId: true } },
+        },
+      }),
+      // The calendar of each person over their own days: a holiday's substitute
+      // day is a holiday here too (CW-081).
+      Promise.all(
+        group.map(async (g) => ({
+          employeeId: g.employeeId,
+          days: await this.calendar.daysFor(
+            organizationId,
+            g.employeeId,
+            g.days[0]!,
+            g.days[g.days.length - 1]!,
+          ),
+        })),
+      ),
+      this.prisma.attendanceRecord.findMany({
+        where: { employeeId: { in: employeeIds }, workDate: { gte: first, lte: last } },
+        select: { employeeId: true, workDate: true },
+      }),
+    ]);
+
+    const punchesOf = new Map<string, AttendancePunch[]>();
+    for (const punch of punchRows) {
+      const k = key(punch.employeeId, punch.workDate);
+      punchesOf.set(k, [...(punchesOf.get(k) ?? []), punch]);
+    }
+    const overrideOf = new Map(overrides.map((o) => [key(o.employeeId, o.date), o]));
+    const leaveOf = new Map<string, { dayValue: Prisma.Decimal; leaveRequestId: string }>();
+    for (const l of leaveDays) {
+      const k = key(l.leaveRequest.employeeId, l.date);
+      if (!leaveOf.has(k))
+        leaveOf.set(k, { dayValue: l.dayValue, leaveRequestId: l.leaveRequestId });
+    }
+    const calendarOf = new Map(calendars.map((c) => [c.employeeId, c.days]));
+    const hasRecord = new Set(existing.map((r) => key(r.employeeId, r.workDate)));
+
+    const shiftFor = (employeeId: string, day: Date): Shift | null => {
+      const override = overrideOf.get(key(employeeId, day));
+      if (override) return override.isDayOff ? null : override.shift;
+      const assignment = assignments.find(
+        (a) =>
+          a.employeeId === employeeId &&
+          a.effectiveFrom <= day &&
+          (a.effectiveTo === null || a.effectiveTo >= day),
+      );
+      return assignment?.schedule.defaultShift ?? null;
+    };
+
+    const toCreate: Prisma.AttendanceRecordCreateManyInput[] = [];
+    const toUpdate: Array<{
+      employeeId: string;
+      day: Date;
+      fields: ReturnType<AttendanceService['deriveRecord']>['fields'];
+    }> = [];
+    for (const { employeeId, days } of group) {
+      for (const day of days) {
+        const k = key(employeeId, day);
+        const { fields, workLocationId } = this.deriveRecord({
+          day,
+          timezone,
+          punchRows: punchesOf.get(k) ?? [],
+          shift: shiftFor(employeeId, day),
+          calendarDay: calendarOf.get(employeeId)!.get(formatDateOnly(day))!,
+          leaveDay: leaveOf.get(k) ?? null,
+          replaceManual: false,
+        });
+        if (hasRecord.has(k)) toUpdate.push({ employeeId, day, fields });
+        else
+          toCreate.push({ organizationId, employeeId, workDate: day, workLocationId, ...fields });
+      }
+    }
+
+    // A row someone else made since it was looked for is updated, not lost.
+    let made = 0;
+    if (toCreate.length > 0) {
+      made = (
+        await this.prisma.attendanceRecord.createMany({ data: toCreate, skipDuplicates: true })
+      ).count;
+    }
+    const upserts = [
+      ...toUpdate.map(({ employeeId, day, fields }) =>
+        this.prisma.attendanceRecord.update({
+          where: { employeeId_workDate: { employeeId, workDate: day } },
+          data: fields,
+        }),
+      ),
+      ...(made < toCreate.length
+        ? toCreate.map(
+            ({ employeeId, workDate, workLocationId: _where, organizationId: _org, ...fields }) =>
+              this.prisma.attendanceRecord.update({
+                where: {
+                  employeeId_workDate: {
+                    employeeId: employeeId as string,
+                    workDate: workDate as Date,
+                  },
+                },
+                data: fields as Prisma.AttendanceRecordUncheckedUpdateInput,
+              }),
+          )
+        : []),
+    ];
+    if (upserts.length > 0) await this.prisma.$transaction(upserts);
   }
 
   /**
