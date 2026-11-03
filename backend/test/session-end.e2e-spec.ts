@@ -137,6 +137,55 @@ describe('Ending a session (e2e)', () => {
     expect((await me((renewed.body as Signed).accessToken)).status).toBe(200);
   });
 
+  it('stops a token issued before a refresh when the renewed session is signed out', async () => {
+    const first = await signIn(await account('after-refresh'));
+    const renewed = (
+      await api.post('/auth/refresh', undefined, { refreshToken: first.refreshToken })
+    ).body as Signed;
+    expect((await me(first.accessToken)).status).toBe(200);
+
+    const out = await api.post('/auth/logout', renewed.accessToken, {
+      refreshToken: renewed.refreshToken,
+    });
+
+    expect(out.status).toBeLessThan(300);
+    expect((await me(first.accessToken)).status).toBe(401);
+    expect((await me(renewed.accessToken)).status).toBe(401);
+  });
+
+  it('stops a token issued before a refresh when another device ends the renewed session', async () => {
+    const email = await account('after-refresh-other');
+    const laptop = await signIn(email);
+    const phone = await signIn(email);
+    const renewed = (
+      await api.post('/auth/refresh', undefined, { refreshToken: laptop.refreshToken })
+    ).body as Signed;
+    const row = await prisma.session.findFirstOrThrow({
+      where: { user: { email }, tokenHash: crypto.hashToken(renewed.refreshToken) },
+    });
+    expect((await me(laptop.accessToken)).status).toBe(200);
+
+    const ended = await api.delete(`/auth/sessions/${row.id}`, phone.accessToken);
+
+    expect(ended.status).toBeLessThan(300);
+    expect((await me(laptop.accessToken)).status).toBe(401);
+    expect((await me(renewed.accessToken)).status).toBe(401);
+    expect((await me(phone.accessToken)).status).toBe(200);
+  });
+
+  it('keeps a token issued before two refreshes while the latest session is in force', async () => {
+    const first = await signIn(await account('two-refreshes'));
+    const second = (
+      await api.post('/auth/refresh', undefined, { refreshToken: first.refreshToken })
+    ).body as Signed;
+    const third = (
+      await api.post('/auth/refresh', undefined, { refreshToken: second.refreshToken })
+    ).body as Signed;
+
+    expect((await me(first.accessToken)).status).toBe(200);
+    expect((await me(third.accessToken)).status).toBe(200);
+  });
+
   it('ends the whole family when an old refresh token is presented again', async () => {
     const session = await signIn(await account('reuse'));
     const renewed = (

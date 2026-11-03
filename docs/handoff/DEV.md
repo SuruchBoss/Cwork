@@ -17,7 +17,7 @@ this file only says where the dev room stands.
   3. every API response carries `Cache-Control: private, no-store` unless it sets its own;
   4. `deploy/nas/install.sh` takes the database password and the saved key from a file, the
      environment or a hidden prompt; the old options still work and warn.
-- Counts: web 330; backend unit 856, domain 544; e2e 539.
+- Counts: web 330; backend unit 856, domain 544; e2e 542.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)

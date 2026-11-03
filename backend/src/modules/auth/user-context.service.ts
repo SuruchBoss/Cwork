@@ -91,12 +91,13 @@ export class UserContextService {
    *
    * A session signed out, revoked from another device or ended by a password
    * change is not in force, and its access token stops working with it. A
-   * session that only moved on to a fresh refresh token (`ROTATED`) is still the
-   * same sign-in, so the access token it issued keeps working until it expires.
+   * session that moved on to a fresh refresh token (`ROTATED`) is still the same
+   * sign-in, so the access token it issued keeps working for as long as that
+   * sign-in does: while some session of the same family has not been ended.
    *
    * The answer is cached like the principal is, so a request does not add a
    * query. Whatever ends sessions calls `invalidate` for the user straight after,
-   * so the next request reads the row again.
+   * so the next request reads the rows again.
    */
   async sessionIsLive(sessionId: string, userId: string): Promise<boolean> {
     const cached = this.sessions.get(sessionId);
@@ -104,9 +105,18 @@ export class UserContextService {
 
     const session = await this.prisma.session.findFirst({
       where: { id: sessionId, userId },
-      select: { revokedAt: true, revokedReason: true },
+      select: { familyId: true, revokedAt: true, revokedReason: true },
     });
-    const live = session !== null && (!session.revokedAt || session.revokedReason === 'ROTATED');
+    let live = false;
+    if (session && !session.revokedAt) {
+      live = true;
+    } else if (session?.revokedReason === 'ROTATED') {
+      const current = await this.prisma.session.findFirst({
+        where: { familyId: session.familyId, userId, revokedAt: null },
+        select: { id: true },
+      });
+      live = current !== null;
+    }
 
     if (this.sessions.size >= UserContextService.SESSION_CACHE_LIMIT) this.dropExpiredSessions();
     this.sessions.set(sessionId, {
