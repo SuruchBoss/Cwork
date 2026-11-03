@@ -27,6 +27,8 @@ import { judgeOwnRecord } from '../auth/domain/duty-separation';
 import { DutySeparationService } from '../auth/duty-separation.service';
 import { OrganizationService } from '../organization/organization.service';
 import { AttendanceService } from './attendance.service';
+import { earliestFreeStart, ownerOn } from './domain/scanner-binding';
+import { ScannerBindingsService } from './scanner-bindings.service';
 import {
   checkDecision,
   classifyDay,
@@ -54,7 +56,9 @@ const MAX_REVIEW_DAYS = 93;
 
 const dayInclude = {
   decisions: { orderBy: { createdAt: 'desc' }, take: 1 },
-  punches: { select: { supersededAt: true, punch: { select: { clientPunchId: true } } } },
+  punches: {
+    select: { supersededAt: true, punch: { select: { clientPunchId: true, employeeId: true } } },
+  },
 } satisfies Prisma.ScannerDayInclude;
 
 type LoadedDay = Prisma.ScannerDayGetPayload<{ include: typeof dayInclude }>;
@@ -224,6 +228,7 @@ export class ScannerImportService {
     private readonly attendance: AttendanceService,
     private readonly organization: OrganizationService,
     private readonly duty: DutySeparationService,
+    private readonly bindings: ScannerBindingsService,
   ) {}
 
   // ------------------------------------------------------------------ import
@@ -670,48 +675,112 @@ export class ScannerImportService {
     });
     const nameOf = new Map(names.map((n) => [n.scannerNumber, n.name]));
     const timed = new Map(withTimes.map((w) => [w.scannerNumber, w._count._all]));
+
+    // "From now on" starts at the first day the number is free (CW-109), and counts
+    // the waiting days from then on to the person: said before it is chosen.
+    const waiting = await this.prisma.scannerDay.findMany({
+      where: base,
+      select: { scannerNumber: true, workDate: true },
+    });
+    const daysOf = new Map<string, string[]>();
+    for (const day of waiting) {
+      daysOf.set(day.scannerNumber, [
+        ...(daysOf.get(day.scannerNumber) ?? []),
+        formatDateOnly(day.workDate),
+      ]);
+    }
+    const periods = await this.prisma.employeeScannerNumber.findMany({
+      where: {
+        organizationId: user.organizationId,
+        scannerNumber: { in: all.map((g) => g.scannerNumber) },
+      },
+      select: { scannerNumber: true, validFrom: true, validTo: true },
+    });
+    const periodsOf = new Map<
+      string,
+      Array<{ validFrom: string | null; validTo: string | null }>
+    >();
+    for (const p of periods) {
+      periodsOf.set(p.scannerNumber, [
+        ...(periodsOf.get(p.scannerNumber) ?? []),
+        {
+          validFrom: p.validFrom ? formatDateOnly(p.validFrom) : null,
+          validTo: p.validTo ? formatDateOnly(p.validTo) : null,
+        },
+      ]);
+    }
     return all
-      .map((g) => ({
-        scannerNumber: g.scannerNumber,
-        name: nameOf.get(g.scannerNumber) ?? '',
-        days: g._count._all,
-        daysWithTimes: timed.get(g.scannerNumber) ?? 0,
-        firstDay: formatDateOnly(g._min.workDate!),
-        lastDay: formatDateOnly(g._max.workDate!),
-      }))
+      .map((g) => {
+        // undefined: the number is in use by someone, so it cannot be bound from now on.
+        const from = earliestFreeStart(periodsOf.get(g.scannerNumber) ?? []);
+        return {
+          scannerNumber: g.scannerNumber,
+          name: nameOf.get(g.scannerNumber) ?? '',
+          days: g._count._all,
+          daysWithTimes: timed.get(g.scannerNumber) ?? 0,
+          firstDay: formatDateOnly(g._min.workDate!),
+          lastDay: formatDateOnly(g._max.workDate!),
+          foreverPossible: from !== undefined,
+          foreverFrom: from ?? null,
+          foreverDays:
+            from === undefined
+              ? 0
+              : (daysOf.get(g.scannerNumber) ?? []).filter((d) => from === null || d >= from)
+                  .length,
+        };
+      })
       .sort((a, b) => Number(a.scannerNumber) - Number(b.scannerNumber));
   }
 
-  /** Registers a scanner number on an employee, and counts the days that were waiting on it. */
+  /**
+   * Registers a scanner number on an employee, and counts the days that were waiting on it.
+   *
+   * `ALWAYS` binds it from now on (from the beginning, or the day after an earlier
+   * end of the number) and the number is then the employee's number in use.
+   * `THESE_DAYS` binds it only for the days no one owns today, from the first to the
+   * last, so the same number can belong to someone else outside them (CW-109).
+   */
   async bind(user: AuthenticatedUser, dto: BindScannerNumberDto) {
     this.assertWholeCompany(user);
     const employee = await this.prisma.employee.findFirst({
       where: { id: dto.employeeId, organizationId: user.organizationId, deletedAt: null },
-      select: { id: true, employeeCode: true, scannerId: true },
+      select: { id: true, employeeCode: true },
     });
     if (!employee) throw new NotFoundError('Employee', dto.employeeId);
-    if (employee.scannerId) {
-      throw new BusinessRuleError(
-        'EMPLOYEE_HAS_SCANNER_NUMBER',
-        `Employee ${employee.employeeCode} already has scanner number ${employee.scannerId}`,
-        { employeeCode: employee.employeeCode, scannerNumber: employee.scannerId },
-      );
-    }
-    const holder = await this.prisma.employee.findFirst({
-      where: { organizationId: user.organizationId, scannerId: dto.scannerNumber },
-      select: { employeeCode: true },
-    });
-    if (holder) {
-      throw new BusinessRuleError(
-        'DUPLICATE_SCANNER_ID',
-        `Scanner number ${dto.scannerNumber} already belongs to employee ${holder.employeeCode}`,
-        { employeeCode: holder.employeeCode, scannerNumber: dto.scannerNumber },
-      );
+
+    const scope = dto.scope ?? 'ALWAYS';
+    let from: string | null;
+    let to: string | null = null;
+    if (scope === 'THESE_DAYS') {
+      const span = await this.prisma.scannerDay.aggregate({
+        where: {
+          organizationId: user.organizationId,
+          employeeId: null,
+          scannerNumber: dto.scannerNumber,
+        },
+        _min: { workDate: true },
+        _max: { workDate: true },
+      });
+      if (!span._min.workDate || !span._max.workDate) {
+        throw new BusinessRuleError(
+          'NO_UNOWNED_DAYS',
+          `ไม่มีวันของเลขสแกน ${dto.scannerNumber} ที่รอเจ้าของ`,
+          { scannerNumber: dto.scannerNumber },
+        );
+      }
+      from = formatDateOnly(span._min.workDate);
+      to = formatDateOnly(span._max.workDate);
+    } else {
+      from = await this.bindings.firstFreeStart(user.organizationId, dto.scannerNumber);
     }
 
-    await this.prisma.employee.update({
-      where: { id: employee.id },
-      data: { scannerId: dto.scannerNumber },
+    await this.bindings.bind({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      employeeId: employee.id,
+      scannerNumber: dto.scannerNumber,
+      from,
+      to,
     });
     const organization = await this.organization.getOrganization(user.organizationId);
     const result = await this.rematchUnmapped(
@@ -726,13 +795,175 @@ export class ScannerImportService {
       action: AuditAction.UPDATE,
       entityType: 'Employee',
       entityId: employee.id,
-      summary: `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode}`,
+      summary:
+        scope === 'THESE_DAYS'
+          ? `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode} for ${from} to ${to}`
+          : `Registered scanner number ${dto.scannerNumber} on employee ${employee.employeeCode}`,
       changes: {
         scannerId: { from: null, to: dto.scannerNumber },
+        validFrom: from,
+        validTo: to,
         daysMatched: result.daysMatched,
       },
     });
     return result;
+  }
+
+  /**
+   * What ending a number in use on a date would do, worked out and nothing written:
+   * the later days of the number that no one has decided go back to no one, the
+   * decided ones stay with whom they were decided for, and a day a payroll run
+   * has calculated or paid blocks the end (CW-109).
+   */
+  async previewEnd(user: AuthenticatedUser, bindingId: string, endDate: string) {
+    this.assertWholeCompany(user);
+    const row = await this.bindings.endable(user.organizationId, bindingId, endDate);
+    const { days: _days, ...said } = await this.planEnd(user.organizationId, row, endDate);
+    void _days;
+    return said;
+  }
+
+  /**
+   * Ends a scanner number that is in use: it counts to the employee through the day
+   * given. Later days of the number that no one has decided go back to no one (their
+   * punches set aside) and are matched again against any other period that holds them.
+   * A later day inside a calculated, approved or paid payroll run refuses the end,
+   * naming the day and the run; nothing is changed then.
+   */
+  async endNumber(user: AuthenticatedUser, bindingId: string, endDate: string) {
+    this.assertWholeCompany(user);
+    const row = await this.bindings.endable(user.organizationId, bindingId, endDate);
+    const plan = await this.planEnd(user.organizationId, row, endDate);
+    if (plan.blocked) {
+      throw new BusinessRuleError(
+        'SCANNER_DAY_IN_PAYROLL_RUN',
+        plan.blocked.runNo
+          ? `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน ${plan.blocked.runNo} ที่คำนวณหรืออนุมัติแล้ว`
+          : `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นเงินเดือนใช้ไปแล้ว`,
+        {
+          scannerNumber: row.scannerNumber,
+          date: plan.blocked.date,
+          runNo: plan.blocked.runNo ?? '—',
+        },
+      );
+    }
+
+    const organization = await this.organization.getOrganization(user.organizationId);
+    const released = plan.days;
+    const ended = await this.prisma.$transaction(async (tx) => {
+      const result = await this.bindings.end(user, bindingId, endDate, {
+        db: tx,
+        released: released.length,
+      });
+      if (released.length > 0) {
+        const ids = released.map((d) => d.id);
+        await tx.scannerPunchLink.updateMany({
+          where: { scannerDayId: { in: ids }, supersededAt: null },
+          data: { supersededAt: new Date() },
+        });
+        await tx.scannerDay.updateMany({ where: { id: { in: ids } }, data: { employeeId: null } });
+      }
+      return result;
+    });
+    if (released.length > 0) {
+      await this.attendance.recalculateDays(
+        user.organizationId,
+        released.map((d) => ({ employeeId: row.employeeId, workDate: d.workDate })),
+        organization.timezone,
+      );
+    }
+    // A period that holds one of those days now takes it (none can while this one was in use).
+    const matched = await this.rematchUnmapped(
+      user.organizationId,
+      organization.timezone,
+      user.userId,
+      row.scannerNumber,
+    );
+    return { ...ended, daysReleased: released.length, daysMatched: matched.daysMatched };
+  }
+
+  /** The later days of a number held by an employee, who keeps them and who loses them. */
+  private async planEnd(
+    organizationId: string,
+    row: { employeeId: string; scannerNumber: string },
+    endDate: string,
+  ) {
+    const later = await this.prisma.scannerDay.findMany({
+      where: {
+        organizationId,
+        scannerNumber: row.scannerNumber,
+        employeeId: row.employeeId,
+        workDate: { gt: toDateOnly(endDate) },
+      },
+      orderBy: { workDate: 'asc' },
+      select: { id: true, workDate: true, decisions: { select: { id: true }, take: 1 } },
+    });
+    const days = later.filter((d) => d.decisions.length === 0);
+    const kept = later.length - days.length;
+    let blocked: { date: string; runNo: string | null } | null = null;
+    if (days.length > 0) {
+      const first = formatDateOnly(days[0]!.workDate);
+      const last = formatDateOnly(days[days.length - 1]!.workDate);
+      const [locked, slips] = await Promise.all([
+        this.prisma.attendanceRecord.findMany({
+          where: {
+            organizationId,
+            employeeId: row.employeeId,
+            workDate: { gte: toDateOnly(first), lte: toDateOnly(last) },
+            lockedAt: { not: null },
+          },
+          select: { workDate: true },
+        }),
+        this.prisma.payslip.findMany({
+          where: {
+            employeeId: row.employeeId,
+            run: {
+              organizationId,
+              status: {
+                in: [
+                  PayrollRunStatus.CALCULATED,
+                  PayrollRunStatus.PENDING_APPROVAL,
+                  PayrollRunStatus.APPROVED,
+                  PayrollRunStatus.PAID,
+                ],
+              },
+              period: {
+                periodStart: { lte: toDateOnly(last) },
+                periodEnd: { gte: toDateOnly(first) },
+              },
+            },
+          },
+          select: {
+            run: {
+              select: { runNo: true, period: { select: { periodStart: true, periodEnd: true } } },
+            },
+          },
+        }),
+      ]);
+      const lockedOn = new Set(locked.map((r) => formatDateOnly(r.workDate)));
+      for (const day of days) {
+        const date = formatDateOnly(day.workDate);
+        const slip = slips.find(
+          (s) =>
+            formatDateOnly(s.run.period.periodStart) <= date &&
+            formatDateOnly(s.run.period.periodEnd) >= date,
+        );
+        if (slip || lockedOn.has(date)) {
+          blocked = { date, runNo: slip?.run.runNo ?? null };
+          break;
+        }
+      }
+    }
+    return {
+      scannerNumber: row.scannerNumber,
+      endDate,
+      daysReleased: days.length,
+      firstDay: days.length > 0 ? formatDateOnly(days[0]!.workDate) : null,
+      lastDay: days.length > 0 ? formatDateOnly(days[days.length - 1]!.workDate) : null,
+      daysKept: kept,
+      blocked,
+      days,
+    };
   }
 
   /**
@@ -969,14 +1200,10 @@ export class ScannerImportService {
     lines: ScannerLine[],
   ): Promise<{ entries: PlanEntry[] }> {
     const numbers = [...new Set(lines.map((l) => l.scannerNumber))];
-    const [employees, existing] = await Promise.all([
-      this.prisma.employee.findMany({
-        where: { organizationId, scannerId: { in: numbers }, deletedAt: null },
-        select: { id: true, scannerId: true },
-      }),
+    const [bound, existing] = await Promise.all([
+      this.bindings.forNumbers(organizationId, numbers),
       this.loadDays(organizationId, lines),
     ]);
-    const employeeOf = new Map(employees.map((e) => [e.scannerId!, e.id]));
     const known = new Map(
       existing.map((d) => [dayKey(d.scannerNumber, formatDateOnly(d.workDate)), d]),
     );
@@ -985,7 +1212,10 @@ export class ScannerImportService {
       const found = known.get(dayKey(line.scannerNumber, line.workDate)) ?? null;
       // A later export of a day can only add times, never take one away.
       const times = found ? [...new Set([...found.times, ...line.times])].sort() : line.times;
-      const employeeId = employeeOf.get(line.scannerNumber) ?? found?.employeeId ?? null;
+      // A day outside every period of its number is no one's; a day already counted
+      // stays with whom it was counted for.
+      const employeeId =
+        ownerOn(bound, line.scannerNumber, line.workDate) ?? found?.employeeId ?? null;
       const decision = found ? inForce(found, times) : null;
       return {
         line,
@@ -1144,12 +1374,18 @@ export class ScannerImportService {
       const wanted = new Map(
         verdict.punches.map((p) => [scannerPunchKey(day.scannerNumber, date, p.time, p.type), p]),
       );
+      // Only the punches of the day's own employee count as the day's: a punch of
+      // someone the day once belonged to is history, not part of what it needs.
+      const activeLinks = day.punches.filter((l) => l.supersededAt === null);
       const active = new Set(
-        day.punches
-          .filter((l) => l.supersededAt === null && l.punch.clientPunchId)
+        activeLinks
+          .filter((l) => l.punch.clientPunchId && l.punch.employeeId === employeeId)
           .map((l) => l.punch.clientPunchId!),
       );
-      const right = wanted.size === active.size && [...wanted.keys()].every((k) => active.has(k));
+      const right =
+        wanted.size === active.size &&
+        activeLinks.every((l) => l.punch.employeeId === employeeId) &&
+        [...wanted.keys()].every((k) => active.has(k));
       if (right) continue;
       if (locked.has(`${employeeId}|${date}`)) continue;
       work.push({
@@ -1173,7 +1409,7 @@ export class ScannerImportService {
               scannerDayId: true,
               punchId: true,
               supersededAt: true,
-              punch: { select: { clientPunchId: true } },
+              punch: { select: { clientPunchId: true, employeeId: true } },
             },
           });
           const linksOf = new Map<string, typeof links>();
@@ -1185,13 +1421,20 @@ export class ScannerImportService {
           const punchRows: Prisma.AttendancePunchCreateManyInput[] = [];
           const linkRows: Prisma.ScannerPunchLinkCreateManyInput[] = [];
           for (const { day, employeeId, wanted, decisionId } of group) {
-            const own = linksOf.get(day.id) ?? [];
-            // Set aside what the day no longer should have.
-            for (const l of own) {
-              if (l.supersededAt === null && !wanted.has(l.punch.clientPunchId ?? '')) {
+            const all = linksOf.get(day.id) ?? [];
+            // Set aside what the day no longer should have, and any punch of someone
+            // else that is still in force on it.
+            for (const l of all) {
+              if (
+                l.supersededAt === null &&
+                (l.punch.employeeId !== employeeId || !wanted.has(l.punch.clientPunchId ?? ''))
+              ) {
                 setAside.push(l.punchId);
               }
             }
+            // A set-aside link is taken up again only for the punch of the same
+            // employee; the day's new holder gets punches of their own.
+            const own = all.filter((l) => l.punch.employeeId === employeeId);
             for (const [key, punch] of wanted) {
               const link = own.find((l) => l.punch.clientPunchId === key);
               if (link) {
@@ -1254,31 +1497,28 @@ export class ScannerImportService {
         employeeId: null,
         ...(onlyNumber ? { scannerNumber: onlyNumber } : {}),
       },
-      select: { scannerNumber: true },
-      distinct: ['scannerNumber'],
+      select: { id: true, scannerNumber: true, workDate: true },
     });
     if (orphans.length === 0) return { daysMatched: 0, punchesAdded: 0 };
-    const owners = await this.prisma.employee.findMany({
-      where: {
-        organizationId,
-        deletedAt: null,
-        scannerId: { in: orphans.map((o) => o.scannerNumber) },
-      },
-      select: { id: true, scannerId: true },
-    });
+    // Each day goes to whoever holds its number on that day (CW-109); a day
+    // outside every period stays unowned.
+    const bound = await this.bindings.forNumbers(organizationId, [
+      ...new Set(orphans.map((o) => o.scannerNumber)),
+    ]);
+    const byOwner = new Map<string, string[]>();
+    for (const day of orphans) {
+      const owner = ownerOn(bound, day.scannerNumber, formatDateOnly(day.workDate));
+      if (owner) byOwner.set(owner, [...(byOwner.get(owner) ?? []), day.id]);
+    }
     let daysMatched = 0;
     const ids: string[] = [];
-    for (const owner of owners) {
-      const matched = await this.prisma.scannerDay.findMany({
-        where: { organizationId, employeeId: null, scannerNumber: owner.scannerId! },
-        select: { id: true },
-      });
+    for (const [employeeId, dayIds] of byOwner) {
       await this.prisma.scannerDay.updateMany({
-        where: { id: { in: matched.map((m) => m.id) } },
-        data: { employeeId: owner.id },
+        where: { id: { in: dayIds } },
+        data: { employeeId },
       });
-      daysMatched += matched.length;
-      ids.push(...matched.map((m) => m.id));
+      daysMatched += dayIds.length;
+      ids.push(...dayIds);
     }
     if (ids.length === 0) return { daysMatched: 0, punchesAdded: 0 };
     const days = await this.loadDaysByIds(organizationId, ids);

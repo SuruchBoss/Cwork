@@ -20,7 +20,12 @@ import { CurrentUser, type AuthenticatedUser } from '../../core/security/current
 import { RequirePermissions } from '../../core/security/decorators';
 import { Permission } from '../../core/security/permissions';
 import { IMPORT_BODY, IMPORT_LIMITS, requireUpload } from '../../core/spreadsheet/upload';
-import { BindScannerNumberDto, DecideScannerDayDto, ScannerDaysQueryDto } from './dto/scanner.dto';
+import {
+  BindScannerNumberDto,
+  DecideScannerDayDto,
+  EndScannerNumberDto,
+  ScannerDaysQueryDto,
+} from './dto/scanner.dto';
 import { ScannerImportService } from './scanner-import.service';
 
 /**
@@ -123,10 +128,47 @@ export class ScannerController {
   @ApiOperation({
     summary: 'Register a scanner number on an employee',
     description:
-      "Sets the employee's scanner ID and counts the days that were waiting on the number.",
+      'Binds the number to the employee, from now on or only for the days no one owns, and ' +
+      'counts the days that were waiting on it. A day outside every period of a number ' +
+      'belongs to no one.',
   })
   bind(@CurrentUser() user: AuthenticatedUser, @Body() dto: BindScannerNumberDto) {
     return this.scanner.bind(user, dto);
+  }
+
+  @Get('numbers/:id/end-preview')
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @ApiOperation({
+    summary: 'What ending a scanner number on a date would do, without doing it',
+    description:
+      'How many later days of the number go back to no one, how many stay because someone ' +
+      'decided them, and the first day a payroll run stops the end, if any.',
+  })
+  endPreview(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: EndScannerNumberDto,
+  ) {
+    return this.scanner.previewEnd(user, id, query.endDate);
+  }
+
+  @Post('numbers/:id/end')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @ApiOperation({
+    summary: 'End a scanner number that is in use',
+    description:
+      'The number counts to the employee through the end date. Later days of it that no one ' +
+      'has decided go back to no one and are matched again to any other period that holds ' +
+      'them; decided days stay. A later day in a calculated, approved or paid payroll run ' +
+      'refuses the end.',
+  })
+  endNumber(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: EndScannerNumberDto,
+  ) {
+    return this.scanner.endNumber(user, id, dto.endDate);
   }
 
   @Post('rematch')

@@ -18,6 +18,8 @@ const MESSAGES: Record<string, string> = {
   SCANNER_NUMBER_NOT_REGISTERED:
     'This scanner number belongs to no employee yet; register it first',
   EMPLOYEE_HAS_SCANNER_NUMBER: 'Employee {employeeCode} already has scanner number {scannerNumber}',
+  SCANNER_DAY_IN_PAYROLL_RUN:
+    'Scanner number {scannerNumber} cannot end before {date}: that day is in payroll run {runNo}',
   DUPLICATE_SCANNER_ID: 'Scanner number {scannerNumber} already belongs to employee {employeeCode}',
   // Reviewing the days the scanner recorded
   RANGE_NOT_SUPPORTED: 'Choose a range of 1 to {max} days',

@@ -19,6 +19,11 @@ export interface UnmappedNumber {
   daysWithTimes: number;
   firstDay: string;
   lastDay: string;
+  /** Whether the number can be bound from now on: not while someone holds it (CW-109). */
+  foreverPossible?: boolean;
+  /** The day "from now on" would start (empty: from the beginning), and the waiting days it would count. */
+  foreverFrom?: string | null;
+  foreverDays?: number;
 }
 
 interface DayCounts {

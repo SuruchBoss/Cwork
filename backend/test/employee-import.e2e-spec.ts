@@ -14,6 +14,7 @@ import { PrismaClient } from '@prisma/client';
 import { readXlsx, writeXlsx } from 'src/core/spreadsheet/xlsx';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { numberInUse } from './utils/scanner-numbers';
 
 const HR_OFFICER = 'hr.officer@cwork.example';
 const HR_MANAGER = 'hr.manager@cwork.example';
@@ -241,7 +242,10 @@ describe('Employee import (e2e)', () => {
 
       expect(first.managerId).toBe(second.id);
       expect(second.managerId).toBe(hrManager.id);
-      expect([first.scannerId, second.scannerId, third.scannerId]).toEqual(['007', '008', null]);
+      const numbers = await withDb((prisma) =>
+        Promise.all([first.id, second.id, third.id].map((id) => numberInUse(prisma, id))),
+      );
+      expect(numbers).toEqual(['007', '008', null]);
       expect([first.status, third.status]).toEqual(['ACTIVE', 'PROBATION']);
 
       const accounts = await withDb((prisma) =>

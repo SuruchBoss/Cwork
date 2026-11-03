@@ -13,6 +13,7 @@ import { PrismaClient, UserStatus } from '@prisma/client';
 import { Permission } from 'src/core/security/permissions';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { giveNumber, takeNumbers } from './utils/scanner-numbers';
 
 const OFFICER = 'hr.officer@cwork.example';
 const MANAGER = 'hr.manager@cwork.example';
@@ -70,10 +71,7 @@ describe('A record that is about the one deciding it (e2e)', () => {
     });
     officerUserId = user.id;
     officerEmployeeId = user.employee!.id;
-    await prisma.employee.update({
-      where: { id: officerEmployeeId },
-      data: { scannerId: SCANNER },
-    });
+    await giveNumber(prisma, officerEmployeeId, SCANNER);
 
     const imported = await api.upload(
       '/attendance/scanner/import',
@@ -90,7 +88,7 @@ describe('A record that is about the one deciding it (e2e)', () => {
     for (const { id, status } of suspended) {
       await prisma?.user.update({ where: { id }, data: { status } });
     }
-    await prisma?.employee.update({ where: { id: officerEmployeeId }, data: { scannerId: null } });
+    if (prisma) await takeNumbers(prisma, [officerEmployeeId]);
     await prisma?.$disconnect();
     await ctx?.close();
   });

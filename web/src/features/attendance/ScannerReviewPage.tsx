@@ -152,6 +152,8 @@ function BindControl({
   const [search, setSearch] = useState('');
   const [term, setTerm] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  // Asked, not assumed: a number carried by someone else later is bound for these days only.
+  const [scope, setScope] = useState<'' | 'THESE_DAYS' | 'ALWAYS'>('');
   const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(() => {
@@ -171,6 +173,7 @@ function BindControl({
       api.post<{ daysMatched: number; punchesAdded: number }>('/attendance/scanner/unmapped/bind', {
         scannerNumber: item.scannerNumber,
         employeeId,
+        scope,
       }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -219,10 +222,42 @@ function BindControl({
             ))}
           </Select>
         )}
+        <Select
+          aria-label={t('How long number {number} is theirs', { number: item.scannerNumber })}
+          value={scope}
+          onChange={(event) => {
+            setScope(event.target.value as typeof scope);
+            setProblem(null);
+          }}
+        >
+          <option value="">{t('Choose…')}</option>
+          <option value="THESE_DAYS">
+            {t('Only these days ({from} to {to})', {
+              from: formatDate(item.firstDay),
+              to: formatDate(item.lastDay),
+            })}
+          </option>
+          <option value="ALWAYS" disabled={item.foreverPossible === false}>
+            {item.foreverPossible === false
+              ? t('From now on: not possible, someone holds this number now')
+              : item.foreverFrom
+                ? t(
+                    'From {date}, until it is ended ({count} waiting days counted for this person)',
+                    {
+                      date: formatDate(item.foreverFrom),
+                      count: formatNumber(item.foreverDays ?? 0),
+                    },
+                  )
+                : t(
+                    'From the beginning, until it is ended ({count} waiting days counted for this person)',
+                    { count: formatNumber(item.foreverDays ?? item.days) },
+                  )}
+          </option>
+        </Select>
         <Button
           size="sm"
           variant="primary"
-          disabled={!employeeId}
+          disabled={!employeeId || !scope}
           loading={bind.isPending}
           onClick={() => bind.mutate()}
         >

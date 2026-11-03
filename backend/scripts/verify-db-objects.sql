@@ -16,14 +16,17 @@ DECLARE
     'knowledge_chunks_content_trgm_idx',
     'employees_name_trgm_idx',
     'approval_tasks_pending_idx',
-    'outbox_events_unprocessed_idx'
+    'outbox_events_unprocessed_idx',
+    'employee_scanner_numbers_one_in_use_idx'
   ];
   expected_constraints text[] := ARRAY[
     'leave_requests_date_order_check',
     'overtime_requests_interval_check',
     'payslips_net_balance_check',
     'employee_compensations_effective_order_check',
-    'review_cycles_weight_total_check'
+    'review_cycles_weight_total_check',
+    'employee_scanner_numbers_period_order_check',
+    'employee_scanner_numbers_no_overlap'
   ];
   expected_triggers text[] := ARRAY[
     'audit_logs_append_only',

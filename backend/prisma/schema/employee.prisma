@@ -44,10 +44,9 @@ model Employee {
   /// Null until the person is invited to the app (or after their login is removed).
   userId         String?  @unique @db.Uuid
   user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  /// The person's user number on the fingerprint scanner, as the scanner writes
-  /// it, so imported punches find their employee (CW-059, CW-061). Kept as text:
-  /// "007" and "7" are different numbers to a scanner that zero-pads.
-  scannerId      String?
+  /// The user numbers this person has had on the fingerprint scanner, each for a
+  /// period (CW-109). The one with no end is the number in use now.
+  scannerNumbers EmployeeScannerNumber[]
 
   titleTh        String?
   /// The name Cwork shows. Thai when the person has a Thai name; a foreign
@@ -155,7 +154,6 @@ model Employee {
   hiredFrom          Application[]
 
   @@unique([organizationId, employeeCode])
-  @@unique([organizationId, scannerId])
   @@index([organizationId, status])
   @@index([organizationId, departmentId])
   @@index([organizationId, managerId])
@@ -437,4 +435,29 @@ model EmployeeDocumentNotice {
   @@unique([employeeId, document, expiresOn, window])
   @@index([organizationId])
   @@map("employee_document_notices")
+}
+
+/// A scanner user number bound to an employee for a period (CW-109). Kept as
+/// text: "007" and "7" are different numbers to a scanner that zero-pads. A day
+/// of a number counts to the person whose period holds that day; outside every
+/// period it is a number nobody owns. An empty `validFrom` means from the
+/// beginning and an empty `validTo` means still in use.
+///
+/// Two periods of one number never overlap and one employee has at most one
+/// number in use: both are kept by the database (see the migration), not only
+/// by the application, so two requests at once cannot break them.
+model EmployeeScannerNumber {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  employeeId     String    @db.Uuid
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  scannerNumber  String
+  validFrom      DateTime? @db.Date
+  validTo        DateTime? @db.Date
+  createdById    String?   @db.Uuid
+  createdAt      DateTime  @default(now())
+
+  @@index([organizationId, scannerNumber])
+  @@index([employeeId])
+  @@map("employee_scanner_numbers")
 }

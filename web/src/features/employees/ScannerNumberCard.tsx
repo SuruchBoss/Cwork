@@ -5,10 +5,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { qk } from '@/app/query-client';
-import { Button, Card, Field, Input } from '@/components/ui';
+import { Button, Card, ConfirmDialog, DateInput, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/api-messages';
 import { useT } from '@/lib/i18n/useT';
+import { formatDate } from '@/lib/format';
+import { P } from '@/lib/permissions';
+import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail } from '@/types/api';
 
 /**
@@ -17,15 +21,28 @@ import type { EmployeeDetail } from '@/types/api';
  * Giving a number to an employee counts the days that were waiting on it in
  * earlier scanner files; the days of a number they had before stay with them.
  */
+/** What ending a number on a date would do (CW-109). */
+interface EndPreview {
+  scannerNumber: string;
+  daysReleased: number;
+  daysKept: number;
+  blocked: { date: string; runNo: string | null } | null;
+}
+
 export function ScannerNumberCard({
   person,
   canEdit,
 }: {
-  person: Pick<EmployeeDetail, 'id' | 'scannerId'>;
+  person: Pick<EmployeeDetail, 'id' | 'scannerId' | 'scannerNumbers'>;
   canEdit: boolean;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
+  const canEnd = useAuthStore((s) => s.canAny)(P.ATTENDANCE_MANAGE);
+  const [ending, setEnding] = useState(false);
+  const [endDate, setEndDate] = useState('');
+  const periods = person.scannerNumbers ?? [];
+  const inUse = periods.find((period) => period.validTo === null);
   const current = person.scannerId ?? '';
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(current);
@@ -47,6 +64,48 @@ export function ScannerNumberCard({
             ? error.message
             : t('Could not save'),
       );
+    },
+  });
+
+  // Asked before it is done: how many later days would go back to no one.
+  const [preview, setPreview] = useState<EndPreview | null>(null);
+  const askEnd = useMutation({
+    mutationFn: () =>
+      api.get<EndPreview>(`/attendance/scanner/numbers/${inUse!.id}/end-preview`, {
+        query: { endDate },
+      }),
+    onSuccess: (result) => {
+      setProblem(null);
+      if (result.blocked) {
+        setProblem(
+          t(
+            'Scanner number {scannerNumber} cannot end before {date}: that day is in payroll run {runNo}',
+            {
+              scannerNumber: result.scannerNumber,
+              date: formatDate(result.blocked.date),
+              runNo: result.blocked.runNo ?? '—',
+            },
+          ),
+        );
+        return;
+      }
+      setPreview(result);
+    },
+    onError: (error) => setProblem(describeApiError(error, t, t('Could not save'))),
+  });
+
+  const end = useMutation({
+    mutationFn: () => api.post(`/attendance/scanner/numbers/${inUse!.id}/end`, { endDate }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      await queryClient.invalidateQueries({ queryKey: qk.employee(person.id) });
+      setPreview(null);
+      setEnding(false);
+      setSaved('cleared');
+    },
+    onError: (error) => {
+      setPreview(null);
+      setProblem(describeApiError(error, t, t('Could not save')));
     },
   });
 
@@ -141,6 +200,96 @@ export function ScannerNumberCard({
             <p className="muted" role="status" style={{ margin: 0 }}>
               {t('Saved. The days already counted for this employee stay as they are.')}
             </p>
+          )}
+          {periods.length > 0 && (
+            <ul
+              className="stack stack--sm"
+              aria-label={t('Numbers this employee has had')}
+              style={{ margin: 0, paddingLeft: 18 }}
+            >
+              {periods.map((period) => (
+                <li key={period.id}>
+                  <span className="mono">{period.scannerNumber}</span>{' '}
+                  <span className="muted">
+                    {period.validFrom
+                      ? t('from {date}', { date: formatDate(period.validFrom) })
+                      : t('from the beginning')}
+                    {', '}
+                    {period.validTo
+                      ? t('until {date}', { date: formatDate(period.validTo) })
+                      : t('in use')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {canEdit && canEnd && inUse && !ending && (
+            <div>
+              <Button size="sm" variant="ghost" onClick={() => setEnding(true)}>
+                {t('End this number on a date')}
+              </Button>
+            </div>
+          )}
+          {ending && inUse && (
+            <form
+              className="row"
+              style={{ flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}
+              onSubmit={(event) => {
+                event.preventDefault();
+                askEnd.mutate();
+              }}
+            >
+              <Field label={t('Last day this number counts')}>
+                <DateInput value={endDate} onChange={setEndDate} />
+              </Field>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!endDate}
+                loading={askEnd.isPending}
+              >
+                {t('End this number')}
+              </Button>
+              <Button variant="ghost" onClick={() => setEnding(false)}>
+                {t('Cancel')}
+              </Button>
+            </form>
+          )}
+          {preview && inUse && (
+            <ConfirmDialog
+              title={t('End scanner number {number}?', { number: inUse.scannerNumber })}
+              confirmLabel={t('End this number')}
+              cancelLabel={t('Cancel')}
+              busy={end.isPending}
+              onConfirm={() => end.mutate()}
+              onCancel={() => setPreview(null)}
+            >
+              <p>
+                {t('The number counts to this employee through {date}.', {
+                  date: formatDate(endDate),
+                })}
+              </p>
+              <p>
+                {preview.daysReleased > 0
+                  ? t(
+                      '{count} later days that no one has decided go back to no one, and are counted for whoever holds the number then.',
+                      { count: preview.daysReleased },
+                    )
+                  : t('No later day goes back to no one.')}
+              </p>
+              {preview.daysKept > 0 && (
+                <p>
+                  {t('{count} later days someone has decided stay with this employee.', {
+                    count: preview.daysKept,
+                  })}
+                </p>
+              )}
+            </ConfirmDialog>
+          )}
+          {problem && !editing && (
+            <div className="alert alert--danger" role="alert">
+              {problem}
+            </div>
           )}
         </div>
       )}

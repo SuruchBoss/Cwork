@@ -64,7 +64,9 @@ export default function OffboardingPage() {
   const resignations = useQuery({
     queryKey: ['offboarding', status],
     queryFn: () =>
-      api.get<Resignation[]>('/offboarding/resignations', { query: { status: status || undefined } }),
+      api.get<Resignation[]>('/offboarding/resignations', {
+        query: { status: status || undefined },
+      }),
   });
 
   const detail = useQuery({
@@ -91,7 +93,9 @@ export default function OffboardingPage() {
     <div className="page">
       <PageHeader
         title={t('Offboarding')}
-        description={t('Resignation requests and the handover checklist before the last working day')}
+        description={t(
+          'Resignation requests and the handover checklist before the last working day',
+        )}
       />
 
       <Card>
@@ -170,7 +174,9 @@ export default function OffboardingPage() {
                             size="sm"
                             variant="primary"
                             loading={decide.isPending && decide.variables?.id === resignation.id}
-                            onClick={() => decide.mutate({ id: resignation.id, decision: 'APPROVE' })}
+                            onClick={() =>
+                              decide.mutate({ id: resignation.id, decision: 'APPROVE' })
+                            }
                           >
                             {t('Approve')}
                           </Button>

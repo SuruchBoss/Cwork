@@ -265,37 +265,41 @@ export class EmployeeImportService {
   }
 
   private async context(organizationId: string) {
-    const [organization, existing, departments, positions, workLocations] = await Promise.all([
-      this.prisma.organization.findUniqueOrThrow({
-        where: { id: organizationId },
-        select: { timezone: true },
-      }),
-      this.prisma.employee.findMany({
-        where: { organizationId },
-        select: { id: true, employeeCode: true, scannerId: true, deletedAt: true },
-      }),
-      this.prisma.department.findMany({
-        where: { organizationId, isActive: true, deletedAt: null },
-        select: { id: true, code: true, name: true },
-      }),
-      this.prisma.position.findMany({
-        where: { organizationId, isActive: true, deletedAt: null },
-        select: { id: true, code: true, title: true },
-      }),
-      this.prisma.workLocation.findMany({
-        where: { organizationId, isActive: true, deletedAt: null },
-        select: { id: true, code: true, name: true },
-      }),
-    ]);
+    const [organization, existing, inUse, departments, positions, workLocations] =
+      await Promise.all([
+        this.prisma.organization.findUniqueOrThrow({
+          where: { id: organizationId },
+          select: { timezone: true },
+        }),
+        this.prisma.employee.findMany({
+          where: { organizationId },
+          select: { id: true, employeeCode: true, deletedAt: true },
+        }),
+        // A number in use (no end) is taken; one that has ended can be given again (CW-109).
+        this.prisma.employeeScannerNumber.findMany({
+          where: { organizationId, validTo: null },
+          select: { scannerNumber: true, employee: { select: { employeeCode: true } } },
+        }),
+        this.prisma.department.findMany({
+          where: { organizationId, isActive: true, deletedAt: null },
+          select: { id: true, code: true, name: true },
+        }),
+        this.prisma.position.findMany({
+          where: { organizationId, isActive: true, deletedAt: null },
+          select: { id: true, code: true, title: true },
+        }),
+        this.prisma.workLocation.findMany({
+          where: { organizationId, isActive: true, deletedAt: null },
+          select: { id: true, code: true, name: true },
+        }),
+      ]);
 
     return {
       existingCodes: new Map(
         existing.map((e) => [e.employeeCode, { id: e.deletedAt ? null : e.id }] as const),
       ),
       takenScannerIds: new Map(
-        existing
-          .filter((e) => e.scannerId !== null)
-          .map((e) => [e.scannerId!, e.employeeCode] as const),
+        inUse.map((n) => [n.scannerNumber, n.employee.employeeCode] as const),
       ),
       departments,
       positions: positions.map((p) => ({ id: p.id, code: p.code, name: p.title })),

@@ -18,6 +18,7 @@
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { giveNumber, numberInUse, takeNumbers } from './utils/scanner-numbers';
 
 const HR = 'hr.officer@cwork.example';
 const EMPLOYEE_TOKEN_USER = 'dev2@cwork.example';
@@ -102,7 +103,7 @@ describe('Fingerprint scanner import (e2e)', () => {
         where: { workEmail: email, organizationId },
         select: { id: true, employeeCode: true },
       });
-      if (scannerId) await prisma.employee.update({ where: { id: found.id }, data: { scannerId } });
+      if (scannerId) await giveNumber(prisma, found.id, scannerId);
       return { id: found.id, code: found.employeeCode };
     };
     ann = await person('dev1@cwork.example', A);
@@ -112,10 +113,9 @@ describe('Fingerprint scanner import (e2e)', () => {
 
   afterAll(async () => {
     // Out of the register again, so no other spec finds a scanner number on them.
-    await prisma?.employee.updateMany({
-      where: { id: { in: [ann?.id, ben?.id, cat?.id].filter(Boolean) as string[] } },
-      data: { scannerId: null },
-    });
+    if (prisma) {
+      await takeNumbers(prisma, [ann?.id, ben?.id, cat?.id].filter(Boolean) as string[]);
+    }
     await prisma?.$disconnect();
     await ctx?.close();
   });
@@ -246,6 +246,10 @@ describe('Fingerprint scanner import (e2e)', () => {
           daysWithTimes: 2,
           firstDay: iso(2),
           lastDay: iso(3),
+          // Nobody has had this number, so "from now on" starts at the beginning and counts both days.
+          foreverPossible: true,
+          foreverFrom: null,
+          foreverDays: 2,
         },
       ]);
     });
@@ -479,9 +483,7 @@ describe('Fingerprint scanner import (e2e)', () => {
       expect(bound.status).toBe(200);
       expect(bound.body).toMatchObject({ daysMatched: 2, punchesAdded: 2 });
 
-      expect((await prisma.employee.findUniqueOrThrow({ where: { id: cat.id } })).scannerId).toBe(
-        TEMP,
-      );
+      expect(await numberInUse(prisma, cat.id)).toBe(TEMP);
       expect((await activeOf(cat.id, 2)).map((p) => p.type)).toEqual(['CLOCK_IN', 'CLOCK_OUT']);
       // The day with one time waits for HR like any other.
       expect(await punchesOf(cat.id, 3)).toEqual([]);
@@ -576,9 +578,7 @@ describe('Fingerprint scanner import (e2e)', () => {
         const taken = await api.patch(`/employees/${cat.id}`, hr, { scannerId: B });
         expect(taken.status).toBe(409);
         expect(taken.body.code).toBe('DUPLICATE_SCANNER_ID');
-        expect((await prisma.employee.findUniqueOrThrow({ where: { id: cat.id } })).scannerId).toBe(
-          '0091',
-        );
+        expect(await numberInUse(prisma, cat.id)).toBe('0091');
 
         const cleared = await api.patch(`/employees/${cat.id}`, hr, { scannerId: null });
         expect(cleared.status).toBe(200);
@@ -707,7 +707,7 @@ describe('Fingerprint scanner import (e2e)', () => {
     beforeAll(async () => {
       const payroll = await api.token('payroll@cwork.example');
       const ceo = await api.token('ceo@cwork.example');
-      await prisma.employee.update({ where: { id: cat.id }, data: { scannerId: PAID_NUMBER } });
+      await giveNumber(prisma, cat.id, PAID_NUMBER);
 
       // Day 4 is counted (two times); day 27 waits (one time) and has no record.
       const imported = await api.upload(
