@@ -60,6 +60,9 @@ this file only says where the PO room stands.
   changed: the owner decides, and the #36 reviewer should confirm the law
   allows deducting only at month end. Dev asked for unit tests of the
   8,556 example.
+- CW-100 (#124, sent to Dev): HR skips social security in a leaver's month;
+  Cwork does not, and will warn HR once the rule is confirmed from official
+  sources.
 - Still to ask HR: whether it rounds the 5% or the net pay (it says its figures
   have no satang), and the field order of the social security web form.
 - #36: a qualified reviewer for the payroll rules.

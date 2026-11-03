@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-099 the payroll register · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-099 the payroll register · CW-100 · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -491,6 +491,47 @@ rounds the 5% or the net (not yet asked).
 **Files** `backend/src/modules/payroll/domain/payroll-export.ts`,
 `backend/src/core/spreadsheet/xlsx.ts`
 
+
+### CW-100 · Someone left this month: tell HR their social security is still due
+`P1` · payroll · **S** · Pilot A · #124
+
+The pilot's HR told the owner (2026-11-03) that when someone leaves in the
+middle of a month, HR neither deducts nor files social security for that
+month. That may be against the rules: the contribution is worked on the wage
+actually paid in the month, and the employer reports the person as leaving.
+Neither point is verified yet.
+
+What Cwork does today, read from `payroll.service.ts`: a person whose
+`lastWorkingDate` falls in the period is still in the run, paid up to that
+day, and social security is worked on that wage by `computeSocialSecurity`
+(the floor and the rounding included). So the default already follows the
+rule as written. It does not skip silently. What is missing is a word to HR,
+whose habit is the opposite.
+
+**Scope**
+- First, from official sources only (the Social Security Act and the Social
+  Security Office's own pages or announcements, cited in the PR): is a
+  contribution due on the wage paid in the month a person leaves, and when and
+  how is the leaving reported? The same check covers the rounding (already
+  verified in CW-084; re-cite it). If the sources say something else, stop
+  and report to the PO before changing any rule.
+- If confirmed: a run warning, in the CW-069 `{ code, params }` form, on the
+  payslip of a person whose last working day is in the period. It says that
+  social security for this month is still deducted and filed, and when the
+  leaving has to be reported. Thai and English.
+- No setting to skip social security for a leaver.
+- In the customer guide (`docs/guide/`), one line: some HR teams skip the
+  leaving month; Cwork does not, and why. No company named.
+
+**Acceptance**
+- The sources are linked in the PR, and the conclusion is written in this
+  entry.
+- A test: a leaver on the 14th of a month gets the prorated wage, the social
+  security on it, and the warning; a person who stays gets no warning.
+
+**Files** `backend/src/modules/payroll/payroll.service.ts`,
+`backend/src/modules/payroll/domain/payroll-calculator.ts`,
+`web/src/lib/i18n/messages.*.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
