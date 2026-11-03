@@ -26,7 +26,7 @@ import {
   type Api,
   type TestContext,
 } from './utils/test-app';
-import { findFridayToMondayWindow, isoDate } from './utils/dates';
+import { calendarToday, findFridayToMondayWindow, isoDate } from './utils/dates';
 
 const EMPLOYEE = 'dev2@cwork.example';
 const MANAGER = 'eng.manager@cwork.example';
@@ -389,7 +389,7 @@ describe('Cwork API (e2e)', () => {
       const dates = new Set<string>(
         holidays.body.map((h: { date: string }) => h.date.slice(0, 10)),
       );
-      window = findFridayToMondayWindow(dates, new Date());
+      window = findFridayToMondayWindow(dates, calendarToday());
     });
 
     it('grants the employee an annual-leave balance', async () => {
