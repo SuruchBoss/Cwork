@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   DateInput,
   EmptyState,
   ErrorState,
@@ -167,6 +168,8 @@ function BindControl({
   const [from, setFrom] = useState(item.firstDay);
   const [to, setTo] = useState(item.lastDay);
   const [problem, setProblem] = useState<string | null>(null);
+  // Registering a number counts waiting days for the person: said first, as ending one is.
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setTerm(search.trim()), 250);
@@ -215,6 +218,8 @@ function BindControl({
   });
 
   const people = matches.data?.data ?? [];
+  const chosen = people.find((person) => person.id === employeeId);
+  const chosenName = chosen ? `${chosen.firstNameTh} ${chosen.lastNameTh}` : '';
 
   return (
     <div className="stack stack--sm">
@@ -309,11 +314,55 @@ function BindControl({
           variant="primary"
           disabled={!employeeId || !scope || (scope === 'THESE_DAYS' && preview.isError)}
           loading={bind.isPending}
-          onClick={() => bind.mutate()}
+          onClick={() => setConfirming(true)}
         >
           {t('Register this number')}
         </Button>
       </div>
+      {confirming && (
+        <ConfirmDialog
+          title={t('Register number {number} for {name}?', {
+            number: item.scannerNumber,
+            name: chosenName,
+          })}
+          confirmLabel={t('Register this number')}
+          cancelLabel={t('Cancel')}
+          busy={bind.isPending}
+          onConfirm={() => bind.mutate(undefined, { onSettled: () => setConfirming(false) })}
+          onCancel={() => setConfirming(false)}
+        >
+          <p>
+            {scope === 'THESE_DAYS'
+              ? t('{count} waiting days from {from} to {to} would be counted for this person.', {
+                  count: formatNumber(preview.data?.days ?? item.days),
+                  from: formatDate(preview.data?.from ?? from),
+                  to: formatDate(preview.data?.to ?? to),
+                })
+              : item.foreverFrom
+                ? t(
+                    'From {date}, until it is ended ({count} waiting days counted for this person)',
+                    {
+                      date: formatDate(item.foreverFrom),
+                      count: formatNumber(item.foreverDays ?? 0),
+                    },
+                  )
+                : t(
+                    'From the beginning, until it is ended ({count} waiting days counted for this person)',
+                    { count: formatNumber(item.foreverDays ?? item.days) },
+                  )}
+          </p>
+          {scope === 'THESE_DAYS' &&
+            preview.data &&
+            preview.data.daysAlsoScannedOnAnotherNumber > 0 && (
+              <p>
+                {t(
+                  'This person already has scans under another number on {count} of these days. Both numbers would count for the same day. Choose fewer days if this card was not theirs on all of them.',
+                  { count: formatNumber(preview.data.daysAlsoScannedOnAnotherNumber) },
+                )}
+              </p>
+            )}
+        </ConfirmDialog>
+      )}
       {rangeKnown && preview.data && (
         <p className="muted" role="status" style={{ margin: 0 }}>
           {t('{count} waiting days from {from} to {to} would be counted for this person.', {

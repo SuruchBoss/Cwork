@@ -297,3 +297,13 @@ export function statusTone(status: string): BadgeTone {
       return 'brand';
   }
 }
+
+/** The kinds of employment, as the create form and the employee page both say them. */
+export const employmentTypeLabels: Record<string, string> = {
+  FULL_TIME: 'Full-time',
+  PART_TIME: 'Part-time',
+  CONTRACT: 'Contract',
+  INTERN: 'Intern',
+  OUTSOURCE: 'Outsourced',
+  DAILY: 'Daily-paid',
+};

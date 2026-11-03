@@ -10,6 +10,7 @@ import { Button, Card, DateInput, Field, Input, PageHeader, Select } from '@/com
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { useT } from '@/lib/i18n/useT';
+import { employmentTypeLabels } from '@/lib/labels';
 import type { EmployeeDetail, EmployeeSummary, Page } from '@/types/api';
 import { buildBody, emptyForm } from './new-employee';
 import type { FieldProblem, NewEmployeeForm, Problems } from './new-employee';
@@ -209,7 +210,7 @@ export default function EmployeeCreatePage() {
               <Select {...field('employmentType')}>
                 {TYPES.map((value) => (
                   <option key={value} value={value}>
-                    {t(TYPE_LABEL[value])}
+                    {t(employmentTypeLabels[value] ?? value)}
                   </option>
                 ))}
               </Select>
@@ -412,12 +413,4 @@ const MARITAL_LABEL: Record<(typeof MARITAL)[number], string> = {
   DIVORCED: 'Divorced',
   WIDOWED: 'Widowed',
   UNDISCLOSED: 'Prefer not to say',
-};
-const TYPE_LABEL: Record<(typeof TYPES)[number], string> = {
-  FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
-  CONTRACT: 'Contract',
-  INTERN: 'Intern',
-  OUTSOURCE: 'Outsourced',
-  DAILY: 'Daily-paid',
 };

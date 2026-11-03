@@ -375,6 +375,9 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(screen.getByRole('button', { name: 'บันทึกเลขนี้' })).toBeDisabled();
     await userEvent.selectOptions(screen.getByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน'), 'ALWAYS');
     await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'บันทึกเลขนี้' }),
+    );
 
     expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
       scannerNumber: '77',
@@ -409,6 +412,9 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     expect(within(how).getByRole('option', { name: /เฉพาะวันเหล่านี้ \(.*ถึง.*\)/ })).toBeTruthy();
     await userEvent.selectOptions(how, 'THESE_DAYS');
     await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'บันทึกเลขนี้' }),
+    );
 
     expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
       scannerNumber: '77',
@@ -468,6 +474,9 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'บันทึกเลขนี้' }),
+    );
     expect(post).toHaveBeenCalledWith('/attendance/scanner/unmapped/bind', {
       scannerNumber: '999',
       employeeId: 'e9',
@@ -475,6 +484,42 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       from: '2026-10-01',
       to: '2026-10-11',
     });
+  });
+
+  it('asks first, saying how many days it counts, and registers nothing when the answer is no (CW-112)', async () => {
+    serve(
+      [],
+      [
+        {
+          scannerNumber: '77',
+          name: 'ชั่วคราว หนึ่ง',
+          days: 2,
+          daysWithTimes: 2,
+          firstDay: '2026-09-03',
+          lastDay: '2026-09-04',
+        },
+      ],
+      { days: 2 },
+    );
+    post.mockResolvedValue({ daysMatched: 2, punchesAdded: 4 });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText('ค้นหาพนักงานของเลข 77'), 'มานี');
+    await userEvent.selectOptions(await screen.findByLabelText('พนักงานของเลข 77'), 'e9');
+    await userEvent.selectOptions(
+      screen.getByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน'),
+      'THESE_DAYS',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'บันทึกเลขนี้' }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('บันทึกเลข 77 ให้ มานี มีตา?');
+    expect(dialog).toHaveTextContent('จะนับ 2 วันที่รออยู่');
+    expect(post).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'ยกเลิก' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(post).not.toHaveBeenCalled();
   });
 
   describe('how long a waiting number is theirs (CW-109)', () => {
@@ -549,6 +594,9 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
       await userEvent.selectOptions(await screen.findByLabelText(label.pick), 'e9');
       await userEvent.selectOptions(screen.getByLabelText(label.how), 'ALWAYS');
       await userEvent.click(screen.getByRole('button', { name: label.save }));
+      await userEvent.click(
+        within(await screen.findByRole('alertdialog')).getByRole('button', { name: label.save }),
+      );
     }
     const thai = {
       find: 'ค้นหาพนักงานของเลข 999',

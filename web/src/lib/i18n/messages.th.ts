@@ -1048,6 +1048,7 @@ export const thMessages: Record<string, string> = {
   'Employee for number {number}': 'พนักงานของเลข {number}',
   'Choose…': 'เลือก…',
   'Register this number': 'บันทึกเลขนี้',
+  'Register number {number} for {name}?': 'บันทึกเลข {number} ให้ {name}?',
   'End scanner number {number}?': 'สิ้นสุดเลขสแกน {number} ใช่ไหม',
   'The number counts to this employee through {date}.': 'เลขนี้นับให้พนักงานคนนี้ถึงวันที่ {date}',
   '{count} later days that no one has decided go back to no one, and are counted for whoever holds the number then.':
@@ -1405,8 +1406,13 @@ export const thMessages: Record<string, string> = {
     'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขเดิมยังเป็นของพนักงานคนนี้',
   'Type it as the scanner writes it: 007 is not 7. Days already imported under this number are counted for this employee.':
     'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขนี้จะนับให้พนักงานคนนี้',
-  'No scanner number. Days from the scanner wait until one is given.':
-    'ยังไม่มีเลขสแกนนิ้ว วันที่มาจากเครื่องสแกนจะรอจนกว่าจะมีเลข',
+  'No number in use right now': 'ตอนนี้ไม่มีเลขที่ใช้อยู่',
+  'Days from the scanner wait for an owner until one is given.':
+    'วันที่มาจากเครื่องสแกนจะรอเจ้าของจนกว่าจะมีเลขให้',
+  'Number {number} counts to this employee through {date}.':
+    'เลข {number} นับให้พนักงานคนนี้ถึงวันที่ {date}',
+  'No later day went back to no one.': 'ไม่มีวันหลังจากนั้นที่กลับเป็นไม่มีเจ้าของ',
+  '{count} later days went back to no one.': 'มี {count} วันหลังจากนั้นที่กลับเป็นไม่มีเจ้าของ',
   'Saved. Days already imported under this number now belong to this employee: those with two times are counted, the others wait for HR on the scanner days page.':
     'บันทึกแล้ว วันที่นำเข้าไว้แล้วภายใต้เลขนี้เป็นของพนักงานคนนี้แล้ว วันที่มีสองเวลานับให้เลย วันอื่นรอ HR ตัดสินในหน้าวันที่สแกนนิ้ว',
   'Saved. The days already counted for this employee stay as they are.':

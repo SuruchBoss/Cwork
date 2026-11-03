@@ -672,6 +672,12 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Registering a scanner number asks first, and ending one says what it did** (CW-112). "Register
+  this number" on the scanner days page asks a question that says how many waiting days it will
+  count for the person, and from which day to which; nothing is saved on "Cancel". After a number
+  is ended, the card says up to which day it counted and how many later days went back to no
+  one. An employee with no number in use reads as a plain state ("No number in use right now"),
+  and an employee's employment type is shown by its Thai label, not as `FULL_TIME`.
 - **Runs waiting for approval are easy to find** (CW-112). The runs table marks each run that
   waits for approval, and says so when it waits for someone else because the signed-in person
   prepared it. The dashboard card for runs waiting for your approval opens the run when there

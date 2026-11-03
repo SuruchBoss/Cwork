@@ -16,7 +16,7 @@ import {
 import { api } from '@/lib/api-client';
 import { formatDate, formatDateTime, formatNumber, yearsOfService } from '@/lib/format';
 import { useT } from '@/lib/i18n/useT';
-import { employeeStatusLabels, statusTone } from '@/lib/labels';
+import { employeeStatusLabels, employmentTypeLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { EmployeeDetail, LeaveBalance } from '@/types/api';
@@ -109,7 +109,14 @@ export default function EmployeeDetailPage() {
                 person.manager ? `${person.manager.firstNameTh} ${person.manager.lastNameTh}` : null
               }
             />
-            <DetailRow label={t('Employment type')} value={person.employmentType} />
+            <DetailRow
+              label={t('Employment type')}
+              value={
+                person.employmentType
+                  ? t(employmentTypeLabels[person.employmentType] ?? person.employmentType)
+                  : null
+              }
+            />
             <DetailRow
               label={t('Start date')}
               value={`${formatDate(person.hireDate)} (${yearsOfService(person.hireDate)})`}

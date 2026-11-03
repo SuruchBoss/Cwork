@@ -41,8 +41,10 @@ describe("An employee's scanner number on their page (CW-090)", () => {
     renderWithProviders(<ScannerNumberCard person={{ id: 'e1', scannerId: null }} canEdit />);
     const user = userEvent.setup();
 
+    // A plain state, not a warning (CW-112).
+    expect(screen.getByText('ตอนนี้ไม่มีเลขที่ใช้อยู่')).toBeInTheDocument();
     expect(
-      screen.getByText('ยังไม่มีเลขสแกนนิ้ว วันที่มาจากเครื่องสแกนจะรอจนกว่าจะมีเลข'),
+      screen.getByText('วันที่มาจากเครื่องสแกนจะรอเจ้าของจนกว่าจะมีเลขให้'),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'เพิ่ม' }));
     await user.type(screen.getByLabelText('เลขในเครื่องสแกน'), ' 007 ');
@@ -171,6 +173,20 @@ describe("An employee's scanner numbers over time (CW-109)", () => {
         endDate: '2026-10-31',
       }),
     );
+  });
+
+  it('says afterwards through which day the number counted and how many later days went back to no one (CW-112)', async () => {
+    get.mockResolvedValue(preview());
+    post.mockResolvedValue({ validTo: '2026-10-31', daysReleased: 3 });
+    const user = await askToEnd();
+
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(within(dialog).getByRole('button', { name: 'สิ้นสุดเลขนี้' }));
+
+    const notice = await screen.findByRole('status');
+    expect(notice).toHaveTextContent('เลข 012 นับให้พนักงานคนนี้ถึงวันที่ 31 ต.ค. 2569');
+    expect(notice).toHaveTextContent('มี 3 วันหลังจากนั้นที่กลับเป็นไม่มีเจ้าของ');
+    expect(screen.queryByText(/ยังเหมือนเดิม|stay as they are/)).toBeNull();
   });
 
   it('does not end the number when the question is answered no', async () => {
