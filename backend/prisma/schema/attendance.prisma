@@ -394,6 +394,8 @@ model ScannerDayDecision {
   timesAtDecision String[] @default([])
   note            String?
   decidedById     String?  @db.Uuid
+  /// Decided by the person the day belongs to, because no one else could.
+  ownDay          Boolean  @default(false)
   createdAt       DateTime @default(now())
 
   @@index([scannerDayId, createdAt])

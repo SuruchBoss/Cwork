@@ -664,6 +664,17 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Someone else decides your own attendance.** A scanner day that belongs to the person
+  deciding it is left to another holder of the attendance permission: the buttons on that row
+  are closed with the reason, and the API answers in Thai. Where nobody else holds the
+  permission, the person may decide it; the decision is marked, the payslip of the run that
+  pays the day lists it under the things to check, and the audit log says so. Recording leave
+  as approved for oneself was already refused and still is.
+- **Approving a run that pays the approver is written down.** The console says so in the
+  question it now asks before approving, and the audit log records that the run included the
+  approver's own payslip. It is not refused, because a small company may have no one else.
+- **Approving a run and recording its payment each ask one question first.** The payment one
+  says it cannot be undone and tells a parallel run not to press it.
 - **Sign-in answers the same for every address.** A refused sign-in is worded and timed
   the same whether or not the address has an account, and asks the caller to wait after
   the same number of tries. A refused sign-in is also answered no sooner than a fixed
@@ -879,6 +890,18 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **A lone evening scan is offered as a clock-out.** On the page where HR settles days the
+  scanner could not, a day with one scan at 17:32 was pre-filled as a clock-in at half past
+  five. A lone scan before noon is still offered as the clock-in, one from 15:00 as the
+  clock-out, and one in between is left for HR to place; several scans offer the first and
+  the last, as before.
+- **The dashboard shows payroll the way an approver needs it.** A person who approves payroll
+  sees how many runs wait for them (a run they prepared waits on someone else and says so),
+  and the latest-run card shows the latest run that has figures instead of a draft at ฿0.00.
+- **A period that has a run opens it.** The pay-periods table offers "open" instead of
+  "create run" for a period with a regular run, and the refusals for a second run and for a
+  closed period, and the two leave refusals for too little notice or too little service,
+  are now worded in Thai.
 - **The compare page names its picker as the month** (CW-108). The box that chooses
   what to compare was headed "งวด" although the page reads the whole calendar month; it
   now reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (in English, "Month (any period of the month

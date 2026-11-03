@@ -22,6 +22,7 @@ import request from 'supertest';
 import { AppModule } from 'src/app.module';
 import { DEMO_MFA_SECRET } from 'src/modules/demo/seed/demo-company';
 import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { APP_CONFIG } from 'src/core/config/config.token';
 import type { RootConfig } from 'src/core/config/configuration';
 import { MetricsService } from 'src/core/telemetry/metrics.service';
@@ -224,6 +225,18 @@ export async function waitForNextStep(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 30_000 - msIntoStep + 500));
 }
 
+/**
+ * The app's scheduled jobs are registered but never left running under a spec.
+ * A spec runs for minutes at any hour, and a job that fires inside it (the
+ * attendance close-out at 01:00 in Bangkok, 18:00 UTC) changes the data the
+ * spec is reading: it marked a working day absent in the middle of a payroll
+ * test and cost the employee a day's pay. A spec that wants a job calls its
+ * method directly, as the job-locking spec does.
+ */
+export function stopNightlyJobs(app: INestApplication): void {
+  for (const job of app.get(SchedulerRegistry).getCronJobs().values()) job.stop();
+}
+
 export interface TestContext {
   app: INestApplication;
   api: Api;
@@ -300,6 +313,7 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
     );
 
     await app.init();
+    stopNightlyJobs(app);
   } catch (error) {
     // An app that refuses to start (the demo's guard does, on purpose) must
     // not leave its environment behind for the next spec.

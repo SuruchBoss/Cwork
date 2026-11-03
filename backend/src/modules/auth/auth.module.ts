@@ -7,6 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { CryptoService } from '../../core/security/crypto.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { DutySeparationService } from './duty-separation.service';
 import { JwtStrategy } from './jwt.strategy';
 import { MfaService } from './mfa.service';
 import { PACING_CLOCK, RefusalPacer, systemClock } from './refusal-pacer';
@@ -26,8 +27,16 @@ import { UserContextService } from './user-context.service';
     UserContextService,
     CryptoService,
     RefusalPacer,
+    DutySeparationService,
     { provide: PACING_CLOCK, useValue: systemClock },
   ],
-  exports: [AuthService, MfaService, UserContextService, CryptoService, JwtModule],
+  exports: [
+    AuthService,
+    MfaService,
+    UserContextService,
+    CryptoService,
+    DutySeparationService,
+    JwtModule,
+  ],
 })
 export class AuthModule {}

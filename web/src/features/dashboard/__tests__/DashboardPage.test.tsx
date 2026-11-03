@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/lib/api-client';
@@ -73,5 +73,100 @@ describe('DashboardPage for HR', () => {
     expect(await screen.findByText('Leave requests waiting for a manager')).toBeInTheDocument();
     expect(screen.getByText('The whole organisation, not your task')).toBeInTheDocument();
     expect(await screen.findByText('Nothing is waiting for your approval')).toBeInTheDocument();
+  });
+});
+
+describe('DashboardPage payroll cards for an owner who approves payroll', () => {
+  const run = (over: Record<string, unknown>) => ({
+    id: 'r',
+    runNo: 'RUN-1',
+    type: 'REGULAR',
+    status: 'DRAFT',
+    employeeCount: 0,
+    totalGross: '0',
+    totalDeduction: '0',
+    totalNet: '0',
+    totalEmployerCost: '0',
+    currency: 'THB',
+    createdById: 'someone-else',
+    calculatedById: null,
+    period: { code: '2026-10', year: 2026, month: 10, payDate: '2026-10-31' },
+    ...over,
+  });
+
+  function asOwner() {
+    useAuthStore.setState({
+      user: {
+        id: 'owner',
+        email: 'owner@example.com',
+        displayName: 'เจ้าของ',
+        roles: ['SUPER_ADMIN'],
+        permissions: [P.PAYROLL_READ, P.PAYROLL_APPROVE],
+      },
+    } as never);
+  }
+
+  function serve(runs: unknown[]) {
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path === '/payroll/runs' ? runs : [],
+    );
+  }
+
+  beforeEach(() => {
+    useUiStore.setState({ language: 'th' });
+    asOwner();
+  });
+
+  it('counts a calculated run that someone else prepared as waiting for the owner', async () => {
+    serve([run({ id: 'r1', status: 'CALCULATED', totalNet: '1000', calculatedById: 'hr' })]);
+    render();
+
+    const card = (await screen.findByText('รอบเงินเดือนที่รอคุณอนุมัติ')).closest('a');
+    await waitFor(() => {
+      expect(card).toHaveTextContent('1');
+      expect(card).toHaveTextContent('แตะเพื่อเปิดรอบนี้');
+      expect(card).toHaveAttribute('href', '/payroll/runs/r1');
+    });
+  });
+
+  it('does not count a run the owner prepared as waiting for the owner, and says why', async () => {
+    serve([run({ id: 'r2', status: 'CALCULATED', createdById: 'owner' })]);
+    render();
+
+    const card = (await screen.findByText('รอบเงินเดือนที่รอคุณอนุมัติ')).closest('a');
+    await waitFor(() => {
+      expect(card).toHaveTextContent('0');
+      expect(card).toHaveTextContent('คุณเป็นคนเตรียมรอบนี้ ต้องให้คนอื่นอนุมัติ');
+    });
+  });
+
+  it('shows the latest run that has figures, not a newer draft at zero', async () => {
+    serve([
+      run({ id: 'new', runNo: 'RUN-3', status: 'DRAFT' }),
+      run({
+        id: 'old',
+        runNo: 'RUN-2',
+        status: 'APPROVED',
+        totalNet: '25000',
+        period: { code: '2026-09', year: 2026, month: 9, payDate: '2026-09-30' },
+      }),
+    ]);
+    render();
+
+    const card = (await screen.findByText('รอบเงินเดือนล่าสุด')).closest('a');
+    await waitFor(() => {
+      expect(card).toHaveTextContent('25,000');
+      expect(card).not.toHaveTextContent('฿0.00');
+    });
+  });
+
+  it('says there is no calculated run yet when only a draft exists', async () => {
+    serve([run({ id: 'd', status: 'DRAFT' })]);
+    render();
+
+    const card = (await screen.findByText('รอบเงินเดือนล่าสุด')).closest('a');
+    await waitFor(() => {
+      expect(card).toHaveTextContent('ยังไม่มีรอบที่คำนวณแล้ว');
+    });
   });
 });

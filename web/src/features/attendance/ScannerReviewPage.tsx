@@ -25,6 +25,7 @@ import { plural } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/useT';
 import type { EmployeeSummary, Page } from '@/types/api';
 import { ScannerStatusBadge, UnmappedTable } from './ScannerParts';
+import { suggestTimes } from './suggest-times';
 import type {
   ScannerDay,
   ScannerDaysPage,
@@ -61,12 +62,10 @@ function DecisionControls({
   busy: boolean;
 }) {
   const t = useT();
-  const first = day.times[0] ?? '';
-  const last = day.times[day.times.length - 1] ?? '';
-  const [clockIn, setClockIn] = useState(day.decision?.clockIn ?? first);
-  const [clockOut, setClockOut] = useState(
-    day.decision ? (day.decision.clockOut ?? '') : day.times.length > 1 ? last : '',
-  );
+  const suggested = suggestTimes(day.times);
+  const decided = day.decision?.action === 'USE' ? day.decision : null;
+  const [clockIn, setClockIn] = useState(decided ? (decided.clockIn ?? '') : suggested.clockIn);
+  const [clockOut, setClockOut] = useState(decided ? (decided.clockOut ?? '') : suggested.clockOut);
 
   if (day.locked) {
     return <Badge tone="neutral">{t('Payroll has used this day')}</Badge>;
@@ -79,13 +78,18 @@ function DecisionControls({
       </option>
     ));
   const label = formatDate(day.workDate);
-  const valid = Boolean(clockIn || clockOut) && (!clockIn || !clockOut || clockOut > clockIn);
+  // Nobody decides their own day while someone else may; where no one else
+  // could, they may, and the page says it will be noted.
+  const leftToAnother = day.ownDay !== null && !day.ownDay.canDecide;
+  const valid =
+    !leftToAnother && Boolean(clockIn || clockOut) && (!clockIn || !clockOut || clockOut > clockIn);
 
   return (
     <div className="row" style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       <Select
         aria-label={t('Clock-in for {day}', { day: `${day.scannerNumber} ${label}` })}
         value={clockIn}
+        disabled={leftToAnother}
         onChange={(event) => setClockIn(event.target.value)}
       >
         <option value="">{t('No clock-in')}</option>
@@ -94,6 +98,7 @@ function DecisionControls({
       <Select
         aria-label={t('Clock-out for {day}', { day: `${day.scannerNumber} ${label}` })}
         value={clockOut}
+        disabled={leftToAnother}
         onChange={(event) => setClockOut(event.target.value)}
       >
         <option value="">{t('No clock-out')}</option>
@@ -114,9 +119,22 @@ function DecisionControls({
       >
         {t('Use these times')}
       </Button>
-      <Button size="sm" disabled={busy} onClick={() => onDecide({ action: 'IGNORE' })}>
+      <Button
+        size="sm"
+        disabled={busy || leftToAnother}
+        onClick={() => onDecide({ action: 'IGNORE' })}
+      >
         {t('Do not count this day')}
       </Button>
+      {day.ownDay && (
+        <span className="subtle" role="note" style={{ flexBasis: '100%' }}>
+          {leftToAnother
+            ? t('This is your own day. Someone else who manages attendance has to decide it.')
+            : t(
+                'This is your own day and no one else can decide it. Your decision will be noted on the payroll run and in the audit log.',
+              )}
+        </span>
+      )}
     </div>
   );
 }

@@ -747,7 +747,7 @@ export class LeaveService implements OnModuleInit {
     if (serviceDays < leaveType.minServiceDays) {
       throw new BusinessRuleError(
         'INSUFFICIENT_SERVICE',
-        `${leaveType.name} requires ${leaveType.minServiceDays} days of service`,
+        `${leaveType.name} ต้องทำงานมาแล้วอย่างน้อย ${leaveType.minServiceDays} วัน`,
         { serviceDays, requiredDays: leaveType.minServiceDays },
       );
     }
@@ -837,7 +837,7 @@ export class LeaveService implements OnModuleInit {
     if (checkNotice && noticeDays < leaveType.minNoticeDays) {
       throw new BusinessRuleError(
         ErrorCode.LEAVE_NOTICE_TOO_SHORT,
-        `${leaveType.name} requires ${leaveType.minNoticeDays} days of notice`,
+        `${leaveType.name} ต้องแจ้งล่วงหน้าอย่างน้อย ${leaveType.minNoticeDays} วัน`,
         { noticeDays, requiredDays: leaveType.minNoticeDays },
       );
     }

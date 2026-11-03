@@ -1,7 +1,7 @@
 // Copyright 2026 Suruch Chakrapeesirisuk
 // SPDX-License-Identifier: Apache-2.0
 
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -168,10 +168,158 @@ describe('The refusal to approve one’s own run (CW-103)', () => {
     render();
 
     await userEvent.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'อนุมัติรอบ' }),
+    );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'รอบเงินเดือนต้องอนุมัติโดยคนอื่นที่ไม่ใช่คนเตรียมรอบ',
     );
+  });
+});
+
+describe('One question before approving or paying a run', () => {
+  const calculated = {
+    ...secondHalf,
+    status: 'CALCULATED',
+    calculatedAt: '2026-11-30T03:00:00.000Z',
+    employeeCount: 1,
+    payslips: [slip],
+    firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+  };
+  const approvedRun = { ...calculated, status: 'APPROVED' };
+  const dialog = () => screen.findByRole('alertdialog');
+
+  it('asks before approving, and approves only on the yes', async () => {
+    serve(calculated);
+    post.mockResolvedValue({});
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+
+    const box = await dialog();
+    expect(
+      within(box).getByRole('heading', { name: 'อนุมัติรอบ PR-2026-11-H2-01 หรือไม่' }),
+    ).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+
+    await user.click(within(box).getByRole('button', { name: 'อนุมัติรอบ' }));
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/payroll/runs/run-h2/approve'));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+  });
+
+  it('opens on the safe answer, and the first answer closes it without doing anything', async () => {
+    serve(calculated);
+    const user = userEvent.setup();
+    render();
+    await user.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+    const box = await dialog();
+
+    expect(within(box).getByRole('button', { name: 'ยังไม่กด' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'อนุมัติรอบ' })).toHaveFocus();
+  });
+
+  it('keeps Tab inside the box while it is open', async () => {
+    serve(calculated);
+    const user = userEvent.setup();
+    render();
+    await user.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+    const box = await dialog();
+
+    await user.tab();
+    expect(within(box).getByRole('button', { name: 'อนุมัติรอบ' })).toHaveFocus();
+    await user.tab();
+
+    expect(within(box).getByRole('button', { name: 'ยังไม่กด' })).toHaveFocus();
+  });
+
+  it('warns the approver whose own payslip is in the run, and nobody else', async () => {
+    useAuthStore.setState({ user: { employeeId: 'e-1' } as never });
+    serve(calculated);
+    const user = userEvent.setup();
+    const { unmount } = render();
+    await user.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+
+    expect(within(await dialog()).getByRole('note')).toHaveTextContent(
+      'รอบนี้มีสลิปของคุณเองอยู่ด้วย อนุมัติได้ แต่จะถูกบันทึกไว้ในประวัติการตรวจสอบ',
+    );
+
+    unmount();
+    useAuthStore.setState({ user: { employeeId: 'someone-else' } as never });
+    render();
+    await user.click(await screen.findByRole('button', { name: 'อนุมัติรอบ' }));
+
+    expect(within(await dialog()).queryByRole('note')).not.toBeInTheDocument();
+  });
+
+  it('says paying cannot be undone, tells a parallel run not to, and pays only on the yes', async () => {
+    serve(approvedRun);
+    post.mockResolvedValue({});
+    const user = userEvent.setup();
+    render();
+
+    await user.click(await screen.findByRole('button', { name: 'บันทึกการจ่ายและเผยแพร่สลิป' }));
+
+    const box = await dialog();
+    expect(box).toHaveTextContent('ย้อนกลับไม่ได้');
+    expect(box).toHaveTextContent('ยกเลิกรอบนั้นไม่ได้แล้ว');
+    expect(within(box).getByRole('note')).toHaveTextContent('รันคู่ขนาน');
+    expect(within(box).getByRole('note')).toHaveTextContent('ไม่ต้องกด');
+    expect(post).not.toHaveBeenCalled();
+
+    await user.click(
+      within(box).getByRole('button', { name: 'ยืนยัน บันทึกการจ่ายและเผยแพร่สลิป' }),
+    );
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/payroll/runs/run-h2/pay'));
+  });
+
+  it('does not pay when the question is turned down', async () => {
+    serve(approvedRun);
+    const user = userEvent.setup();
+    render();
+    await user.click(await screen.findByRole('button', { name: 'บันทึกการจ่ายและเผยแพร่สลิป' }));
+
+    await user.click(within(await dialog()).getByRole('button', { name: 'ยังไม่กด' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('has nothing an accessibility check would flag while it is open', async () => {
+    serve(approvedRun);
+    const user = userEvent.setup();
+    const { container } = render();
+    await user.click(await screen.findByRole('button', { name: 'บันทึกการจ่ายและเผยแพร่สลิป' }));
+    await dialog();
+
+    await expectNoAxeViolations(container);
+  });
+
+  it('names a day the employee decided for themselves among the things to check', async () => {
+    serve({
+      ...calculated,
+      payslips: [
+        {
+          ...slip,
+          warnings: [{ code: 'OWN_SCANNER_DAY_DECIDED', params: { days: 1, dates: '2026-11-17' } }],
+        },
+      ],
+    });
+    render();
+
+    expect(
+      await screen.findByText(
+        'มี 1 วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้ ตรวจก่อนอนุมัติ: 17 พ.ย. 2569',
+      ),
+    ).toBeInTheDocument();
   });
 });
 

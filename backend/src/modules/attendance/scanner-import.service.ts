@@ -18,10 +18,13 @@ import {
 } from '../../core/errors/domain.errors';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../core/security/current-user';
+import { Permission } from '../../core/security/permissions';
 import type { ImportProblem } from '../../core/spreadsheet/problems';
 import type { UploadedTable } from '../../core/spreadsheet/upload';
 import { formatDateOnly, toDateOnly, zonedInstant } from '../../core/utils/date.util';
 import { AuditService } from '../audit/audit.service';
+import { judgeOwnRecord } from '../auth/domain/duty-separation';
+import { DutySeparationService } from '../auth/duty-separation.service';
 import { OrganizationService } from '../organization/organization.service';
 import { AttendanceService } from './attendance.service';
 import {
@@ -124,6 +127,11 @@ export interface ScannerDayView {
   punchesCounted: number;
   /** A payroll run has used this employee's day, so it cannot change. */
   locked: boolean;
+  /**
+   * Set when the day belongs to the person asking. `canDecide` is false while
+   * someone else may decide it, and true when nobody else could.
+   */
+  ownDay: { canDecide: boolean } | null;
 }
 
 export interface ScannerDaysPage {
@@ -215,6 +223,7 @@ export class ScannerImportService {
     private readonly audit: AuditService,
     private readonly attendance: AttendanceService,
     private readonly organization: OrganizationService,
+    private readonly duty: DutySeparationService,
   ) {}
 
   // ------------------------------------------------------------------ import
@@ -461,7 +470,11 @@ export class ScannerImportService {
       from,
       to,
     );
-    const views = rows.map((row) => this.view(row, locked));
+    const own = await this.ownContext(
+      user,
+      rows.map((r) => r.employeeId),
+    );
+    const views = rows.map((row) => this.view(row, locked, own));
 
     // A locked day is not work for HR: no decision can change it. It is counted
     // under locked, not waiting, and listed under the LOCKED filter (#95).
@@ -518,8 +531,9 @@ export class ScannerImportService {
     });
     const current =
       decisions[0] && sameTimes(decisions[0].timesAtDecision, row.times) ? decisions[0].id : null;
+    const own = await this.ownContext(user, [row.employeeId]);
     return {
-      ...this.view(row, locked),
+      ...this.view(row, locked, own),
       history: decisions.map((d) => ({
         id: d.id,
         action: d.action,
@@ -543,6 +557,17 @@ export class ScannerImportService {
       throw new BusinessRuleError(
         'SCANNER_NUMBER_NOT_REGISTERED',
         'This scanner number belongs to no employee yet; register it first',
+      );
+    }
+    const ownVerdict = await this.ownVerdict(
+      user,
+      row.employeeId,
+      row.employee?.departmentId ?? null,
+    );
+    if (ownVerdict === 'LEAVE_TO_ANOTHER') {
+      throw new BusinessRuleError(
+        'OWN_SCANNER_DAY_NEEDS_ANOTHER',
+        'วันสแกนนี้เป็นของคุณเอง ต้องให้ผู้มีสิทธิ์จัดการเวลาทำงานคนอื่นเป็นผู้ตัดสิน',
       );
     }
     if (row.times.length === 0) {
@@ -583,6 +608,7 @@ export class ScannerImportService {
         timesAtDecision: row.times,
         note: dto.note ?? null,
         decidedById: user.userId,
+        ownDay: ownVerdict === 'ALLOWED_AS_ONLY_HOLDER',
       },
     });
 
@@ -596,8 +622,11 @@ export class ScannerImportService {
       action: AuditAction.UPDATE,
       entityType: 'ScannerDay',
       entityId: row.id,
-      summary: `Decided scanner number ${row.scannerNumber} on ${day}: ${dto.action}`,
+      summary:
+        `Decided scanner number ${row.scannerNumber} on ${day}: ${dto.action}` +
+        (ownVerdict === 'ALLOWED_AS_ONLY_HOLDER' ? ' (own day, no one else may decide)' : ''),
       changes: {
+        ownDay: ownVerdict === 'ALLOWED_AS_ONLY_HOLDER',
         scannerNumber: row.scannerNumber,
         workDate: day,
         action: dto.action,
@@ -744,6 +773,43 @@ export class ScannerImportService {
     return parseScannerExport(decoded.text);
   }
 
+  /**
+   * Whether the day about to be decided is the decider's own, and if so whether
+   * anyone else could decide it instead (nobody decides their own day while
+   * someone else may).
+   */
+  private async ownVerdict(
+    user: AuthenticatedUser,
+    subjectEmployeeId: string | null,
+    departmentId: string | null,
+  ) {
+    if (subjectEmployeeId === null || subjectEmployeeId !== user.employeeId) return 'NOT_OWN';
+    return judgeOwnRecord({
+      subjectEmployeeId,
+      actorEmployeeId: user.employeeId,
+      anotherHolderExists: await this.duty.anotherHolderExists(
+        user.organizationId,
+        Permission.ATTENDANCE_MANAGE,
+        user.userId,
+        departmentId,
+      ),
+    });
+  }
+
+  /** What the review page needs to know about the asker's own days, worked out once. */
+  private async ownContext(
+    user: AuthenticatedUser,
+    employeeIds: Array<string | null>,
+  ): Promise<{ employeeId: string; canDecide: boolean } | null> {
+    if (!user.employeeId || !employeeIds.includes(user.employeeId)) return null;
+    const own = await this.prisma.employee.findFirst({
+      where: { id: user.employeeId, organizationId: user.organizationId },
+      select: { departmentId: true },
+    });
+    const verdict = await this.ownVerdict(user, user.employeeId, own?.departmentId ?? null);
+    return { employeeId: user.employeeId, canDecide: verdict !== 'LEAVE_TO_ANOTHER' };
+  }
+
   private async visibleDay(user: AuthenticatedUser, dayId: string) {
     const scoped = user.scopedDepartmentIds;
     const row = await this.prisma.scannerDay.findFirst({
@@ -754,7 +820,15 @@ export class ScannerImportService {
       },
       include: {
         ...dayInclude,
-        employee: { select: { id: true, employeeCode: true, firstNameTh: true, lastNameTh: true } },
+        employee: {
+          select: {
+            id: true,
+            employeeCode: true,
+            firstNameTh: true,
+            lastNameTh: true,
+            departmentId: true,
+          },
+        },
       },
     });
     if (!row) throw new NotFoundError('ScannerDay', dayId);
@@ -792,6 +866,7 @@ export class ScannerImportService {
       } | null;
     },
     locked: LockedDays,
+    own: { employeeId: string; canDecide: boolean } | null,
   ): ScannerDayView {
     const decision = inForce(row, row.times);
     const verdict = classifyDay({ times: row.times, mapped: row.employeeId !== null, decision });
@@ -825,6 +900,7 @@ export class ScannerImportService {
       decisionOutdated: Boolean(latest) && !decision,
       punchesCounted: row.punches.filter((p) => p.supersededAt === null).length,
       locked: row.employeeId !== null && locked.has(`${row.employeeId}|${day}`),
+      ownDay: own && row.employeeId === own.employeeId ? { canDecide: own.canDecide } : null,
     };
   }
 

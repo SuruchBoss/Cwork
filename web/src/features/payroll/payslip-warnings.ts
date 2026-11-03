@@ -42,6 +42,11 @@ export function describeWarning(warning: PayslipWarning, t: Translate): string {
         days: Number(p.days ?? 0),
         dates: dates(),
       });
+    case 'OWN_SCANNER_DAY_DECIDED':
+      return t(
+        '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: check them before approving: {dates}',
+        { days: Number(p.days ?? 0), dates: dates() },
+      );
     case 'NO_ATTENDANCE_RECORD':
       return t('Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}', {
         days: Number(p.days ?? 0),

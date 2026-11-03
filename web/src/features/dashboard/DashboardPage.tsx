@@ -11,7 +11,15 @@ import { useT } from '@/lib/i18n/useT';
 import { approvalEntityLabels, leaveStatusLabels, statusTone } from '@/lib/labels';
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
-import type { ApprovalTask, LeaveRequest, Page, PayrollRun } from '@/types/api';
+import type { ApprovalTask, LeaveRequest, Page, PayrollRun, PayrollRunStatus } from '@/types/api';
+
+const RUNS_WAITING: PayrollRunStatus[] = ['CALCULATED', 'PENDING_APPROVAL'];
+const RUNS_WITH_FIGURES: PayrollRunStatus[] = [
+  'CALCULATED',
+  'PENDING_APPROVAL',
+  'APPROVED',
+  'PAID',
+];
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -21,6 +29,7 @@ export default function DashboardPage() {
   const canSeePeople = canAny(P.EMPLOYEE_READ, P.EMPLOYEE_READ_TEAM);
   const canSeeLeave = canAny(P.LEAVE_READ, P.LEAVE_READ_TEAM);
   const canSeePayroll = canAny(P.PAYROLL_READ);
+  const canApprovePayroll = canAny(P.PAYROLL_APPROVE);
   // Someone who sees none of the HR lists is an employee: their day-to-day is
   // in the phone app, so the console points them at it instead of looking empty.
   const employeeOnly = !canSeePeople && !canSeeLeave && !canSeePayroll;
@@ -33,7 +42,9 @@ export default function DashboardPage() {
   const headcount = useQuery({
     queryKey: qk.employees({ scope: 'dashboard' }),
     queryFn: () =>
-      api.get<Page<unknown>>('/employees', { query: { limit: 1, status: ['ACTIVE', 'PROBATION'] } }),
+      api.get<Page<unknown>>('/employees', {
+        query: { limit: 1, status: ['ACTIVE', 'PROBATION'] },
+      }),
     enabled: canSeePeople,
   });
 
@@ -50,7 +61,17 @@ export default function DashboardPage() {
     enabled: canSeePayroll,
   });
 
-  const run = latestRun.data?.[0];
+  // The latest run worth showing is one that has figures: a draft, or a run
+  // that failed or was cancelled, shows ฿0.00 and tells the reader nothing.
+  const run = latestRun.data?.find((candidate) => RUNS_WITH_FIGURES.includes(candidate.status));
+  // Runs that wait for an approver. Whoever prepared a run cannot approve it,
+  // so those are counted apart: they wait on someone else.
+  const waiting = (latestRun.data ?? []).filter((candidate) =>
+    RUNS_WAITING.includes(candidate.status),
+  );
+  const waitingForMe = waiting.filter(
+    (candidate) => candidate.createdById !== user?.id && candidate.calculatedById !== user?.id,
+  );
 
   return (
     <div className="page">
@@ -82,11 +103,25 @@ export default function DashboardPage() {
             to="/leave"
           />
         )}
+        {canSeePayroll && canApprovePayroll && (
+          <Stat
+            label={t('Payroll runs waiting for your approval')}
+            value={latestRun.data ? waitingForMe.length : '—'}
+            hint={
+              waitingForMe.length > 0
+                ? t('Tap to open the run')
+                : waiting.length > 0
+                  ? t('Prepared by you, so someone else approves')
+                  : t('Nothing pending')
+            }
+            to={waitingForMe.length === 1 ? `/payroll/runs/${waitingForMe[0].id}` : '/payroll'}
+          />
+        )}
         {canSeePayroll && (
           <Stat
             label={t('Latest payroll run')}
             value={run ? (run.period ? formatPeriod(run.period.code) : run.runNo) : '—'}
-            hint={run ? formatMoney(run.totalNet, run.currency) : t('No runs yet')}
+            hint={run ? formatMoney(run.totalNet, run.currency) : t('No calculated run yet')}
             to="/payroll"
           />
         )}
@@ -140,10 +175,7 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <EmptyState
-              icon="check"
-              title={t('Nothing is waiting for your approval')}
-            />
+            <EmptyState icon="check" title={t('Nothing is waiting for your approval')} />
           )}
         </Card>
 
@@ -170,7 +202,10 @@ export default function DashboardPage() {
                           />
                         </td>
                         <td>
-                          <span className="row" style={{ gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+                          <span
+                            className="row"
+                            style={{ gap: 6, flexWrap: 'nowrap', whiteSpace: 'nowrap' }}
+                          >
                             <span
                               className="dot"
                               style={{ background: request.leaveType.colorHex }}

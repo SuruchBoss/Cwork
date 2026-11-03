@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   EmptyState,
   ErrorState,
   Field,
@@ -289,7 +290,10 @@ export default function PayrollRunPage() {
   const { id = '' } = useParams();
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
+  const myEmployeeId = useAuthStore((s) => s.user?.employeeId ?? null);
   const t = useT();
+  /** The step waiting for a yes: both are taken once and are seen by other people. */
+  const [confirming, setConfirming] = useState<'approve' | 'pay' | null>(null);
 
   const run = useQuery({
     queryKey: qk.payrollRun(id),
@@ -340,8 +344,57 @@ export default function PayrollRunPage() {
     data.firstHalf?.status !== 'APPROVED' &&
     data.firstHalf?.status !== 'PAID';
 
+  const includesMe =
+    myEmployeeId !== null && data.payslips.some((slip) => slip.employee?.id === myEmployeeId);
+  const answer = (action: 'approve' | 'pay') =>
+    act.mutate(action, { onSettled: () => setConfirming(null) });
+
   return (
     <div className="page">
+      {confirming === 'approve' && (
+        <ConfirmDialog
+          title={t('Approve run {no}?', { no: data.runNo })}
+          confirmLabel={t('Approve run')}
+          cancelLabel={t('Not yet')}
+          busy={act.isPending}
+          onConfirm={() => answer('approve')}
+          onCancel={() => setConfirming(null)}
+        >
+          <p>
+            {t(
+              'Approving fixes the figures of this run. It can no longer be calculated again, and the expense claims it pays are held for it.',
+            )}
+          </p>
+          {includesMe && (
+            <div className="alert alert--warning" role="note">
+              {t(
+                'This run includes your own payslip. You may approve it, but it will be noted in the audit log. Check your own payslip with extra care.',
+              )}
+            </div>
+          )}
+        </ConfirmDialog>
+      )}
+      {confirming === 'pay' && (
+        <ConfirmDialog
+          title={t('Record payment and publish payslips?')}
+          confirmLabel={t('Yes, record payment and publish payslips')}
+          cancelLabel={t('Not yet')}
+          busy={act.isPending}
+          onConfirm={() => answer('pay')}
+          onCancel={() => setConfirming(null)}
+        >
+          <p>
+            {t(
+              'This tells Cwork the money has really been paid. The payslips are published, employees with an account are notified, the scanner days of this period can no longer be changed and the run can no longer be cancelled. This cannot be undone.',
+            )}
+          </p>
+          <div className="alert alert--warning" role="note">
+            {t(
+              'If you are still paying the old way beside Cwork (a parallel run), do not do this. Stop here and print the payslips instead.',
+            )}
+          </div>
+        </ConfirmDialog>
+      )}
       <PageHeader
         title={t('Run {no}', { no: data.runNo })}
         description={t('Period {code} · pay date {date}', {
@@ -368,7 +421,7 @@ export default function PayrollRunPage() {
               <Button
                 variant="primary"
                 loading={act.isPending && act.variables === 'approve'}
-                onClick={() => act.mutate('approve')}
+                onClick={() => setConfirming('approve')}
               >
                 {t('Approve run')}
               </Button>
@@ -377,7 +430,7 @@ export default function PayrollRunPage() {
               <Button
                 variant="primary"
                 loading={act.isPending && act.variables === 'pay'}
-                onClick={() => act.mutate('pay')}
+                onClick={() => setConfirming('pay')}
               >
                 {t('Record payment and publish payslips')}
               </Button>

@@ -6,26 +6,36 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #145 (CW-101 to CW-107, the performance measurement, the
+- On `main`: everything up to #147 (CW-101 to CW-108, the performance measurement, the
   dependency updates, the access-check work, the sign-in and session changes, the response
   cache header and the installer's secret handling), and the UX room's guide (#138).
-- **On branch `claude/new-session-syszvt` (the PO opens the PR):**
-  1. CW-108 (#146): the compare page's picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" (Thai and
-     English), the register's row number and days worked are aligned right, and the two HR
-     guides name the box the same way (the pictures are not retaken);
-  2. a refused sign-in is answered no sooner than `AUTH_REFUSED_SIGN_IN_MIN_MS` (default 150)
-     after the request began (`RefusalPacer`, the clock is injected in tests);
-  3. the no-store header is set by middleware for every route under the API prefix, refusals
-     and unknown routes included;
-  4. the web console shows a note on the sign-in page when a session has ended, the mobile
-     app's note names the same reasons (the Flutter side is untested here), and the
-     password-change endpoint says it ends every session.
-- Counts: web 337; backend unit 875, domain 544; e2e 550.
+- **On branch `claude/new-session-syszvt` (the PO opens the PR):** the round of fixes after the
+  blind test of 09fc821 that is public in wording:
+  1. a scanner day that belongs to the person deciding it is left to another holder of the
+     attendance permission (API answer in Thai, buttons closed on that row); where nobody else
+     holds it the person may decide, and the decision is marked, listed on the payslip and
+     audited;
+  2. approving a run that includes the approver's own payslip asks first and is audit-logged;
+  3. approving a run and recording its payment each ask one question first (a shared
+     `ConfirmDialog`); the payment one says it cannot be undone.
+  Recording leave as approved for oneself was already refused (`CANNOT_RECORD_OWN_LEAVE`).
+  4. the e2e leave test takes today from the organization's calendar (Asia/Bangkok), not UTC;
+     it failed between midnight and seven in the morning there (`test/utils/dates.ts`);
+  5. the app under an e2e spec no longer leaves its cron jobs running: the attendance close-out
+     (01:00 Bangkok, 18:00 UTC) fired inside the payroll test once a day and cost a day's pay;
+  6. CW-110 (#149): a lone evening scan is offered as a clock-out (`suggest-times.ts`), the
+     dashboard lists runs waiting for an approver and shows the latest run with figures, a
+     period with a run offers "open", and the two period refusals are in Thai.
+- One small wording nit, not urgent: the installer's source line reads "database password:
+  from made new by this installer"; smooth it the next time the installer is touched.
+- Counts: web 362; backend unit 881, domain 548; e2e 564.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
 
-1. Wait for the PO's review of the branch above.
+1. Wait for the PO's review of the branch above, then CW-110 (public bugs, wording as in its
+   issue), then CW-109 (a scanner number bound for a period; the PO's decisions are in the
+   backlog).
 2. CW-101 asks the PO for one decision from the owner: issue #36, which month a 14-day period that
    spans two months counts toward. `monthCountedFor` in `domain/pay-period.ts` is the only place to
    change, and the one e2e case that pins the month of the spanning period

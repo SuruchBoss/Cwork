@@ -4,7 +4,7 @@
 import clsx from 'clsx';
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type {
-  ButtonHTMLAttributes,
+  ComponentPropsWithRef,
   InputHTMLAttributes,
   ReactElement,
   ReactNode,
@@ -25,7 +25,8 @@ export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: R
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// With a ref: the dialog focuses its safe button when it opens.
+interface ButtonProps extends ComponentPropsWithRef<'button'> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md';
   loading?: boolean;
@@ -186,7 +187,13 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...props} className={clsx('textarea', props.className)} />;
 }
 
-export function Avatar({ name, size = 'md' }: { name: string | null | undefined; size?: 'md' | 'lg' }) {
+export function Avatar({
+  name,
+  size = 'md',
+}: {
+  name: string | null | undefined;
+  size?: 'md' | 'lg';
+}) {
   const label = (name ?? '?').trim();
   const parts = label.split(/\s+/);
   const text =
@@ -198,13 +205,7 @@ export function Avatar({ name, size = 'md' }: { name: string | null | undefined;
   );
 }
 
-export function Person({
-  name,
-  meta,
-}: {
-  name: string;
-  meta?: ReactNode;
-}) {
+export function Person({ name, meta }: { name: string; meta?: ReactNode }) {
   return (
     <div className="person">
       <Avatar name={name} />
@@ -319,5 +320,6 @@ export function PageHeader({
   );
 }
 
+export { ConfirmDialog } from './ConfirmDialog';
 export { DateInput } from './DateInput';
 export type { DateInputProps } from './DateInput';

@@ -81,6 +81,10 @@ export const thMessages: Record<string, string> = {
   'The whole organisation, not your task': 'ทั้งองค์กร ไม่ใช่งานของคุณ',
   'Latest payroll run': 'รอบเงินเดือนล่าสุด',
   'No runs yet': 'ยังไม่มีรอบ',
+  'No calculated run yet': 'ยังไม่มีรอบที่คำนวณแล้ว',
+  'Payroll runs waiting for your approval': 'รอบเงินเดือนที่รอคุณอนุมัติ',
+  'Tap to open the run': 'แตะเพื่อเปิดรอบนี้',
+  'Prepared by you, so someone else approves': 'คุณเป็นคนเตรียมรอบนี้ ต้องให้คนอื่นอนุมัติ',
   'Pending approvals': 'รายการรออนุมัติ',
   'View all': 'ดูทั้งหมด',
   'Nothing is waiting for your approval': 'ไม่มีรายการรอคุณอนุมัติ',
@@ -421,6 +425,7 @@ export const thMessages: Record<string, string> = {
   Dates: 'ช่วงเวลา',
   Runs: 'รอบคำนวณ',
   'Create run': 'สร้างรอบคำนวณ',
+  'Open run': 'เปิดรอบ',
   'No pay periods yet': 'ยังไม่มีงวดเงินเดือน',
   'Create the first period to start running payroll': 'สร้างงวดแรกเพื่อเริ่มคำนวณเงินเดือน',
   'Payroll runs': 'รอบการคำนวณ',
@@ -436,6 +441,18 @@ export const thMessages: Record<string, string> = {
   'Period {code} · pay date {date}': 'งวด {code} · จ่ายวันที่ {date}',
   Back: 'กลับ',
   'Calculate payroll': 'คำนวณเงินเดือน',
+  'Approve run {no}?': 'อนุมัติรอบ {no} หรือไม่',
+  'Not yet': 'ยังไม่กด',
+  'Approving fixes the figures of this run. It can no longer be calculated again, and the expense claims it pays are held for it.':
+    'เมื่ออนุมัติ ตัวเลขของรอบนี้จะถูกล็อก คำนวณใหม่ไม่ได้อีก และใบเบิกที่รอบนี้จ่ายจะถูกกันไว้ให้รอบนี้',
+  'This run includes your own payslip. You may approve it, but it will be noted in the audit log. Check your own payslip with extra care.':
+    'รอบนี้มีสลิปของคุณเองอยู่ด้วย อนุมัติได้ แต่จะถูกบันทึกไว้ในประวัติการตรวจสอบ ตรวจสลิปของตัวเองให้ละเอียดเป็นพิเศษ',
+  'Record payment and publish payslips?': 'บันทึกการจ่ายและเผยแพร่สลิป?',
+  'Yes, record payment and publish payslips': 'ยืนยัน บันทึกการจ่ายและเผยแพร่สลิป',
+  'This tells Cwork the money has really been paid. The payslips are published, employees with an account are notified, the scanner days of this period can no longer be changed and the run can no longer be cancelled. This cannot be undone.':
+    'ปุ่มนี้คือการบอก Cwork ว่าจ่ายเงินจริงแล้ว สลิปจะถูกเผยแพร่ พนักงานที่มีบัญชีจะได้รับแจ้งเตือน วันสแกนของงวดนั้นจะแก้ไม่ได้อีก และยกเลิกรอบนั้นไม่ได้แล้ว ย้อนกลับไม่ได้',
+  'If you are still paying the old way beside Cwork (a parallel run), do not do this. Stop here and print the payslips instead.':
+    'ถ้ายังจ่ายแบบเดิมคู่กับ Cwork อยู่ (รันคู่ขนาน) ไม่ต้องกด ให้หยุดที่การพิมพ์สลิปแทน',
   'Approve run': 'อนุมัติรอบ',
   'Record payment and publish payslips': 'บันทึกการจ่ายและเผยแพร่สลิป',
   'Calculated {date}': 'คำนวณเมื่อ {date}',
@@ -1010,6 +1027,10 @@ export const thMessages: Record<string, string> = {
   '{count} days have no punch at all. Choose “No punch” under Show to see it.':
     'มี {count} วันที่ไม่มีการสแกนเลย ดูได้โดยเลือก “ไม่มีการสแกน” ในช่อง “แสดง”',
   'Use these times': 'ใช้เวลาเหล่านี้',
+  'This is your own day. Someone else who manages attendance has to decide it.':
+    'นี่เป็นวันสแกนของคุณเอง ต้องให้ผู้มีสิทธิ์จัดการเวลาทำงานคนอื่นเป็นผู้ตัดสิน',
+  'This is your own day and no one else can decide it. Your decision will be noted on the payroll run and in the audit log.':
+    'นี่เป็นวันสแกนของคุณเอง และไม่มีผู้อื่นที่ตัดสินแทนได้ การตัดสินของคุณจะถูกระบุไว้บนรอบเงินเดือนและบันทึกในประวัติการตรวจสอบ',
   'Do not count this day': 'ไม่นับวันนี้',
   'Number {number} registered: {days} days matched, {punches} punches added':
     'บันทึกเลข {number} แล้ว จับคู่ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
@@ -1393,6 +1414,8 @@ export const thMessages: Record<string, string> = {
     'มีค่าจ้างที่เริ่มวันนั้นอยู่แล้ว เลือกวันอื่น',
   'Pay is either a monthly salary or a daily wage paid twice a month.':
     'ค่าจ้างเป็นได้แบบเดียว คือเงินเดือนรายเดือน หรือค่าจ้างรายวันที่จ่ายเดือนละ 2 ครั้ง',
+  '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: check them before approving: {dates}':
+    'มี {days} วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้ ตรวจก่อนอนุมัติ: {dates}',
   'Counted {days} day(s) with an incomplete punch as worked: {dates}':
     'นับ {days} วันที่ลงเวลาไม่ครบเป็นวันทำงาน: {dates}',
   'Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}':
