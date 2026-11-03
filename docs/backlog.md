@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-099 the payroll register · CW-100 · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-099 the payroll register · CW-100 · CW-101 before paying real wages · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -534,6 +534,51 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
+
+### CW-101 · Daily wages paid every 14 days
+`P1` · payroll · **L** · Pilot A · after CW-099 · before Cwork pays real wages · #125
+
+The owner confirmed on 2026-11-03 that the pilot pays its daily staff every
+two weeks: 14-day pay periods whose cut-off moves through the calendar. Some
+months have three paydays, and some periods span two months. HR works social
+security once a month, on the month's total.
+
+Cwork cannot do this today. `PayrollPeriod` is keyed by year, month and half
+(MONTHLY or SEMI_MONTHLY, CW-069). `PayFrequency.BIWEEKLY` exists in the enum,
+but nothing uses it.
+
+**Decided by the owner (17:19, relayed by the Asuna Bot room):** the parallel
+run does not wait for this. Daily staff are set up on monthly periods, and
+Cwork is compared with HR at the month: register, social security, tax. This
+ticket comes after CW-099, and must be done before Cwork pays real wages.
+
+**Scope**
+- A 14-day period: anchored on a first start date, each next one 14 days on,
+  its own pay date. Monthly and half-monthly periods keep working unchanged.
+- Social security and withholding stay monthly figures, built from every
+  14-day period that counts toward the month. Which month a period that spans
+  two months counts toward is **not decided**: it waits on #36, answered from
+  the Social Security Act or the office's announcements. Build the rule as one
+  function, so the answer changes one place.
+- Whether the contribution may be taken once, at the month's last payday,
+  also waits on #36. Build nothing for it until the owner approves.
+- The monthly outputs (CW-099 register, the สปส.1-10 file, the accountant
+  export) add up the month's 14-day periods by the same rule.
+- Moving a daily worker from the parallel-run monthly setup to 14-day
+  periods, without losing the months already run.
+
+**Acceptance**
+- A year of 14-day periods from a synthetic start date: every day falls in
+  exactly one period; a month with three paydays and a period spanning two
+  months are both tested.
+- A month's social security from two or three periods equals one monthly run
+  on the same total (rounded once, CW-084).
+- The month's register and สปส.1-10 file equal the sum of its periods.
+
+**Files** `backend/prisma/schema/payroll.prisma`,
+`backend/src/modules/payroll/payroll.service.ts`,
+`backend/src/modules/payroll/domain/payroll-calculator.ts`,
+`backend/src/modules/payroll/sso-filing.service.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued

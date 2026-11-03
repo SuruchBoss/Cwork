@@ -7,8 +7,12 @@ this file only says where the PO room stands.
 ## Where things are (2026-11-03)
 
 - **Dev queue:** CW-099 (#123) the payroll register export, then the 8,556
-  social security tests, then CW-100 (#124) the leaver warning. Estimates:
-  CW-099 merged and QA-checked Thu 5 Nov, the rest Fri 6 Nov.
+  social security tests and CW-100 (#124) the leaver warning, then CW-101
+  (#125) 14-day pay periods. Estimates: CW-099 Thu 5 Nov, CW-100 Fri 6 Nov,
+  CW-101 one to two weeks after, before Cwork pays real wages.
+- **Owner's choice (17:19):** the parallel run puts daily staff on monthly
+  periods and compares at the month. Install from Mon 9 Nov; propose Wed or
+  Thu to HR (not Tue 10 Nov evening). The owner books it with HR himself.
 - **Pilot A, all ten HR answers in (2026-11-03).** HR keys social security on
   the web (no upload file, CW-085 updated). It sends the accounting firm a
   one-sheet payroll register, which CW-089 is not, hence CW-099. The firm sets
@@ -34,12 +38,10 @@ this file only says where the PO room stands.
 - `./check.sh` on the pilot's NAS: **approved 2026-11-03 17:18** in this room
   (read-only, run on-site). Still needed: a backup drive, a password store for
   the key, the HR file (filled on-site).
-- Daily wages are paid every 14 days, which Cwork cannot do yet (periods are
-  monthly or half-monthly). The PO proposes monthly periods for daily staff
-  during the parallel run (install 9 Nov), with a 14-day cycle built before
-  Cwork pays for real; or the cycle first (install around 20 Nov). Owner to
-  choose. Two law questions are on #36: which month a cross-month period counts
-  toward, and whether the contribution may be deducted once a month.
+- HR (asked by the owner): in a pay period spanning two months, which month
+  does the monthly register count the days toward? Needed before comparing.
+- #36: which month a cross-month period counts toward for social security,
+  and whether the contribution may be deducted once a month.
 - The landing cash-sheet picture and its alt text (public wording).
 - Still to ask HR: whether it rounds the net, and the field order of the
   social security web form.
