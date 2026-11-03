@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-111 · blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-111 · CW-115 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -484,6 +484,28 @@ approved, overpay. Found by the Dev room while tracing a CI failure on #150.
   gives the same day.
 - The comment on the job states when a day is closed.
 
+### CW-115 · Choose the days when binding a scanner number for a stretch
+`P1` · attendance · web · **S** · Pilot A · before the install
+
+"Only these days" on the scanner days page binds the whole waiting range of a
+number, first day to last, and a closed period cannot be changed afterwards
+from the employee page. A temporary card used by more than one person in the
+same file, by someone who already has a number of their own, needs the
+stretch to be chosen. Found by the UX room on an installed stack.
+
+**Scope**
+- "Only these days" lets HR choose the first and last day inside the waiting
+  range; the default stays the whole range.
+- A closed period of a number can be shortened (or ended earlier) from the
+  employee card, with the same preview, confirmation and payroll-run refusal
+  as ending the number in use.
+
+**Acceptance**
+- Tests: a sub-range binds only its days and leaves the rest waiting; a
+  closed period shortened gives its later days back; a day inside a
+  calculated run refuses the change.
+- The HR guide's temporary-card example covers it.
+
 ### CW-112 · Small things the re-check on the installed stack left
 `P1` · web · api · i18n · **S** · Pilot A · before the install if time allows
 
@@ -500,14 +522,39 @@ blind test. None blocks the install; each confuses a first-time HR user.
   `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE`, and the two-step
   sign-in's "That code is not right".
 - Previewing one's own leave warns as the submit does.
-- The parallel-run notice can be dismissed for the session instead of showing
-  on every visit.
 - The installer's wording "from made new by this installer" is corrected.
 - The pre-approval check box does not repeat its own heading in each line.
 - Ending a scanner number takes the same per-number lock as binding one, so two ends sent at once cannot both succeed.
+- After ending a number, the notice says up to which day it counted and how many later days went back to no one, instead of "the days already counted stay the same".
+- An employee with no number in use reads as a plain state, not a warning.
+- "Save this number" from the scanner days page asks first when it moves days, as ending one does.
+- "FULL_TIME" shows as the employment type's Thai label.
 
 **Acceptance**
 - A test for each item; the HR guide matches where it shows the screen.
+
+### CW-114 · A shift that crosses midnight
+`P1` · attendance · **M** · owner decides; Pilot A only if it has night shifts
+
+A punch or scan takes the calendar date of the moment it was made; a shift's
+`crossesMidnight` is used only for leaving early. Someone who clocks in at
+22:00 and out at 06:00 leaves day D incomplete: the 06:00 clock-out lands on
+D+1, where the app refuses it (no clock-in that day) and a lone morning scan
+is suggested as a clock-in (CW-110). HR fixes D by hand. Found by the Dev room
+while checking CW-111; it predates that change.
+
+**Open question for the owner:** does the pilot company run shifts that cross
+midnight? If not, this waits until after Pilot A.
+
+**Scope (if yes)**
+- A clock-out or scan in the morning counts toward the previous day's shift
+  when that shift crosses midnight and is still open.
+- The single-scan suggestion knows the person's shift before suggesting a
+  clock-in.
+
+**Acceptance**
+- Tests with a fixed clock for an app punch and for a scanner file: 22:00 in,
+  06:00 out gives one complete day D; a day shift is unchanged.
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
