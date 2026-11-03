@@ -246,6 +246,10 @@ describe('Fingerprint scanner import (e2e)', () => {
           daysWithTimes: 2,
           firstDay: iso(2),
           lastDay: iso(3),
+          // Nobody has had this number, so "from now on" starts at the beginning and counts both days.
+          foreverPossible: true,
+          foreverFrom: null,
+          foreverDays: 2,
         },
       ]);
     });

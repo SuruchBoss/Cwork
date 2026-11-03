@@ -241,14 +241,13 @@ export class ScannerBindingsService {
     return { changed: true, previous: null };
   }
 
-  /** Ends a number that is in use, on the day given: it counts through that day. */
-  async end(
-    user: { organizationId: string; userId: string },
-    bindingId: string,
-    endDate: string,
-  ): Promise<ScannerBindingView> {
+  /**
+   * The period to end, checked: it is in use, and the end is no earlier than the
+   * start. Used before anything is changed, so a refusal leaves everything as it was.
+   */
+  async endable(organizationId: string, bindingId: string, endDate: string) {
     const row = await this.prisma.employeeScannerNumber.findFirst({
-      where: { id: bindingId, organizationId: user.organizationId },
+      where: { id: bindingId, organizationId },
       include: { employee: { select: { employeeCode: true } } },
     });
     if (!row) throw new NotFoundError('ScannerNumber', bindingId);
@@ -265,7 +264,21 @@ export class ScannerBindingsService {
         to: endDate,
       });
     }
-    const updated = await this.prisma.employeeScannerNumber.update({
+    return row;
+  }
+
+  /**
+   * Ends a number that is in use, on the day given: it counts through that day.
+   * `released` is how many later days went back to no one with it (said in the audit log).
+   */
+  async end(
+    user: { organizationId: string; userId: string },
+    bindingId: string,
+    endDate: string,
+    options: { db?: Db; released?: number } = {},
+  ): Promise<ScannerBindingView> {
+    const row = await this.endable(user.organizationId, bindingId, endDate);
+    const updated = await (options.db ?? this.prisma).employeeScannerNumber.update({
       where: { id: row.id },
       data: { validTo: toDateOnly(endDate) },
     });
@@ -276,9 +289,25 @@ export class ScannerBindingsService {
       entityType: 'Employee',
       entityId: row.employeeId,
       summary: `Ended scanner number ${row.scannerNumber} of employee ${row.employee.employeeCode} on ${endDate}`,
-      changes: { scannerNumber: row.scannerNumber, validTo: { from: null, to: endDate } },
+      changes: {
+        scannerNumber: row.scannerNumber,
+        validTo: { from: null, to: endDate },
+        ...(options.released !== undefined ? { daysReleased: options.released } : {}),
+      },
     });
     return view(updated);
+  }
+
+  /** Every period of a number, with whom it is, for the number's whole history. */
+  async periodsOf(organizationId: string, scannerNumber: string) {
+    const rows = await this.prisma.employeeScannerNumber.findMany({
+      where: { organizationId, scannerNumber },
+      select: { validFrom: true, validTo: true },
+    });
+    return rows.map((p) => ({
+      validFrom: p.validFrom ? formatDateOnly(p.validFrom) : null,
+      validTo: p.validTo ? formatDateOnly(p.validTo) : null,
+    }));
   }
 
   /** The day after the latest end of a number, for "from now on" bindings. */
@@ -321,12 +350,20 @@ export class ScannerBindingsService {
         employee: { select: { employeeCode: true } },
       },
     });
-    const meeting = others.find((other) =>
-      periodsOverlap(span, {
-        validFrom: other.validFrom ? formatDateOnly(other.validFrom) : null,
-        validTo: other.validTo ? formatDateOnly(other.validTo) : null,
-      }),
-    );
+    // Name the one that really stands in the way: of several periods that meet
+    // the one asked for, the one still in use, else the latest to end.
+    const meeting = others
+      .filter((other) =>
+        periodsOverlap(span, {
+          validFrom: other.validFrom ? formatDateOnly(other.validFrom) : null,
+          validTo: other.validTo ? formatDateOnly(other.validTo) : null,
+        }),
+      )
+      .sort((a, b) => {
+        const last = (p: { validTo: Date | null }) =>
+          p.validTo ? p.validTo.getTime() : Number.POSITIVE_INFINITY;
+        return last(b) - last(a);
+      })[0];
     if (meeting) throw this.numberTaken(scannerNumber, meeting.employee.employeeCode);
   }
 

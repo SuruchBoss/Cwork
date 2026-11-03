@@ -674,7 +674,13 @@ entry, tags it and publishes the notes.
   they have had and can end the one in use on a date. The employee API and the employee
   file keep `scannerId`, read as the number in use now. A new migration moves every
   current number across with no dates and drops the old column; `down.sql` beside it
-  reverses it by hand.
+  reverses it by hand. Ending a number on a date sends its later days that no one has
+  decided back to no one (their punches are set aside) and counts them for any other
+  period that holds them; days someone decided stay. The page asks first, saying how many
+  days that is, and an end before a day that a calculated, approved or paid payroll run
+  covers is refused in Thai, naming the day and the run. The choice "from now on" says the
+  day it starts and how many waiting days it counts before it is saved, and a refusal of a
+  number names the period that is in the way.
 - **Someone else decides your own attendance.** A scanner day that belongs to the person
   deciding it is left to another holder of the attendance permission: the buttons on that row
   are closed with the reason, and the API answers in Thai. Where nobody else holds the

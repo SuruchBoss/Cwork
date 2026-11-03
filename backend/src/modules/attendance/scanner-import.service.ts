@@ -27,7 +27,7 @@ import { judgeOwnRecord } from '../auth/domain/duty-separation';
 import { DutySeparationService } from '../auth/duty-separation.service';
 import { OrganizationService } from '../organization/organization.service';
 import { AttendanceService } from './attendance.service';
-import { ownerOn } from './domain/scanner-binding';
+import { earliestFreeStart, ownerOn } from './domain/scanner-binding';
 import { ScannerBindingsService } from './scanner-bindings.service';
 import {
   checkDecision,
@@ -673,15 +673,60 @@ export class ScannerImportService {
     });
     const nameOf = new Map(names.map((n) => [n.scannerNumber, n.name]));
     const timed = new Map(withTimes.map((w) => [w.scannerNumber, w._count._all]));
+
+    // "From now on" starts at the first day the number is free (CW-109), and counts
+    // the waiting days from then on to the person: said before it is chosen.
+    const waiting = await this.prisma.scannerDay.findMany({
+      where: base,
+      select: { scannerNumber: true, workDate: true },
+    });
+    const daysOf = new Map<string, string[]>();
+    for (const day of waiting) {
+      daysOf.set(day.scannerNumber, [
+        ...(daysOf.get(day.scannerNumber) ?? []),
+        formatDateOnly(day.workDate),
+      ]);
+    }
+    const periods = await this.prisma.employeeScannerNumber.findMany({
+      where: {
+        organizationId: user.organizationId,
+        scannerNumber: { in: all.map((g) => g.scannerNumber) },
+      },
+      select: { scannerNumber: true, validFrom: true, validTo: true },
+    });
+    const periodsOf = new Map<
+      string,
+      Array<{ validFrom: string | null; validTo: string | null }>
+    >();
+    for (const p of periods) {
+      periodsOf.set(p.scannerNumber, [
+        ...(periodsOf.get(p.scannerNumber) ?? []),
+        {
+          validFrom: p.validFrom ? formatDateOnly(p.validFrom) : null,
+          validTo: p.validTo ? formatDateOnly(p.validTo) : null,
+        },
+      ]);
+    }
     return all
-      .map((g) => ({
-        scannerNumber: g.scannerNumber,
-        name: nameOf.get(g.scannerNumber) ?? '',
-        days: g._count._all,
-        daysWithTimes: timed.get(g.scannerNumber) ?? 0,
-        firstDay: formatDateOnly(g._min.workDate!),
-        lastDay: formatDateOnly(g._max.workDate!),
-      }))
+      .map((g) => {
+        // undefined: the number is in use by someone, so it cannot be bound from now on.
+        const from = earliestFreeStart(periodsOf.get(g.scannerNumber) ?? []);
+        return {
+          scannerNumber: g.scannerNumber,
+          name: nameOf.get(g.scannerNumber) ?? '',
+          days: g._count._all,
+          daysWithTimes: timed.get(g.scannerNumber) ?? 0,
+          firstDay: formatDateOnly(g._min.workDate!),
+          lastDay: formatDateOnly(g._max.workDate!),
+          foreverPossible: from !== undefined,
+          foreverFrom: from ?? null,
+          foreverDays:
+            from === undefined
+              ? 0
+              : (daysOf.get(g.scannerNumber) ?? []).filter((d) => from === null || d >= from)
+                  .length,
+        };
+      })
       .sort((a, b) => Number(a.scannerNumber) - Number(b.scannerNumber));
   }
 
@@ -762,10 +807,161 @@ export class ScannerImportService {
     return result;
   }
 
-  /** Ends a scanner number that is in use: it counts to the employee through the day given. */
+  /**
+   * What ending a number in use on a date would do, worked out and nothing written:
+   * the later days of the number that no one has decided go back to no one, the
+   * decided ones stay with whom they were decided for, and a day a payroll run
+   * has calculated or paid blocks the end (CW-109).
+   */
+  async previewEnd(user: AuthenticatedUser, bindingId: string, endDate: string) {
+    this.assertWholeCompany(user);
+    const row = await this.bindings.endable(user.organizationId, bindingId, endDate);
+    const { days: _days, ...said } = await this.planEnd(user.organizationId, row, endDate);
+    void _days;
+    return said;
+  }
+
+  /**
+   * Ends a scanner number that is in use: it counts to the employee through the day
+   * given. Later days of the number that no one has decided go back to no one (their
+   * punches set aside) and are matched again against any other period that holds them.
+   * A later day inside a calculated, approved or paid payroll run refuses the end,
+   * naming the day and the run; nothing is changed then.
+   */
   async endNumber(user: AuthenticatedUser, bindingId: string, endDate: string) {
     this.assertWholeCompany(user);
-    return this.bindings.end(user, bindingId, endDate);
+    const row = await this.bindings.endable(user.organizationId, bindingId, endDate);
+    const plan = await this.planEnd(user.organizationId, row, endDate);
+    if (plan.blocked) {
+      throw new BusinessRuleError(
+        'SCANNER_DAY_IN_PAYROLL_RUN',
+        plan.blocked.runNo
+          ? `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน ${plan.blocked.runNo} ที่คำนวณหรืออนุมัติแล้ว`
+          : `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นเงินเดือนใช้ไปแล้ว`,
+        {
+          scannerNumber: row.scannerNumber,
+          date: plan.blocked.date,
+          runNo: plan.blocked.runNo ?? '—',
+        },
+      );
+    }
+
+    const organization = await this.organization.getOrganization(user.organizationId);
+    const released = plan.days;
+    const ended = await this.prisma.$transaction(async (tx) => {
+      const result = await this.bindings.end(user, bindingId, endDate, {
+        db: tx,
+        released: released.length,
+      });
+      if (released.length > 0) {
+        const ids = released.map((d) => d.id);
+        await tx.scannerPunchLink.updateMany({
+          where: { scannerDayId: { in: ids }, supersededAt: null },
+          data: { supersededAt: new Date() },
+        });
+        await tx.scannerDay.updateMany({ where: { id: { in: ids } }, data: { employeeId: null } });
+      }
+      return result;
+    });
+    if (released.length > 0) {
+      await this.attendance.recalculateDays(
+        user.organizationId,
+        released.map((d) => ({ employeeId: row.employeeId, workDate: d.workDate })),
+        organization.timezone,
+      );
+    }
+    // A period that holds one of those days now takes it (none can while this one was in use).
+    const matched = await this.rematchUnmapped(
+      user.organizationId,
+      organization.timezone,
+      user.userId,
+      row.scannerNumber,
+    );
+    return { ...ended, daysReleased: released.length, daysMatched: matched.daysMatched };
+  }
+
+  /** The later days of a number held by an employee, who keeps them and who loses them. */
+  private async planEnd(
+    organizationId: string,
+    row: { employeeId: string; scannerNumber: string },
+    endDate: string,
+  ) {
+    const later = await this.prisma.scannerDay.findMany({
+      where: {
+        organizationId,
+        scannerNumber: row.scannerNumber,
+        employeeId: row.employeeId,
+        workDate: { gt: toDateOnly(endDate) },
+      },
+      orderBy: { workDate: 'asc' },
+      select: { id: true, workDate: true, decisions: { select: { id: true }, take: 1 } },
+    });
+    const days = later.filter((d) => d.decisions.length === 0);
+    const kept = later.length - days.length;
+    let blocked: { date: string; runNo: string | null } | null = null;
+    if (days.length > 0) {
+      const first = formatDateOnly(days[0]!.workDate);
+      const last = formatDateOnly(days[days.length - 1]!.workDate);
+      const [locked, slips] = await Promise.all([
+        this.prisma.attendanceRecord.findMany({
+          where: {
+            organizationId,
+            employeeId: row.employeeId,
+            workDate: { gte: toDateOnly(first), lte: toDateOnly(last) },
+            lockedAt: { not: null },
+          },
+          select: { workDate: true },
+        }),
+        this.prisma.payslip.findMany({
+          where: {
+            employeeId: row.employeeId,
+            run: {
+              organizationId,
+              status: {
+                in: [
+                  PayrollRunStatus.CALCULATED,
+                  PayrollRunStatus.PENDING_APPROVAL,
+                  PayrollRunStatus.APPROVED,
+                  PayrollRunStatus.PAID,
+                ],
+              },
+              period: {
+                periodStart: { lte: toDateOnly(last) },
+                periodEnd: { gte: toDateOnly(first) },
+              },
+            },
+          },
+          select: {
+            run: {
+              select: { runNo: true, period: { select: { periodStart: true, periodEnd: true } } },
+            },
+          },
+        }),
+      ]);
+      const lockedOn = new Set(locked.map((r) => formatDateOnly(r.workDate)));
+      for (const day of days) {
+        const date = formatDateOnly(day.workDate);
+        const slip = slips.find(
+          (s) =>
+            formatDateOnly(s.run.period.periodStart) <= date &&
+            formatDateOnly(s.run.period.periodEnd) >= date,
+        );
+        if (slip || lockedOn.has(date)) {
+          blocked = { date, runNo: slip?.run.runNo ?? null };
+          break;
+        }
+      }
+    }
+    return {
+      scannerNumber: row.scannerNumber,
+      endDate,
+      daysReleased: days.length,
+      firstDay: days.length > 0 ? formatDateOnly(days[0]!.workDate) : null,
+      lastDay: days.length > 0 ? formatDateOnly(days[days.length - 1]!.workDate) : null,
+      daysKept: kept,
+      blocked,
+      days,
+    };
   }
 
   /**

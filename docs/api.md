@@ -108,8 +108,14 @@ were waiting on that number (CW-090); `null` ends it today. The files and the cr
 update bodies keep `scannerId` as before. `POST /attendance/scanner/unmapped/bind` takes
 `scope`: `ALWAYS` (default, from now on, as the number in use) or `THESE_DAYS` (only the
 days no one owns), and `POST /attendance/scanner/numbers/{id}/end` ends a number in use
-on a date. A day outside every period of its number belongs to no one. The console's
-employee page has a card for it.
+on a date: its later days that no one has decided go back to no one and are matched again
+to any other period that holds them, decided days stay, and a later day in a calculated,
+approved or paid payroll run refuses the end (`422 SCANNER_DAY_IN_PAYROLL_RUN`).
+`GET /attendance/scanner/numbers/{id}/end-preview?endDate=` says what that would do
+without doing it. The waiting numbers (`GET /attendance/scanner/unmapped`) say where
+`ALWAYS` would start (`foreverFrom`), how many waiting days it would count
+(`foreverDays`) and whether it is possible at all (`foreverPossible`). A day outside every
+period of its number belongs to no one. The console's employee page has a card for it.
 
 ### Importing employees (CW-059)
 

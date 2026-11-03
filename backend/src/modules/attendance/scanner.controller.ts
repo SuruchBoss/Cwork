@@ -136,14 +136,32 @@ export class ScannerController {
     return this.scanner.bind(user, dto);
   }
 
+  @Get('numbers/:id/end-preview')
+  @RequirePermissions(Permission.ATTENDANCE_MANAGE)
+  @ApiOperation({
+    summary: 'What ending a scanner number on a date would do, without doing it',
+    description:
+      'How many later days of the number go back to no one, how many stay because someone ' +
+      'decided them, and the first day a payroll run stops the end, if any.',
+  })
+  endPreview(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: EndScannerNumberDto,
+  ) {
+    return this.scanner.previewEnd(user, id, query.endDate);
+  }
+
   @Post('numbers/:id/end')
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(Permission.ATTENDANCE_MANAGE)
   @ApiOperation({
     summary: 'End a scanner number that is in use',
     description:
-      'The number counts to the employee through the end date; later days of it belong to no ' +
-      'one until it is bound again. Days already counted stay.',
+      'The number counts to the employee through the end date. Later days of it that no one ' +
+      'has decided go back to no one and are matched again to any other period that holds ' +
+      'them; decided days stay. A later day in a calculated, approved or paid payroll run ' +
+      'refuses the end.',
   })
   endNumber(
     @CurrentUser() user: AuthenticatedUser,

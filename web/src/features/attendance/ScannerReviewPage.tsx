@@ -237,7 +237,22 @@ function BindControl({
               to: formatDate(item.lastDay),
             })}
           </option>
-          <option value="ALWAYS">{t('From now on, until it is ended')}</option>
+          <option value="ALWAYS" disabled={item.foreverPossible === false}>
+            {item.foreverPossible === false
+              ? t('From now on: not possible, someone holds this number now')
+              : item.foreverFrom
+                ? t(
+                    'From {date}, until it is ended ({count} waiting days counted for this person)',
+                    {
+                      date: formatDate(item.foreverFrom),
+                      count: formatNumber(item.foreverDays ?? 0),
+                    },
+                  )
+                : t(
+                    'From the beginning, until it is ended ({count} waiting days counted for this person)',
+                    { count: formatNumber(item.foreverDays ?? item.days) },
+                  )}
+          </option>
         </Select>
         <Button
           size="sm"

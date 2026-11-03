@@ -1039,6 +1039,13 @@ export const thMessages: Record<string, string> = {
   'Employee for number {number}': 'พนักงานของเลข {number}',
   'Choose…': 'เลือก…',
   'Register this number': 'บันทึกเลขนี้',
+  'End scanner number {number}?': 'สิ้นสุดเลขสแกน {number} ใช่ไหม',
+  'The number counts to this employee through {date}.': 'เลขนี้นับให้พนักงานคนนี้ถึงวันที่ {date}',
+  '{count} later days that no one has decided go back to no one, and are counted for whoever holds the number then.':
+    'มี {count} วันหลังจากนั้นที่ยังไม่มีใครตัดสิน จะกลับเป็นไม่มีเจ้าของ และนับให้คนที่ถือเลขนี้ในวันนั้น',
+  'No later day goes back to no one.': 'ไม่มีวันหลังจากนั้นที่ต้องกลับเป็นไม่มีเจ้าของ',
+  '{count} later days someone has decided stay with this employee.':
+    'มี {count} วันหลังจากนั้นที่มีคนตัดสินแล้ว ยังเป็นของพนักงานคนนี้ตามเดิม',
   'Numbers this employee has had': 'เลขที่พนักงานคนนี้เคยใช้',
   'from {date}': 'ตั้งแต่ {date}',
   'from the beginning': 'ตั้งแต่ต้น',
@@ -1048,7 +1055,12 @@ export const thMessages: Record<string, string> = {
   'End this number': 'สิ้นสุดเลขนี้',
   'How long number {number} is theirs': 'เลข {number} เป็นของคนนี้นานแค่ไหน',
   'Only these days ({from} to {to})': 'เฉพาะวันเหล่านี้ ({from} ถึง {to})',
-  'From now on, until it is ended': 'ตั้งแต่นี้ไปจนกว่าจะสิ้นสุด',
+  'From now on: not possible, someone holds this number now':
+    'ตั้งแต่นี้ไป: ทำไม่ได้ เพราะตอนนี้มีคนถือเลขนี้อยู่',
+  'From {date}, until it is ended ({count} waiting days counted for this person)':
+    'ตั้งแต่ {date} จนกว่าจะสิ้นสุด (นับวันที่รออยู่ให้คนนี้ {count} วัน)',
+  'From the beginning, until it is ended ({count} waiting days counted for this person)':
+    'ตั้งแต่ต้นจนกว่าจะสิ้นสุด (นับวันที่รออยู่ให้คนนี้ {count} วัน)',
   'Matched again: {days} days matched, {punches} punches added':
     'จับคู่ใหม่แล้ว ได้ {days} วัน เพิ่มรายการลงเวลา {punches} รายการ',
   'All rows': 'ทุกแถว',
@@ -1631,6 +1643,8 @@ export const thMessages: Record<string, string> = {
     'เลขสแกนนี้ยังไม่มีเจ้าของ ต้องลงทะเบียนเลขนี้ให้พนักงานก่อน',
   'Employee {employeeCode} already has scanner number {scannerNumber}':
     'พนักงาน {employeeCode} มีเลขสแกน {scannerNumber} อยู่แล้ว ถ้าจะเปลี่ยนเลข ให้แก้ที่หน้าพนักงาน',
+  'Scanner number {scannerNumber} cannot end before {date}: that day is in payroll run {runNo}':
+    'สิ้นสุดเลขสแกน {scannerNumber} ก่อนวันที่ {date} ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน {runNo} ที่คำนวณหรืออนุมัติแล้ว',
   'Scanner number {scannerNumber} already belongs to employee {employeeCode}':
     'เลขสแกน {scannerNumber} เป็นของพนักงาน {employeeCode} อยู่แล้ว',
   'Choose a range of 1 to {max} days': 'เลือกช่วงวันที่ตั้งแต่ 1 ถึง {max} วัน',

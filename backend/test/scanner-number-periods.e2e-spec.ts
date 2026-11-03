@@ -35,6 +35,7 @@ describe('A scanner number bound for a period (e2e)', () => {
   let api: Api;
   let prisma: PrismaClient;
   let hr: string;
+  let admin: string;
   let ann: string;
   let ben: string;
   let cat: string;
@@ -77,6 +78,7 @@ describe('A scanner number bound for a period (e2e)', () => {
     api = ctx.api;
     prisma = new PrismaClient({ datasources: { db: { url: resolveDatabaseUrl() } } });
     hr = await api.token(HR);
+    admin = await api.token('hr.manager@cwork.example');
     ann = await person('dev1@cwork.example');
     ben = await person('sales1@cwork.example');
     cat = await person('eng.manager@cwork.example');
@@ -248,5 +250,216 @@ describe('A scanner number bound for a period (e2e)', () => {
         },
       }),
     ).rejects.toThrow();
+  });
+
+  describe('ending a number gives the later days back (CW-109)', () => {
+    const X = '9310';
+    const Y = '9311';
+    const Z = '9312';
+    const activeLinksOf = (day: number, number: string) =>
+      prisma.scannerPunchLink.count({
+        where: {
+          supersededAt: null,
+          scannerDay: {
+            scannerNumber: number,
+            workDate: new Date(`${iso(day)}T00:00:00Z`),
+          },
+        },
+      });
+    const bindingOf = async (number: string, employeeId: string) =>
+      prisma.employeeScannerNumber.findFirstOrThrow({
+        where: { scannerNumber: number, employeeId, validTo: null },
+      });
+
+    beforeAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+
+    afterAll(async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+
+    it('sends the days after the end back to no one, sets their punches aside, and counts them for the next holder', async () => {
+      expect((await bind(X, cat, 'ALWAYS')).status).toBe(200);
+      await importDays(X, [10, 12]);
+      expect(await ownerOfDay(X, 10)).toBe(cat);
+      expect(await ownerOfDay(X, 12)).toBe(cat);
+      expect(await activeLinksOf(12, X)).toBeGreaterThan(0);
+
+      const open = await bindingOf(X, cat);
+      const preview = await api.get(
+        `/attendance/scanner/numbers/${open.id}/end-preview?endDate=${iso(10)}`,
+        hr,
+      );
+      expect(preview.status).toBe(200);
+      expect(preview.body).toMatchObject({
+        daysReleased: 1,
+        firstDay: iso(12),
+        lastDay: iso(12),
+        daysKept: 0,
+        blocked: null,
+      });
+      // Asking changes nothing.
+      expect(await ownerOfDay(X, 12)).toBe(cat);
+
+      const ended = await api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, {
+        endDate: iso(10),
+      });
+      expect(ended.status).toBe(200);
+      expect(ended.body).toMatchObject({ validTo: iso(10), daysReleased: 1, daysMatched: 0 });
+
+      expect(await ownerOfDay(X, 10)).toBe(cat);
+      expect(await ownerOfDay(X, 12)).toBeNull();
+      expect(await activeLinksOf(12, X)).toBe(0);
+      expect(await activeLinksOf(10, X)).toBeGreaterThan(0);
+      expect(await unownedDaysOf(X)).toBe(1);
+
+      // The next holder, from the day after the end, takes the day that went back.
+      const next = await bind(X, ben, 'ALWAYS');
+      expect(next.status).toBe(200);
+      expect(next.body).toMatchObject({ daysMatched: 1 });
+      expect(await ownerOfDay(X, 12)).toBe(ben);
+      expect(await activeLinksOf(12, X)).toBeGreaterThan(0);
+    });
+
+    it('keeps a later day somebody decided with whom it was decided for', async () => {
+      expect((await bind(Y, cat, 'ALWAYS')).status).toBe(200);
+      await importDays(Y, [10, 12, 14]);
+      const decided = await prisma.scannerDay.findFirstOrThrow({
+        where: { scannerNumber: Y, workDate: new Date(`${iso(14)}T00:00:00Z`) },
+      });
+      const decision = await api.post(`/attendance/scanner/days/${decided.id}/decision`, hr, {
+        action: 'IGNORE',
+      });
+      expect(decision.status).toBeLessThan(300);
+
+      const open = await bindingOf(Y, cat);
+      const ended = await api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, {
+        endDate: iso(10),
+      });
+      expect(ended.status).toBe(200);
+      expect(ended.body).toMatchObject({ daysReleased: 1 });
+      expect(await ownerOfDay(Y, 12)).toBeNull();
+      expect(await ownerOfDay(Y, 14)).toBe(cat);
+    });
+
+    it('refuses the end before a day a payroll run has calculated, and changes nothing', async () => {
+      expect((await bind(Z, cat, 'ALWAYS')).status).toBe(200);
+      await importDays(Z, [14]);
+      const period = await api.post('/payroll/periods', admin, {
+        year: YEAR,
+        month: 3,
+        periodStart: `${YEAR}-03-01`,
+        periodEnd: `${YEAR}-03-31`,
+        payDate: `${YEAR}-03-31`,
+      });
+      expect(period.body.id).toBeTruthy();
+      const run = await api.post('/payroll/runs', admin, { periodId: period.body.id });
+      expect(run.body.id).toBeTruthy();
+      const calculated = await api.post(`/payroll/runs/${run.body.id}/calculate`, admin);
+      expect(calculated.body.status).toBe('CALCULATED');
+
+      try {
+        const open = await bindingOf(Z, cat);
+        const blocked = await api.get(
+          `/attendance/scanner/numbers/${open.id}/end-preview?endDate=${iso(10)}`,
+          hr,
+        );
+        expect(blocked.body.blocked).toMatchObject({ date: iso(14), runNo: run.body.runNo });
+
+        const refused = await api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, {
+          endDate: iso(10),
+        });
+        expect(refused.status).toBe(422);
+        expect(refused.body.code).toBe('SCANNER_DAY_IN_PAYROLL_RUN');
+        expect(refused.body.message).toContain(iso(14));
+        expect(refused.body.message).toContain(run.body.runNo);
+        expect(refused.body.message).toMatch(/[\u0E00-\u0E7F]/);
+
+        expect((await bindingOf(Z, cat)).validTo).toBeNull();
+        expect(await ownerOfDay(Z, 14)).toBe(cat);
+        expect(await activeLinksOf(14, Z)).toBeGreaterThan(0);
+
+        // Ending on or after that day does not touch it.
+        const later = await api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, {
+          endDate: iso(20),
+        });
+        expect(later.status).toBe(200);
+        expect(await ownerOfDay(Z, 14)).toBe(cat);
+      } finally {
+        await api.post(`/payroll/runs/${run.body.id}/cancel`, admin);
+      }
+    });
+  });
+
+  describe('a number asked for again names the period that stands in the way (CW-109)', () => {
+    const W = '9320';
+
+    it('points to whoever holds the number now, not to the first period it ever had', async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+      await importDays(W, [1, 2, 6, 7]);
+      expect((await bind(W, ann, 'THESE_DAYS')).status).toBe(200);
+      // ann holds 1-7, ended; ben holds it from the day after.
+      const holder = await prisma.employeeScannerNumber.findFirstOrThrow({
+        where: { employeeId: ann, scannerNumber: W },
+      });
+      expect(holder.validTo).not.toBeNull();
+      expect((await bind(W, ben, 'ALWAYS')).status).toBe(200);
+      const benCode = (await prisma.employee.findUniqueOrThrow({ where: { id: ben } }))
+        .employeeCode;
+      const annCode = (await prisma.employee.findUniqueOrThrow({ where: { id: ann } }))
+        .employeeCode;
+
+      const typed = await api.patch(`/employees/${cat}`, hr, { scannerId: W });
+
+      expect(typed.status).toBe(409);
+      expect(typed.body.details).toMatchObject({ employeeCode: benCode });
+      expect(typed.body.message).toContain(benCode);
+      expect(typed.body.message).not.toContain(annCode);
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+  });
+
+  describe('the numbers still waiting say what "from now on" would do (CW-109)', () => {
+    const V = '9330';
+
+    it('gives the day it would start and how many waiting days it would count', async () => {
+      await takeNumbers(prisma, [ann, ben, cat]);
+      await importDays(V, [3, 4, 9, 10]);
+      expect((await bind(V, ann, 'THESE_DAYS')).status).toBe(200);
+      const row = (
+        (await api.get('/attendance/scanner/unmapped', hr)).body as Array<Record<string, unknown>>
+      ).find((n) => n.scannerNumber === V);
+      // Every waiting day was taken by the bound period (3 to 10), so none is left.
+      expect(row).toBeUndefined();
+
+      // Two more days after it wait; from now on starts the day after the period's end.
+      await importDays(V, [15, 16]);
+      const waiting = (
+        (await api.get('/attendance/scanner/unmapped', hr)).body as Array<Record<string, unknown>>
+      ).find((n) => n.scannerNumber === V);
+      expect(waiting).toMatchObject({
+        foreverPossible: true,
+        foreverFrom: iso(11),
+        foreverDays: 2,
+      });
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
+
+    it('says it cannot be bound from now on while someone holds the number', async () => {
+      const U = '9331';
+      await takeNumbers(prisma, [ann, ben, cat]);
+      await importDays(U, [3]);
+      expect((await bind(U, ann, 'ALWAYS')).status).toBe(200);
+      await prisma.scannerDay.updateMany({
+        where: { scannerNumber: U },
+        data: { employeeId: null },
+      });
+      const row = (
+        (await api.get('/attendance/scanner/unmapped', hr)).body as Array<Record<string, unknown>>
+      ).find((n) => n.scannerNumber === U);
+      expect(row).toMatchObject({ foreverPossible: false, foreverDays: 0 });
+      await takeNumbers(prisma, [ann, ben, cat]);
+    });
   });
 });

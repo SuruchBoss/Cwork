@@ -392,6 +392,54 @@ describe('Reviewing the scanner’s days (CW-061)', () => {
     });
   });
 
+  describe('how long a waiting number is theirs (CW-109)', () => {
+    const waiting = (over: Record<string, unknown>) => ({
+      scannerNumber: '77',
+      name: 'ชั่วคราว หนึ่ง',
+      days: 5,
+      daysWithTimes: 5,
+      firstDay: '2026-09-03',
+      lastDay: '2026-09-12',
+      ...over,
+    });
+
+    it('says the day "from now on" would start and how many waiting days it would count', async () => {
+      serve([], [waiting({ foreverPossible: true, foreverFrom: '2026-09-08', foreverDays: 3 })]);
+      renderPage();
+
+      const how = await screen.findByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน');
+      expect(
+        within(how).getByRole('option', {
+          name: /ตั้งแต่ 8 ก\.ย\. 2569 จนกว่าจะสิ้นสุด \(นับวันที่รออยู่ให้คนนี้ 3 วัน\)/,
+        }),
+      ).toBeEnabled();
+    });
+
+    it('says it counts from the beginning when the number has never been anyone’s', async () => {
+      serve([], [waiting({ foreverPossible: true, foreverFrom: null, foreverDays: 5 })]);
+      renderPage();
+
+      const how = await screen.findByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน');
+      expect(
+        within(how).getByRole('option', {
+          name: 'ตั้งแต่ต้นจนกว่าจะสิ้นสุด (นับวันที่รออยู่ให้คนนี้ 5 วัน)',
+        }),
+      ).toBeEnabled();
+    });
+
+    it('closes "from now on" while someone holds the number, and says why', async () => {
+      serve([], [waiting({ foreverPossible: false, foreverFrom: null, foreverDays: 0 })]);
+      renderPage();
+
+      const how = await screen.findByLabelText('เลข 77 เป็นของคนนี้นานแค่ไหน');
+      expect(
+        within(how).getByRole('option', {
+          name: 'ตั้งแต่นี้ไป: ทำไม่ได้ เพราะตอนนี้มีคนถือเลขนี้อยู่',
+        }),
+      ).toBeDisabled();
+    });
+  });
+
   describe('a refusal from the server, in the language of the screen (CW-096)', () => {
     const unmapped = [
       {
