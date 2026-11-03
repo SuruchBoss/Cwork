@@ -15,7 +15,8 @@ this file only says where the PO room stands.
   temporary-badge path on `482d405` and writes the badge and parallel-run
   guide (its branch waits on the owner, so the PO room commits its text).
 - **Dev queue:** CW-111 in #154 (close-out closes the day that just ended),
-  then CW-112 (small items, ready in the Dev room), one PR each.
+  then CW-115 (choose the days of a stretch), then CW-112 (small items,
+  partly ready in the Dev room), one PR each.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`
