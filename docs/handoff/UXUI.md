@@ -26,7 +26,9 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   install date.** Report: [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md).
   No blocker on clean data; 5 heavy items (no compare step in the guide, the compare
   page's net-pay header, no on-screen warning before recording payment in a parallel
-  run, single-scan days, unknown scanner numbers). The PO opens the tickets.
+  run, single-scan days, unknown scanner numbers). Same file has the CW-099 register
+  check: a month with a 1-15 period cannot be exported during a parallel run, an English
+  error, a summary sheet that does not add up. The PO opens the tickets.
 
 ## Next
 

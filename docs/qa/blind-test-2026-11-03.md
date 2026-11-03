@@ -176,6 +176,71 @@ HR re-imports a month after recording payment.
   a signature column and the cash sheet are all correct Thai, and the totals match
   the run.
 
+## CW-099 payroll register export (checked by hand, not by the tester)
+
+Asked for by the PO after the blind test. Run on `main` at `f553518` with the same
+synthetic data. The `.xlsx` files were opened with LibreOffice 24.2 in the container.
+
+### What works
+
+- **The button:** "ส่งออกทะเบียนเงินเดือน" sits on each period row, next to
+  "ส่งออก CSV" and "ส่งออกสำหรับนักบัญชี".
+- **Download:** a complete month downloads straight away as
+  `payroll-register-2026-09.xlsx`.
+- **Layout:** the sheet follows the Pilot A template.
+  - Two header rows. "รายการเงินได้" is merged over C:I and "รายการหัก" over J:M.
+    Under them, "ค่าแรงรายวัน" is merged over D:F (วันละ, จำนวนวันทำงาน,
+    จำนวนเงิน).
+  - Monthly and daily staff are on one sheet, with a totals row.
+- **Content:** Thai shows correctly and figures use `#,##0.00`. The other-deduction
+  notes (e.g. "หักอื่นๆ: กองทุนสำรองเลี้ยงชีพ 2,700.00") are in the last column.
+  The rows are frozen under the header.
+  - In October, the daily staff show 450.00 a day × 12 days = 5,400.00
+    ([16](blind-test-2026-11-03/16-register-libreoffice-page1.png)).
+
+### Findings
+
+19. **Heavy: during a parallel run, a month with a 15-day period cannot be
+    exported.**
+    - The register of a month that has a 1-15 period needs the 16-31 period too.
+      The 16-31 period cannot be calculated until the 1-15 run is recorded as
+      paid (`FIRST_HALF_NOT_PAID`).
+    - The CW-066 guide tells HR to run both periods in the parallel run and never
+      to record payment. Following the guide, HR can never export that month's
+      register.
+    - The test only got past this by recording the first half as paid in its
+      synthetic data.
+    - Pilot A plans to compare at month level, so this depends on whether its
+      parallel run creates a 1-15 period at all.
+20. **Heavy: when the month is not complete, the message is English with an ISO
+    month.**
+    - It reads "The second half of 2026-10 has no period yet, so the daily wages of
+      the month are not all there."
+    - It shows in a red box above the period table
+      ([15](blind-test-2026-11-03/15-register-incomplete-month.png)).
+    - It does not say what to do next.
+21. **Medium: the summary sheet does not add up.**
+    - "สรุปยอด" lists gross, tax, social security (employee, employer, total) and
+      net, but not the other deductions.
+    - In October: 417,800.00 − 29,010.72 − 5,790.00 = 382,999.28, while the sheet
+      says net 370,789.28. The missing 12,210.00 is the provident fund.
+    - An accountant who checks the summary will find a gap.
+22. **Medium: printing splits the sheet over 6 portrait A4 pages.**
+    - No page setup is saved: no landscape, no fit-to-width and no repeated header
+      rows. Columns land on separate pages
+      ([16](blind-test-2026-11-03/16-register-libreoffice-page1.png)).
+    - With landscape and fit-to-width set, the whole register fits on one page
+      ([17](blind-test-2026-11-03/17-register-landscape-fit.png)).
+23. **Light: the two-row header does not look grouped.**
+    - The merged group headers are left-aligned and the sheet has no borders.
+    - "รายการเงินได้" therefore reads as the heading of the เงินเดือน column only.
+      "ค่าแรงรายวัน" reads the same way over วันละ.
+24. **Light: three export buttons on every row.** "ส่งออกสำหรับนักบัญชี" and
+    "ส่งออกทะเบียนเงินเดือน" both go to the accountant, and nothing says which one
+    the accountant wants.
+25. **Light: no confirmation after the download.** Nothing appears on screen; the
+    file just arrives.
+
 ## Not findings
 
 - **The seed accounts hint on the sign-in page.** It shows only in a dev build
