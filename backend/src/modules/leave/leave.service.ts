@@ -248,6 +248,20 @@ export class LeaveService implements OnModuleInit {
 
   // ------------------------------------------------------- recorded by HR (CW-067)
 
+  /** Approving one's own leave would skip the only other pair of eyes on it. */
+  private assertNotOwnApprovedLeave(
+    user: AuthenticatedUser,
+    employeeId: string,
+    approved: boolean,
+  ): void {
+    if (approved && employeeId === user.employeeId) {
+      throw new BusinessRuleError(
+        ErrorCode.CANNOT_RECORD_OWN_LEAVE,
+        'การลาของตัวเองต้องส่งให้หัวหน้าอนุมัติ บันทึกเป็นอนุมัติแล้วด้วยตัวเองไม่ได้',
+      );
+    }
+  }
+
   /**
    * The preview HR sees while recording leave for someone else. It refuses
    * what saving would refuse, with the same code, so HR reads the reason before
@@ -257,6 +271,8 @@ export class LeaveService implements OnModuleInit {
   async previewRecord(user: AuthenticatedUser, dto: RecordLeaveRequestDto) {
     const employee = await this.recordableEmployee(user, dto.employeeId);
     const approved = dto.recordAsApproved !== false;
+    // Said at the preview as it is at the submit, not only after the form is filled in.
+    this.assertNotOwnApprovedLeave(user, employee.id, approved);
     const { leaveType, computed } = await this.resolveRequest(
       user.organizationId,
       employee.id,
@@ -296,13 +312,7 @@ export class LeaveService implements OnModuleInit {
     const approved = dto.recordAsApproved !== false;
     await this.files.assertAttachable(user, dto.attachmentIds ?? []);
 
-    // Approving one's own leave would skip the only other pair of eyes on it.
-    if (approved && employee.id === user.employeeId) {
-      throw new BusinessRuleError(
-        ErrorCode.CANNOT_RECORD_OWN_LEAVE,
-        'การลาของตัวเองต้องส่งให้หัวหน้าอนุมัติ บันทึกเป็นอนุมัติแล้วด้วยตัวเองไม่ได้',
-      );
-    }
+    this.assertNotOwnApprovedLeave(user, employee.id, approved);
 
     const { leaveType, computed } = await this.resolveRequest(
       user.organizationId,

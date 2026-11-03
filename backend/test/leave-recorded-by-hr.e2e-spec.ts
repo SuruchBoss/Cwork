@@ -419,5 +419,24 @@ describe('Leave recorded by HR (e2e)', () => {
       expect(res.body.code).toBe('CANNOT_RECORD_OWN_LEAVE');
       expect(res.body.message).toContain('ต้องส่งให้หัวหน้าอนุมัติ');
     });
+
+    it('says so at the preview too, before the form is submitted (CW-112)', async () => {
+      const body = {
+        employeeId: hrEmployeeId,
+        leaveTypeId: types.get('SICK'),
+        startDate: '2019-06-19',
+        endDate: '2019-06-19',
+      };
+      const approved = await api.post('/leave/requests/record/preview', hrToken, body);
+      expect(approved.status).toBe(422);
+      expect(approved.body.code).toBe('CANNOT_RECORD_OWN_LEAVE');
+
+      // Sent to the manager instead, it is not the same refusal.
+      const toManager = await api.post('/leave/requests/record/preview', hrToken, {
+        ...body,
+        recordAsApproved: false,
+      });
+      expect(toManager.body.code).not.toBe('CANNOT_RECORD_OWN_LEAVE');
+    });
   });
 });

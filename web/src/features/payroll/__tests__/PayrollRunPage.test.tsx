@@ -380,9 +380,11 @@ describe('One question before approving or paying a run', () => {
 
     expect(
       await screen.findByText(
-        'มี 1 วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้ ตรวจก่อนอนุมัติ: 17 พ.ย. 2569',
+        'มี 1 วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้: 17 พ.ย. 2569',
       ),
     ).toBeInTheDocument();
+    // The box already says "check before approving" in its heading; no line repeats it (CW-112).
+    expect(screen.getAllByText(/ตรวจก่อนอนุมัติ/)).toHaveLength(1);
   });
 });
 

@@ -454,6 +454,11 @@ export const thMessages: Record<string, string> = {
   'If you are still paying the old way beside Cwork (a parallel run), do not do this. Stop here and print the payslips instead.':
     'ถ้ายังจ่ายแบบเดิมคู่กับ Cwork อยู่ (รันคู่ขนาน) ไม่ต้องกด ให้หยุดที่การพิมพ์สลิปแทน',
   'Approve run': 'อนุมัติรอบ',
+  'Waiting for approval': 'รออนุมัติ',
+  'Waiting for someone else to approve': 'รอคนอื่นอนุมัติ',
+  'Showing the runs waiting for your approval ({count}).':
+    'แสดงเฉพาะรอบที่รอคุณอนุมัติ ({count} รอบ)',
+  'Show all runs': 'ดูทุกรอบ',
   'Record payment and publish payslips': 'บันทึกการจ่ายและเผยแพร่สลิป',
   'Calculated {date}': 'คำนวณเมื่อ {date}',
   'Paid {date}': 'จ่ายเมื่อ {date}',
@@ -1440,8 +1445,8 @@ export const thMessages: Record<string, string> = {
     'มีค่าจ้างที่เริ่มวันนั้นอยู่แล้ว เลือกวันอื่น',
   'Pay is either a monthly salary or a daily wage paid twice a month.':
     'ค่าจ้างเป็นได้แบบเดียว คือเงินเดือนรายเดือน หรือค่าจ้างรายวันที่จ่ายเดือนละ 2 ครั้ง',
-  '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: check them before approving: {dates}':
-    'มี {days} วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้ ตรวจก่อนอนุมัติ: {dates}',
+  '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: {dates}':
+    'มี {days} วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้: {dates}',
   'Counted {days} day(s) with an incomplete punch as worked: {dates}':
     'นับ {days} วันที่ลงเวลาไม่ครบเป็นวันทำงาน: {dates}',
   'Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}':

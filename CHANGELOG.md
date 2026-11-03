@@ -664,6 +664,14 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **Runs waiting for approval are easy to find** (CW-112). The runs table marks each run that
+  waits for approval, and says so when it waits for someone else because the signed-in person
+  prepared it. The dashboard card for runs waiting for your approval opens the run when there
+  is one, and the payroll page showing only those runs when there are several, with a link to
+  all runs.
+- **The warning list before approval no longer repeats its heading.** A line about scanner days
+  an employee decided for themselves ended with "check before approving", under a heading that
+  already said so.
 - **A payroll step the signed-in person cannot take is shown closed, with the reason** (CW-112).
   The person who created or calculated a run sees "Approve run" greyed out with a note that
   they prepared it and another authorised person has to approve it, instead of an active
@@ -916,6 +924,12 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Own leave is refused at the preview too, and three answers are in Thai** (CW-112). Previewing
+  leave HR was about to record as approved for themselves was accepted, then refused at the
+  submit; the preview now says the same thing. The refusals "no working days in the range" and
+  "your own leave goes to your manager", and the sign-in code refusal "That code is not right",
+  were in English on screens that show the server's words. The installer's line about a secret
+  it made reads "from a new one made by this installer".
 - **Ending a scanner number takes the same lock as binding one** (CW-112). Two ends of one
   period at the same moment could both pass the check and both write, the later date
   overwriting the earlier and the change logged twice. The end now checks, plans and writes

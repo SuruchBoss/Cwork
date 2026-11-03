@@ -283,6 +283,21 @@ describe('Recording leave for an employee (CW-067)', () => {
     );
   });
 
+  it('tells HR at the preview, not only at the submit, that their own leave cannot be approved by them (CW-112)', async () => {
+    allow(true);
+    renderPage();
+    post.mockImplementation((path: string) =>
+      path === '/leave/requests/record/preview'
+        ? Promise.reject(new ApiError(422, 'CANNOT_RECORD_OWN_LEAVE', 'own leave'))
+        : Promise.resolve(recorded),
+    );
+    const { panel } = await openAndChoose();
+
+    expect(await within(panel).findByRole('alert')).toHaveTextContent(
+      'การลาของคุณเองต้องให้หัวหน้าอนุมัติ',
+    );
+  });
+
   it('offers half days only for one day of a type that allows them', async () => {
     allow(true);
     renderPage();
