@@ -465,18 +465,6 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
-### CW-108 · The compare page still labels its picker "period", and two register columns align left
-`P2` · payroll · web · **XS** · found by the UX room · #146
-
-Found while updating the HR guide (#138), 2026-11-03. The compare page reads
-the whole calendar month (CW-104) but its picker is still headed "งวด". In the
-register export (CW-099), the row-number and days-worked columns align left
-while every other number aligns right.
-
-**Acceptance**
-- The picker names the month in Thai and English; the guide still matches.
-- Both columns align right in the exported file.
-
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
 
@@ -1641,3 +1629,4 @@ Kept so the reasoning survives.
 | **CW-105** · The payroll register's fixes from the UX review | The totals sheet adds up (gross − tax − social security − other deductions = net, tested), and an incomplete month is explained in Thai with the next step in four cases: run awaiting approval, no run, missing second half, missing 14-day period. Print check in LibreOffice by the UX room. #136, in #141 at 14fb65d, 2026-11-03. |
 | **CW-106** · A day with one scan was paid as a full day, with no warning | A past day with only a clock-in, or only a clock-out, is INCOMPLETE with 0 minutes, never an error; the payslip shows `INCOMPLETE_PUNCH_COUNTED` with the date, today's open day stays PRESENT, and the import summary counts the single-scan days. How a counted day is paid is unchanged. #137, in #141 at 14fb65d, 2026-11-03. |
 | **CW-107** · The register exported a month with no monthly period, leaving monthly staff out without a word | When active staff on a monthly salary exist for the month and no monthly period covers it, the register export and the compare page refuse in Thai and name the next step (create the monthly period, calculate and approve it), checked after the missing half-month and 14-day periods. A company with no monthly staff is not warned; a month with both kinds of period is unchanged (tested). Found by the QA room. The same PR: another person's tax declaration answers "not found" for someone who may not read pay, and the record-leave panel test pastes its long note instead of typing it, with no timeout changed. #142, in #143 at 82e5009, 2026-11-03. |
+| **CW-108** · The compare page still labelled its picker "period", and two register columns aligned left | The picker reads "เดือน (เลือกงวดไหนของเดือนก็ได้)" / "Month (any period of the month will do)"; the register's row-number and days-worked columns align right (a test reads the cell styles of the exported file); the HR guide and the period-check guide use the new label. Found by the UX room. #146, in #147 at 09fc821, 2026-11-03. |
