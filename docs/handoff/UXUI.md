@@ -26,16 +26,17 @@ this file only says where the UX/UI room stands. The older, longer write-up of t
   [`docs/qa/blind-test-2026-11-03.md`](../qa/blind-test-2026-11-03.md), with the CW-099
   register check. On `main` via #135. The PO opened CW-103 (#134), CW-105 (#136) and
   CW-106 (#137, single-scan days and clock-out-only days) from it.
-- **CW-103 guide part, in review.** `docs/guide/hr-daily-tasks.th.md` gained the sign-in
-  and first 2FA setup, unregistered scanner numbers, single-scan days, the compare step
-  (month register plus a `รหัสพนักงาน` column) and the no-payment warning. Merge after the
-  dev part of CW-103 and CW-104. No picture of the compare step yet: capture it after
-  the dev room changes that page.
+- **CW-103 guide part, in review (#138).** `docs/guide/hr-daily-tasks.th.md` covers the
+  sign-in and first 2FA setup, unregistered scanner numbers, single-scan days as CW-106
+  made them (INCOMPLETE, counted in the import summary, a payslip warning for daily
+  staff), the month compare step with a `รหัสพนักงาน` column (picture `hr-15`), and the
+  no-payment warning. All guide pictures were taken again on `main` at `9a99475`.
+- **CW-105 register printing, checked on #141 (`a1e460c`).** LibreOffice prints it
+  landscape, one page wide, borders, centred group headings, rows 1-4 repeated on every
+  page; the summary sheet adds up to the net. The register code has not changed since.
 
 ## Next
 
-- When CW-106 lands, rewrite the single-scan bullets in job 1 step 5 of the HR guide
-  (the day becomes INCOMPLETE and the payslip warns). The PO will say when.
 - Final blind test after the security fixes, CW-103 and CW-104: install with
   `deploy/nas/install.sh` in docker at 2 CPU and 2 GB (method in
   `docs/qa/performance-pilot-a.md`), with a new tester, noting every hesitation.

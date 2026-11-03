@@ -685,7 +685,10 @@ entry, tags it and publishes the notes.
   is matched; says what deciding a single-scan day does to pay; adds the step
   that compares the month with HR's own register (add a `รหัสพนักงาน` column
   first); and warns at the top of the payroll job never to record payment during
-  the parallel run.
+  the parallel run. `docs/guide/capture-hr-tasks.mjs` now also calculates and
+  approves the second half and captures the month compared with a register that
+  differs by one person's tax (`hr-15-compare.png`); every picture was taken
+  again on the current screens.
 
 - **The everyday HR tasks, walked as a first-time user would** (CW-066). Four jobs
   at 1366×768 in Thai, from the scanner file to the printed payslips, and what
