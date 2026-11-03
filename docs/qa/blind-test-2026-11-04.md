@@ -165,3 +165,28 @@ These are changes to the test environment, not to the installer:
   whether to fill blank columns, and the upload accepted them.
 - **Pending leave requests in October** (two from the seed) were not cleared before
   the run; the guide does not ask for it, and the run did not warn.
+
+## Re-test after the fixes (4 Nov 2026)
+
+`main` at `a93751d` (#150, CW-110), installed the same way: a clean copy, `install.sh --mode full`
+with both secret files, 2 CPU / 2 GB. The install took 106 s and `.env` matches both files.
+Same synthetic data and the same paths as the run above. The payment was never recorded.
+
+| Path | Result |
+|---|---|
+| A scan only in the evening | Pre-filled as "ไม่มีเวลาเข้า" and "ออก 17:32". The morning-only and three-scan days are pre-filled as before. Passed. |
+| The owner's dashboard | A card "รอบเงินเดือนที่รอคุณอนุมัติ" counts the runs waiting; "รอบเงินเดือนล่าสุด" shows October at ฿360,529.28 instead of a draft at ฿0.00. Passed. |
+| A period that already has a run | The row offers "เปิดรอบ". A second run and a run on a closed period are refused in Thai ("งวดนี้มีรอบปกติอยู่แล้ว … เปิดรอบเดิมแทนการสร้างใหม่", "งวดเงินเดือนนี้ปิดแล้ว สร้างรอบใหม่ไม่ได้"). Passed. |
+| Recording the payment | Asks first, says it cannot be undone, and says not to press it during a parallel run. Passed. |
+| Leave with too little notice | Refused in Thai: "ลาพักร้อน ต้องแจ้งล่วงหน้าอย่างน้อย 3 วัน". Passed. |
+| The figures | Unchanged: 9,404.00 for the first half, 9,406.00 for the second, 360,529.28 for the month; "ตรวจก่อนอนุมัติ" still names 19 Oct. Passed. |
+
+Reviewed; findings, if any, went to the owner privately.
+
+Still open, light:
+
+- The dashboard card reads "แตะเพื่อเปิดรอบนี้" while two runs wait, and opens the top of Payroll;
+  the period table does not mark which runs wait for approval.
+- The create-period form still opens on the current month.
+
+Not re-tested: the temporary scanner card, which waits for CW-109.
