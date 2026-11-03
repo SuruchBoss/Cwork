@@ -7,15 +7,13 @@ this file only says where the PO room stands.
 ## Where things are (2026-11-03, evening)
 
 - **Merged today:** #126 (CW-099), #128, #132, #135, #139 (access checks and
-  the performance note), #140 (QA re-test of #139), #141 (CW-101 to CW-106,
-  QA passed every ticket on `a1e460c`), merged at `14fb65d`.
-- **Next:** UX guide #138 (CW-103 part) after a merge of `main`. Dev's next
-  ticket: a 404 for another employee's tax profile, a faster
-  RecordLeavePanel test without touching timeouts, then CW-107 (#142).
+  the performance note), #140, #141 (CW-101 to CW-106, `14fb65d`), #144 (QA
+  final regression, passed), #143 (CW-107 and two small follow-ups, `82e5009`).
+- **Next:** UX guide #138 (CW-103 part) after a merge of `main`, then the
+  final blind test. Dev's next branch is being prepared from `main`.
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
-  test. Security review done; findings went to the owner privately. Still to
-  run: the final regression (including issuing a document with an
-  attached file) and the final blind test on a stack installed with
+  test. Security review done; findings went to the owner privately. Regression passed (#144).
+  Still to run: the final blind test on a stack installed with
   `deploy/nas/install.sh` (2 CPU / 2 GB). Report the gates to the Asuna Bot
   room before the install date is booked (target Saturday 14 Nov).
 - **Owner's choices today:** daily staff stay half-monthly and the compare
@@ -27,7 +25,8 @@ this file only says where the PO room stands.
 
 ## Waiting on the owner
 
-- File the private advisory (fixes are in #139).
+- File the private advisory (fixes are in #139), and two design choices
+  sent privately. The pilot NAS's RAM, for the install checklist.
 - The law texts for CW-100 (sections 33, 34, 46, 47 and the สปส.6-09 page),
   or the domains to fetch them.
 - HR: which month a cross-month period counts toward, whether it rounds the

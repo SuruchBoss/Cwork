@@ -47,7 +47,7 @@ severity; this is the sequence work is actually taken in.
 | **0** | A baseline to measure from | ✅ closed 2026-09-16 |
 | **1** | A stranger can install it | ✅ closed 2026-09-16 |
 | **2** | The pilot can run | ✅ closed 2026-09-26 |
-| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · CW-107 · final regression and blind test on an installed stack · UX alongside: CW-066 |
+| **Pilot A** | Records in Cwork by 31 October 2026 | CW-062 on the real NAS · CW-100 · blind test on an installed stack · UX alongside: CW-066 |
 | **Pilot B** | Shadow payroll for November, beside their Excel | CW-085 |
 | **3** | Payroll can file and pay · the app is complete | CW-031 · CW-019 · CW-045 → CW-046 → CW-047 · CW-012 · CW-013 · CW-014 · CW-043 |
 | **4** | When someone actually needs it | CW-021 · CW-037 · CW-041 |
@@ -464,28 +464,6 @@ whose habit is the opposite.
 **Files** `backend/src/modules/payroll/payroll.service.ts`,
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
-
-### CW-107 · The register exports a month with no monthly period, leaving monthly staff out without a word
-`P1` · payroll · **S** · Pilot A · found by the QA room · #142
-
-Found while re-testing #141 (2026-11-03). A month with only approved
-half-month runs for daily staff and no monthly period yet still exports a
-register (200), with no monthly staff in it. The system cannot tell that a
-monthly period should exist.
-
-**Scope**
-- When active monthly staff exist for the month and no monthly period covers
-  it, the register export and the compare page say so in Thai and name the
-  step (create the monthly period first), as an incomplete month is reported
-  today.
-- A company with no monthly staff is not warned.
-
-**Acceptance**
-- Tests: daily-only month with monthly staff present → the warning; a
-  daily-only company → no warning; a month with both periods → unchanged.
-
-**Files** `backend/src/modules/payroll/period-check.ts`,
-`backend/src/modules/payroll/payroll-register.ts`
 
 ### CW-077 · Before Cwork is sold: what a paying customer is owed
 `P1` · business · docs · **M** · owner decides when; not queued
@@ -1650,3 +1628,4 @@ Kept so the reasoning survives.
 | **CW-104** · The compare page read one period, so daily staff looked missing | The compare page reads the whole calendar month, called from any period of it, with the same `ReconciledPeriod` month logic as CW-099. Owner's choices: daily staff stay half-monthly (18:38) and the second half may run once the first half is approved, unpaid or not (19:21, option 1, `FIRST_HALF_NOT_APPROVED` otherwise). A claim is taken by one run only: locked when the first half is approved, released when an approved run is cancelled (tested). #127, in #141 at 14fb65d, 2026-11-03. |
 | **CW-105** · The payroll register's fixes from the UX review | The totals sheet adds up (gross − tax − social security − other deductions = net, tested), and an incomplete month is explained in Thai with the next step in four cases: run awaiting approval, no run, missing second half, missing 14-day period. Print check in LibreOffice by the UX room. #136, in #141 at 14fb65d, 2026-11-03. |
 | **CW-106** · A day with one scan was paid as a full day, with no warning | A past day with only a clock-in, or only a clock-out, is INCOMPLETE with 0 minutes, never an error; the payslip shows `INCOMPLETE_PUNCH_COUNTED` with the date, today's open day stays PRESENT, and the import summary counts the single-scan days. How a counted day is paid is unchanged. #137, in #141 at 14fb65d, 2026-11-03. |
+| **CW-107** · The register exported a month with no monthly period, leaving monthly staff out without a word | When active staff on a monthly salary exist for the month and no monthly period covers it, the register export and the compare page refuse in Thai and name the next step (create the monthly period, calculate and approve it), checked after the missing half-month and 14-day periods. A company with no monthly staff is not warned; a month with both kinds of period is unchanged (tested). Found by the QA room. The same PR: another person's tax declaration answers "not found" for someone who may not read pay, and the record-leave panel test pastes its long note instead of typing it, with no timeout changed. #142, in #143 at 82e5009, 2026-11-03. |
