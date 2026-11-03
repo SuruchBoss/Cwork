@@ -178,6 +178,69 @@ describe('The refusal to approve one’s own run (CW-103)', () => {
   });
 });
 
+describe('A step the signed-in person cannot take is shown closed, with the reason (CW-112)', () => {
+  const calculated = {
+    ...secondHalf,
+    status: 'CALCULATED',
+    calculatedAt: '2026-11-30T03:00:00.000Z',
+    createdById: 'creator',
+    calculatedById: 'preparer',
+    firstHalf: { id: 'run-h1', runNo: 'PR-2026-11-H1-01', status: 'PAID' },
+  };
+
+  it('closes Approve for whoever calculated the run, and says why on the screen', async () => {
+    useAuthStore.setState({ user: { id: 'preparer' } as never });
+    serve(calculated);
+    render();
+
+    const button = await screen.findByRole('button', { name: 'อนุมัติรอบ' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription(/คุณเป็นคนเตรียมรอบนี้ จึงอนุมัติเองไม่ได้/);
+    await userEvent.click(button);
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('closes Approve for whoever created the run as well', async () => {
+    useAuthStore.setState({ user: { id: 'creator' } as never });
+    serve(calculated);
+    render();
+
+    expect(await screen.findByRole('button', { name: 'อนุมัติรอบ' })).toBeDisabled();
+  });
+
+  it('leaves Approve open for another approver, with no notice', async () => {
+    useAuthStore.setState({ user: { id: 'owner' } as never });
+    serve(calculated);
+    render();
+
+    expect(await screen.findByRole('button', { name: 'อนุมัติรอบ' })).toBeEnabled();
+    expect(screen.queryByText(/จึงอนุมัติเองไม่ได้/)).not.toBeInTheDocument();
+  });
+
+  it('closes Approve and payment for a person who runs payroll but may not approve it', async () => {
+    useAuthStore.setState({
+      user: { id: 'officer' } as never,
+      can: (...permissions: string[]) => permissions.includes(P.PAYROLL_RUN),
+    });
+    serve(calculated);
+    const first = render();
+
+    const approve = await screen.findByRole('button', { name: 'อนุมัติรอบ' });
+    expect(approve).toBeDisabled();
+    expect(approve).toHaveAccessibleDescription(/ต้องมีสิทธิ์อนุมัติเงินเดือน/);
+    first.unmount();
+
+    serve({ ...calculated, status: 'APPROVED' });
+    render();
+    const pay = await screen.findByRole('button', {
+      name: 'บันทึกการจ่ายและเผยแพร่สลิป',
+    });
+    expect(pay).toBeDisabled();
+    expect(pay).toHaveAccessibleDescription(/ต้องมีสิทธิ์อนุมัติเงินเดือน/);
+  });
+});
+
 describe('One question before approving or paying a run', () => {
   const calculated = {
     ...secondHalf,
@@ -572,11 +635,16 @@ describe('A run HR meets for the first time', () => {
   });
 
   it('tells whoever calculated who has to approve, and how', async () => {
-    serve({ ...secondHalf, status: 'CALCULATED', firstHalf: undefined, payslips: [slip] });
+    useAuthStore.setState({ user: { id: 'preparer' } as never });
+    serve({
+      ...secondHalf,
+      status: 'CALCULATED',
+      calculatedById: 'preparer',
+      firstHalf: undefined,
+      payslips: [slip],
+    });
     render();
 
-    expect(
-      await screen.findByText(/ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/จึงอนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน/)).toBeInTheDocument();
   });
 });

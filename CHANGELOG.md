@@ -664,6 +664,12 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **A payroll step the signed-in person cannot take is shown closed, with the reason** (CW-112).
+  The person who created or calculated a run sees "Approve run" greyed out with a note that
+  they prepared it and another authorised person has to approve it, instead of an active
+  button refused after its question. A person who may run payroll but not approve it sees
+  "Approve run" and "Record payment" closed the same way. The server's own refusal is
+  unchanged.
 - **A scanner number is bound to an employee for a period** (CW-109). A number carried by
   someone else later no longer keeps counting to the first person. Each number has a start
   and an end (an empty start is from the beginning, an empty end is still in use), two

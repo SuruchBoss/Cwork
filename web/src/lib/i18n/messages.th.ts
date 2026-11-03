@@ -458,8 +458,12 @@ export const thMessages: Record<string, string> = {
   'Calculated {date}': 'คำนวณเมื่อ {date}',
   'Paid {date}': 'จ่ายเมื่อ {date}',
   'Calculation failed: {reason}': 'การคำนวณล้มเหลว: {reason}',
-  'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
-    'ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
+  'You prepared this run, so you cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
+    'คุณเป็นคนเตรียมรอบนี้ จึงอนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
+  'Approving a run needs the permission to approve payroll, which this account does not have.':
+    'การอนุมัติรอบต้องมีสิทธิ์อนุมัติเงินเดือน ซึ่งบัญชีนี้ยังไม่มี',
+  'Recording payment needs the permission to approve payroll, which this account does not have.':
+    'การบันทึกการจ่ายต้องมีสิทธิ์อนุมัติเงินเดือน ซึ่งบัญชีนี้ยังไม่มี',
   '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page, in the Pay card, then calculate again.':
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page, in the Pay card, then calculate again.':

@@ -18,7 +18,7 @@ this file only says where the dev room stands.
   a reason.
 - One small wording nit, not urgent: the installer's source line reads "database password:
   from made new by this installer"; smooth it the next time the installer is touched.
-- Counts: web 371; backend unit 903, domain 558; e2e 586.
+- Counts: web 375; backend unit 903, domain 558; e2e 586.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
