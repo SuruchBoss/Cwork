@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   DateInput,
   EmptyState,
   ErrorState,
@@ -144,6 +145,8 @@ function DecisionControls({
 interface BindPreview {
   from: string;
   to: string;
+  /** The number the person uses now, if any: "from now on" is not open to them. */
+  numberInUse: string | null;
   days: number;
   daysWithTimes: number;
   daysAlsoScannedOnAnotherNumber: number;
@@ -167,6 +170,8 @@ function BindControl({
   const [from, setFrom] = useState(item.firstDay);
   const [to, setTo] = useState(item.lastDay);
   const [problem, setProblem] = useState<string | null>(null);
+  // Registering a number counts waiting days for the person: said first, as ending one is.
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setTerm(search.trim()), 250);
@@ -182,16 +187,19 @@ function BindControl({
 
   // Asked before it is done: how many waiting days the range counts, and how many of them
   // the person already has scans for under another number.
-  const rangeKnown = scope === 'THESE_DAYS' && Boolean(employeeId) && Boolean(from) && Boolean(to);
+  const personChosen = Boolean(employeeId) && Boolean(from) && Boolean(to);
+  const rangeKnown = scope === 'THESE_DAYS' && personChosen;
   const preview = useQuery({
     queryKey: ['attendance', 'scanner-bind-preview', item.scannerNumber, employeeId, from, to],
     queryFn: () =>
       api.get<BindPreview>('/attendance/scanner/unmapped/bind-preview', {
         query: { scannerNumber: item.scannerNumber, employeeId, from, to },
       }),
-    enabled: rangeKnown,
+    enabled: personChosen,
     retry: false,
   });
+  // Someone who already uses a number cannot have another from now on (the server refuses it).
+  const alwaysClosedBy = preview.data?.numberInUse ?? null;
 
   const bind = useMutation({
     mutationFn: () =>
@@ -202,6 +210,14 @@ function BindControl({
         ...(scope === 'THESE_DAYS' ? { from, to } : {}),
       }),
     onSuccess: async (result) => {
+      // The row starts over: the person, the how-long answer and the dates were for this save.
+      setSearch('');
+      setTerm('');
+      setEmployeeId('');
+      setScope('');
+      setFrom(item.firstDay);
+      setTo(item.lastDay);
+      setProblem(null);
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
       onBound(
         t('Number {number} registered: {days} days matched, {punches} punches added', {
@@ -215,6 +231,8 @@ function BindControl({
   });
 
   const people = matches.data?.data ?? [];
+  const chosen = people.find((person) => person.id === employeeId);
+  const chosenName = chosen ? `${chosen.firstNameTh} ${chosen.lastNameTh}` : '';
 
   return (
     <div className="stack stack--sm">
@@ -263,25 +281,34 @@ function BindControl({
               to: formatDate(item.lastDay),
             })}
           </option>
-          <option value="ALWAYS" disabled={item.foreverPossible === false}>
+          <option
+            value="ALWAYS"
+            disabled={item.foreverPossible === false || alwaysClosedBy !== null}
+          >
             {item.foreverPossible === false
               ? t('From now on: not possible, someone holds this number now')
-              : item.foreverFrom
-                ? t(
-                    'From {date}, until it is ended ({count} waiting days counted for this person)',
-                    {
-                      date: formatDate(item.foreverFrom),
-                      count: formatNumber(item.foreverDays ?? 0),
-                    },
-                  )
-                : t(
-                    'From the beginning, until it is ended ({count} waiting days counted for this person)',
-                    { count: formatNumber(item.foreverDays ?? item.days) },
-                  )}
+              : alwaysClosedBy !== null
+                ? t('From now on: not possible, {name} already uses number {number}', {
+                    name: chosenName,
+                    number: alwaysClosedBy,
+                  })
+                : item.foreverFrom
+                  ? t(
+                      'From {date}, until it is ended ({count} waiting days counted for this person)',
+                      {
+                        date: formatDate(item.foreverFrom),
+                        count: formatNumber(item.foreverDays ?? 0),
+                      },
+                    )
+                  : t(
+                      'From the beginning, until it is ended ({count} waiting days counted for this person)',
+                      { count: formatNumber(item.foreverDays ?? item.days) },
+                    )}
           </option>
         </Select>
         {scope === 'THESE_DAYS' && (
           <>
+            <span className="muted">{t('From')}</span>
             <DateInput
               aria-label={t('First day of number {number}', { number: item.scannerNumber })}
               value={from}
@@ -292,6 +319,7 @@ function BindControl({
                 setProblem(null);
               }}
             />
+            <span className="muted">{t('To')}</span>
             <DateInput
               aria-label={t('Last day of number {number}', { number: item.scannerNumber })}
               value={to}
@@ -307,13 +335,62 @@ function BindControl({
         <Button
           size="sm"
           variant="primary"
-          disabled={!employeeId || !scope || (scope === 'THESE_DAYS' && preview.isError)}
+          disabled={
+            !employeeId ||
+            !scope ||
+            (scope === 'ALWAYS' && alwaysClosedBy !== null) ||
+            (scope === 'THESE_DAYS' && preview.isError)
+          }
           loading={bind.isPending}
-          onClick={() => bind.mutate()}
+          onClick={() => setConfirming(true)}
         >
           {t('Register this number')}
         </Button>
       </div>
+      {confirming && (
+        <ConfirmDialog
+          title={t('Register number {number} for {name}?', {
+            number: item.scannerNumber,
+            name: chosenName,
+          })}
+          confirmLabel={t('Register this number')}
+          cancelLabel={t('Cancel')}
+          busy={bind.isPending}
+          onConfirm={() => bind.mutate(undefined, { onSettled: () => setConfirming(false) })}
+          onCancel={() => setConfirming(false)}
+        >
+          <p>
+            {scope === 'THESE_DAYS'
+              ? t('{count} waiting days from {from} to {to} would be counted for this person.', {
+                  count: formatNumber(preview.data?.days ?? item.days),
+                  from: formatDate(preview.data?.from ?? from),
+                  to: formatDate(preview.data?.to ?? to),
+                })
+              : item.foreverFrom
+                ? t(
+                    'From {date}, until it is ended ({count} waiting days counted for this person)',
+                    {
+                      date: formatDate(item.foreverFrom),
+                      count: formatNumber(item.foreverDays ?? 0),
+                    },
+                  )
+                : t(
+                    'From the beginning, until it is ended ({count} waiting days counted for this person)',
+                    { count: formatNumber(item.foreverDays ?? item.days) },
+                  )}
+          </p>
+          {scope === 'THESE_DAYS' &&
+            preview.data &&
+            preview.data.daysAlsoScannedOnAnotherNumber > 0 && (
+              <p>
+                {t(
+                  'This person already has scans under another number on {count} of these days. Both numbers would count for the same day. Choose fewer days if this card was not theirs on all of them.',
+                  { count: formatNumber(preview.data.daysAlsoScannedOnAnotherNumber) },
+                )}
+              </p>
+            )}
+        </ConfirmDialog>
+      )}
       {rangeKnown && preview.data && (
         <p className="muted" role="status" style={{ margin: 0 }}>
           {t('{count} waiting days from {from} to {to} would be counted for this person.', {
@@ -533,7 +610,13 @@ export default function ScannerReviewPage() {
           </div>
           <UnmappedTable
             items={unmapped.data!}
-            action={(item) => <BindControl item={item} onBound={setNotice} />}
+            action={(item) => (
+              <BindControl
+                key={`${item.scannerNumber}-${item.firstDay}-${item.lastDay}`}
+                item={item}
+                onBound={setNotice}
+              />
+            )}
           />
         </Card>
       )}

@@ -50,6 +50,10 @@ export function ScannerNumberCard({
   const [value, setValue] = useState(current);
   const [problem, setProblem] = useState<string | null>(null);
   const [saved, setSaved] = useState<'set' | 'cleared' | null>(null);
+  // What the last end did, said in days: through which day, and how many went back to no one.
+  const [ended, setEnded] = useState<{ number: string; date: string; released: number } | null>(
+    null,
+  );
 
   const save = useMutation({
     mutationFn: (scannerId: string | null) => api.patch(`/employees/${person.id}`, { scannerId }),
@@ -97,13 +101,19 @@ export function ScannerNumberCard({
   });
 
   const end = useMutation({
-    mutationFn: () => api.post(`/attendance/scanner/numbers/${target!.id}/end`, { endDate }),
-    onSuccess: async () => {
+    mutationFn: () =>
+      api.post<{ validTo: string; daysReleased: number }>(
+        `/attendance/scanner/numbers/${target!.id}/end`,
+        { endDate },
+      ),
+    onSuccess: async (result) => {
+      const number = target!.scannerNumber;
       await queryClient.invalidateQueries({ queryKey: ['attendance'] });
       await queryClient.invalidateQueries({ queryKey: qk.employee(person.id) });
       setPreview(null);
       setEnding(null);
-      setSaved('cleared');
+      setSaved(null);
+      setEnded({ number, date: result.validTo, released: result.daysReleased });
     },
     onError: (error) => {
       setPreview(null);
@@ -115,6 +125,7 @@ export function ScannerNumberCard({
     setValue(current);
     setProblem(null);
     setSaved(null);
+    setEnded(null);
     setEditing(true);
   };
 
@@ -183,19 +194,34 @@ export function ScannerNumberCard({
         </form>
       ) : (
         <div className="stack stack--sm">
-          <p className="mono" style={{ margin: 0 }}>
-            {current || '—'}
-          </p>
-          {!current && (
-            <p className="muted" style={{ margin: 0 }}>
-              {t('No scanner number. Days from the scanner wait until one is given.')}
+          {current ? (
+            <p className="mono" style={{ margin: 0 }}>
+              {current}
             </p>
+          ) : (
+            <>
+              <p style={{ margin: 0 }}>{t('No number in use right now')}</p>
+              <p className="muted" style={{ margin: 0 }}>
+                {t('Days from the scanner wait for an owner until one is given.')}
+              </p>
+            </>
           )}
           {saved === 'set' && (
             <p className="muted" role="status" style={{ margin: 0 }}>
               {t(
                 'Saved. Days already imported under this number now belong to this employee: those with two times are counted, the others wait for HR on the scanner days page.',
               )}
+            </p>
+          )}
+          {ended && (
+            <p className="muted" role="status" style={{ margin: 0 }}>
+              {t('Number {number} counts to this employee through {date}.', {
+                number: ended.number,
+                date: formatDate(ended.date),
+              })}{' '}
+              {ended.released > 0
+                ? t('{count} later days went back to no one.', { count: ended.released })
+                : t('No later day went back to no one.')}
             </p>
           )}
           {saved === 'cleared' && (

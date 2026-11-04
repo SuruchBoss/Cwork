@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { qk } from '@/app/query-client';
 import {
   Badge,
@@ -26,6 +26,12 @@ import { payrollPeriodStatusLabels, payrollStatusLabels, statusTone } from '@/li
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { PayrollPeriod, PayrollRun } from '@/types/api';
+import {
+  WAITING_FOR_ME_QUERY,
+  isWaitingForApproval,
+  preparedBy,
+  waitingForApprover,
+} from './waiting-runs';
 
 /**
  * What a new period pays (CW-069, CW-101): the whole month, one half of it, or
@@ -62,6 +68,11 @@ export default function PayrollPage() {
   const t = useT();
   const canRun = can(P.PAYROLL_RUN);
   const canExport = can(P.PAYROLL_EXPORT);
+  const myUserId = useAuthStore((s) => s.user?.id);
+  const [searchParams] = useSearchParams();
+  // The dashboard card for runs waiting for this person's approval lands here when
+  // there are several (CW-112): show only those, with a way back to all runs.
+  const onlyWaitingForMe = searchParams.toString() === WAITING_FOR_ME_QUERY;
 
   const [creating, setCreating] = useState(false);
   const now = new Date();
@@ -159,6 +170,9 @@ export default function PayrollPage() {
     },
   });
 
+  const shownRuns = onlyWaitingForMe
+    ? waitingForApprover(runs.data ?? [], myUserId)
+    : (runs.data ?? []);
   const latest = runs.data?.[0];
   // A period that already has a regular run opens it instead of offering a
   // second one: the server refuses that, and a failed or cancelled run does
@@ -459,7 +473,15 @@ export default function PayrollPage() {
       </Card>
 
       <Card title={t('Payroll runs')} flush>
-        {runs.data && runs.data.length > 0 ? (
+        {onlyWaitingForMe && runs.data && (
+          <div className="alert alert--info" role="status" style={{ margin: 12 }}>
+            {t('Showing the runs waiting for your approval ({count}).', {
+              count: waitingForApprover(runs.data, myUserId).length,
+            })}{' '}
+            <Link to="/payroll">{t('Show all runs')}</Link>
+          </div>
+        )}
+        {shownRuns.length > 0 ? (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -476,7 +498,7 @@ export default function PayrollPage() {
                 </tr>
               </thead>
               <tbody>
-                {runs.data.map((run) => (
+                {shownRuns.map((run) => (
                   <tr key={run.id}>
                     <td className="mono">{run.runNo}</td>
                     <td>{formatPeriod(run.period?.code)}</td>
@@ -487,6 +509,16 @@ export default function PayrollPage() {
                       <Badge tone={statusTone(run.status)}>
                         {t(payrollStatusLabels[run.status] ?? run.status)}
                       </Badge>
+                      {isWaitingForApproval(run) && (
+                        <>
+                          {' '}
+                          <Badge tone="warning">
+                            {preparedBy(run, myUserId)
+                              ? t('Waiting for someone else to approve')
+                              : t('Waiting for approval')}
+                          </Badge>
+                        </>
+                      )}
                     </td>
                     <td>
                       <Link to={`/payroll/runs/${run.id}`} className="btn btn--secondary btn--sm">

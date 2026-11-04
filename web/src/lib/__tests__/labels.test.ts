@@ -23,4 +23,17 @@ describe('labels', () => {
     const missing = Object.values(map).filter((label) => !(label in thMessages));
     expect(missing).toEqual([]);
   });
+
+  it('says every employment type the create form offers in Thai, not as its code (CW-112)', () => {
+    const types = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'OUTSOURCE', 'DAILY'];
+    const said = types.map((type) => thMessages[labels.employmentTypeLabels[type]!]);
+    expect(said).toEqual([
+      'พนักงานประจำ',
+      'พาร์ตไทม์',
+      'สัญญาจ้าง',
+      'นักศึกษาฝึกงาน',
+      'เอาท์ซอร์ส',
+      'รายวัน',
+    ]);
+  });
 });

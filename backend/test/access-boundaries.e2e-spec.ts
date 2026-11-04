@@ -11,6 +11,7 @@
  */
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { addDays, isoDate } from './utils/dates';
+import { firstWorkingDay } from './utils/leave-days';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const PERSON = 'dev2@cwork.example';
@@ -111,6 +112,7 @@ describe('Access boundaries (e2e)', () => {
 
   describe('the approval trail of a leave request', () => {
     let requestId: string;
+    let leaveDay: string;
 
     beforeAll(async () => {
       const types = (await api.get('/leave/types', person)).body as Array<{
@@ -118,7 +120,8 @@ describe('Access boundaries (e2e)', () => {
         code: string;
       }>;
       const sick = types.find((t) => t.code === 'SICK')!;
-      const day = isoDate(addDays(new Date(), 3));
+      const day = await firstWorkingDay(api, person, sick.id, 3);
+      leaveDay = day;
       const created = await api.post('/leave/requests', person, {
         leaveTypeId: sick.id,
         startDate: day,
@@ -159,8 +162,9 @@ describe('Access boundaries (e2e)', () => {
 
     describe('on the leave calendar', () => {
       const window = () => {
-        const from = isoDate(addDays(new Date(), 2));
-        const to = isoDate(addDays(new Date(), 4));
+        const around = new Date(`${leaveDay}T00:00:00Z`);
+        const from = isoDate(addDays(around, -1));
+        const to = isoDate(addDays(around, 1));
         return `from=${from}&to=${to}`;
       };
       const entryOf = (rows: CalendarRow[]) =>

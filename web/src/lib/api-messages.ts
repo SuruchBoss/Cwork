@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ApiError } from '@/lib/api-error';
+import { formatDate } from '@/lib/format';
 import type { translate } from '@/lib/i18n';
 
 type Translate = (key: string, params?: Parameters<typeof translate>[2]) => string;
@@ -21,6 +22,14 @@ const MESSAGES: Record<string, string> = {
   SCANNER_DAY_IN_PAYROLL_RUN:
     'Scanner number {scannerNumber} cannot end before {date}: that day is in payroll run {runNo}',
   DUPLICATE_SCANNER_ID: 'Scanner number {scannerNumber} already belongs to employee {employeeCode}',
+  SCANNER_RANGE_OUTSIDE_WAITING_DAYS:
+    'You can only choose days from {first} to {last}: the days of this number that wait for an owner',
+  SCANNER_PERIOD_ORDER: 'The last day must not be before the first day',
+  SCANNER_RANGE_NEEDS_THESE_DAYS:
+    'The first and last day can only be chosen when the number is bound for these days only',
+  NO_UNOWNED_DAYS: 'No days of scanner number {scannerNumber} wait for an owner',
+  SCANNER_NUMBER_ALREADY_ENDED:
+    'Scanner number ended on {endedOn}; choose an earlier day to make it shorter',
   // Reviewing the days the scanner recorded
   RANGE_NOT_SUPPORTED: 'Choose a range of 1 to {max} days',
   SCANNER_DAY_HAS_NO_TIMES: 'The scanner recorded no time this day',
@@ -49,7 +58,9 @@ export function describeApiError(caught: unknown, t: Translate, fallback: string
   for (const [, name] of template.matchAll(/\{(\w+)\}/g)) {
     const value = details[name];
     if (typeof value !== 'string' && typeof value !== 'number') return caught.message;
-    params[name] = value;
+    // A date the server wrote as 2026-10-12 is read as a Thai date, not as the code it is.
+    params[name] =
+      typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : value;
   }
   return t(template, params);
 }

@@ -37,9 +37,9 @@ const halves = [
   },
 ];
 
-function render() {
+function render(url = '/payroll') {
   return renderWithProviders(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <PayrollPage />
     </MemoryRouter>,
   );
@@ -258,5 +258,74 @@ describe('First-time use of the periods page', () => {
 
       expect(await screen.findByRole('button', { name: 'สร้างรอบคำนวณ' })).toBeInTheDocument();
     });
+  });
+});
+
+describe('Runs waiting for approval (CW-112)', () => {
+  const run = (id: string, over: Record<string, unknown> = {}) => ({
+    id,
+    runNo: `PR-${id}`,
+    type: 'REGULAR',
+    status: 'CALCULATED',
+    employeeCount: 3,
+    totalGross: '30000',
+    totalDeduction: '0',
+    totalNet: '30000',
+    totalEmployerCost: '30000',
+    currency: 'THB',
+    calculatedAt: null,
+    approvedAt: null,
+    paidAt: null,
+    failureReason: null,
+    createdById: 'hr',
+    calculatedById: 'hr',
+    period: { code: '2026-11-H1', year: 2026, month: 11, payDate: '2026-11-16' },
+    ...over,
+  });
+  const runs = [
+    run('a'),
+    run('b'),
+    run('mine', { createdById: 'owner', calculatedById: 'owner' }),
+    run('paid', { status: 'PAID' }),
+  ];
+
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 'owner' } as never,
+      can: (...permissions: string[]) => permissions.includes(P.PAYROLL_RUN),
+    });
+    get.mockImplementation((path: string) =>
+      Promise.resolve(path === '/payroll/periods' ? halves : path === '/payroll/runs' ? runs : []),
+    );
+  });
+
+  /** The table row of a run, or null: the latest-run card repeats a run number outside the table. */
+  const rowOf = (runNo: string) =>
+    screen
+      .queryAllByText(runNo)
+      .map((element) => element.closest('tr'))
+      .find((row) => row !== null) ?? null;
+
+  it('marks the runs that wait for approval, and says which wait for someone else', async () => {
+    render();
+
+    await waitFor(() => expect(rowOf('PR-a')).not.toBeNull());
+    expect(rowOf('PR-a')).toHaveTextContent('รออนุมัติ');
+    expect(rowOf('PR-b')).toHaveTextContent('รออนุมัติ');
+    expect(rowOf('PR-mine')).toHaveTextContent('รอคนอื่นอนุมัติ');
+    // A paid run carries no such mark.
+    expect(rowOf('PR-paid')).not.toHaveTextContent('รออนุมัติ');
+    expect(rowOf('PR-paid')).not.toHaveTextContent('รอคนอื่นอนุมัติ');
+  });
+
+  it('shows only the runs waiting for the signed-in approver when the dashboard card sends them here', async () => {
+    render('/payroll?waiting=me');
+
+    await waitFor(() => expect(rowOf('PR-a')).not.toBeNull());
+    expect(rowOf('PR-b')).not.toBeNull();
+    expect(rowOf('PR-mine')).toBeNull();
+    expect(rowOf('PR-paid')).toBeNull();
+    expect(screen.getByText(/แสดงเฉพาะรอบที่รอคุณอนุมัติ \(2 รอบ\)/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'ดูทุกรอบ' })).toHaveAttribute('href', '/payroll');
   });
 });

@@ -25,6 +25,16 @@ describe('describeApiError (CW-096)', () => {
     expect(describeApiError(error, th, 'x')).toBe('เลขสแกน 77 เป็นของพนักงาน E-1 อยู่แล้ว');
   });
 
+  it('reads a date in the details as a Thai date, not as 2026-10-12 (CW-112)', () => {
+    const error = refusal('SCANNER_RANGE_OUTSIDE_WAITING_DAYS', 'x', {
+      first: '2026-10-12',
+      last: '2026-10-21',
+    });
+    expect(describeApiError(error, th, 'x')).toBe(
+      'เลือกได้เฉพาะวันที่ 12 ต.ค. 2569 ถึง 21 ต.ค. 2569 ซึ่งเป็นวันของเลขนี้ที่รอเจ้าของ',
+    );
+  });
+
   it('gives English readers the same sentence the server sent', () => {
     const message = 'Employee E-1 already has scanner number 77';
     const error = refusal('EMPLOYEE_HAS_SCANNER_NUMBER', message, {

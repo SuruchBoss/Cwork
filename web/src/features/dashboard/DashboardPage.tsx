@@ -12,8 +12,12 @@ import { approvalEntityLabels, leaveStatusLabels, statusTone } from '@/lib/label
 import { P } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/auth.store';
 import type { ApprovalTask, LeaveRequest, Page, PayrollRun, PayrollRunStatus } from '@/types/api';
+import {
+  WAITING_FOR_ME_QUERY,
+  isWaitingForApproval,
+  waitingForApprover,
+} from '../payroll/waiting-runs';
 
-const RUNS_WAITING: PayrollRunStatus[] = ['CALCULATED', 'PENDING_APPROVAL'];
 const RUNS_WITH_FIGURES: PayrollRunStatus[] = [
   'CALCULATED',
   'PENDING_APPROVAL',
@@ -66,12 +70,8 @@ export default function DashboardPage() {
   const run = latestRun.data?.find((candidate) => RUNS_WITH_FIGURES.includes(candidate.status));
   // Runs that wait for an approver. Whoever prepared a run cannot approve it,
   // so those are counted apart: they wait on someone else.
-  const waiting = (latestRun.data ?? []).filter((candidate) =>
-    RUNS_WAITING.includes(candidate.status),
-  );
-  const waitingForMe = waiting.filter(
-    (candidate) => candidate.createdById !== user?.id && candidate.calculatedById !== user?.id,
-  );
+  const waiting = (latestRun.data ?? []).filter(isWaitingForApproval);
+  const waitingForMe = waitingForApprover(latestRun.data ?? [], user?.id);
 
   return (
     <div className="page">
@@ -114,7 +114,13 @@ export default function DashboardPage() {
                   ? t('Prepared by you, so someone else approves')
                   : t('Nothing pending')
             }
-            to={waitingForMe.length === 1 ? `/payroll/runs/${waitingForMe[0].id}` : '/payroll'}
+            to={
+              waitingForMe.length === 1
+                ? `/payroll/runs/${waitingForMe[0].id}`
+                : waitingForMe.length > 1
+                  ? `/payroll?${WAITING_FOR_ME_QUERY}`
+                  : '/payroll'
+            }
           />
         )}
         {canSeePayroll && (

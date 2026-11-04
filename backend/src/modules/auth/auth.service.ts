@@ -232,7 +232,7 @@ export class AuthService {
     const accepted = await this.mfa.consumeFactor(user.id, dto.code);
     if (!accepted) {
       await this.registerFailedAttempt(user.id, user.failedLoginCount, user.organizationId, meta);
-      throw new UnauthorizedException('That code is not right');
+      throw new UnauthorizedException('รหัสไม่ถูกต้อง ลองใหม่อีกครั้ง');
     }
 
     if (user.status !== UserStatus.ACTIVE) {

@@ -345,6 +345,46 @@ describe('A scanner number bound for a period (e2e)', () => {
       expect(await activeLinksOf(12, X)).toBeGreaterThan(0);
     });
 
+    it('gives every round of two ends of one number at once one winner and a refusal in words (CW-112)', async () => {
+      // Ending checked the number and then wrote, without the lock a bind takes, so
+      // two ends of one period could both pass the check and both write.
+      const seen = new Set<string>();
+      for (let round = 0; round < 40; round += 1) {
+        const number = `95${String(round).padStart(3, '0')}`;
+        await takeNumbers(prisma, [cat]);
+        expect((await bind(number, cat, 'ALWAYS')).status).toBe(200);
+        const open = await bindingOf(number, cat);
+        // The same day twice: an earlier day after an end is a shorter period (CW-115), a
+        // legitimate second change, so only the same day leaves exactly one winner.
+        const ends = [iso(10), iso(10)];
+        const answers = await Promise.all(
+          ends.map((endDate) =>
+            api.post(`/attendance/scanner/numbers/${open.id}/end`, hr, { endDate }),
+          ),
+        );
+        seen.add(
+          answers
+            .map((a) => `${a.status}${a.body.code ? `:${a.body.code}` : ''}`)
+            .sort()
+            .join(' + '),
+        );
+        const winner = answers.findIndex((a) => a.status === 200);
+        const row = await prisma.employeeScannerNumber.findUniqueOrThrow({
+          where: { id: open.id },
+        });
+        expect(row.validTo?.toISOString().slice(0, 10)).toBe(ends[winner]);
+        expect(
+          await prisma.auditLog.count({
+            where: {
+              entityId: cat,
+              summary: { startsWith: `Ended scanner number ${number} ` },
+            },
+          }),
+        ).toBe(1);
+      }
+      expect([...seen]).toEqual(['200 + 422:SCANNER_NUMBER_ALREADY_ENDED']);
+    });
+
     it('keeps a later day somebody decided with whom it was decided for', async () => {
       expect((await bind(Y, cat, 'ALWAYS')).status).toBe(200);
       await importDays(Y, [10, 12, 14]);
@@ -662,7 +702,14 @@ describe('A scanner number bound for a period (e2e)', () => {
 
       const whole = await previewBind(ann);
       expect(whole.status).toBe(200);
-      expect(whole.body).toMatchObject({ from: iso(1), to: iso(10), days: 10 });
+      expect(whole.body).toMatchObject({
+        from: iso(1),
+        to: iso(10),
+        days: 10,
+        numberInUse: OWN,
+      });
+      // Someone with no number in use is not told they have one.
+      expect((await previewBind(cat)).body.numberInUse).toBeNull();
       expect(whole.body.daysAlsoScannedOnAnotherNumber).toBe(await elsewhere(1, 10));
       // Her own number's scans on the 5th and the 6th are among them.
       expect(whole.body.daysAlsoScannedOnAnotherNumber).toBeGreaterThanOrEqual(2);

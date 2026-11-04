@@ -291,6 +291,7 @@ export default function PayrollRunPage() {
   const queryClient = useQueryClient();
   const can = useAuthStore((s) => s.can);
   const myEmployeeId = useAuthStore((s) => s.user?.employeeId ?? null);
+  const myUserId = useAuthStore((s) => s.user?.id ?? null);
   const t = useT();
   /** The step waiting for a yes: both are taken once and are seen by other people. */
   const [confirming, setConfirming] = useState<'approve' | 'pay' | null>(null);
@@ -338,6 +339,25 @@ export default function PayrollRunPage() {
   const data = run.data;
   const canRun = can(P.PAYROLL_RUN);
   const canApprove = can(P.PAYROLL_APPROVE);
+  // Whoever created or last calculated the run cannot approve it (the server refuses; the
+  // button is shown closed with the reason instead of failing after the question).
+  const preparedByMe =
+    myUserId !== null && (data.createdById === myUserId || data.calculatedById === myUserId);
+  // Someone who runs payroll but does not approve it sees the step closed, with the reason.
+  const approvalClosedReason: string | null =
+    data.status === 'CALCULATED' && canApprove && preparedByMe
+      ? t(
+          'You prepared this run, so you cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.',
+        )
+      : data.status === 'CALCULATED' && canRun && !canApprove
+        ? t(
+            'Approving a run needs the permission to approve payroll, which this account does not have.',
+          )
+        : data.status === 'APPROVED' && canRun && !canApprove
+          ? t(
+              'Recording payment needs the permission to approve payroll, which this account does not have.',
+            )
+          : null;
   // Approved is enough: its figures are fixed and the claims it pays are held (CW-104).
   const waitsForFirstHalf =
     data.firstHalf !== undefined &&
@@ -417,13 +437,20 @@ export default function PayrollRunPage() {
                 {t('Calculate payroll')}
               </Button>
             )}
-            {canApprove && data.status === 'CALCULATED' && (
+            {data.status === 'CALCULATED' && (canApprove || canRun) && (
               <Button
                 variant="primary"
                 loading={act.isPending && act.variables === 'approve'}
+                disabled={approvalClosedReason !== null}
+                aria-describedby={approvalClosedReason ? 'approval-closed' : undefined}
                 onClick={() => setConfirming('approve')}
               >
                 {t('Approve run')}
+              </Button>
+            )}
+            {data.status === 'APPROVED' && !canApprove && canRun && (
+              <Button variant="primary" disabled aria-describedby="approval-closed">
+                {t('Record payment and publish payslips')}
               </Button>
             )}
             {canApprove && data.status === 'APPROVED' && (
@@ -465,11 +492,9 @@ export default function PayrollRunPage() {
           {t('Calculation failed: {reason}', { reason: data.failureReason })}
         </div>
       )}
-      {data.status === 'CALCULATED' && (
-        <div className="alert alert--info">
-          {t(
-            'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.',
-          )}
+      {approvalClosedReason && (
+        <div className="alert alert--info" id="approval-closed">
+          {approvalClosedReason}
         </div>
       )}
       {skipped.length > 0 && (

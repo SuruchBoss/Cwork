@@ -672,6 +672,32 @@ entry, tags it and publishes the notes.
 
 ### Changed
 
+- **The row for a waiting scanner number starts over after it is saved, and says what it will do**
+  (CW-112). After "Register this number" the person, the how-long answer and the dates in that
+  row are cleared, so an old range cannot be refused against the days that are left. "From now
+  on" is closed at once, with the reason, for someone who already uses a number. The two date
+  fields carry the words "from" and "to", and dates inside the page's refusals are written as Thai
+  dates, not as 2026-10-12.
+- **Registering a scanner number asks first, and ending one says what it did** (CW-112). "Register
+  this number" on the scanner days page asks a question that says how many waiting days it will
+  count for the person, and from which day to which; nothing is saved on "Cancel". After a number
+  is ended, the card says up to which day it counted and how many later days went back to no
+  one. An employee with no number in use reads as a plain state ("No number in use right now"),
+  and an employee's employment type is shown by its Thai label, not as `FULL_TIME`.
+- **Runs waiting for approval are easy to find** (CW-112). The runs table marks each run that
+  waits for approval, and says so when it waits for someone else because the signed-in person
+  prepared it. The dashboard card for runs waiting for your approval opens the run when there
+  is one, and the payroll page showing only those runs when there are several, with a link to
+  all runs.
+- **The warning list before approval no longer repeats its heading.** A line about scanner days
+  an employee decided for themselves ended with "check before approving", under a heading that
+  already said so.
+- **A payroll step the signed-in person cannot take is shown closed, with the reason** (CW-112).
+  The person who created or calculated a run sees "Approve run" greyed out with a note that
+  they prepared it and another authorised person has to approve it, instead of an active
+  button refused after its question. A person who may run payroll but not approve it sees
+  "Approve run" and "Record payment" closed the same way. The server's own refusal is
+  unchanged.
 - **A scanner number is bound to an employee for a period** (CW-109). A number carried by
   someone else later no longer keeps counting to the first person. Each number has a start
   and an end (an empty start is from the beginning, an empty end is still in use), two
@@ -918,6 +944,17 @@ entry, tags it and publishes the notes.
 
 ### Fixed
 
+- **Own leave is refused at the preview too, and three answers are in Thai** (CW-112). Previewing
+  leave HR was about to record as approved for themselves was accepted, then refused at the
+  submit; the preview now says the same thing. The refusals "no working days in the range" and
+  "your own leave goes to your manager", and the sign-in code refusal "That code is not right",
+  were in English on screens that show the server's words. The installer's line about a secret
+  it made reads "from a new one made by this installer".
+- **Ending a scanner number takes the same lock as binding one** (CW-112). Two ends of one
+  period at the same moment could both pass the check and both write, the later date
+  overwriting the earlier and the change logged twice. The end now checks, plans and writes
+  while holding the number's lock, so the second request waits, finds the period ended and is
+  told so.
 - **The nightly attendance close-out closes the day that just ended** (CW-111). The job runs at
   01:00 in Bangkok (18:00 UTC), but it took "yesterday" from the UTC date, so it closed the
   day before the one that had just finished, about a day late. It now closes the day before

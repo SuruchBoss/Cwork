@@ -129,6 +129,21 @@ describe('DashboardPage payroll cards for an owner who approves payroll', () => 
     });
   });
 
+  it('opens the list of waiting runs when there are several (CW-112)', async () => {
+    serve([
+      run({ id: 'r1', status: 'CALCULATED', calculatedById: 'hr' }),
+      run({ id: 'r2', status: 'CALCULATED', calculatedById: 'hr' }),
+      run({ id: 'r3', status: 'CALCULATED', createdById: 'owner' }),
+    ]);
+    render();
+
+    const card = (await screen.findByText('รอบเงินเดือนที่รอคุณอนุมัติ')).closest('a');
+    await waitFor(() => {
+      expect(card).toHaveTextContent('2');
+      expect(card).toHaveAttribute('href', '/payroll?waiting=me');
+    });
+  });
+
   it('does not count a run the owner prepared as waiting for the owner, and says why', async () => {
     serve([run({ id: 'r2', status: 'CALCULATED', createdById: 'owner' })]);
     render();

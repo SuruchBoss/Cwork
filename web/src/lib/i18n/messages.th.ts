@@ -454,12 +454,21 @@ export const thMessages: Record<string, string> = {
   'If you are still paying the old way beside Cwork (a parallel run), do not do this. Stop here and print the payslips instead.':
     'ถ้ายังจ่ายแบบเดิมคู่กับ Cwork อยู่ (รันคู่ขนาน) ไม่ต้องกด ให้หยุดที่การพิมพ์สลิปแทน',
   'Approve run': 'อนุมัติรอบ',
+  'Waiting for approval': 'รออนุมัติ',
+  'Waiting for someone else to approve': 'รอคนอื่นอนุมัติ',
+  'Showing the runs waiting for your approval ({count}).':
+    'แสดงเฉพาะรอบที่รอคุณอนุมัติ ({count} รอบ)',
+  'Show all runs': 'ดูทุกรอบ',
   'Record payment and publish payslips': 'บันทึกการจ่ายและเผยแพร่สลิป',
   'Calculated {date}': 'คำนวณเมื่อ {date}',
   'Paid {date}': 'จ่ายเมื่อ {date}',
   'Calculation failed: {reason}': 'การคำนวณล้มเหลว: {reason}',
-  'Whoever calculated this run cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
-    'ผู้ที่คำนวณรอบนี้อนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
+  'You prepared this run, so you cannot approve it. Another authorised person, such as the owner, signs in, opens this run and presses “Approve run”.':
+    'คุณเป็นคนเตรียมรอบนี้ จึงอนุมัติเองไม่ได้ ให้ผู้มีสิทธิ์อีกคน เช่น เจ้าของกิจการ เข้าสู่ระบบ เปิดรอบนี้ แล้วกด “อนุมัติรอบ”',
+  'Approving a run needs the permission to approve payroll, which this account does not have.':
+    'การอนุมัติรอบต้องมีสิทธิ์อนุมัติเงินเดือน ซึ่งบัญชีนี้ยังไม่มี',
+  'Recording payment needs the permission to approve payroll, which this account does not have.':
+    'การบันทึกการจ่ายต้องมีสิทธิ์อนุมัติเงินเดือน ซึ่งบัญชีนี้ยังไม่มี',
   '{count} employee is not in this run because no pay is set for them from this period: {codes}. Set it on the employee’s page, in the Pay card, then calculate again.':
     'มีพนักงาน {count} คนที่ไม่อยู่ในรอบนี้ เพราะยังไม่ได้ตั้งค่าจ้างตั้งแต่งวดนี้: {codes} ตั้งได้ที่หน้าพนักงาน การ์ดค่าจ้าง แล้วกดคำนวณอีกครั้ง',
   '{count} employees are not in this run because no pay is set for them from this period: {codes}. Set it on each employee’s page, in the Pay card, then calculate again.':
@@ -1039,6 +1048,18 @@ export const thMessages: Record<string, string> = {
   'Employee for number {number}': 'พนักงานของเลข {number}',
   'Choose…': 'เลือก…',
   'Register this number': 'บันทึกเลขนี้',
+  'You can only choose days from {first} to {last}: the days of this number that wait for an owner':
+    'เลือกได้เฉพาะวันที่ {first} ถึง {last} ซึ่งเป็นวันของเลขนี้ที่รอเจ้าของ',
+  'The last day must not be before the first day': 'วันสุดท้ายต้องไม่ก่อนวันแรก',
+  'The first and last day can only be chosen when the number is bound for these days only':
+    'เลือกวันแรกและวันสุดท้ายได้เฉพาะตอนผูกเลขเฉพาะวันเหล่านี้',
+  'No days of scanner number {scannerNumber} wait for an owner':
+    'ไม่มีวันของเลขสแกน {scannerNumber} ที่รอเจ้าของ',
+  'Scanner number ended on {endedOn}; choose an earlier day to make it shorter':
+    'เลขสแกนนี้สิ้นสุดไปแล้วเมื่อ {endedOn} เลือกวันที่เร็วกว่านั้นถ้าจะย่นให้สั้นลง',
+  'From now on: not possible, {name} already uses number {number}':
+    'ตั้งแต่นี้ไป: ทำไม่ได้ เพราะ {name} ใช้เลข {number} อยู่แล้ว',
+  'Register number {number} for {name}?': 'บันทึกเลข {number} ให้ {name}?',
   'End scanner number {number}?': 'สิ้นสุดเลขสแกน {number} ใช่ไหม',
   'The number counts to this employee through {date}.': 'เลขนี้นับให้พนักงานคนนี้ถึงวันที่ {date}',
   '{count} later days that no one has decided go back to no one, and are counted for whoever holds the number then.':
@@ -1396,8 +1417,13 @@ export const thMessages: Record<string, string> = {
     'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขเดิมยังเป็นของพนักงานคนนี้',
   'Type it as the scanner writes it: 007 is not 7. Days already imported under this number are counted for this employee.':
     'พิมพ์ตามที่เครื่องสแกนเขียน เลข 007 ไม่ใช่ 7 วันที่นำเข้าไว้แล้วภายใต้เลขนี้จะนับให้พนักงานคนนี้',
-  'No scanner number. Days from the scanner wait until one is given.':
-    'ยังไม่มีเลขสแกนนิ้ว วันที่มาจากเครื่องสแกนจะรอจนกว่าจะมีเลข',
+  'No number in use right now': 'ตอนนี้ไม่มีเลขที่ใช้อยู่',
+  'Days from the scanner wait for an owner until one is given.':
+    'วันที่มาจากเครื่องสแกนจะรอเจ้าของจนกว่าจะมีเลขให้',
+  'Number {number} counts to this employee through {date}.':
+    'เลข {number} นับให้พนักงานคนนี้ถึงวันที่ {date}',
+  'No later day went back to no one.': 'ไม่มีวันหลังจากนั้นที่กลับเป็นไม่มีเจ้าของ',
+  '{count} later days went back to no one.': 'มี {count} วันหลังจากนั้นที่กลับเป็นไม่มีเจ้าของ',
   'Saved. Days already imported under this number now belong to this employee: those with two times are counted, the others wait for HR on the scanner days page.':
     'บันทึกแล้ว วันที่นำเข้าไว้แล้วภายใต้เลขนี้เป็นของพนักงานคนนี้แล้ว วันที่มีสองเวลานับให้เลย วันอื่นรอ HR ตัดสินในหน้าวันที่สแกนนิ้ว',
   'Saved. The days already counted for this employee stay as they are.':
@@ -1444,8 +1470,8 @@ export const thMessages: Record<string, string> = {
     'มีค่าจ้างที่เริ่มวันนั้นอยู่แล้ว เลือกวันอื่น',
   'Pay is either a monthly salary or a daily wage paid twice a month.':
     'ค่าจ้างเป็นได้แบบเดียว คือเงินเดือนรายเดือน หรือค่าจ้างรายวันที่จ่ายเดือนละ 2 ครั้ง',
-  '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: check them before approving: {dates}':
-    'มี {days} วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้ ตรวจก่อนอนุมัติ: {dates}',
+  '{days} scanner day(s) were decided by the employee themselves, as no one else could decide them: {dates}':
+    'มี {days} วันสแกนที่พนักงานตัดสินเอง เพราะไม่มีผู้อื่นที่ตัดสินแทนได้: {dates}',
   'Counted {days} day(s) with an incomplete punch as worked: {dates}':
     'นับ {days} วันที่ลงเวลาไม่ครบเป็นวันทำงาน: {dates}',
   'Not paid for {days} scheduled day(s) with no attendance and no leave: {dates}':

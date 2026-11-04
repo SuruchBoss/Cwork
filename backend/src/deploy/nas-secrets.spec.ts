@@ -153,7 +153,10 @@ describe('the installer’s secrets', () => {
 
       expect(field(result.stdout, 'DB')).toMatch(/^[0-9a-f]{48}$/);
       expect(printed(result.stdout)).toContain(
-        'database password: from made new by this installer',
+        'database password: from a new one made by this installer',
+      );
+      expect(printed(result.stdout)).toContain(
+        'encryption key: from a new one made by this installer',
       );
     });
 

@@ -17,7 +17,7 @@
 import { AttendanceStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AttendanceService } from 'src/modules/attendance/attendance.service';
-import { addDays, isoDate } from './utils/dates';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const HR_OFFICER = 'hr.officer@cwork.example';
@@ -283,6 +283,8 @@ describe('Leave recorded by HR (e2e)', () => {
       expect(recorded.status).toBe(own.status);
       expect(recorded.body.code).toBe('NO_WORKING_DAYS_SELECTED');
       expect(recorded.body.message).toBe(own.body.message);
+      // The words the person reads are Thai (CW-112).
+      expect(recorded.body.message).toContain('ไม่มีวันทำงานเลย');
     });
 
     it('refuses a day the employee already has leave on', async () => {
@@ -300,7 +302,7 @@ describe('Leave recorded by HR (e2e)', () => {
     it('holds leave sent for approval to the notice rule, and not leave recorded as approved', async () => {
       // Annual leave needs three days' notice; the first working day from today has less.
       const nextWorkingDay = [0, 1, 2]
-        .map((n) => addDays(new Date(), n))
+        .map((n) => addDays(calendarToday(), n))
         .find((d) => {
           const day = d.getUTCDay();
           return day !== 0 && day !== 6;
@@ -353,7 +355,7 @@ describe('Leave recorded by HR (e2e)', () => {
 
     it('sends leave ahead for approval when HR chooses to, still recorded by HR', async () => {
       // Two weeks out, on a day that is a working day for this company.
-      let ahead = addDays(new Date(), 14);
+      let ahead = addDays(calendarToday(), 14);
       for (;;) {
         const preview = await api.post('/leave/requests/record/preview', hrToken, {
           employeeId: somchaiId,
@@ -415,6 +417,26 @@ describe('Leave recorded by HR (e2e)', () => {
 
       expect(res.status).toBe(422);
       expect(res.body.code).toBe('CANNOT_RECORD_OWN_LEAVE');
+      expect(res.body.message).toContain('ต้องส่งให้หัวหน้าอนุมัติ');
+    });
+
+    it('says so at the preview too, before the form is submitted (CW-112)', async () => {
+      const body = {
+        employeeId: hrEmployeeId,
+        leaveTypeId: types.get('SICK'),
+        startDate: '2019-06-19',
+        endDate: '2019-06-19',
+      };
+      const approved = await api.post('/leave/requests/record/preview', hrToken, body);
+      expect(approved.status).toBe(422);
+      expect(approved.body.code).toBe('CANNOT_RECORD_OWN_LEAVE');
+
+      // Sent to the manager instead, it is not the same refusal.
+      const toManager = await api.post('/leave/requests/record/preview', hrToken, {
+        ...body,
+        recordAsApproved: false,
+      });
+      expect(toManager.body.code).not.toBe('CANNOT_RECORD_OWN_LEAVE');
     });
   });
 });

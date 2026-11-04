@@ -898,9 +898,15 @@ export class ScannerImportService {
       select: { workDate: true },
     });
     const scannedElsewhere = new Set(otherDays.map((d) => formatDateOnly(d.workDate)));
+    // "From now on" is only for someone with no number in use: said before it is chosen.
+    const inUse = await this.prisma.employeeScannerNumber.findFirst({
+      where: { organizationId: user.organizationId, employeeId: employee.id, validTo: null },
+      select: { scannerNumber: true },
+    });
     return {
       from: range.from,
       to: range.to,
+      numberInUse: inUse?.scannerNumber ?? null,
       days: range.days.length,
       daysWithTimes: range.daysWithTimes.length,
       daysAlsoScannedOnAnotherNumber: range.daysWithTimes.filter((d) => scannedElsewhere.has(d))
@@ -931,39 +937,53 @@ export class ScannerImportService {
    */
   async endNumber(user: AuthenticatedUser, bindingId: string, endDate: string) {
     this.assertWholeCompany(user);
-    const row = await this.bindings.endable(user.organizationId, bindingId, endDate);
-    const plan = await this.planEnd(user.organizationId, row, endDate);
-    if (plan.blocked) {
-      throw new BusinessRuleError(
-        'SCANNER_DAY_IN_PAYROLL_RUN',
-        plan.blocked.runNo
-          ? `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน ${plan.blocked.runNo} ที่คำนวณหรืออนุมัติแล้ว`
-          : `สิ้นสุดเลขสแกน ${row.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นเงินเดือนใช้ไปแล้ว`,
-        {
-          scannerNumber: row.scannerNumber,
-          date: plan.blocked.date,
-          runNo: plan.blocked.runNo ?? '—',
-        },
-      );
-    }
-
+    // The first read only finds the number to lock and refuses the plain cases early.
+    const found = await this.bindings.endable(user.organizationId, bindingId, endDate);
     const organization = await this.organization.getOrganization(user.organizationId);
-    const released = plan.days;
-    const ended = await this.prisma.$transaction(async (tx) => {
-      const result = await this.bindings.end(user, bindingId, endDate, {
-        db: tx,
-        released: released.length,
-      });
-      if (released.length > 0) {
-        const ids = released.map((d) => d.id);
-        await tx.scannerPunchLink.updateMany({
-          where: { scannerDayId: { in: ids }, supersededAt: null },
-          data: { supersededAt: new Date() },
+
+    // Everything that decides and writes the end is done holding the number's lock,
+    // the one binding a number takes, so two ends of one period (or an end and a
+    // bind) cannot both pass the checks on the same state: the second waits, reads
+    // what the first left and is refused in words.
+    const { ended, row, released } = await this.bindings.withNumberLocked(
+      this.prisma,
+      user.organizationId,
+      found.scannerNumber,
+      async (tx) => {
+        const current = await this.bindings.endable(user.organizationId, bindingId, endDate, tx);
+        const plan = await this.planEnd(user.organizationId, current, endDate, tx);
+        if (plan.blocked) {
+          throw new BusinessRuleError(
+            'SCANNER_DAY_IN_PAYROLL_RUN',
+            plan.blocked.runNo
+              ? `สิ้นสุดเลขสแกน ${current.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นอยู่ในรอบเงินเดือน ${plan.blocked.runNo} ที่คำนวณหรืออนุมัติแล้ว`
+              : `สิ้นสุดเลขสแกน ${current.scannerNumber} ก่อนวันที่ ${plan.blocked.date} ไม่ได้ เพราะวันนั้นเงินเดือนใช้ไปแล้ว`,
+            {
+              scannerNumber: current.scannerNumber,
+              date: plan.blocked.date,
+              runNo: plan.blocked.runNo ?? '—',
+            },
+          );
+        }
+        const days = plan.days;
+        const result = await this.bindings.end(user, bindingId, endDate, {
+          db: tx,
+          released: days.length,
         });
-        await tx.scannerDay.updateMany({ where: { id: { in: ids } }, data: { employeeId: null } });
-      }
-      return result;
-    });
+        if (days.length > 0) {
+          const ids = days.map((d) => d.id);
+          await tx.scannerPunchLink.updateMany({
+            where: { scannerDayId: { in: ids }, supersededAt: null },
+            data: { supersededAt: new Date() },
+          });
+          await tx.scannerDay.updateMany({
+            where: { id: { in: ids } },
+            data: { employeeId: null },
+          });
+        }
+        return { ended: result, row: current, released: days };
+      },
+    );
     if (released.length > 0) {
       await this.attendance.recalculateDays(
         user.organizationId,
@@ -986,8 +1006,9 @@ export class ScannerImportService {
     organizationId: string,
     row: { employeeId: string; scannerNumber: string; validTo?: Date | null },
     endDate: string,
+    db: Prisma.TransactionClient | PrismaService = this.prisma,
   ) {
-    const later = await this.prisma.scannerDay.findMany({
+    const later = await db.scannerDay.findMany({
       where: {
         organizationId,
         scannerNumber: row.scannerNumber,
@@ -1006,7 +1027,7 @@ export class ScannerImportService {
       const first = formatDateOnly(days[0]!.workDate);
       const last = formatDateOnly(days[days.length - 1]!.workDate);
       const [locked, slips] = await Promise.all([
-        this.prisma.attendanceRecord.findMany({
+        db.attendanceRecord.findMany({
           where: {
             organizationId,
             employeeId: row.employeeId,
@@ -1015,7 +1036,7 @@ export class ScannerImportService {
           },
           select: { workDate: true },
         }),
-        this.prisma.payslip.findMany({
+        db.payslip.findMany({
           where: {
             employeeId: row.employeeId,
             run: {

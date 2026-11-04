@@ -18,7 +18,7 @@
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
-import { giveNumber, numberInUse, takeNumbers } from './utils/scanner-numbers';
+import { emptyScannerLedger, giveNumber, numberInUse, takeNumbers } from './utils/scanner-numbers';
 
 const HR = 'hr.officer@cwork.example';
 const EMPLOYEE_TOKEN_USER = 'dev2@cwork.example';
@@ -47,6 +47,8 @@ describe('Fingerprint scanner import (e2e)', () => {
   let prisma: PrismaClient;
   let hr: string;
   let organizationId: string;
+  /** Audit entries are append-only and shared, so the spec reads only those written after it began. */
+  let startedAt: Date;
   let ann: { id: string; code: string };
   let ben: { id: string; code: string };
   let cat: { id: string; code: string };
@@ -95,6 +97,9 @@ describe('Fingerprint scanner import (e2e)', () => {
     ctx = await createTestApp();
     api = ctx.api;
     prisma = new PrismaClient({ datasources: { db: { url: resolveDatabaseUrl() } } });
+    // This spec counts whole tables; it starts from an empty ledger, whatever ran before it.
+    await emptyScannerLedger(prisma);
+    startedAt = new Date();
     hr = await api.token(HR);
     ({ id: organizationId } = await prisma.organization.findFirstOrThrow({ select: { id: true } }));
 
@@ -273,7 +278,7 @@ describe('Fingerprint scanner import (e2e)', () => {
 
     it('audits the import as one event naming the file, its dates and the punches added', async () => {
       const entries = await prisma.auditLog.findMany({
-        where: { entityType: 'ScannerImport', organizationId },
+        where: { entityType: 'ScannerImport', organizationId, createdAt: { gte: startedAt } },
       });
       expect(entries).toHaveLength(1);
       expect(entries[0]!.changes).toMatchObject({
@@ -421,7 +426,7 @@ describe('Fingerprint scanner import (e2e)', () => {
 
     it('audits each decision', async () => {
       const entries = await prisma.auditLog.findMany({
-        where: { entityType: 'ScannerDay', organizationId },
+        where: { entityType: 'ScannerDay', organizationId, createdAt: { gte: startedAt } },
       });
       expect(entries.length).toBe(4);
       expect(entries.every((e) => e.actorUserId)).toBe(true);

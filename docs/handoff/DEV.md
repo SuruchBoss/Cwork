@@ -6,25 +6,25 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #153 (CW-101 to CW-110) and, when #154 merges, CW-111.
-- **CW-115, in the working tree, not pushed (waits for #154 to merge):** "these days only" takes a
-  first and last day inside the waiting stretch (`from`/`to` on `POST /attendance/scanner/unmapped/bind`),
-  `GET /attendance/scanner/unmapped/bind-preview` counts the days and how many the person already has
-  scans for under another number (the page warns), and a period that has ended can be made shorter
-  through the same end/preview/confirm/payroll-run refusal (`planEnd` limits itself to the days between
-  the new and the old end). Left open: whether a day with scans from two numbers of one person should
-  wait for HR instead of counting both; it is only warned about at binding time (a bigger change to
-  the day statuses, to be a ticket of its own if the PO wants it).
-- CW-112 waits behind CW-115 on a local branch (`blind-round`): see its commits. Counts there differ
-  and are reconciled on merge.
-- Counts: web 374; backend unit 903, domain 558; e2e 591.
+- On `main`: everything up to #155 (CW-101 to CW-111, CW-115).
+- **CW-112 is PR #156**, together with **CW-118** (test-only apart from the demo seed): the per-number
+  lock on ending a number; Approve/Record payment shown closed with the reason; Thai wording for
+  three answers; own-leave preview refused as the submit is; waiting runs marked and the dashboard
+  card opens them (`?waiting=me`); the installer wording; the UX items from the blind rounds.
+- **CW-118:** specs that file leave no longer count "today plus N" days. They use the organisation's
+  calendar day and ask the leave calendar for a working day (`test/utils/leave-days.ts`), so they do
+  not fail on the weekday when N lands on a weekend, nor when a run crosses midnight between two
+  specs. `scanner-import` empties the scanner ledger first (`emptyScannerLedger`) because it counts
+  whole tables. The demo seed (`demo-activity.ts`) dates its leave, expenses and payroll by the
+  organisation's day.
+- Known, outside CW-112: a shift that crosses midnight is not supported by punches or scanner days
+  (CW-114 is the ticket).
+- Counts: web 390; backend unit 903, domain 558; e2e 593.
 - The Flutter app was not audited for dependency advisories (no toolchain here).
 
 ## Next (the PO's order)
 
-1. Wait for the PO's review of the branch above, then CW-110 (public bugs, wording as in its
-   issue), then CW-109 (a scanner number bound for a period; the PO's decisions are in the
-   backlog).
+1. #156 (CW-112 + CW-118) waits for CI and QA; then whatever the PO sends next.
 2. CW-101 asks the PO for one decision from the owner: issue #36, which month a 14-day period that
    spans two months counts toward. `monthCountedFor` in `domain/pay-period.ts` is the only place to
    change, and the one e2e case that pins the month of the spanning period

@@ -276,8 +276,8 @@ export class ScannerBindingsService {
    * The period to end, checked: it is in use, and the end is no earlier than the
    * start. Used before anything is changed, so a refusal leaves everything as it was.
    */
-  async endable(organizationId: string, bindingId: string, endDate: string) {
-    const row = await this.prisma.employeeScannerNumber.findFirst({
+  async endable(organizationId: string, bindingId: string, endDate: string, db: Db = this.prisma) {
+    const row = await db.employeeScannerNumber.findFirst({
       where: { id: bindingId, organizationId },
       include: { employee: { select: { employeeCode: true } } },
     });
@@ -425,7 +425,7 @@ export class ScannerBindingsService {
    * its turn and meet the first one's committed period, so it is refused in
    * words. Inside a transaction already open the lock lasts until it ends.
    */
-  private async withNumberLocked<T>(
+  async withNumberLocked<T>(
     db: Db,
     organizationId: string,
     scannerNumber: string | null,
