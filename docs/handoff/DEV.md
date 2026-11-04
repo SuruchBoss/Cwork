@@ -6,16 +6,15 @@ this file only says where the dev room stands.
 
 ## Where things are
 
-- On `main`: everything up to #155 (CW-101 to CW-111, CW-115).
-- **CW-112 is PR #156**, together with **CW-118** (test-only apart from the demo seed): the per-number
-  lock on ending a number; Approve/Record payment shown closed with the reason; Thai wording for
-  three answers; own-leave preview refused as the submit is; waiting runs marked and the dashboard
-  card opens them (`?waiting=me`); the installer wording; the UX items from the blind rounds.
-- **CW-118:** specs that file leave no longer count "today plus N" days. They use the organisation's
-  calendar day and ask the leave calendar for a working day (`test/utils/leave-days.ts`), so they do
-  not fail on the weekday when N lands on a weekend, nor when a run crosses midnight between two
-  specs. `scanner-import` empties the scanner ledger first (`emptyScannerLedger`) because it counts
-  whole tables. The demo seed (`demo-activity.ts`) dates its leave, expenses and payroll by the
+- On `main`: everything up to #156 (CW-101 to CW-115, CW-118). CW-112 and CW-118 merged as #156.
+- **CW-119 is PR #157** (waiting for CI): the remaining specs take their dates from `calendarToday()`
+  and `firstWorkingDay()` (`test/utils/leave-days.ts`), and `npm run verify:spec-dates` (a CI step after
+  `verify:sql`) fails when a spec turns the UTC clock into a calendar date; a line that is right on
+  purpose says `// utc-ok: why`. The check reads lines, so it catches the usual shapes, not every one.
+- Lessons from CW-118: `scanner-import` counts whole tables, so it starts with `emptyScannerLedger`
+  and reads only the audit entries written after it began (audit is append-only and shared); the demo
+  spec resets the whole database mid-run, so a local ordered run must put it first to mean anything.
+- The demo seed (`demo-activity.ts`) dates leave, expenses, payroll and the review cycle by the
   organisation's day.
 - Known, outside CW-112: a shift that crosses midnight is not supported by punches or scanner days
   (CW-114 is the ticket).
@@ -24,7 +23,7 @@ this file only says where the dev room stands.
 
 ## Next (the PO's order)
 
-1. #156 (CW-112 + CW-118) waits for CI and QA; then whatever the PO sends next.
+1. #157 (CW-119) waits for CI; then whatever the PO sends next.
 2. CW-101 asks the PO for one decision from the owner: issue #36, which month a 14-day period that
    spans two months counts toward. `monthCountedFor` in `domain/pay-period.ts` is the only place to
    change, and the one e2e case that pins the month of the spanning period

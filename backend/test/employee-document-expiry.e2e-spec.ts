@@ -13,6 +13,7 @@ import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './utils/database';
 import { DocumentExpiryService } from 'src/modules/employees/document-expiry.service';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 
 const HR = 'hr.officer@cwork.example';
 const EMPLOYEE = 'dev2@cwork.example';
@@ -20,8 +21,7 @@ const EMPLOYEE = 'dev2@cwork.example';
 const PERMIT_NO = 'WP-0012345';
 const PASSPORT_NO = 'MB123456';
 
-const day = (offset: number, from = new Date()) =>
-  new Date(from.getTime() + offset * 86_400_000).toISOString().slice(0, 10);
+const day = (offset: number, from = calendarToday()) => isoDate(addDays(from, offset));
 
 describe('Expiring documents (e2e)', () => {
   let ctx: TestContext;

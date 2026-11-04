@@ -14,6 +14,7 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 import { CryptoService } from 'src/core/security/crypto.service';
 import { generateTotpForStep, timeStepAt } from 'src/modules/auth/domain/totp';
 import { createTestApp, waitForNextStep, type Api, type TestContext } from './utils/test-app';
+import { calendarToday } from './utils/dates';
 
 const CEO = 'ceo@cwork.example'; // SUPER_ADMIN
 const HR_MANAGER = 'hr.manager@cwork.example'; // HR_ADMIN: role:manage, but not every permission
@@ -266,7 +267,7 @@ describe('Roles given from the console (e2e)', () => {
       expect(byHrManager.status).toBe(403);
 
       // A super administrator until the end of next year is still not a permanent one.
-      const nextYear = new Date().getUTCFullYear() + 1;
+      const nextYear = calendarToday().getUTCFullYear() + 1;
       const temporary = await grant(ceoToken, {
         roleKey: 'SUPER_ADMIN',
         expiresOn: `${nextYear}-12-31`,

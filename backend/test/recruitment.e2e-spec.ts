@@ -22,6 +22,7 @@
  */
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 
 const HR = 'hr.manager@cwork.example';
 const ORG_CODE = 'CWORK';
@@ -257,7 +258,7 @@ describe('Recruitment (e2e)', () => {
       const offer = await api.post('/recruitment/offers', hrToken, {
         applicationId,
         baseSalary: 95000,
-        startDate: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10),
+        startDate: isoDate(addDays(calendarToday(), 30)),
       });
       expect(offer.status).toBe(201);
       offerId = offer.body.id;

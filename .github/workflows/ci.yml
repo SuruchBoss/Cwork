@@ -93,6 +93,11 @@ jobs:
       - name: Every raw SQL statement has been classified
         run: npm run verify:sql
 
+      # A spec that takes today's date from the UTC clock fails on the weekday or the
+      # hour when the organisation's day and UTC's differ, which is hours of CI time later.
+      - name: No spec takes the calendar day from the UTC clock
+        run: npm run verify:spec-dates
+
       - name: Unit tests, with the environment a fresh clone has
         run: env -u DATABASE_URL -u JWT_ACCESS_SECRET -u JWT_REFRESH_SECRET -u FIELD_ENCRYPTION_KEY npm test
 
