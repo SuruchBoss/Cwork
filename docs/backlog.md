@@ -465,53 +465,18 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
-### CW-118 · e2e specs that read "today" from the UTC clock
-`P1` · tests · **S** · before the install
+### CW-119 · The remaining specs take "today" from the calendar
+`P1` · tests · ci · **S** · before the install
 
-`main` went red twice on docs-only commits: `file-access` (23:47 UTC on
-`bfedc60`) and `access-boundaries` (00:17 UTC on `b6a7699`), each refused a
-sick-leave request with 422 at setup. Specs pick leave days from the clock and
-share employees, so one spec's leave can overlap another's depending on the
-day. Same family as #151. Found by the Dev room on the CW-112 branch.
-
-**Scope**
-- Reproduce with a fixed clock, find whether the cause is in the spec or the
-  code, and fix it at the cause; the 422 prints its code and body.
-- Leave days in specs never collide: an employee of the spec's own, or a day
-  found free in the database.
-- Sweep the other specs for `new Date()` or `toISOString().slice(0, 10)` used
-  as "today" and move them to `calendarToday()`.
+Follow-up to CW-118: move the other specs that turn the clock into a date
+(`employee-document-expiry`, `payroll-advances`, `recruitment`,
+`organization`, `user-roles`, `notification-delivery`) to `calendarToday()`
+and the working-day helper, and add `npm run verify:spec-dates` to CI so a
+new spec that does it fails the build.
 
 **Acceptance**
-- The full suite passes with the clock fixed at 23:40 UTC and at 00:20 UTC;
-  no timeout or expected value is changed to make it pass.
-
-### CW-112 · Small things the re-check on the installed stack left
-`P1` · web · api · i18n · **S** · Pilot A · before the install if time allows
-
-From the UX room's re-check of #150 on an installed stack and the earlier
-blind test. None blocks the install; each confuses a first-time HR user.
-
-**Scope**
-- A payroll action the signed-in user cannot take is shown closed with the
-  reason, not as an active button that is refused after its confirmation.
-- The owner's dashboard card for runs waiting for approval opens the runs
-  that are waiting (one run: that run; several: the list filtered to them),
-  and the runs table marks which ones wait for approval.
-- Thai wording for the API answers still in English:
-  `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE`, and the two-step
-  sign-in's "That code is not right".
-- Previewing one's own leave warns as the submit does.
-- The installer's wording "from made new by this installer" is corrected.
-- The pre-approval check box does not repeat its own heading in each line.
-- Ending a scanner number takes the same per-number lock as binding one, so two ends sent at once cannot both succeed.
-- After ending a number, the notice says up to which day it counted and how many later days went back to no one, instead of "the days already counted stay the same".
-- An employee with no number in use reads as a plain state, not a warning.
-- "Save this number" from the scanner days page asks first when it moves days, as ending one does.
-- "FULL_TIME" shows as the employment type's Thai label.
-
-**Acceptance**
-- A test for each item; the HR guide matches where it shows the screen.
+- The check fails on a planted line and passes once it goes; a line can opt
+  out only with `// utc-ok:` and a reason.
 
 ### CW-114 · A shift that crosses midnight
 `P2` · attendance · **M** · after Pilot A
@@ -1740,3 +1705,5 @@ Kept so the reasoning survives.
 | **CW-109** · A scanner number can be bound for a period | A number is bound to an employee from a date to a date (`employee_scanner_numbers`); an empty start counts from the beginning and an empty end means still in use. The migration moved every number across with no dates; `down.sql` is the hand-run way back. The database refuses overlapping periods of one number and a second number in use for one employee; writes for one number take a per-number advisory lock of their own family. The import, later matching and binding match (number, date). Binding from the review page asks "these days only" or "from now on" and says the first day and how many waiting days it counts; ending a number on the employee page asks first, gives later undecided days back to no one, and is refused in Thai when a later day is in a calculated, approved or paid run. `scannerId` on the API and the employee file still reads as the number in use now. QA re-test in `docs/qa/pilot-a-2026-10.md`. #153 at 482d405, 2026-11-04. |
 | **CW-111** · The nightly close-out closes the day that just ended | The 01:00 Bangkok job closes the day before `organization.today()` instead of the UTC date minus one, so a day is closed about an hour after it ends, not about 25. Tested with a fixed clock (unit and e2e); a day closed as absent and then filled by a scanner file imported afterwards comes back with its worked time and leaves nothing absent for payroll. A shift that crosses midnight is CW-114. #154 at fadc709, 2026-11-04. |
 | **CW-115** · Choose the days when binding a scanner number for a stretch | "Only these days" takes a first and last day inside the waiting stretch (the default is the whole stretch); a preview counts the days and warns when the person already has scans under another number there. An ended period can be ended earlier from the employee card, with the same preview, confirmation and refusal when a later day is in a calculated, approved or paid run; only undecided days between the new and old end go back to no one. QA and the UX room re-tested on an installed stack; a first-time tester bound a borrowed card correctly from the guide. #155 at 8ef8cda, 2026-11-04. |
+| **CW-112** · Small things the re-checks left | Ending a scanner number takes the per-number lock; payroll steps the user cannot take show closed with the reason; Thai wording for `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE` and the two-step sign-in; the leave preview says what the submit says; the owner's card opens the waiting run or the filtered list, and the runs table marks waiting runs; scanner-number confirmations, notices, labels and the row reset after saving; "FULL_TIME" in Thai. QA re-test in `docs/qa/pilot-a-2026-10.md`. #156 at f848821, 2026-11-04. |
+| **CW-118** · e2e specs that read "today" from the UTC clock | `main` had gone red on docs-only commits: specs picked leave days from the clock and shared employees and tables. `test/utils/leave-days.ts` finds working days from the leave preview; "today" in the affected specs comes from `calendarToday()`; `scanner-import` starts from an emptied ledger and reads only its own audit entries; the demo seed uses `organizationToday`. No expected value or timeout changed. In #156 at f848821, 2026-11-04. |
