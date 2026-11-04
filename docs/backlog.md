@@ -465,6 +465,27 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
+### CW-118 · e2e specs that read "today" from the UTC clock
+`P1` · tests · **S** · before the install
+
+`main` went red twice on docs-only commits: `file-access` (23:47 UTC on
+`bfedc60`) and `access-boundaries` (00:17 UTC on `b6a7699`), each refused a
+sick-leave request with 422 at setup. Specs pick leave days from the clock and
+share employees, so one spec's leave can overlap another's depending on the
+day. Same family as #151. Found by the Dev room on the CW-112 branch.
+
+**Scope**
+- Reproduce with a fixed clock, find whether the cause is in the spec or the
+  code, and fix it at the cause; the 422 prints its code and body.
+- Leave days in specs never collide: an employee of the spec's own, or a day
+  found free in the database.
+- Sweep the other specs for `new Date()` or `toISOString().slice(0, 10)` used
+  as "today" and move them to `calendarToday()`.
+
+**Acceptance**
+- The full suite passes with the clock fixed at 23:40 UTC and at 00:20 UTC;
+  no timeout or expected value is changed to make it pass.
+
 ### CW-112 · Small things the re-check on the installed stack left
 `P1` · web · api · i18n · **S** · Pilot A · before the install if time allows
 

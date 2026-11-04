@@ -14,7 +14,8 @@ this file only says where the PO room stands.
   **UX:** re-check of #150 on an installed stack passed; it now tries the
   temporary-badge path on `482d405` and writes the badge and parallel-run
   guide (its branch waits on the owner, so the PO room commits its text).
-- **Dev queue:** CW-112 (small items), ready in the Dev room, one PR.
+- **Dev queue:** CW-112 in #156 (small items), then CW-118 (specs that read
+  "today" from the UTC clock).
 - **Install gates (owner 17:51):** QA regression, security, performance, blind
   test. Security review done; findings went to the owner privately. Regression passed (#144).
   Blind test ran on a stack installed with `deploy/nas/install.sh`
