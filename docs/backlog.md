@@ -465,19 +465,6 @@ whose habit is the opposite.
 `backend/src/modules/payroll/domain/payroll-calculator.ts`,
 `web/src/lib/i18n/messages.*.ts`
 
-### CW-119 · The remaining specs take "today" from the calendar
-`P1` · tests · ci · **S** · before the install
-
-Follow-up to CW-118: move the other specs that turn the clock into a date
-(`employee-document-expiry`, `payroll-advances`, `recruitment`,
-`organization`, `user-roles`, `notification-delivery`) to `calendarToday()`
-and the working-day helper, and add `npm run verify:spec-dates` to CI so a
-new spec that does it fails the build.
-
-**Acceptance**
-- The check fails on a planted line and passes once it goes; a line can opt
-  out only with `// utc-ok:` and a reason.
-
 ### CW-114 · A shift that crosses midnight
 `P2` · attendance · **M** · after Pilot A
 
@@ -1707,3 +1694,4 @@ Kept so the reasoning survives.
 | **CW-115** · Choose the days when binding a scanner number for a stretch | "Only these days" takes a first and last day inside the waiting stretch (the default is the whole stretch); a preview counts the days and warns when the person already has scans under another number there. An ended period can be ended earlier from the employee card, with the same preview, confirmation and refusal when a later day is in a calculated, approved or paid run; only undecided days between the new and old end go back to no one. QA and the UX room re-tested on an installed stack; a first-time tester bound a borrowed card correctly from the guide. #155 at 8ef8cda, 2026-11-04. |
 | **CW-112** · Small things the re-checks left | Ending a scanner number takes the per-number lock; payroll steps the user cannot take show closed with the reason; Thai wording for `NO_WORKING_DAYS_SELECTED`, `CANNOT_RECORD_OWN_LEAVE` and the two-step sign-in; the leave preview says what the submit says; the owner's card opens the waiting run or the filtered list, and the runs table marks waiting runs; scanner-number confirmations, notices, labels and the row reset after saving; "FULL_TIME" in Thai. QA re-test in `docs/qa/pilot-a-2026-10.md`. #156 at f848821, 2026-11-04. |
 | **CW-118** · e2e specs that read "today" from the UTC clock | `main` had gone red on docs-only commits: specs picked leave days from the clock and shared employees and tables. `test/utils/leave-days.ts` finds working days from the leave preview; "today" in the affected specs comes from `calendarToday()`; `scanner-import` starts from an emptied ledger and reads only its own audit entries; the demo seed uses `organizationToday`. No expected value or timeout changed. In #156 at f848821, 2026-11-04. |
+| **CW-119** · The remaining specs take "today" from the calendar | Six more specs (document expiry, payroll advances, recruitment, organisation, user roles, notification delivery) take their dates from `calendarToday()` and the working-day helper. `npm run verify:spec-dates` runs in CI after `verify:sql` and fails when a spec turns the UTC clock into a calendar date; a deliberate line says `// utc-ok:` with a reason. The check reads one line at a time, so it catches the usual shapes, not every one. No expected value or timeout changed. In #157 at 0e480ca, 2026-11-04. |
