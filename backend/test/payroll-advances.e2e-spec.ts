@@ -12,6 +12,7 @@
 import { AttendanceStatus, EmployeeStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 
 const PAYROLL = 'payroll@cwork.example'; // records advances, prepares runs
 const CEO = 'ceo@cwork.example'; // approves: whoever prepared a run cannot
@@ -147,7 +148,7 @@ describe('Cash advances (e2e)', () => {
     });
     expect(refused.status).toBe(403);
 
-    const tomorrow = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+    const tomorrow = isoDate(addDays(calendarToday(), 2));
     const future = await record({ amount: 500, paidOn: tomorrow });
     expect(future.status).toBe(422);
     expect(future.body.code).toBe('ADVANCE_IN_FUTURE');

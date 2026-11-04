@@ -23,6 +23,7 @@ import { NotificationsService } from 'src/modules/notifications/notifications.se
 import { decodePart, header, startFakeSmtp, type FakeSmtp } from './utils/fake-smtp';
 import { startFakeFcm, type FakeFcm } from './utils/fake-fcm';
 import { createTestApp, type TestContext } from './utils/test-app';
+import { firstWorkingDay } from './utils/leave-days';
 
 const EMPLOYEE = 'dev2@cwork.example';
 const JWT_SECRET = 'test-access-secret-that-is-at-least-32-chars';
@@ -37,28 +38,6 @@ describe('Notification delivery (e2e)', () => {
 
   const notify = (type: string, title = 'คำขอลาได้รับการอนุมัติ', body = 'ลาป่วย 2 วัน') =>
     ctx.app.get(NotificationsService).notify(organizationId, userId, { type, title, body });
-
-  /** The first day from `daysAhead` onwards that the leave calendar will charge. */
-  async function firstWorkingDay(
-    token: string,
-    leaveTypeId: string,
-    daysAhead: number,
-  ): Promise<string> {
-    for (let offset = 0; offset < 14; offset += 1) {
-      const date = new Date(Date.now() + (daysAhead + offset) * 86_400_000)
-        .toISOString()
-        .slice(0, 10);
-
-      const preview = await ctx.api.post('/leave/requests/preview', token, {
-        leaveTypeId,
-        startDate: date,
-        endDate: date,
-      });
-
-      if (preview.status < 400 && Number(preview.body.totalDays) > 0) return date;
-    }
-    throw new Error('No working day found in the fortnight after the offset');
-  }
 
   const drain = () => ctx.app.get(OutboxDispatcher).drainOnce();
 
@@ -271,7 +250,7 @@ describe('Notification delivery (e2e)', () => {
       // and checked against the calendar rather than assumed: a request landing
       // on a weekend or a public holiday is refused for having no working days,
       // which would read as a delivery failure three assertions later.
-      const start = await firstWorkingDay(employeeToken, annual.leaveTypeId, 200);
+      const start = await firstWorkingDay(ctx.api, employeeToken, annual.leaveTypeId, 200);
 
       const created = await ctx.api.post('/leave/requests', employeeToken, {
         leaveTypeId: annual.leaveTypeId,

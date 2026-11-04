@@ -18,6 +18,7 @@
  */
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 
 const HR = 'hr.manager@cwork.example';
 const EMPLOYEE = 'dev2@cwork.example';
@@ -27,9 +28,9 @@ const stamp = Date.now().toString(36).toUpperCase().slice(-5);
 
 /** A Wednesday far enough out that no other spec has claimed it. */
 function futureWednesday(): string {
-  const date = new Date(Date.now() + 300 * 86_400_000);
-  while (date.getUTCDay() !== 3) date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
+  let date = addDays(calendarToday(), 300);
+  while (date.getUTCDay() !== 3) date = addDays(date, 1);
+  return isoDate(date);
 }
 
 describe('Organisation (e2e)', () => {
