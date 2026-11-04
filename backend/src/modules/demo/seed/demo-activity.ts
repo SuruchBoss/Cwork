@@ -20,6 +20,7 @@
  * services); the public demo's reset runs it inside the running application.
  */
 import type { Type } from '@nestjs/common';
+import { organizationToday } from '../../organization/organization-today';
 import {
   ApplicationStage,
   ApprovalTaskStatus,
@@ -150,7 +151,8 @@ async function seedLeave(
       (h) => h.date.toISOString().slice(0, 10),
     ),
   );
-  const workingDay = (after: number): string => workingDayFromToday(after, holidays);
+  const today = await organizationToday(prisma, organizationId);
+  const workingDay = (after: number): string => workingDayFromToday(today, after, holidays);
 
   const plan = [
     {
@@ -243,6 +245,7 @@ async function seedExpenses(
   }
 
   const expenses = app.get(ExpensesService);
+  const today = await organizationToday(prisma, organizationId);
 
   const claims = [
     {
@@ -253,7 +256,7 @@ async function seedExpenses(
         {
           description: 'ค่าแท็กซี่ไป-กลับ',
           amount: 640,
-          expenseDate: dayFromToday(-9),
+          expenseDate: dayFromToday(today, -9),
           category: ExpenseCategory.TRAVEL,
         },
       ],
@@ -266,7 +269,7 @@ async function seedExpenses(
         {
           description: 'ค่าลงทะเบียนสัมมนา',
           amount: 4500,
-          expenseDate: dayFromToday(-4),
+          expenseDate: dayFromToday(today, -4),
           category: ExpenseCategory.TRAINING,
         },
       ],
@@ -324,7 +327,7 @@ async function seedPayroll(
   const officer = people.payrollOfficer;
   const approver = people.hrManager;
 
-  const now = new Date();
+  const now = await organizationToday(prisma, organizationId);
   const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   const year = last.getUTCFullYear();
 
@@ -469,7 +472,7 @@ async function seedPerformance(
   }
 
   const performance = app.get(PerformanceService);
-  const year = new Date().getUTCFullYear();
+  const year = (await organizationToday(prisma, organizationId)).getUTCFullYear();
 
   const cycle = await performance.createCycle(organizationId, {
     code: `${year}-H2`,
@@ -531,9 +534,9 @@ async function seedPerformance(
   log.log(`performance: 1 cycle, ${created} KPI goal(s)`);
 }
 
-/** A date `offset` days from today, as YYYY-MM-DD. */
-function dayFromToday(offset: number): string {
-  const date = new Date();
+/** A date `offset` days from `today` (the organisation's calendar day), as YYYY-MM-DD. */
+function dayFromToday(today: Date, offset: number): string {
+  const date = new Date(today);
   date.setUTCDate(date.getUTCDate() + offset);
   return date.toISOString().slice(0, 10);
 }
@@ -542,8 +545,8 @@ function dayFromToday(offset: number): string {
  * The `count`-th working day after today (0 is today, or the next working day
  * if today is not one), as YYYY-MM-DD: weekends and the given holidays skipped.
  */
-function workingDayFromToday(count: number, holidays: Set<string>): string {
-  const date = new Date();
+function workingDayFromToday(today: Date, count: number, holidays: Set<string>): string {
+  const date = new Date(today);
   const working = (): boolean => {
     const day = date.getUTCDay();
     return day !== 0 && day !== 6 && !holidays.has(date.toISOString().slice(0, 10));

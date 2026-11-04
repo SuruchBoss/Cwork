@@ -17,7 +17,7 @@
 import { AttendanceStatus } from '@prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AttendanceService } from 'src/modules/attendance/attendance.service';
-import { addDays, isoDate } from './utils/dates';
+import { addDays, calendarToday, isoDate } from './utils/dates';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
 
 const HR_OFFICER = 'hr.officer@cwork.example';
@@ -302,7 +302,7 @@ describe('Leave recorded by HR (e2e)', () => {
     it('holds leave sent for approval to the notice rule, and not leave recorded as approved', async () => {
       // Annual leave needs three days' notice; the first working day from today has less.
       const nextWorkingDay = [0, 1, 2]
-        .map((n) => addDays(new Date(), n))
+        .map((n) => addDays(calendarToday(), n))
         .find((d) => {
           const day = d.getUTCDay();
           return day !== 0 && day !== 6;
@@ -355,7 +355,7 @@ describe('Leave recorded by HR (e2e)', () => {
 
     it('sends leave ahead for approval when HR chooses to, still recorded by HR', async () => {
       // Two weeks out, on a day that is a working day for this company.
-      let ahead = addDays(new Date(), 14);
+      let ahead = addDays(calendarToday(), 14);
       for (;;) {
         const preview = await api.post('/leave/requests/record/preview', hrToken, {
           employeeId: somchaiId,

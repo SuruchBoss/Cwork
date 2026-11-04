@@ -18,7 +18,7 @@
 import { PrismaClient } from '@prisma/client';
 import { resolveDatabaseUrl } from './utils/database';
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
-import { giveNumber, numberInUse, takeNumbers } from './utils/scanner-numbers';
+import { emptyScannerLedger, giveNumber, numberInUse, takeNumbers } from './utils/scanner-numbers';
 
 const HR = 'hr.officer@cwork.example';
 const EMPLOYEE_TOKEN_USER = 'dev2@cwork.example';
@@ -95,6 +95,8 @@ describe('Fingerprint scanner import (e2e)', () => {
     ctx = await createTestApp();
     api = ctx.api;
     prisma = new PrismaClient({ datasources: { db: { url: resolveDatabaseUrl() } } });
+    // This spec counts whole tables; it starts from an empty ledger, whatever ran before it.
+    await emptyScannerLedger(prisma);
     hr = await api.token(HR);
     ({ id: organizationId } = await prisma.organization.findFirstOrThrow({ select: { id: true } }));
 

@@ -11,7 +11,8 @@
  * does not say which ids are real.
  */
 import { createTestApp, type Api, type TestContext } from './utils/test-app';
-import { addDays, isoDate } from './utils/dates';
+import { calendarToday, isoDate } from './utils/dates';
+import { firstWorkingDay } from './utils/leave-days';
 
 const OWNER = 'dev2@cwork.example';
 const COLLEAGUE = 'dev1@cwork.example';
@@ -100,7 +101,8 @@ describe('Access to stored files (e2e)', () => {
         code: string;
       }>;
       const sick = types.find((t) => t.code === 'SICK')!;
-      const day = isoDate(addDays(new Date(), 2));
+      // Its own stretch of the calendar, a working day and clear of what other specs file.
+      const day = await firstWorkingDay(api, owner, sick.id, 20);
       const created = await api.post('/leave/requests', owner, {
         leaveTypeId: sick.id,
         startDate: day,
@@ -109,7 +111,12 @@ describe('Access to stored files (e2e)', () => {
         attachmentIds: [id],
         saveAsDraft: true,
       });
-      expect(created.status).toBeLessThan(300);
+      if (created.status >= 300) {
+        // Say why: a bare status says nothing about which rule refused the day.
+        throw new Error(
+          `Leave for ${day} was refused with ${created.status}: ${JSON.stringify(created.body)}`,
+        );
+      }
     });
 
     it('can be opened by the person who asked for the leave', async () => {
@@ -131,7 +138,7 @@ describe('Access to stored files (e2e)', () => {
         code: string;
       }>;
       const sick = types.find((t) => t.code === 'SICK')!;
-      const day = isoDate(addDays(new Date(), 9));
+      const day = await firstWorkingDay(api, colleague, sick.id, 20);
       const res = await api.post('/leave/requests', colleague, {
         leaveTypeId: sick.id,
         startDate: day,
@@ -156,7 +163,7 @@ describe('Access to stored files (e2e)', () => {
         saveAsDraft: true,
         items: [
           {
-            expenseDate: isoDate(new Date()),
+            expenseDate: isoDate(calendarToday()),
             category: 'TRANSPORT',
             description: 'แท็กซี่',
             amount: 120,
@@ -181,7 +188,7 @@ describe('Access to stored files (e2e)', () => {
         saveAsDraft: true,
         items: [
           {
-            expenseDate: isoDate(new Date()),
+            expenseDate: isoDate(calendarToday()),
             category: 'TRANSPORT',
             description: 'แท็กซี่',
             amount: 120,

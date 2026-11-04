@@ -43,3 +43,18 @@ export async function numberInUse(prisma: PrismaClient, employeeId: string) {
   });
   return row?.scannerNumber ?? null;
 }
+
+/**
+ * Empties what a scanner file leaves behind: its imports and days, the punches and
+ * attendance records made from them, and the corrections on those records.
+ *
+ * A spec that counts whole tables (how many imports, how many punches) starts from
+ * here, so it does not depend on which specs ran before it. Punches are append-only,
+ * which rules out DELETE, hence TRUNCATE, as the harness itself does.
+ */
+export async function emptyScannerLedger(prisma: PrismaClient): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    'TRUNCATE TABLE "scanner_punch_links", "scanner_day_decisions", "scanner_days", ' +
+      '"scanner_imports", "attendance_punches", "attendance_records" CASCADE',
+  );
+}

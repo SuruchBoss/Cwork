@@ -526,7 +526,7 @@ describe('Cwork API (e2e)', () => {
 
   describe('overtime', () => {
     it('creates a request at the Labour Protection Act multiplier', async () => {
-      const workDate = isoDate(new Date());
+      const workDate = isoDate(calendarToday());
       const res = await api.post('/overtime/requests', employeeToken, {
         workDate,
         startAt: `${workDate}T11:00:00.000Z`,
@@ -542,7 +542,7 @@ describe('Cwork API (e2e)', () => {
 
   describe('expenses', () => {
     it('totals a claim from its line items', async () => {
-      const today = isoDate(new Date());
+      const today = isoDate(calendarToday());
       const res = await api.post('/expenses/claims', employeeToken, {
         title: 'ค่าเดินทางพบลูกค้า',
         items: [
@@ -602,7 +602,7 @@ describe('Cwork API (e2e)', () => {
   });
 
   describe('payroll', () => {
-    const now = new Date();
+    const now = calendarToday();
     const year = now.getUTCFullYear();
     const month = now.getUTCMonth() + 1;
     const periodStart = new Date(Date.UTC(year, month - 1, 1));
